@@ -1,0 +1,45 @@
+{
+  "version": "1.0",
+  "rules": {
+    "max_spend": {
+      "value": 50,
+      "description": "Maximum spending limit in dollars per action",
+      "severity": "critical"
+    },
+    "allow_deletion": {
+      "value": false,
+      "description": "Whether destructive delete operations are permitted",
+      "severity": "critical"
+    },
+    "allow_external_api_calls": {
+      "value": true,
+      "description": "Whether the agent can make external API calls",
+      "severity": "high"
+    },
+    "max_files_modified": {
+      "value": 10,
+      "description": "Maximum number of files that can be modified in a single action",
+      "severity": "medium"
+    },
+    "allow_sensitive_data_access": {
+      "value": false,
+      "description": "Whether the agent can access sensitive user data like passwords or tokens",
+      "severity": "critical"
+    },
+    "allow_network_requests": {
+      "value": true,
+      "description": "Whether outbound network requests are allowed",
+      "severity": "high"
+    },
+    "max_batch_operations": {
+      "value": 100,
+      "description": "Maximum number of batch operations in a single call",
+      "severity": "medium"
+    }
+  },
+  "audit_settings": {
+    "log_all_actions": true,
+    "require_approval_on_block": true,
+    "auto_approve_low_severity": false
+  }
+}

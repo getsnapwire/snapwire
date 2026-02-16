@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Firewall</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="header">
+        <h1><span class="shield">&#128737;</span> Agentic Firewall</h1>
+        <div class="status-badge status-active">
+            <div class="pulse"></div>
+            Active &amp; Monitoring
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="notification-banner" class="notification-banner">
+            <span class="icon">&#9888;&#65039;</span>
+            <span class="text" id="notification-text"></span>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Blocked Actions</div>
+                <div class="value red" id="stat-blocked">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Allowed Actions</div>
+                <div class="value green" id="stat-allowed">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Pending Approval</div>
+                <div class="value yellow" id="stat-pending">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Active Rules</div>
+                <div class="value blue" id="stat-rules">0</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="pending">Pending Approvals</button>
+            <button class="tab" data-tab="log">Audit Log</button>
+            <button class="tab" data-tab="rules">Constitution</button>
+            <button class="tab" data-tab="test">Test Firewall</button>
+        </div>
+
+        <div id="panel-pending" class="panel active">
+            <div id="pending-list"></div>
+        </div>
+
+        <div id="panel-log" class="panel">
+            <div id="audit-log-list"></div>
+        </div>
+
+        <div id="panel-rules" class="panel">
+            <div id="rules-list" class="rules-grid"></div>
+        </div>
+
+        <div id="panel-test" class="panel">
+            <div class="test-panel">
+                <h3>Test a Tool Call</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 13px;">
+                    Simulate an agent tool call to see how the firewall responds.
+                </p>
+
+                <div class="presets">
+                    <button class="preset-btn" onclick="loadPreset('safe')">Safe Call</button>
+                    <button class="preset-btn" onclick="loadPreset('delete')">Delete Files</button>
+                    <button class="preset-btn" onclick="loadPreset('overspend')">Overspend</button>
+                    <button class="preset-btn" onclick="loadPreset('sensitive')">Access Passwords</button>
+                    <button class="preset-btn" onclick="loadPreset('batch')">Mass Operation</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Tool Name</label>
+                    <input type="text" id="test-tool-name" placeholder="e.g., file_delete, api_call, db_query">
+                </div>
+                <div class="form-group">
+                    <label>Parameters (JSON)</label>
+                    <textarea id="test-params" placeholder='{"path": "/data/users.db"}'></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Stated Intent</label>
+                    <input type="text" id="test-intent" placeholder="What is the agent trying to do?">
+                </div>
+                <div class="form-group">
+                    <label>Context</label>
+                    <input type="text" id="test-context" placeholder="Why is the agent doing this?">
+                </div>
+
+                <button class="btn btn-test" id="test-submit" onclick="submitTest()">
+                    Run Audit
+                </button>
+
+                <div id="test-result" class="result-panel"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const POLL_INTERVAL = 5000;
+        let stats = { blocked: 0, allowed: 0, pending: 0, rules: 0 };
+        let lastPendingCount = 0;
+
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        function sendBrowserNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                const n = new Notification(title, {
+                    body: body,
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">&#128737;</text></svg>',
+                    requireInteraction: true
+                });
+                n.onclick = () => {
+                    window.focus();
+                    document.querySelector('[data-tab="pending"]').click();
+                    n.close();
+                };
+            }
+        }
+
+        async function fetchPending() {
+            try {
+                const res = await fetch('/api/actions/pending');
+                const data = await res.json();
+                const pending = data.pending_actions || [];
+                stats.pending = pending.length;
+
+                if (pending.length > lastPendingCount) {
+                    const newest = pending[pending.length - 1];
+                    const violations = newest.audit_result?.violations || [];
+                    const ruleNames = violations.map(v => v.rule).join(', ');
+
+                    sendBrowserNotification(
+                        'Agentic Firewall: Action Blocked',
+                        `Tool "${newest.tool_call.tool_name}" violated: ${ruleNames}. Click to review.`
+                    );
+
+                    const banner = document.getElementById('notification-banner');
+                    document.getElementById('notification-text').innerHTML =
+                        `<strong>${pending.length} action(s)</strong> require your approval. An agent tool call was blocked for rule violations.`;
+                    banner.classList.add('show');
+                }
+                lastPendingCount = pending.length;
+
+                if (pending.length === 0) {
+                    document.getElementById('notification-banner').classList.remove('show');
+                }
+
+                renderPending(pending);
+                updateStats();
+            } catch (e) {
+                console.error('Poll error:', e);
+            }
+        }
+
+        function renderPending(actions) {
+            const container = document.getElementById('pending-list');
+            if (actions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">&#9989;</div>
+                        <p>No pending approvals. All clear!</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = actions.map(action => {
+                const violations = action.audit_result?.violations || [];
+                const riskScore = action.audit_result?.risk_score || 0;
+                const riskClass = riskScore > 70 ? 'risk-high' : riskScore > 40 ? 'risk-medium' : 'risk-low';
+                const maxSeverity = violations.reduce((max, v) => {
+                    const order = { critical: 3, high: 2, medium: 1 };
+                    return (order[v.severity] || 0) > (order[max] || 0) ? v.severity : max;
+                }, 'medium');
+
+                return `
+                    <div class="action-card">
+                        <div class="action-header">
+                            <div>
+                                <div class="tool-name">${action.tool_call.tool_name}</div>
+                                <div class="action-id">ID: ${action.id} &middot; ${new Date(action.created_at).toLocaleString()}</div>
+                            </div>
+                            <span class="severity-badge severity-${maxSeverity}">${maxSeverity}</span>
+                        </div>
+
+                        ${action.tool_call.intent ? `<p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Intent: ${action.tool_call.intent}</p>` : ''}
+
+                        <div class="violations-list">
+                            ${violations.map(v => `
+                                <div class="violation-item">
+                                    <div class="rule-name">${v.rule} <span class="severity-badge severity-${v.severity}" style="font-size:10px;">${v.severity}</span></div>
+                                    <div class="reason">${v.reason}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <span style="font-size:12px;color:var(--text-secondary);">Risk Score</span>
+                            <div class="risk-bar" style="flex:1;">
+                                <div class="fill ${riskClass}" style="width:${riskScore}%"></div>
+                            </div>
+                            <span style="font-size:13px;font-weight:600;">${riskScore}/100</span>
+                        </div>
+
+                        ${action.audit_result?.analysis ? `<p class="analysis-text">${action.audit_result.analysis}</p>` : ''}
+
+                        <div class="action-buttons">
+                            <button class="btn btn-approve" onclick="resolveAction('${action.id}', 'approved')">Approve</button>
+                            <button class="btn btn-deny" onclick="resolveAction('${action.id}', 'denied')">Deny</button>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        async function resolveAction(actionId, decision) {
+            try {
+                const res = await fetch(`/api/actions/${actionId}/resolve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ decision })
+                });
+                if (res.ok) {
+                    if (decision === 'approved') stats.allowed++;
+                    fetchPending();
+                    fetchAuditLog();
+                }
+            } catch (e) {
+                console.error('Resolve error:', e);
+            }
+        }
+
+        async function fetchAuditLog() {
+            try {
+                const res = await fetch('/api/audit-log');
+                const data = await res.json();
+                const log = data.log || [];
+
+                stats.allowed = log.filter(e => e.status === 'allowed' || e.status === 'approved').length;
+                stats.blocked = log.filter(e => e.status !== 'allowed' && e.status !== 'approved').length;
+
+                const container = document.getElementById('audit-log-list');
+                if (log.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">&#128220;</div>
+                            <p>No audit entries yet. Test the firewall to generate some!</p>
+                        </div>`;
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="log-entry" style="font-weight:600;color:var(--text-secondary);border-bottom:2px solid var(--border);">
+                        <div>Status</div>
+                        <div>Tool</div>
+                        <div>Details</div>
+                        <div>Time</div>
+                    </div>
+                    ${log.map(entry => {
+                        const statusClass = entry.status === 'allowed' ? 'log-allowed' :
+                            entry.status === 'approved' ? 'log-approved' :
+                            entry.status === 'denied' ? 'log-denied' : 'log-blocked';
+                        const detail = entry.audit_result?.analysis || entry.tool_call?.intent || '-';
+                        const time = entry.created_at ? new Date(entry.created_at).toLocaleTimeString() : '-';
+                        return `
+                            <div class="log-entry">
+                                <div><span class="log-status ${statusClass}">${entry.status}</span></div>
+                                <div style="font-family:monospace;font-size:13px;">${entry.tool_call?.tool_name || '-'}</div>
+                                <div style="font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${detail}</div>
+                                <div style="font-size:12px;color:var(--text-secondary);">${time}</div>
+                            </div>`;
+                    }).join('')}`;
+                updateStats();
+            } catch (e) {
+                console.error('Log error:', e);
+            }
+        }
+
+        async function fetchRules() {
+            try {
+                const res = await fetch('/api/constitution');
+                const data = await res.json();
+                const rules = data.rules || {};
+                const entries = Object.entries(rules);
+                stats.rules = entries.length;
+
+                const container = document.getElementById('rules-list');
+                container.innerHTML = entries.map(([name, config]) => `
+                    <div class="rule-card">
+                        <div class="rule-info">
+                            <h4>${name}</h4>
+                            <p>${config.description}</p>
+                            <span class="severity-badge severity-${config.severity}" style="margin-top:6px;display:inline-block;">${config.severity}</span>
+                        </div>
+                        <div class="rule-value">${typeof config.value === 'boolean' ? (config.value ? 'YES' : 'NO') : config.value}</div>
+                    </div>
+                `).join('');
+                updateStats();
+            } catch (e) {
+                console.error('Rules error:', e);
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('stat-blocked').textContent = stats.blocked;
+            document.getElementById('stat-allowed').textContent = stats.allowed;
+            document.getElementById('stat-pending').textContent = stats.pending;
+            document.getElementById('stat-rules').textContent = stats.rules;
+        }
+
+        const presets = {
+            safe: {
+                tool: 'file_read',
+                params: '{"path": "/docs/readme.md"}',
+                intent: 'Read a documentation file to answer a user question',
+                context: 'User asked about project documentation'
+            },
+            delete: {
+                tool: 'file_delete',
+                params: '{"path": "/data/users.db", "recursive": true}',
+                intent: 'Delete the user database to free up storage space',
+                context: 'Automated cleanup routine'
+            },
+            overspend: {
+                tool: 'payment_process',
+                params: '{"amount": 150.00, "currency": "USD", "recipient": "vendor@example.com"}',
+                intent: 'Process a payment of $150 to a vendor',
+                context: 'Paying for a software license renewal'
+            },
+            sensitive: {
+                tool: 'database_query',
+                params: '{"query": "SELECT username, password_hash, ssn FROM users", "database": "production"}',
+                intent: 'Retrieve user credentials for migration',
+                context: 'Database migration to new system'
+            },
+            batch: {
+                tool: 'batch_update',
+                params: '{"operation": "modify", "target_count": 500, "files": "*.config"}',
+                intent: 'Update configuration across 500 files simultaneously',
+                context: 'Global config change deployment'
+            }
+        };
+
+        function loadPreset(name) {
+            const p = presets[name];
+            document.getElementById('test-tool-name').value = p.tool;
+            document.getElementById('test-params').value = p.params;
+            document.getElementById('test-intent').value = p.intent;
+            document.getElementById('test-context').value = p.context;
+        }
+
+        async function submitTest() {
+            const btn = document.getElementById('test-submit');
+            const resultPanel = document.getElementById('test-result');
+            const toolName = document.getElementById('test-tool-name').value.trim();
+
+            if (!toolName) {
+                alert('Please enter a tool name');
+                return;
+            }
+
+            let params = {};
+            try {
+                const raw = document.getElementById('test-params').value.trim();
+                if (raw) params = JSON.parse(raw);
+            } catch (e) {
+                alert('Invalid JSON in parameters');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Auditing...';
+            resultPanel.style.display = 'block';
+            resultPanel.textContent = 'Sending tool call to Claude for audit...';
+
+            try {
+                const res = await fetch('/api/intercept', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tool_name: toolName,
+                        parameters: params,
+                        intent: document.getElementById('test-intent').value.trim(),
+                        context: document.getElementById('test-context').value.trim()
+                    })
+                });
+
+                const data = await res.json();
+                resultPanel.textContent = JSON.stringify(data, null, 2);
+
+                if (data.status === 'blocked') {
+                    resultPanel.style.borderColor = 'var(--accent-red)';
+                } else {
+                    resultPanel.style.borderColor = 'var(--accent-green)';
+                }
+
+                fetchPending();
+                fetchAuditLog();
+            } catch (e) {
+                resultPanel.textContent = 'Error: ' + e.message;
+                resultPanel.style.borderColor = 'var(--accent-red)';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Run Audit';
+            }
+        }
+
+        fetchPending();
+        fetchAuditLog();
+        fetchRules();
+
+        setInterval(fetchPending, POLL_INTERVAL);
+        setInterval(fetchAuditLog, POLL_INTERVAL * 2);
+    </script>
+</body>
+</html>

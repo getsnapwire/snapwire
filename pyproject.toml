@@ -1,0 +1,11 @@
+[project]
+name = "repl-nix-workspace"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.79.0",
+    "flask>=3.1.2",
+    "pydantic>=2.12.5",
+    "tenacity>=9.1.4",
+]

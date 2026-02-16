@@ -1,0 +1,104 @@
+import os
+import json
+from anthropic import Anthropic
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
+from src.constitution import get_rules_summary, get_rules
+
+AI_INTEGRATIONS_ANTHROPIC_API_KEY = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
+AI_INTEGRATIONS_ANTHROPIC_BASE_URL = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_BASE_URL")
+
+client = Anthropic(
+    api_key=AI_INTEGRATIONS_ANTHROPIC_API_KEY,
+    base_url=AI_INTEGRATIONS_ANTHROPIC_BASE_URL,
+)
+
+SYSTEM_PROMPT = """You are the Agentic Firewall Auditor. Your job is to analyze an agent's intended tool call and determine whether it violates any of the constitutional rules.
+
+You will be given:
+1. The constitutional rules with their values and severity levels
+2. The agent's tool call details (tool name, parameters, stated intent)
+
+You must analyze the tool call and return a JSON response with this exact structure:
+{
+  "allowed": true/false,
+  "violations": [
+    {
+      "rule": "rule_name",
+      "severity": "critical/high/medium",
+      "reason": "explanation of why this violates the rule"
+    }
+  ],
+  "risk_score": 0-100,
+  "analysis": "brief analysis of the agent's intent and potential risks"
+}
+
+Rules for your analysis:
+- Be strict: if there's reasonable suspicion of a violation, flag it
+- Consider indirect violations (e.g., a tool call that could lead to data deletion even if not explicitly deleting)
+- Assess the risk_score based on potential harm (0 = no risk, 100 = maximum risk)
+- If no violations are found, return allowed: true with an empty violations array
+- Always return valid JSON and nothing else"""
+
+
+def is_rate_limit_error(exception):
+    error_msg = str(exception)
+    return (
+        "429" in error_msg
+        or "RATELIMIT_EXCEEDED" in error_msg
+        or "quota" in error_msg.lower()
+        or "rate limit" in error_msg.lower()
+        or (hasattr(exception, "status_code") and exception.status_code == 429)
+    )
+
+
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=2, max=64),
+    retry=retry_if_exception(is_rate_limit_error),
+    reraise=True,
+)
+def audit_tool_call(tool_call):
+    rules_summary = get_rules_summary()
+
+    user_message = f"""Constitutional Rules:
+{rules_summary}
+
+Agent Tool Call to Audit:
+- Tool Name: {tool_call.get('tool_name', 'unknown')}
+- Parameters: {json.dumps(tool_call.get('parameters', {}), indent=2)}
+- Stated Intent: {tool_call.get('intent', 'No intent provided')}
+- Context: {tool_call.get('context', 'No context provided')}
+
+Analyze this tool call against the constitutional rules and return your assessment as JSON."""
+
+    message = client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=8192,
+        system=SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": user_message}],
+    )
+
+    response_text = getattr(message.content[0], "text", "")
+
+    try:
+        start = response_text.find("{")
+        end = response_text.rfind("}") + 1
+        if start != -1 and end > start:
+            result = json.loads(response_text[start:end])
+        else:
+            result = json.loads(response_text)
+    except json.JSONDecodeError:
+        result = {
+            "allowed": False,
+            "violations": [
+                {
+                    "rule": "parse_error",
+                    "severity": "high",
+                    "reason": "Could not parse auditor response - blocking for safety",
+                }
+            ],
+            "risk_score": 75,
+            "analysis": response_text,
+        }
+
+    return result
