@@ -125,12 +125,14 @@ def make_replit_blueprint():
 
 
 def save_user(user_claims):
+    from datetime import datetime
     user = User()
     user.id = user_claims['sub']
     user.email = user_claims.get('email')
     user.first_name = user_claims.get('first_name')
     user.last_name = user_claims.get('last_name')
     user.profile_image_url = user_claims.get('profile_image_url')
+    user.last_login_at = datetime.now()
     merged_user = db.session.merge(user)
     db.session.commit()
     return merged_user
@@ -162,6 +164,12 @@ def require_login(f):
                 return jsonify({"error": "Authentication required"}), 401
             session["next_url"] = get_next_navigation_url(request)
             return redirect(url_for('replit_auth.login'))
+
+        if hasattr(current_user, 'is_active') and not current_user.is_active:
+            is_api = request.path.startswith('/api/')
+            if is_api:
+                return jsonify({"error": "Account access has been revoked"}), 403
+            return render_template("403.html"), 403
 
         try:
             token = replit.token

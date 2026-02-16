@@ -6,6 +6,258 @@
     <title>Agentic Firewall</title>
     <link rel="stylesheet" href="/static/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        .stat-card .value.purple { color: var(--accent-purple); }
+
+        .activity-summary-banner {
+            background: rgba(77, 139, 255, 0.10);
+            border: 1px solid rgba(77, 139, 255, 0.25);
+            border-radius: 12px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            animation: slideIn 0.3s ease;
+        }
+        .activity-summary-banner .icon { font-size: 20px; }
+        .activity-summary-banner strong { color: var(--accent-blue); }
+
+        #violations-chart {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        #violations-chart h4 {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .vio-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .vio-bar-label {
+            min-width: 140px;
+            font-size: 13px;
+            color: var(--text-primary);
+            text-align: right;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .vio-bar-track {
+            flex: 1;
+            height: 18px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .vio-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: var(--accent-red);
+            transition: width 0.5s ease;
+            min-width: 2px;
+        }
+        .vio-bar-count {
+            min-width: 30px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-family: 'Fira Code', monospace;
+        }
+
+        #recent-activity {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        #recent-activity h4 {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .timeline-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 13px;
+        }
+        .timeline-item:last-child { border-bottom: none; }
+        .timeline-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+        .timeline-dot.allowed { background: var(--accent-green); }
+        .timeline-dot.blocked { background: var(--accent-red); }
+        .timeline-dot.approved { background: var(--accent-blue); }
+        .timeline-dot.denied { background: var(--accent-yellow); }
+        .timeline-dot.pending { background: var(--accent-yellow); }
+        .timeline-content { flex: 1; color: var(--text-primary); }
+        .timeline-time { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+
+        .bulk-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+        .bulk-toolbar label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .bulk-toolbar input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-blue);
+            cursor: pointer;
+        }
+        .bulk-toolbar .btn { padding: 7px 16px; font-size: 13px; }
+
+        .pending-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-blue);
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-right: 4px;
+        }
+
+        .export-toolbar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 12px;
+        }
+        .btn-export {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-export:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .admin-table-wrap {
+            overflow-x: auto;
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .admin-table th {
+            text-align: left;
+            padding: 10px 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 11px;
+            border-bottom: 2px solid var(--border);
+        }
+        .admin-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        .admin-table tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+        .admin-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .admin-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid var(--border);
+        }
+        .admin-avatar-placeholder {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .admin-role-select {
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .admin-role-select:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .admin-toggle-btn {
+            padding: 5px 14px;
+            border-radius: 6px;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .admin-toggle-btn.active {
+            background: rgba(45, 212, 168, 0.15);
+            color: var(--accent-green);
+        }
+        .admin-toggle-btn.revoked {
+            background: rgba(255, 77, 106, 0.15);
+            color: var(--accent-red);
+        }
+        .admin-toggle-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body>
     <div id="onboarding-overlay" class="onboarding-overlay">
@@ -80,6 +332,11 @@
     </div>
 
     <div class="container">
+        <div id="activity-summary-banner" class="activity-summary-banner" style="display:none;">
+            <span class="icon">&#128200;</span>
+            <span id="activity-summary-text"></span>
+        </div>
+
         <div id="notification-banner" class="notification-banner">
             <span class="icon">&#9888;&#65039;</span>
             <span class="text" id="notification-text"></span>
@@ -102,6 +359,28 @@
                 <div class="label">Active Rules</div>
                 <div class="value blue" id="stat-rules">0</div>
             </div>
+            <div class="stat-card" data-tooltip="Percentage of blocked actions that were approved on review" data-tooltip-pos="bottom">
+                <div class="label">Approval Rate</div>
+                <div class="value purple" id="stat-approval-rate">0%</div>
+            </div>
+            <div class="stat-card" data-tooltip="Total number of actions audited by the firewall" data-tooltip-pos="bottom">
+                <div class="label">Total Audited</div>
+                <div class="value" style="color:var(--text-primary);" id="stat-total">0</div>
+            </div>
+        </div>
+
+        <div id="violations-chart">
+            <h4>Violations by Rule</h4>
+            <div id="violations-chart-bars">
+                <div style="color:var(--text-secondary);font-size:13px;">No violation data yet.</div>
+            </div>
+        </div>
+
+        <div id="recent-activity">
+            <h4>Recent Activity</h4>
+            <div id="recent-activity-list">
+                <div style="color:var(--text-secondary);font-size:13px;">No recent activity.</div>
+            </div>
         </div>
 
         <div class="tabs">
@@ -109,13 +388,24 @@
             <button class="tab" data-tab="log" data-tooltip="A history of everything the firewall has checked, and what happened" data-tooltip-pos="bottom">Audit Log</button>
             <button class="tab" data-tab="rules" data-tooltip="The rules that define what your AI agent can and cannot do" data-tooltip-pos="bottom">Constitution</button>
             <button class="tab" data-tab="test" data-tooltip="Try out a fake action to see how the firewall would respond" data-tooltip-pos="bottom">Test Firewall</button>
+            {% if user and user.role == 'admin' %}
+            <button class="tab" data-tab="admin" data-tooltip="Manage users, roles, and access controls" data-tooltip-pos="bottom">Admin</button>
+            {% endif %}
         </div>
 
         <div id="panel-pending" class="panel active">
+            <div class="bulk-toolbar" id="bulk-toolbar">
+                <label><input type="checkbox" id="select-all-pending" onchange="selectAllPending()"> Select All</label>
+                <button class="btn btn-approve" onclick="bulkResolve('approved')">Approve Selected</button>
+                <button class="btn btn-deny" onclick="bulkResolve('denied')">Deny Selected</button>
+            </div>
             <div id="pending-list"></div>
         </div>
 
         <div id="panel-log" class="panel">
+            <div class="export-toolbar">
+                <a href="/api/audit-log/export" class="btn-export" download>&#128229; Export CSV</a>
+            </div>
             <div id="audit-log-list"></div>
         </div>
 
@@ -173,6 +463,34 @@
             <div id="rules-list" class="rules-grid"></div>
         </div>
 
+        {% if user and user.role == 'admin' %}
+        <div id="panel-admin" class="panel">
+            <div class="test-panel">
+                <h3>User Management</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 13px;">
+                    Manage user roles and access. You cannot modify your own role or access.
+                </p>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Joined</th>
+                                <th>Last Active</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-users-body">
+                            <tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:24px;">Loading users...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <div id="panel-test" class="panel">
             <div class="test-panel">
                 <h3>Test a Tool Call</h3>
@@ -216,6 +534,8 @@
 
     <script>
         const POLL_INTERVAL = 5000;
+        const CURRENT_USER_ID = '{{ user.id }}';
+        const CURRENT_USER_ROLE = '{{ user.role }}';
         let stats = { blocked: 0, allowed: 0, pending: 0, rules: 0 };
         let lastPendingCount = 0;
 
@@ -305,9 +625,12 @@
                 return `
                     <div class="action-card">
                         <div class="action-header">
-                            <div>
-                                <div class="tool-name">${action.tool_call.tool_name}</div>
-                                <div class="action-id">ID: ${action.id} &middot; ${new Date(action.created_at).toLocaleString()}</div>
+                            <div style="display:flex;align-items:flex-start;gap:10px;">
+                                <input type="checkbox" class="pending-checkbox" data-action-id="${action.id}">
+                                <div>
+                                    <div class="tool-name">${action.tool_call.tool_name}</div>
+                                    <div class="action-id">ID: ${action.id} &middot; ${new Date(action.created_at).toLocaleString()}</div>
+                                </div>
                             </div>
                             <span class="severity-badge severity-${maxSeverity}">${maxSeverity}</span>
                         </div>
@@ -777,12 +1100,209 @@
             document.getElementById('onboarding-overlay').style.display = 'none';
         }
 
+        async function fetchStats() {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+
+                if (data.total !== undefined) {
+                    document.getElementById('stat-total').textContent = data.total;
+                }
+                if (data.approval_rate !== undefined) {
+                    document.getElementById('stat-approval-rate').textContent = Math.round(data.approval_rate) + '%';
+                }
+                if (data.blocked !== undefined) {
+                    document.getElementById('stat-blocked').textContent = data.blocked;
+                    stats.blocked = data.blocked;
+                }
+                if (data.allowed !== undefined) {
+                    document.getElementById('stat-allowed').textContent = data.allowed;
+                    stats.allowed = data.allowed;
+                }
+
+                const banner = document.getElementById('activity-summary-banner');
+                const bannerText = document.getElementById('activity-summary-text');
+                const total = data.total || 0;
+                const blocked = data.blocked || 0;
+                if (total > 0) {
+                    bannerText.innerHTML = `Since your last visit: <strong>${total}</strong> new actions audited, <strong>${blocked}</strong> blocked`;
+                    banner.style.display = 'flex';
+                }
+
+                const chartBars = document.getElementById('violations-chart-bars');
+                if (data.violations_by_rule && Object.keys(data.violations_by_rule).length > 0) {
+                    const entries = Object.entries(data.violations_by_rule);
+                    const maxVal = Math.max(...entries.map(([, v]) => v), 1);
+                    chartBars.innerHTML = entries.map(([rule, count]) => `
+                        <div class="vio-bar-row">
+                            <div class="vio-bar-label" title="${rule}">${rule}</div>
+                            <div class="vio-bar-track">
+                                <div class="vio-bar-fill" style="width:${Math.max((count / maxVal) * 100, 3)}%"></div>
+                            </div>
+                            <div class="vio-bar-count">${count}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    chartBars.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;">No violation data yet.</div>';
+                }
+
+                const activityList = document.getElementById('recent-activity-list');
+                if (data.recent_activity && data.recent_activity.length > 0) {
+                    activityList.innerHTML = data.recent_activity.slice(0, 10).map(item => {
+                        const statusClass = item.status || 'blocked';
+                        const time = item.created_at ? new Date(item.created_at).toLocaleString() : '';
+                        const tool = item.tool_name || item.tool_call?.tool_name || 'unknown';
+                        return `
+                            <div class="timeline-item">
+                                <div class="timeline-dot ${statusClass}"></div>
+                                <div class="timeline-content"><strong>${tool}</strong> &mdash; ${item.status}</div>
+                                <div class="timeline-time">${time}</div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    activityList.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;">No recent activity.</div>';
+                }
+            } catch (e) {
+                console.error('Stats error:', e);
+            }
+        }
+
+        function selectAllPending() {
+            const checked = document.getElementById('select-all-pending').checked;
+            document.querySelectorAll('.pending-checkbox').forEach(cb => { cb.checked = checked; });
+        }
+
+        async function bulkResolve(decision) {
+            const checked = document.querySelectorAll('.pending-checkbox:checked');
+            const actionIds = Array.from(checked).map(cb => cb.dataset.actionId);
+            if (actionIds.length === 0) {
+                alert('No actions selected.');
+                return;
+            }
+            try {
+                const res = await fetch('/api/actions/bulk-resolve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action_ids: actionIds, decision: decision })
+                });
+                if (res.ok) {
+                    document.getElementById('select-all-pending').checked = false;
+                    fetchPending();
+                    fetchAuditLog();
+                    fetchStats();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Bulk resolve failed');
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        async function fetchUsers() {
+            if (CURRENT_USER_ROLE !== 'admin') return;
+            try {
+                const res = await fetch('/api/admin/users');
+                const data = await res.json();
+                const users = data.users || [];
+                const tbody = document.getElementById('admin-users-body');
+                if (!tbody) return;
+
+                if (users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:24px;">No users found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = users.map(u => {
+                    const isSelf = String(u.id) === String(CURRENT_USER_ID);
+                    const avatar = u.profile_image_url
+                        ? `<img class="admin-avatar" src="${u.profile_image_url}" alt="">`
+                        : `<div class="admin-avatar-placeholder">&#128100;</div>`;
+                    const name = u.first_name || u.username || 'User';
+                    const email = u.email || '-';
+                    const role = u.role || 'viewer';
+                    const isActive = u.is_active !== false;
+                    const joined = u.created_at ? new Date(u.created_at).toLocaleDateString() : '-';
+                    const lastActive = u.last_active ? new Date(u.last_active).toLocaleDateString() : '-';
+
+                    return `<tr>
+                        <td>
+                            <div class="admin-user-info">
+                                ${avatar}
+                                <span>${name}</span>
+                            </div>
+                        </td>
+                        <td style="color:var(--text-secondary);">${email}</td>
+                        <td>
+                            <select class="admin-role-select" onchange="updateUserRole('${u.id}', this.value)" ${isSelf ? 'disabled' : ''}>
+                                <option value="admin" ${role === 'admin' ? 'selected' : ''}>Admin</option>
+                                <option value="viewer" ${role === 'viewer' ? 'selected' : ''}>Viewer</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button class="admin-toggle-btn ${isActive ? 'active' : 'revoked'}"
+                                onclick="updateUserAccess('${u.id}', ${!isActive})"
+                                ${isSelf ? 'disabled' : ''}>
+                                ${isActive ? 'Active' : 'Revoked'}
+                            </button>
+                        </td>
+                        <td style="font-size:12px;color:var(--text-secondary);">${joined}</td>
+                        <td style="font-size:12px;color:var(--text-secondary);">${lastActive}</td>
+                    </tr>`;
+                }).join('');
+            } catch (e) {
+                console.error('Fetch users error:', e);
+            }
+        }
+
+        async function updateUserRole(userId, role) {
+            try {
+                const res = await fetch(`/api/admin/users/${userId}/role`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role: role })
+                });
+                if (res.ok) {
+                    fetchUsers();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Failed to update role');
+                    fetchUsers();
+                }
+            } catch (e) {
+                alert('Error updating role: ' + e.message);
+            }
+        }
+
+        async function updateUserAccess(userId, isActive) {
+            try {
+                const res = await fetch(`/api/admin/users/${userId}/access`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_active: isActive })
+                });
+                if (res.ok) {
+                    fetchUsers();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Failed to update access');
+                    fetchUsers();
+                }
+            } catch (e) {
+                alert('Error updating access: ' + e.message);
+            }
+        }
+
         fetchPending();
         fetchAuditLog();
         fetchRules();
+        fetchStats();
+        if (CURRENT_USER_ROLE === 'admin') fetchUsers();
 
         setInterval(fetchPending, POLL_INTERVAL);
         setInterval(fetchAuditLog, POLL_INTERVAL * 2);
+        setInterval(fetchStats, POLL_INTERVAL * 2);
     </script>
 </body>
 </html>
