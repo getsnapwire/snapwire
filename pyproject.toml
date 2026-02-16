@@ -6,6 +6,14 @@ requires-python = ">=3.11"
 dependencies = [
     "anthropic>=0.79.0",
     "flask>=3.1.2",
+    "flask-dance>=7.1.0",
+    "flask-login>=0.6.3",
+    "flask-sqlalchemy>=3.1.1",
+    "oauthlib>=3.3.1",
+    "psycopg2-binary>=2.9.11",
     "pydantic>=2.12.5",
+    "pyjwt>=2.11.0",
+    "sqlalchemy>=2.0.46",
     "tenacity>=9.1.4",
+    "werkzeug>=3.1.5",
 ]

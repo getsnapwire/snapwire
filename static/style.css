@@ -735,6 +735,88 @@ body {
     text-transform: capitalize;
 }
 
+.onboarding-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.onboarding-modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 40px 36px;
+    max-width: 520px;
+    width: 90%;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+    animation: modalIn 0.4s ease;
+}
+
+@keyframes modalIn {
+    from { transform: scale(0.9) translateY(20px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.onboarding-icon {
+    font-size: 56px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.onboarding-step h2 {
+    font-size: 22px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 14px;
+    color: var(--text-primary);
+}
+
+.onboarding-step p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.onboarding-step p strong {
+    color: var(--accent-blue);
+}
+
+.onboarding-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.onboarding-dots {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+.onboarding-dots .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.3s;
+}
+
+.onboarding-dots .dot.active {
+    background: var(--accent-blue);
+    box-shadow: 0 0 6px rgba(77, 139, 255, 0.5);
+}
+
 [data-tooltip] {
     position: relative;
 }

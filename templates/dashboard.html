@@ -8,11 +8,74 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div id="onboarding-overlay" class="onboarding-overlay">
+        <div class="onboarding-modal">
+            <div class="onboarding-step" data-step="1">
+                <div class="onboarding-icon">&#128737;</div>
+                <h2>Welcome to the Agentic Firewall</h2>
+                <p>This dashboard helps you stay in control of what your AI agents do. Think of it as a security guard that checks every action before it happens.</p>
+                <div class="onboarding-nav">
+                    <span class="onboarding-dots">
+                        <span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                    </span>
+                    <button class="btn btn-approve" onclick="nextOnboardingStep(2)">Next</button>
+                </div>
+            </div>
+            <div class="onboarding-step" data-step="2" style="display:none;">
+                <div class="onboarding-icon">&#9878;&#65039;</div>
+                <h2>Your Constitution</h2>
+                <p>You set the rules. The <strong>Constitution</strong> tab is where you define what your AI is allowed to do -- like spending limits, file access, and more. You can add, edit, or remove rules anytime.</p>
+                <div class="onboarding-nav">
+                    <span class="onboarding-dots">
+                        <span class="dot"></span><span class="dot active"></span><span class="dot"></span><span class="dot"></span>
+                    </span>
+                    <button class="btn" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);" onclick="nextOnboardingStep(1)">Back</button>
+                    <button class="btn btn-approve" onclick="nextOnboardingStep(3)">Next</button>
+                </div>
+            </div>
+            <div class="onboarding-step" data-step="3" style="display:none;">
+                <div class="onboarding-icon">&#128275;</div>
+                <h2>Approve or Deny</h2>
+                <p>When an agent tries something that breaks a rule, it gets blocked and sent to you. In the <strong>Pending Approvals</strong> tab, you decide: let it through or shut it down.</p>
+                <div class="onboarding-nav">
+                    <span class="onboarding-dots">
+                        <span class="dot"></span><span class="dot"></span><span class="dot active"></span><span class="dot"></span>
+                    </span>
+                    <button class="btn" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);" onclick="nextOnboardingStep(2)">Back</button>
+                    <button class="btn btn-approve" onclick="nextOnboardingStep(4)">Next</button>
+                </div>
+            </div>
+            <div class="onboarding-step" data-step="4" style="display:none;">
+                <div class="onboarding-icon">&#128640;</div>
+                <h2>You're All Set!</h2>
+                <p>Use the <strong>Test Firewall</strong> tab to try sample actions and see how the firewall responds. Hover over anything for a quick explanation. You're in control.</p>
+                <div class="onboarding-nav">
+                    <span class="onboarding-dots">
+                        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot active"></span>
+                    </span>
+                    <button class="btn" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);" onclick="nextOnboardingStep(3)">Back</button>
+                    <button class="btn btn-approve" onclick="dismissOnboarding()">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="header">
         <h1 data-tooltip="Your AI safety dashboard -- monitors and controls what AI agents can do" data-tooltip-pos="bottom"><span class="shield">&#128737;</span> Agentic Firewall</h1>
-        <div class="status-badge status-active" data-tooltip="The firewall is running and checking every action your AI agent tries to take" data-tooltip-pos="bottom">
-            <div class="pulse"></div>
-            Active &amp; Monitoring
+        <div style="display:flex;align-items:center;gap:16px;">
+            <div class="status-badge status-active" data-tooltip="The firewall is running and checking every action your AI agent tries to take" data-tooltip-pos="bottom">
+                <div class="pulse"></div>
+                Active &amp; Monitoring
+            </div>
+            {% if user and user.is_authenticated %}
+            <div style="display:flex;align-items:center;gap:10px;">
+                {% if user.profile_image_url %}
+                <img src="{{ user.profile_image_url }}" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">
+                {% endif %}
+                <span style="font-size:13px;color:var(--text-secondary);">{{ user.first_name or user.email or 'User' }}</span>
+                <a href="/auth/logout" style="font-size:12px;color:var(--accent-red);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,77,106,0.3);border-radius:6px;" data-tooltip="Sign out of your account" data-tooltip-pos="bottom">Sign Out</a>
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -698,6 +761,20 @@
                 btn.disabled = false;
                 btn.innerHTML = 'Run Audit';
             }
+        }
+
+        function nextOnboardingStep(step) {
+            document.querySelectorAll('.onboarding-step').forEach(s => s.style.display = 'none');
+            document.querySelector(`.onboarding-step[data-step="${step}"]`).style.display = 'block';
+        }
+
+        function dismissOnboarding() {
+            document.getElementById('onboarding-overlay').style.display = 'none';
+            localStorage.setItem('onboarding_seen', 'true');
+        }
+
+        if (localStorage.getItem('onboarding_seen')) {
+            document.getElementById('onboarding-overlay').style.display = 'none';
         }
 
         fetchPending();

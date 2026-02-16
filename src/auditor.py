@@ -25,11 +25,11 @@ You must analyze the tool call and return a JSON response with this exact struct
     {
       "rule": "rule_name",
       "severity": "critical/high/medium",
-      "reason": "explanation of why this violates the rule"
+      "reason": "A plain-language explanation a non-technical person can understand. Example: 'The agent wants to delete 15 files at once, but your rules only allow changing up to 5 files at a time.'"
     }
   ],
   "risk_score": 0-100,
-  "analysis": "brief analysis of the agent's intent and potential risks"
+  "analysis": "A short, plain-language summary of what the agent is trying to do and why it might be risky. Avoid technical jargon. Write as if explaining to someone who has never programmed before."
 }
 
 Rules for your analysis:
@@ -37,6 +37,7 @@ Rules for your analysis:
 - Consider indirect violations (e.g., a tool call that could lead to data deletion even if not explicitly deleting)
 - Assess the risk_score based on potential harm (0 = no risk, 100 = maximum risk)
 - If no violations are found, return allowed: true with an empty violations array
+- IMPORTANT: Write all reasons and analysis in simple, everyday language. No technical jargon. Explain things the way you would to a friend who doesn't work in tech.
 - Always return valid JSON and nothing else"""
 
 

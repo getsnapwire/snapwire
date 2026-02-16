@@ -1,5 +1,9 @@
 import os
-from flask import Flask, request, jsonify, render_template
+from flask import request, jsonify, render_template, session, url_for
+from flask_login import current_user
+
+from app import app
+from replit_auth import require_login, make_replit_blueprint
 from src.constitution import load_constitution, update_rule, add_rule, delete_rule, update_rule_full
 from src.auditor import audit_tool_call
 from src.action_queue import (
@@ -11,13 +15,19 @@ from src.action_queue import (
     get_audit_log,
 )
 
-app = Flask(__name__, template_folder="templates", static_folder="static")
-app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
+app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
+
+
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
 
 
 @app.route("/")
 def dashboard():
-    return render_template("dashboard.html")
+    if not current_user.is_authenticated:
+        return render_template("login.html", login_url=url_for("replit_auth.login"))
+    return render_template("dashboard.html", user=current_user)
 
 
 @app.route("/api/intercept", methods=["POST"])
@@ -66,11 +76,13 @@ def intercept_tool_call():
 
 
 @app.route("/api/actions/pending", methods=["GET"])
+@require_login
 def list_pending():
     return jsonify({"pending_actions": get_pending_actions()})
 
 
 @app.route("/api/actions/<action_id>", methods=["GET"])
+@require_login
 def get_action_detail(action_id):
     action = get_action(action_id)
     if not action:
@@ -79,6 +91,7 @@ def get_action_detail(action_id):
 
 
 @app.route("/api/actions/<action_id>/resolve", methods=["POST"])
+@require_login
 def resolve(action_id):
     data = request.get_json()
     if not data or "decision" not in data:
@@ -96,17 +109,20 @@ def resolve(action_id):
 
 
 @app.route("/api/audit-log", methods=["GET"])
+@require_login
 def audit_log():
     limit = request.args.get("limit", 50, type=int)
     return jsonify({"log": get_audit_log(limit)})
 
 
 @app.route("/api/constitution", methods=["GET"])
+@require_login
 def get_constitution():
     return jsonify(load_constitution())
 
 
 @app.route("/api/constitution/rules/<rule_name>", methods=["PUT"])
+@require_login
 def update_constitution_rule(rule_name):
     data = request.get_json()
     if not data or "value" not in data:
@@ -119,6 +135,7 @@ def update_constitution_rule(rule_name):
 
 
 @app.route("/api/constitution/rules", methods=["POST"])
+@require_login
 def create_constitution_rule():
     data = request.get_json()
     if not data:
@@ -147,6 +164,7 @@ def create_constitution_rule():
 
 
 @app.route("/api/constitution/rules/<rule_name>", methods=["DELETE"])
+@require_login
 def delete_constitution_rule(rule_name):
     success = delete_rule(rule_name)
     if success:
@@ -155,6 +173,7 @@ def delete_constitution_rule(rule_name):
 
 
 @app.route("/api/constitution/rules/<rule_name>", methods=["PATCH"])
+@require_login
 def patch_constitution_rule(rule_name):
     data = request.get_json()
     if not data:
@@ -174,6 +193,7 @@ def patch_constitution_rule(rule_name):
 
 
 @app.route("/api/notifications/poll", methods=["GET"])
+@require_login
 def poll_notifications():
     pending = get_pending_actions()
     return jsonify({"count": len(pending), "actions": pending})
