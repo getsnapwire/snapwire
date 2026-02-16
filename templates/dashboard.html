@@ -9,8 +9,8 @@
 </head>
 <body>
     <div class="header">
-        <h1><span class="shield">&#128737;</span> Agentic Firewall</h1>
-        <div class="status-badge status-active">
+        <h1 data-tooltip="Your AI safety dashboard -- monitors and controls what AI agents can do" data-tooltip-pos="bottom"><span class="shield">&#128737;</span> Agentic Firewall</h1>
+        <div class="status-badge status-active" data-tooltip="The firewall is running and checking every action your AI agent tries to take" data-tooltip-pos="bottom">
             <div class="pulse"></div>
             Active &amp; Monitoring
         </div>
@@ -23,29 +23,29 @@
         </div>
 
         <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card" data-tooltip="Actions the firewall stopped because they broke a rule" data-tooltip-pos="bottom">
                 <div class="label">Blocked Actions</div>
                 <div class="value red" id="stat-blocked">0</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" data-tooltip="Actions the firewall checked and approved automatically" data-tooltip-pos="bottom">
                 <div class="label">Allowed Actions</div>
                 <div class="value green" id="stat-allowed">0</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" data-tooltip="Blocked actions waiting for you to approve or deny them" data-tooltip-pos="bottom">
                 <div class="label">Pending Approval</div>
                 <div class="value yellow" id="stat-pending">0</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" data-tooltip="Total number of rules currently protecting your system" data-tooltip-pos="bottom">
                 <div class="label">Active Rules</div>
                 <div class="value blue" id="stat-rules">0</div>
             </div>
         </div>
 
         <div class="tabs">
-            <button class="tab active" data-tab="pending">Pending Approvals</button>
-            <button class="tab" data-tab="log">Audit Log</button>
-            <button class="tab" data-tab="rules">Constitution</button>
-            <button class="tab" data-tab="test">Test Firewall</button>
+            <button class="tab active" data-tab="pending" data-tooltip="Actions that were blocked and need your decision to allow or deny" data-tooltip-pos="bottom">Pending Approvals</button>
+            <button class="tab" data-tab="log" data-tooltip="A history of everything the firewall has checked, and what happened" data-tooltip-pos="bottom">Audit Log</button>
+            <button class="tab" data-tab="rules" data-tooltip="The rules that define what your AI agent can and cannot do" data-tooltip-pos="bottom">Constitution</button>
+            <button class="tab" data-tab="test" data-tooltip="Try out a fake action to see how the firewall would respond" data-tooltip-pos="bottom">Test Firewall</button>
         </div>
 
         <div id="panel-pending" class="panel active">
@@ -58,7 +58,7 @@
 
         <div id="panel-rules" class="panel">
             <div id="add-rule-section">
-                <button class="btn btn-test" id="toggle-add-form" onclick="toggleAddForm()" style="margin-bottom: 16px;">+ Add an Amendment</button>
+                <button class="btn btn-test" id="toggle-add-form" onclick="toggleAddForm()" style="margin-bottom: 16px;" data-tooltip="Create a new rule to control what your AI agent is allowed to do" data-tooltip-pos="bottom">+ Add an Amendment</button>
                 <div id="add-rule-form" class="test-panel" style="margin-bottom: 20px; display: none;">
                     <h3>Draft a New Amendment</h3>
                     <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 13px;">
@@ -114,10 +114,10 @@
             <div class="test-panel">
                 <h3>Test a Tool Call</h3>
                 <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 13px;">
-                    Simulate an agent tool call to see how the firewall responds.
+                    Simulate an agent tool call to see how the firewall responds. Nothing here will actually run -- it's just a safe way to test your rules.
                 </p>
 
-                <div class="presets">
+                <div class="presets" data-tooltip="Click any example to auto-fill the form with a sample scenario" data-tooltip-pos="bottom">
                     <button class="preset-btn" onclick="loadPreset('safe')">Safe Call</button>
                     <button class="preset-btn" onclick="loadPreset('delete')">Delete Files</button>
                     <button class="preset-btn" onclick="loadPreset('overspend')">Overspend</button>
@@ -126,23 +126,23 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Tool Name</label>
+                    <label data-tooltip="The name of the action the agent wants to perform, like deleting a file or sending an email" data-tooltip-pos="bottom">Tool Name</label>
                     <input type="text" id="test-tool-name" placeholder="e.g., file_delete, api_call, db_query">
                 </div>
                 <div class="form-group">
-                    <label>Parameters (JSON)</label>
+                    <label data-tooltip="The details of what the agent wants to do, written as structured data" data-tooltip-pos="bottom">Parameters (JSON)</label>
                     <textarea id="test-params" placeholder='{"path": "/data/users.db"}'></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Stated Intent</label>
+                    <label data-tooltip="What the agent says it's trying to accomplish with this action" data-tooltip-pos="bottom">Stated Intent</label>
                     <input type="text" id="test-intent" placeholder="What is the agent trying to do?">
                 </div>
                 <div class="form-group">
-                    <label>Context</label>
+                    <label data-tooltip="Background information about why the agent is taking this action" data-tooltip-pos="bottom">Context</label>
                     <input type="text" id="test-context" placeholder="Why is the agent doing this?">
                 </div>
 
-                <button class="btn btn-test" id="test-submit" onclick="submitTest()">
+                <button class="btn btn-test" id="test-submit" onclick="submitTest()" data-tooltip="Send this test action through the firewall to see if it would be allowed or blocked" data-tooltip-pos="bottom">
                     Run Audit
                 </button>
 
