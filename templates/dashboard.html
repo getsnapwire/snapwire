@@ -57,6 +57,45 @@
         </div>
 
         <div id="panel-rules" class="panel">
+            <div id="add-rule-form" class="test-panel" style="margin-bottom: 20px;">
+                <h3>Add New Rule</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 13px;">
+                    Define a new guardrail for the firewall. Rules control what agents are allowed to do.
+                </p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label>Rule Name</label>
+                        <input type="text" id="new-rule-name" placeholder="e.g., max_api_calls_per_minute">
+                    </div>
+                    <div class="form-group">
+                        <label>Severity Level</label>
+                        <select id="new-rule-severity">
+                            <option value="critical">Critical - blocks immediately</option>
+                            <option value="high">High - likely blocks</option>
+                            <option value="medium" selected>Medium - flags for review</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description (plain language)</label>
+                    <input type="text" id="new-rule-description" placeholder="e.g., Maximum number of API calls an agent can make per minute">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label>Value Type</label>
+                        <select id="new-rule-type" onchange="updateValueField()">
+                            <option value="number">Number (limit/threshold)</option>
+                            <option value="boolean">Yes / No (toggle)</option>
+                            <option value="text">Text (custom value)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="value-field-container">
+                        <label>Value</label>
+                        <input type="number" id="new-rule-value" placeholder="e.g., 100">
+                    </div>
+                </div>
+                <button class="btn btn-approve" onclick="addRule()">Add Rule</button>
+            </div>
             <div id="rules-list" class="rules-grid"></div>
         </div>
 
@@ -291,23 +330,161 @@
             }
         }
 
+        function updateValueField() {
+            const type = document.getElementById('new-rule-type').value;
+            const container = document.getElementById('value-field-container');
+            if (type === 'boolean') {
+                container.innerHTML = `<label>Value</label>
+                    <select id="new-rule-value">
+                        <option value="true">Yes (allowed)</option>
+                        <option value="false">No (not allowed)</option>
+                    </select>`;
+            } else if (type === 'number') {
+                container.innerHTML = `<label>Value</label>
+                    <input type="number" id="new-rule-value" placeholder="e.g., 100">`;
+            } else {
+                container.innerHTML = `<label>Value</label>
+                    <input type="text" id="new-rule-value" placeholder="e.g., read-only">`;
+            }
+        }
+
+        async function addRule() {
+            const name = document.getElementById('new-rule-name').value.trim();
+            const description = document.getElementById('new-rule-description').value.trim();
+            const severity = document.getElementById('new-rule-severity').value;
+            const type = document.getElementById('new-rule-type').value;
+            const rawValue = document.getElementById('new-rule-value').value;
+
+            if (!name || !description) {
+                alert('Please fill in the rule name and description.');
+                return;
+            }
+
+            let value;
+            if (type === 'boolean') {
+                value = rawValue === 'true';
+            } else if (type === 'number') {
+                value = parseFloat(rawValue);
+                if (isNaN(value)) { alert('Please enter a valid number.'); return; }
+            } else {
+                value = rawValue;
+            }
+
+            try {
+                const res = await fetch('/api/constitution/rules', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, value, description, severity })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('new-rule-name').value = '';
+                    document.getElementById('new-rule-description').value = '';
+                    document.getElementById('new-rule-value').value = '';
+                    fetchRules();
+                } else {
+                    alert(data.error || 'Failed to add rule');
+                }
+            } catch (e) {
+                alert('Error adding rule: ' + e.message);
+            }
+        }
+
+        async function deleteRule(ruleName) {
+            if (!confirm(`Are you sure you want to delete the rule "${ruleName}"? This cannot be undone.`)) return;
+            try {
+                const res = await fetch(`/api/constitution/rules/${ruleName}`, { method: 'DELETE' });
+                if (res.ok) fetchRules();
+                else alert('Failed to delete rule');
+            } catch (e) {
+                alert('Error deleting rule: ' + e.message);
+            }
+        }
+
+        function startEditRule(name, config) {
+            const card = document.getElementById('rule-card-' + name);
+            const isBoolean = typeof config.value === 'boolean';
+            const valueInput = isBoolean
+                ? `<select id="edit-value-${name}">
+                     <option value="true" ${config.value ? 'selected' : ''}>Yes</option>
+                     <option value="false" ${!config.value ? 'selected' : ''}>No</option>
+                   </select>`
+                : `<input type="${typeof config.value === 'number' ? 'number' : 'text'}" id="edit-value-${name}" value="${config.value}" style="width:100%;">`;
+
+            card.innerHTML = `
+                <div style="width:100%;">
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" id="edit-desc-${name}" value="${config.description}" style="width:100%;">
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="form-group">
+                            <label>Value</label>
+                            ${valueInput}
+                        </div>
+                        <div class="form-group">
+                            <label>Severity</label>
+                            <select id="edit-sev-${name}">
+                                <option value="critical" ${config.severity === 'critical' ? 'selected' : ''}>Critical</option>
+                                <option value="high" ${config.severity === 'high' ? 'selected' : ''}>High</option>
+                                <option value="medium" ${config.severity === 'medium' ? 'selected' : ''}>Medium</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:12px;">
+                        <button class="btn btn-approve" onclick="saveRule('${name}', ${isBoolean}, ${typeof config.value === 'number'})">Save</button>
+                        <button class="btn" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);" onclick="fetchRules()">Cancel</button>
+                    </div>
+                </div>`;
+        }
+
+        async function saveRule(name, isBoolean, isNumber) {
+            const rawValue = document.getElementById('edit-value-' + name).value;
+            let value;
+            if (isBoolean) value = rawValue === 'true';
+            else if (isNumber) { value = parseFloat(rawValue); if (isNaN(value)) { alert('Enter a valid number'); return; } }
+            else value = rawValue;
+
+            const description = document.getElementById('edit-desc-' + name).value.trim();
+            const severity = document.getElementById('edit-sev-' + name).value;
+
+            try {
+                const res = await fetch(`/api/constitution/rules/${name}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value, description, severity })
+                });
+                if (res.ok) fetchRules();
+                else alert('Failed to update rule');
+            } catch (e) {
+                alert('Error saving rule: ' + e.message);
+            }
+        }
+
+        let currentRulesData = {};
+
         async function fetchRules() {
             try {
                 const res = await fetch('/api/constitution');
                 const data = await res.json();
                 const rules = data.rules || {};
+                currentRulesData = rules;
                 const entries = Object.entries(rules);
                 stats.rules = entries.length;
 
                 const container = document.getElementById('rules-list');
                 container.innerHTML = entries.map(([name, config]) => `
-                    <div class="rule-card">
-                        <div class="rule-info">
-                            <h4>${name}</h4>
+                    <div class="rule-card" id="rule-card-${name}">
+                        <div class="rule-info" style="flex:1;">
+                            <h4>${name.replace(/_/g, ' ')}</h4>
                             <p>${config.description}</p>
                             <span class="severity-badge severity-${config.severity}" style="margin-top:6px;display:inline-block;">${config.severity}</span>
                         </div>
-                        <div class="rule-value">${typeof config.value === 'boolean' ? (config.value ? 'YES' : 'NO') : config.value}</div>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <div class="rule-value">${typeof config.value === 'boolean' ? (config.value ? 'YES' : 'NO') : config.value}</div>
+                            <button class="preset-btn" onclick='startEditRule("${name}", ${JSON.stringify(config).replace(/'/g, "&#39;")})' title="Edit rule">&#9998;</button>
+                            <button class="preset-btn" onclick="deleteRule('${name}')" title="Delete rule" style="color:var(--accent-red);border-color:rgba(255,77,106,0.3);">&#10005;</button>
+                        </div>
                     </div>
                 `).join('');
                 updateStats();

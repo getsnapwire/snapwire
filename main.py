@@ -1,6 +1,6 @@
 import os
 from flask import Flask, request, jsonify, render_template
-from src.constitution import load_constitution, update_rule
+from src.constitution import load_constitution, update_rule, add_rule, delete_rule, update_rule_full
 from src.auditor import audit_tool_call
 from src.action_queue import (
     add_pending_action,
@@ -115,6 +115,55 @@ def update_constitution_rule(rule_name):
     success = update_rule(rule_name, data["value"])
     if success:
         return jsonify({"status": "updated", "rule": rule_name, "value": data["value"]})
+    return jsonify({"error": "Rule not found"}), 404
+
+
+@app.route("/api/constitution/rules", methods=["POST"])
+def create_constitution_rule():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No JSON payload provided"}), 400
+
+    required = ["name", "value", "description", "severity"]
+    for field in required:
+        if field not in data:
+            return jsonify({"error": f"Missing required field: {field}"}), 400
+
+    if data["severity"] not in ("critical", "high", "medium"):
+        return jsonify({"error": "Severity must be 'critical', 'high', or 'medium'"}), 400
+
+    rule_name = data["name"].strip().lower().replace(" ", "_")
+    if not rule_name:
+        return jsonify({"error": "Rule name cannot be empty"}), 400
+
+    success, error = add_rule(rule_name, data["value"], data["description"], data["severity"])
+    if success:
+        return jsonify({"status": "created", "rule": rule_name}), 201
+    return jsonify({"error": error or "Failed to create rule"}), 409
+
+
+@app.route("/api/constitution/rules/<rule_name>", methods=["DELETE"])
+def delete_constitution_rule(rule_name):
+    success = delete_rule(rule_name)
+    if success:
+        return jsonify({"status": "deleted", "rule": rule_name})
+    return jsonify({"error": "Rule not found"}), 404
+
+
+@app.route("/api/constitution/rules/<rule_name>", methods=["PATCH"])
+def patch_constitution_rule(rule_name):
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No JSON payload provided"}), 400
+
+    success = update_rule_full(
+        rule_name,
+        value=data.get("value"),
+        description=data.get("description"),
+        severity=data.get("severity"),
+    )
+    if success:
+        return jsonify({"status": "updated", "rule": rule_name})
     return jsonify({"error": "Rule not found"}), 404
 
 

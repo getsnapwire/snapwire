@@ -38,3 +38,43 @@ def update_rule(rule_name, new_value):
             json.dump(constitution, f, indent=2)
         return True
     return False
+
+
+def add_rule(rule_name, value, description, severity):
+    constitution = load_constitution()
+    if rule_name in constitution["rules"]:
+        return False, "Rule already exists"
+    constitution["rules"][rule_name] = {
+        "value": value,
+        "description": description,
+        "severity": severity,
+    }
+    with open(CONSTITUTION_PATH, "w") as f:
+        json.dump(constitution, f, indent=2)
+    return True, None
+
+
+def delete_rule(rule_name):
+    constitution = load_constitution()
+    if rule_name not in constitution["rules"]:
+        return False
+    del constitution["rules"][rule_name]
+    with open(CONSTITUTION_PATH, "w") as f:
+        json.dump(constitution, f, indent=2)
+    return True
+
+
+def update_rule_full(rule_name, value=None, description=None, severity=None):
+    constitution = load_constitution()
+    if rule_name not in constitution["rules"]:
+        return False
+    rule = constitution["rules"][rule_name]
+    if value is not None:
+        rule["value"] = value
+    if description is not None:
+        rule["description"] = description
+    if severity is not None:
+        rule["severity"] = severity
+    with open(CONSTITUTION_PATH, "w") as f:
+        json.dump(constitution, f, indent=2)
+    return True
