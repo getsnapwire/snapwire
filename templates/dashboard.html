@@ -57,44 +57,55 @@
         </div>
 
         <div id="panel-rules" class="panel">
-            <div id="add-rule-form" class="test-panel" style="margin-bottom: 20px;">
-                <h3>Add New Rule</h3>
-                <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 13px;">
-                    Define a new guardrail for the firewall. Rules control what agents are allowed to do.
-                </p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div id="add-rule-section">
+                <button class="btn btn-test" id="toggle-add-form" onclick="toggleAddForm()" style="margin-bottom: 16px;">+ Add a New Guardrail</button>
+                <div id="add-rule-form" class="test-panel" style="margin-bottom: 20px; display: none;">
+                    <h3>Create a New Guardrail</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 13px;">
+                        Guardrails define what an AI agent is and isn't allowed to do. Write your rule in plain language.
+                    </p>
                     <div class="form-group">
-                        <label>Rule Name</label>
-                        <input type="text" id="new-rule-name" placeholder="e.g., max_api_calls_per_minute">
+                        <label>What should this rule be called?</label>
+                        <input type="text" id="new-rule-display-name" placeholder="e.g., Email Sending Limit">
+                        <span class="field-hint">A short, friendly name that describes this guardrail</span>
                     </div>
                     <div class="form-group">
-                        <label>Severity Level</label>
-                        <select id="new-rule-severity">
-                            <option value="critical">Critical - blocks immediately</option>
-                            <option value="high">High - likely blocks</option>
-                            <option value="medium" selected>Medium - flags for review</option>
-                        </select>
+                        <label>Describe this rule in plain language</label>
+                        <input type="text" id="new-rule-description" placeholder="e.g., How many emails can the agent send per hour?">
+                        <span class="field-hint">This is what users will see. Keep it simple and clear.</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Why does this rule matter?</label>
+                        <input type="text" id="new-rule-hint" placeholder="e.g., Prevents the agent from spamming your contacts">
+                        <span class="field-hint">A helpful tip that explains the impact of this guardrail</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label>What kind of value?</label>
+                            <select id="new-rule-type" onchange="updateValueField()">
+                                <option value="number">A number (limit)</option>
+                                <option value="boolean">On or Off (toggle)</option>
+                                <option value="text">Custom text</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="value-field-container">
+                            <label>Set the limit</label>
+                            <input type="number" id="new-rule-value" placeholder="e.g., 100">
+                        </div>
+                        <div class="form-group">
+                            <label>How important is this?</label>
+                            <select id="new-rule-severity">
+                                <option value="critical">Critical &mdash; must never be broken</option>
+                                <option value="high">High &mdash; very important</option>
+                                <option value="medium" selected>Medium &mdash; good to check</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-approve" onclick="addRule()">Create Guardrail</button>
+                        <button class="btn" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);" onclick="toggleAddForm()">Cancel</button>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Description (plain language)</label>
-                    <input type="text" id="new-rule-description" placeholder="e.g., Maximum number of API calls an agent can make per minute">
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div class="form-group">
-                        <label>Value Type</label>
-                        <select id="new-rule-type" onchange="updateValueField()">
-                            <option value="number">Number (limit/threshold)</option>
-                            <option value="boolean">Yes / No (toggle)</option>
-                            <option value="text">Text (custom value)</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="value-field-container">
-                        <label>Value</label>
-                        <input type="number" id="new-rule-value" placeholder="e.g., 100">
-                    </div>
-                </div>
-                <button class="btn btn-approve" onclick="addRule()">Add Rule</button>
             </div>
             <div id="rules-list" class="rules-grid"></div>
         </div>
@@ -330,35 +341,50 @@
             }
         }
 
+        function toggleAddForm() {
+            const form = document.getElementById('add-rule-form');
+            const btn = document.getElementById('toggle-add-form');
+            if (form.style.display === 'none') {
+                form.style.display = 'block';
+                btn.style.display = 'none';
+            } else {
+                form.style.display = 'none';
+                btn.style.display = '';
+            }
+        }
+
         function updateValueField() {
             const type = document.getElementById('new-rule-type').value;
             const container = document.getElementById('value-field-container');
             if (type === 'boolean') {
-                container.innerHTML = `<label>Value</label>
+                container.innerHTML = `<label>Default setting</label>
                     <select id="new-rule-value">
-                        <option value="true">Yes (allowed)</option>
-                        <option value="false">No (not allowed)</option>
+                        <option value="true">Allowed (On)</option>
+                        <option value="false" selected>Not Allowed (Off)</option>
                     </select>`;
             } else if (type === 'number') {
-                container.innerHTML = `<label>Value</label>
+                container.innerHTML = `<label>Set the limit</label>
                     <input type="number" id="new-rule-value" placeholder="e.g., 100">`;
             } else {
-                container.innerHTML = `<label>Value</label>
+                container.innerHTML = `<label>Enter the value</label>
                     <input type="text" id="new-rule-value" placeholder="e.g., read-only">`;
             }
         }
 
         async function addRule() {
-            const name = document.getElementById('new-rule-name').value.trim();
+            const displayName = document.getElementById('new-rule-display-name').value.trim();
             const description = document.getElementById('new-rule-description').value.trim();
+            const hint = document.getElementById('new-rule-hint').value.trim();
             const severity = document.getElementById('new-rule-severity').value;
             const type = document.getElementById('new-rule-type').value;
             const rawValue = document.getElementById('new-rule-value').value;
 
-            if (!name || !description) {
+            if (!displayName || !description) {
                 alert('Please fill in the rule name and description.');
                 return;
             }
+
+            const name = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 
             let value;
             if (type === 'boolean') {
@@ -374,13 +400,15 @@
                 const res = await fetch('/api/constitution/rules', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, value, description, severity })
+                    body: JSON.stringify({ name, value, description, severity, display_name: displayName, hint })
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    document.getElementById('new-rule-name').value = '';
+                    document.getElementById('new-rule-display-name').value = '';
                     document.getElementById('new-rule-description').value = '';
+                    document.getElementById('new-rule-hint').value = '';
                     document.getElementById('new-rule-value').value = '';
+                    toggleAddForm();
                     fetchRules();
                 } else {
                     alert(data.error || 'Failed to add rule');
@@ -390,8 +418,8 @@
             }
         }
 
-        async function deleteRule(ruleName) {
-            if (!confirm(`Are you sure you want to delete the rule "${ruleName}"? This cannot be undone.`)) return;
+        async function deleteRule(ruleName, displayName) {
+            if (!confirm(`Are you sure you want to remove the "${displayName}" guardrail? This cannot be undone.`)) return;
             try {
                 const res = await fetch(`/api/constitution/rules/${ruleName}`, { method: 'DELETE' });
                 if (res.ok) fetchRules();
@@ -401,38 +429,78 @@
             }
         }
 
+        async function toggleBooleanRule(name, currentValue) {
+            try {
+                const res = await fetch(`/api/constitution/rules/${name}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: !currentValue })
+                });
+                if (res.ok) fetchRules();
+            } catch (e) {
+                alert('Error updating rule: ' + e.message);
+            }
+        }
+
+        async function updateNumberRule(name, newValue) {
+            const val = parseFloat(newValue);
+            if (isNaN(val)) return;
+            try {
+                const res = await fetch(`/api/constitution/rules/${name}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: val })
+                });
+                if (res.ok) fetchRules();
+            } catch (e) {
+                alert('Error updating rule: ' + e.message);
+            }
+        }
+
         function startEditRule(name, config) {
             const card = document.getElementById('rule-card-' + name);
             const isBoolean = typeof config.value === 'boolean';
+            const isNumber = typeof config.value === 'number';
+            const displayName = config.display_name || name.replace(/_/g, ' ');
+
             const valueInput = isBoolean
                 ? `<select id="edit-value-${name}">
-                     <option value="true" ${config.value ? 'selected' : ''}>Yes</option>
-                     <option value="false" ${!config.value ? 'selected' : ''}>No</option>
+                     <option value="true" ${config.value ? 'selected' : ''}>Allowed (On)</option>
+                     <option value="false" ${!config.value ? 'selected' : ''}>Not Allowed (Off)</option>
                    </select>`
-                : `<input type="${typeof config.value === 'number' ? 'number' : 'text'}" id="edit-value-${name}" value="${config.value}" style="width:100%;">`;
+                : `<input type="${isNumber ? 'number' : 'text'}" id="edit-value-${name}" value="${config.value}" style="width:100%;">`;
 
             card.innerHTML = `
                 <div style="width:100%;">
                     <div class="form-group">
+                        <label>Display Name</label>
+                        <input type="text" id="edit-display-${name}" value="${displayName}" style="width:100%;">
+                    </div>
+                    <div class="form-group">
                         <label>Description</label>
                         <input type="text" id="edit-desc-${name}" value="${config.description}" style="width:100%;">
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label>Why it matters</label>
+                        <input type="text" id="edit-hint-${name}" value="${config.hint || ''}" style="width:100%;">
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
                         <div class="form-group">
                             <label>Value</label>
                             ${valueInput}
                         </div>
                         <div class="form-group">
-                            <label>Severity</label>
+                            <label>Importance</label>
                             <select id="edit-sev-${name}">
                                 <option value="critical" ${config.severity === 'critical' ? 'selected' : ''}>Critical</option>
                                 <option value="high" ${config.severity === 'high' ? 'selected' : ''}>High</option>
                                 <option value="medium" ${config.severity === 'medium' ? 'selected' : ''}>Medium</option>
                             </select>
                         </div>
+                        <div></div>
                     </div>
                     <div style="display:flex;gap:8px;margin-top:12px;">
-                        <button class="btn btn-approve" onclick="saveRule('${name}', ${isBoolean}, ${typeof config.value === 'number'})">Save</button>
+                        <button class="btn btn-approve" onclick="saveRule('${name}', ${isBoolean}, ${isNumber})">Save Changes</button>
                         <button class="btn" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);" onclick="fetchRules()">Cancel</button>
                     </div>
                 </div>`;
@@ -447,12 +515,14 @@
 
             const description = document.getElementById('edit-desc-' + name).value.trim();
             const severity = document.getElementById('edit-sev-' + name).value;
+            const display_name = document.getElementById('edit-display-' + name).value.trim();
+            const hint = document.getElementById('edit-hint-' + name).value.trim();
 
             try {
                 const res = await fetch(`/api/constitution/rules/${name}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ value, description, severity })
+                    body: JSON.stringify({ value, description, severity, display_name, hint })
                 });
                 if (res.ok) fetchRules();
                 else alert('Failed to update rule');
@@ -462,6 +532,27 @@
         }
 
         let currentRulesData = {};
+
+        function renderRuleValue(name, config) {
+            const isBoolean = typeof config.value === 'boolean';
+            const isNumber = typeof config.value === 'number';
+
+            if (isBoolean) {
+                return `<label class="toggle-switch" title="Click to ${config.value ? 'disable' : 'enable'}">
+                    <input type="checkbox" ${config.value ? 'checked' : ''} onchange="toggleBooleanRule('${name}', ${config.value})">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-label">${config.value ? 'Allowed' : 'Blocked'}</span>
+                </label>`;
+            } else if (isNumber) {
+                return `<div class="number-control">
+                    <button class="num-btn" onclick="updateNumberRule('${name}', ${config.value - (config.value >= 10 ? 10 : 1)})">-</button>
+                    <span class="num-value">${config.value}</span>
+                    <button class="num-btn" onclick="updateNumberRule('${name}', ${config.value + (config.value >= 10 ? 10 : 1)})">+</button>
+                </div>`;
+            } else {
+                return `<div class="rule-value">${config.value}</div>`;
+            }
+        }
 
         async function fetchRules() {
             try {
@@ -473,20 +564,32 @@
                 stats.rules = entries.length;
 
                 const container = document.getElementById('rules-list');
-                container.innerHTML = entries.map(([name, config]) => `
-                    <div class="rule-card" id="rule-card-${name}">
-                        <div class="rule-info" style="flex:1;">
-                            <h4>${name.replace(/_/g, ' ')}</h4>
-                            <p>${config.description}</p>
-                            <span class="severity-badge severity-${config.severity}" style="margin-top:6px;display:inline-block;">${config.severity}</span>
+                container.innerHTML = entries.map(([name, config]) => {
+                    const displayName = config.display_name || name.replace(/_/g, ' ');
+                    const hint = config.hint || '';
+                    const severityLabels = { critical: 'Must never be broken', high: 'Very important', medium: 'Good to check' };
+                    const severityLabel = severityLabels[config.severity] || config.severity;
+                    const escapedConfig = JSON.stringify(config).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                    return `
+                    <div class="rule-card-v2" id="rule-card-${name}">
+                        <div class="rule-card-header">
+                            <div class="rule-card-title">
+                                <h4>${displayName}</h4>
+                                <span class="severity-badge severity-${config.severity}">${severityLabel}</span>
+                            </div>
+                            <div class="rule-card-actions">
+                                <button class="icon-btn" onclick='startEditRule("${name}", JSON.parse(decodeURIComponent("${encodeURIComponent(JSON.stringify(config))}")))' title="Edit guardrail">&#9998;</button>
+                                <button class="icon-btn icon-btn-danger" onclick="deleteRule('${name}', '${displayName.replace(/'/g, "\\'")}')" title="Remove guardrail">&#10005;</button>
+                            </div>
                         </div>
-                        <div style="display:flex;align-items:center;gap:12px;">
-                            <div class="rule-value">${typeof config.value === 'boolean' ? (config.value ? 'YES' : 'NO') : config.value}</div>
-                            <button class="preset-btn" onclick='startEditRule("${name}", ${JSON.stringify(config).replace(/'/g, "&#39;")})' title="Edit rule">&#9998;</button>
-                            <button class="preset-btn" onclick="deleteRule('${name}')" title="Delete rule" style="color:var(--accent-red);border-color:rgba(255,77,106,0.3);">&#10005;</button>
+                        <p class="rule-description">${config.description}</p>
+                        ${hint ? `<p class="rule-hint">&#128161; ${hint}</p>` : ''}
+                        <div class="rule-card-footer">
+                            ${renderRuleValue(name, config)}
                         </div>
-                    </div>
-                `).join('');
+                    </div>`;
+                }).join('');
                 updateStats();
             } catch (e) {
                 console.error('Rules error:', e);

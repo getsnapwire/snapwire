@@ -3,37 +3,51 @@
   "rules": {
     "max_spend": {
       "value": 50,
-      "description": "Maximum spending limit in dollars per action",
+      "display_name": "Spending Limit",
+      "description": "The most an agent can spend in a single action (in dollars)",
+      "hint": "Prevents agents from making expensive purchases or transfers without your approval. If an agent tries to spend more than this amount, it will be blocked.",
       "severity": "critical"
     },
     "allow_deletion": {
       "value": false,
-      "description": "Whether destructive delete operations are permitted",
+      "display_name": "Allow Deleting Files or Data",
+      "description": "Can the agent permanently delete files, databases, or other data?",
+      "hint": "When set to No, the agent cannot remove any files or data. This protects against accidental or malicious data loss.",
       "severity": "critical"
     },
     "allow_external_api_calls": {
       "value": true,
-      "description": "Whether the agent can make external API calls",
+      "display_name": "Allow External Service Calls",
+      "description": "Can the agent connect to outside services and APIs?",
+      "hint": "Controls whether the agent can reach out to third-party services like payment processors, email providers, or other websites.",
       "severity": "high"
     },
     "max_files_modified": {
       "value": 10,
-      "description": "Maximum number of files that can be modified in a single action",
+      "display_name": "File Change Limit",
+      "description": "How many files can the agent change at once?",
+      "hint": "Limits the blast radius of any single action. A lower number means the agent must work in smaller, safer batches.",
       "severity": "medium"
     },
     "allow_sensitive_data_access": {
       "value": false,
-      "description": "Whether the agent can access sensitive user data like passwords or tokens",
+      "display_name": "Access to Sensitive Information",
+      "description": "Can the agent view passwords, tokens, or personal info?",
+      "hint": "When set to No, the agent is blocked from reading passwords, API keys, social security numbers, or other private data.",
       "severity": "critical"
     },
     "allow_network_requests": {
       "value": true,
-      "description": "Whether outbound network requests are allowed",
+      "display_name": "Allow Internet Access",
+      "description": "Can the agent send data out over the internet?",
+      "hint": "Controls whether the agent can make outbound network connections. Turning this off keeps the agent completely offline.",
       "severity": "high"
     },
     "max_batch_operations": {
       "value": 100,
-      "description": "Maximum number of batch operations in a single call",
+      "display_name": "Batch Operation Limit",
+      "description": "How many items can the agent process in a single batch?",
+      "hint": "Prevents the agent from running massive bulk operations that could overwhelm systems or cause widespread changes.",
       "severity": "medium"
     }
   },

@@ -136,7 +136,11 @@ def create_constitution_rule():
     if not rule_name:
         return jsonify({"error": "Rule name cannot be empty"}), 400
 
-    success, error = add_rule(rule_name, data["value"], data["description"], data["severity"])
+    success, error = add_rule(
+        rule_name, data["value"], data["description"], data["severity"],
+        display_name=data.get("display_name"),
+        hint=data.get("hint"),
+    )
     if success:
         return jsonify({"status": "created", "rule": rule_name}), 201
     return jsonify({"error": error or "Failed to create rule"}), 409
@@ -161,6 +165,8 @@ def patch_constitution_rule(rule_name):
         value=data.get("value"),
         description=data.get("description"),
         severity=data.get("severity"),
+        display_name=data.get("display_name"),
+        hint=data.get("hint"),
     )
     if success:
         return jsonify({"status": "updated", "rule": rule_name})
