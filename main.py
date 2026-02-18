@@ -44,7 +44,7 @@ from src.input_sanitizer import sanitize_parameters
 from src.nlp_rule_builder import parse_natural_language_rule, detect_rule_conflicts, test_rule_against_action
 from src.notifications import send_slack_notification, send_notification_to_configured_webhooks
 from src.tool_catalog import check_tool_catalog, get_catalog, update_tool_status, regrade_tool
-from src.blast_radius import check_blast_radius, get_blast_radius_config, update_blast_radius_config, get_blast_radius_events, clear_lockout
+from src.blast_radius import check_blast_radius, get_blast_radius_config, update_blast_radius_config, get_blast_radius_events, clear_lockout, get_active_lockouts
 from src.honeypot import check_honeypot, get_honeypots, create_honeypot, delete_honeypot, toggle_honeypot, get_honeypot_alerts
 from src.vault import get_vault_entries, create_vault_entry, delete_vault_entry, update_vault_entry, get_vault_credentials
 from src.deception import analyze_deception
@@ -1595,6 +1595,13 @@ def update_br_config():
 def list_br_events():
     tenant_id = get_current_tenant_id()
     return jsonify({"events": get_blast_radius_events(tenant_id)})
+
+
+@app.route("/api/blast-radius/lockouts", methods=["GET"])
+@require_login
+def list_br_lockouts():
+    tenant_id = get_current_tenant_id()
+    return jsonify({"lockouts": get_active_lockouts(tenant_id)})
 
 
 @app.route("/api/blast-radius/clear/<agent_id>", methods=["POST"])

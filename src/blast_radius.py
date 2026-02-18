@@ -128,3 +128,27 @@ def clear_lockout(tenant_id, agent_id):
         if key in _call_tracker:
             del _call_tracker[key]
     return True
+
+
+def get_active_lockouts(tenant_id):
+    now = datetime.utcnow()
+    prefix = f"{tenant_id}:"
+    result = []
+    with _tracker_lock:
+        expired_keys = []
+        for key, lockout_until in _lockouts.items():
+            if not key.startswith(prefix):
+                continue
+            if now >= lockout_until:
+                expired_keys.append(key)
+                continue
+            agent_id = key[len(prefix):]
+            remaining = int((lockout_until - now).total_seconds())
+            result.append({
+                "agent_id": agent_id,
+                "lockout_until": lockout_until.isoformat(),
+                "remaining_seconds": remaining,
+            })
+        for k in expired_keys:
+            del _lockouts[k]
+    return result

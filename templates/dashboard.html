@@ -453,6 +453,17 @@
             </div>
         </div>
 
+        <div id="lockout-alert-banner" style="display:none;background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.4);border-radius:10px;padding:12px 18px;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:18px;">&#9888;</span>
+                <div style="flex:1;">
+                    <div style="font-weight:600;color:var(--accent-red);font-size:13px;">Agent Lockout Active</div>
+                    <div id="lockout-alert-text" style="font-size:12px;color:var(--text-secondary);margin-top:2px;"></div>
+                </div>
+                <button onclick="document.querySelector('[data-tab=blast]').click();" style="background:var(--accent-red);border:none;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">View Details</button>
+            </div>
+        </div>
+
         <div class="tabs">
             <button class="tab active" data-tab="pending" data-tooltip="Actions that were blocked and need your decision to allow or deny" data-tooltip-pos="bottom">Pending Approvals</button>
             <button class="tab" data-tab="log" data-tooltip="A history of everything the firewall has checked, and what happened" data-tooltip-pos="bottom">Audit Log</button>
@@ -469,6 +480,7 @@
             <button class="tab" data-tab="catalog" data-tooltip="View and manage the tool safety catalog" data-tooltip-pos="bottom">Tool Catalog</button>
             <button class="tab" data-tab="vault" data-tooltip="Manage credential vault for secure tool access" data-tooltip-pos="bottom">Identity Vault</button>
             <button class="tab" data-tab="honeypots" data-tooltip="Set up honeypot decoy tools to detect breaches" data-tooltip-pos="bottom">Honeypots</button>
+            <button class="tab" data-tab="blast" data-tooltip="Control how fast agents can make calls — prevents runaway loops and rate-limits suspicious activity" data-tooltip-pos="bottom">Blast Radius</button>
             {% endif %}
             <button class="tab" data-tab="org" data-tooltip="Manage your organization members and settings" data-tooltip-pos="bottom">Organization</button>
             <button class="tab" data-tab="account" data-tooltip="Your account settings and usage stats" data-tooltip-pos="bottom">Account</button>
@@ -1103,9 +1115,20 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
 
     <div id="panel-catalog" class="panel">
         <h3 style="margin-bottom:16px;">Tool Safe Catalog</h3>
-        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Every tool an agent uses is tracked here with a safety grade. Unknown tools are auto-graded by AI. Only approved A/B-grade tools can be auto-approved.</p>
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px;">Every tool an agent uses is tracked here with a safety grade. Unknown tools are auto-graded by AI. Only approved A/B-grade tools can be auto-approved.</p>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:16px;">
+            <h4 style="font-size:13px;margin-bottom:8px;">Safety Grade Legend</h4>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:12px;">
+                <span><span style="display:inline-block;width:22px;height:22px;border-radius:6px;background:var(--accent-green);color:#fff;text-align:center;line-height:22px;font-weight:700;font-size:12px;margin-right:4px;">A</span> Safe (read-only, no side effects)</span>
+                <span><span style="display:inline-block;width:22px;height:22px;border-radius:6px;background:#6fcf97;color:#fff;text-align:center;line-height:22px;font-weight:700;font-size:12px;margin-right:4px;">B</span> Low risk (minor changes, reversible)</span>
+                <span><span style="display:inline-block;width:22px;height:22px;border-radius:6px;background:var(--accent-yellow);color:#fff;text-align:center;line-height:22px;font-weight:700;font-size:12px;margin-right:4px;">C</span> Moderate (data modification, network)</span>
+                <span><span style="display:inline-block;width:22px;height:22px;border-radius:6px;background:var(--accent-red);color:#fff;text-align:center;line-height:22px;font-weight:700;font-size:12px;margin-right:4px;">D</span> High risk (destructive, external calls)</span>
+                <span><span style="display:inline-block;width:22px;height:22px;border-radius:6px;background:#ff4444;color:#fff;text-align:center;line-height:22px;font-weight:700;font-size:12px;margin-right:4px;">F</span> Dangerous (auto-blocked, needs review)</span>
+                <span><span style="display:inline-block;width:22px;height:22px;border-radius:6px;background:var(--bg-secondary);color:var(--text-secondary);text-align:center;line-height:22px;font-weight:700;font-size:12px;margin-right:4px;">U</span> Ungraded (pending AI review)</span>
+            </div>
+        </div>
         <div id="catalog-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-        <div id="catalog-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No tools in catalog yet. Tools appear here when agents use them.</div>
+        <div id="catalog-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No tools in catalog yet. When an agent makes a tool call through the firewall, it automatically appears here with an AI-generated safety grade. You can then approve, block, or re-grade it.</div>
     </div>
 
     <div id="panel-vault" class="panel">
@@ -1115,7 +1138,7 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
             <button onclick="showAddVaultModal()" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">+ Add Vault Entry</button>
         </div>
         <div id="vault-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-        <div id="vault-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No vault entries configured. Add tool-to-secret mappings above.</div>
+        <div id="vault-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No vault entries configured yet. Click "+ Add Vault Entry" above to map a tool to a secret key. The secret key name must match an entry in your Replit Secrets tab (click the lock icon in the sidebar). When an agent's tool call is approved, the firewall will automatically inject the credential.</div>
     </div>
 
     <div id="panel-honeypots" class="panel">
@@ -1127,7 +1150,54 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
         <div id="honeypot-list" style="display:flex;flex-direction:column;gap:8px;"></div>
         <h4 style="margin-top:24px;margin-bottom:12px;color:var(--text-secondary);font-size:14px;">Recent Alerts</h4>
         <div id="honeypot-alerts" style="display:flex;flex-direction:column;gap:8px;"></div>
-        <div id="honeypot-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No honeypots configured yet.</div>
+        <div id="honeypot-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No honeypots configured yet. Click "+ Add Honeypot" to create a fake tool name. If any agent ever tries to call it, the firewall instantly locks their API key and alerts you. Great for detecting compromised agents or unauthorized access.</div>
+    </div>
+
+    <div id="panel-blast" class="panel">
+        <h3 style="margin-bottom:16px;">Blast Radius Governor</h3>
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Prevents agents from making too many calls too quickly. If an agent exceeds the limit, it's automatically locked out for a cooldown period. This stops runaway loops, infinite retries, and rogue agents from doing damage.</p>
+
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
+            <h4 style="margin-bottom:14px;font-size:14px;">Settings</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                <div>
+                    <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">Max calls per window</label>
+                    <input type="number" id="br-max-calls" min="1" max="1000" value="5" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">How many tool calls an agent can make before triggering lockout</div>
+                </div>
+                <div>
+                    <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">Time window (seconds)</label>
+                    <input type="number" id="br-window" min="5" max="3600" value="60" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">The rolling time period to count calls in</div>
+                </div>
+                <div>
+                    <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">Lockout duration (seconds)</label>
+                    <input type="number" id="br-lockout" min="10" max="86400" value="300" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">How long agents are blocked after exceeding the limit</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding-top:18px;">
+                    <label class="toggle-switch" style="margin:0;">
+                        <input type="checkbox" id="br-enabled" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span style="font-size:13px;">Enabled</span>
+                </div>
+            </div>
+            <button onclick="saveBlastConfig()" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13px;">Save Settings</button>
+        </div>
+
+        <div id="br-lockout-section" style="margin-bottom:20px;">
+            <h4 style="margin-bottom:10px;font-size:14px;">Currently Locked Out Agents</h4>
+            <div id="br-lockout-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+            <div id="br-lockout-empty" style="color:var(--text-secondary);font-size:13px;">No agents are currently locked out.</div>
+        </div>
+
+        <div>
+            <h4 style="margin-bottom:10px;font-size:14px;">Recent Throttle Events</h4>
+            <p style="color:var(--text-secondary);font-size:12px;margin-bottom:10px;">Each event below means an agent was locked out because it exceeded the call limit.</p>
+            <div id="br-events-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+            <div id="br-events-empty" style="color:var(--text-secondary);font-size:13px;">No throttle events recorded yet.</div>
+        </div>
     </div>
 
     <div id="add-vault-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
@@ -1201,6 +1271,7 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                 if (tabName === 'catalog') loadCatalog();
                 if (tabName === 'vault') loadVault();
                 if (tabName === 'honeypots') loadHoneypots();
+                if (tabName === 'blast') loadBlastRadius();
             });
         });
 
@@ -1305,6 +1376,11 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                             </div>
                             <span style="font-size:13px;font-weight:600;">${riskScore}/100</span>
                         </div>
+
+                        ${(violations.some(v => v.rule === 'deception_detector') || action.audit_result?.deception_warning) ? `<div style="background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.3);border-radius:8px;padding:10px 14px;margin-bottom:8px;">
+                            <div style="font-weight:600;color:var(--accent-red);font-size:12px;">&#9888; Deception Warning</div>
+                            <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">This agent's stated intent may not match its actual action. Review carefully before approving.</div>
+                        </div>` : ''}
 
                         ${action.audit_result?.analysis ? `<p class="analysis-text">${action.audit_result.analysis}</p>` : ''}
 
@@ -3185,6 +3261,94 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
             await fetch(`/api/honeypots/${id}`, {method:'DELETE'});
             loadHoneypots();
         }
+        // === BLAST RADIUS GOVERNOR ===
+        async function loadBlastRadius() {
+            try {
+                const [configResp, eventsResp, lockoutsResp] = await Promise.all([
+                    fetch('/api/blast-radius/config'),
+                    fetch('/api/blast-radius/events'),
+                    fetch('/api/blast-radius/lockouts'),
+                ]);
+                const config = await configResp.json();
+                const eventsData = await eventsResp.json();
+                const lockoutsData = await lockoutsResp.json();
+
+                document.getElementById('br-max-calls').value = config.max_calls || 5;
+                document.getElementById('br-window').value = config.window_seconds || 60;
+                document.getElementById('br-lockout').value = config.lockout_seconds || 300;
+                document.getElementById('br-enabled').checked = config.enabled !== false;
+
+                const lockoutList = document.getElementById('br-lockout-list');
+                const lockoutEmpty = document.getElementById('br-lockout-empty');
+                if (lockoutsData.lockouts && lockoutsData.lockouts.length > 0) {
+                    lockoutEmpty.style.display = 'none';
+                    lockoutList.innerHTML = lockoutsData.lockouts.map(l => `
+                        <div style="background:rgba(255,77,77,0.08);border:1px solid rgba(255,77,77,0.3);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;">
+                            <span style="font-size:18px;">&#128274;</span>
+                            <div style="flex:1;">
+                                <div style="font-weight:600;font-size:13px;">Agent: ${l.agent_id}</div>
+                                <div style="font-size:12px;color:var(--text-secondary);">Locked for ${l.remaining_seconds}s more (until ${new Date(l.lockout_until).toLocaleTimeString()})</div>
+                            </div>
+                            <button onclick="unlockAgent('${l.agent_id}')" style="background:var(--accent-green);border:none;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Unlock</button>
+                        </div>
+                    `).join('');
+                } else {
+                    lockoutEmpty.style.display = 'block';
+                    lockoutList.innerHTML = '';
+                }
+
+                const eventsList = document.getElementById('br-events-list');
+                const eventsEmpty = document.getElementById('br-events-empty');
+                if (eventsData.events && eventsData.events.length > 0) {
+                    eventsEmpty.style.display = 'none';
+                    eventsList.innerHTML = eventsData.events.map(e => `
+                        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <span style="font-weight:600;font-size:13px;">Agent: ${e.agent_id}</span>
+                                    <span style="color:var(--text-secondary);font-size:12px;margin-left:8px;">${e.call_count} calls in ${e.window_seconds}s</span>
+                                </div>
+                                <span style="font-size:12px;color:var(--text-secondary);">${new Date(e.triggered_at).toLocaleString()}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    eventsEmpty.style.display = 'block';
+                    eventsList.innerHTML = '';
+                }
+            } catch(e) { console.error('Failed to load blast radius', e); }
+        }
+        async function saveBlastConfig() {
+            const data = {
+                max_calls: parseInt(document.getElementById('br-max-calls').value),
+                window_seconds: parseInt(document.getElementById('br-window').value),
+                lockout_seconds: parseInt(document.getElementById('br-lockout').value),
+                enabled: document.getElementById('br-enabled').checked,
+            };
+            await fetch('/api/blast-radius/config', {method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+            loadBlastRadius();
+        }
+        async function unlockAgent(agentId) {
+            await fetch(`/api/blast-radius/clear/${agentId}`, {method:'POST'});
+            loadBlastRadius();
+            checkLockoutBanner();
+        }
+        async function checkLockoutBanner() {
+            try {
+                const resp = await fetch('/api/blast-radius/lockouts');
+                const data = await resp.json();
+                const banner = document.getElementById('lockout-alert-banner');
+                if (data.lockouts && data.lockouts.length > 0) {
+                    banner.style.display = 'block';
+                    const names = data.lockouts.map(l => l.agent_id).join(', ');
+                    document.getElementById('lockout-alert-text').textContent = `${data.lockouts.length} agent(s) currently locked out: ${names}`;
+                } else {
+                    banner.style.display = 'none';
+                }
+            } catch(e) {}
+        }
+        setInterval(checkLockoutBanner, 15000);
+        checkLockoutBanner();
     </script>
 </body>
 </html>
