@@ -1,13 +1,19 @@
 import csv
 import io
 import os
+import json
+import time
+import hashlib
+import secrets
+import threading
+from datetime import datetime
 from functools import wraps
-from flask import request, jsonify, render_template, session, url_for, Response
+from flask import request, jsonify, render_template, session, url_for, Response, stream_with_context
 from flask_login import current_user
 
 from app import app, db
 from replit_auth import require_login, make_replit_blueprint
-from models import User
+from models import User, ApiKey
 from src.constitution import load_constitution, update_rule, add_rule, delete_rule, update_rule_full
 from src.auditor import audit_tool_call
 from src.action_queue import (
@@ -19,7 +25,14 @@ from src.action_queue import (
     get_audit_log,
     get_stats,
     bulk_resolve,
+    subscribe_sse,
+    unsubscribe_sse,
+    get_agent_sessions,
+    check_auto_approve,
+    auto_deny_expired,
+    get_weekly_digest,
 )
+from src.rule_templates import get_templates, get_template
 
 
 def require_admin(f):
@@ -32,7 +45,36 @@ def require_admin(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
+def authenticate_api_key():
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        raw_key = auth_header[7:]
+        key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+        api_key = ApiKey.query.filter_by(key_hash=key_hash, is_active=True).first()
+        if api_key:
+            api_key.last_used_at = datetime.now()
+            db.session.commit()
+            return api_key
+    return None
+
+
 app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
+
+
+def start_auto_deny_timer():
+    def run():
+        while True:
+            time.sleep(60)
+            try:
+                with app.app_context():
+                    auto_deny_expired(timeout_minutes=30)
+            except Exception:
+                pass
+    t = threading.Thread(target=run, daemon=True)
+    t.start()
+
+start_auto_deny_timer()
 
 
 @app.before_request
@@ -53,6 +95,14 @@ def intercept_tool_call():
     if not data:
         return jsonify({"error": "No JSON payload provided"}), 400
 
+    api_key = authenticate_api_key()
+    if not api_key and not current_user.is_authenticated:
+        return jsonify({"error": "Authentication required. Provide an API key via Authorization header or sign in."}), 401
+
+    agent_id = data.get("agent_id", api_key.agent_name if api_key else None) or "unknown"
+    webhook_url = data.get("webhook_url")
+    api_key_id = api_key.id if api_key else None
+
     required_fields = ["tool_name"]
     for field in required_fields:
         if field not in data:
@@ -71,7 +121,7 @@ def intercept_tool_call():
         return jsonify({"error": f"Audit failed: {str(e)}"}), 500
 
     if audit_result.get("allowed", False):
-        log_action(tool_call, audit_result, "allowed")
+        log_action(tool_call, audit_result, "allowed", agent_id=agent_id, api_key_id=api_key_id)
         return jsonify(
             {
                 "status": "allowed",
@@ -80,7 +130,17 @@ def intercept_tool_call():
             }
         )
     else:
-        action_id = add_pending_action(tool_call, audit_result)
+        if check_auto_approve(tool_call, audit_result, agent_id):
+            log_action(tool_call, audit_result, "auto-approved", agent_id=agent_id, api_key_id=api_key_id)
+            return jsonify(
+                {
+                    "status": "auto-approved",
+                    "audit": audit_result,
+                    "message": "Tool call auto-approved based on previous approval history.",
+                }
+            )
+
+        action_id = add_pending_action(tool_call, audit_result, webhook_url=webhook_url, agent_id=agent_id, api_key_id=api_key_id)
         return jsonify(
             {
                 "status": "blocked",
@@ -88,6 +148,7 @@ def intercept_tool_call():
                 "audit": audit_result,
                 "message": "Tool call blocked. Awaiting manual approval.",
                 "approval_url": f"/api/actions/{action_id}/resolve",
+                "poll_url": f"/api/actions/{action_id}",
             }
         ), 403
 
@@ -99,10 +160,14 @@ def list_pending():
 
 
 @app.route("/api/actions/<action_id>", methods=["GET"])
-@require_login
 def get_action_detail(action_id):
+    api_key = authenticate_api_key()
+    if not api_key and not current_user.is_authenticated:
+        return jsonify({"error": "Authentication required"}), 401
     action = get_action(action_id)
     if not action:
+        return jsonify({"error": "Action not found"}), 404
+    if api_key and action.get("api_key_id") != api_key.id:
         return jsonify({"error": "Action not found"}), 404
     return jsonify(action)
 
@@ -243,7 +308,7 @@ def export_audit_log():
     log = get_audit_log(limit=10000)
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["ID", "Status", "Tool Name", "Intent", "Risk Score", "Violations", "Analysis", "Time"])
+    writer.writerow(["ID", "Status", "Tool Name", "Intent", "Risk Score", "Violations", "Analysis", "Agent", "Time"])
     for entry in log:
         tool_call = entry.get("tool_call", {})
         audit = entry.get("audit_result", {})
@@ -257,6 +322,7 @@ def export_audit_log():
             audit.get("risk_score", ""),
             violation_str,
             audit.get("analysis", ""),
+            entry.get("agent_id", "unknown"),
             entry.get("created_at", ""),
         ])
     output.seek(0)
@@ -319,6 +385,163 @@ def update_user_access(user_id):
     db.session.commit()
     status = "activated" if data["is_active"] else "revoked"
     return jsonify({"status": status, "user_id": user_id})
+
+
+@app.route("/api/api-keys", methods=["GET"])
+@require_login
+def list_api_keys():
+    keys = ApiKey.query.filter_by(user_id=current_user.id).order_by(ApiKey.created_at.desc()).all()
+    return jsonify({
+        "api_keys": [{
+            "id": k.id,
+            "name": k.name,
+            "key_prefix": k.key_prefix,
+            "agent_name": k.agent_name,
+            "is_active": k.is_active,
+            "last_used_at": k.last_used_at.isoformat() if k.last_used_at else None,
+            "created_at": k.created_at.isoformat() if k.created_at else None,
+        } for k in keys]
+    })
+
+
+@app.route("/api/api-keys", methods=["POST"])
+@require_admin
+def create_api_key():
+    data = request.get_json()
+    if not data or "name" not in data:
+        return jsonify({"error": "Must provide 'name'"}), 400
+
+    import uuid
+    raw_key = f"af_{secrets.token_hex(32)}"
+    key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+
+    api_key = ApiKey(
+        id=str(uuid.uuid4()),
+        user_id=current_user.id,
+        name=data["name"],
+        key_hash=key_hash,
+        key_prefix=raw_key[:12],
+        agent_name=data.get("agent_name"),
+    )
+    db.session.add(api_key)
+    db.session.commit()
+
+    return jsonify({
+        "id": api_key.id,
+        "name": api_key.name,
+        "key": raw_key,
+        "key_prefix": api_key.key_prefix,
+        "agent_name": api_key.agent_name,
+        "message": "Save this key now. It won't be shown again.",
+    }), 201
+
+
+@app.route("/api/api-keys/<key_id>", methods=["DELETE"])
+@require_admin
+def revoke_api_key(key_id):
+    api_key = ApiKey.query.filter_by(id=key_id, user_id=current_user.id).first()
+    if not api_key:
+        return jsonify({"error": "API key not found"}), 404
+    db.session.delete(api_key)
+    db.session.commit()
+    return jsonify({"status": "revoked", "id": key_id})
+
+
+@app.route("/api/api-keys/<key_id>/toggle", methods=["PATCH"])
+@require_admin
+def toggle_api_key(key_id):
+    api_key = ApiKey.query.filter_by(id=key_id, user_id=current_user.id).first()
+    if not api_key:
+        return jsonify({"error": "API key not found"}), 404
+    api_key.is_active = not api_key.is_active
+    db.session.commit()
+    return jsonify({"status": "active" if api_key.is_active else "inactive", "id": key_id})
+
+
+@app.route("/api/stream", methods=["GET"])
+@require_login
+def sse_stream():
+    def generate():
+        q = subscribe_sse()
+        try:
+            yield f"data: {json.dumps({'type': 'connected', 'time': datetime.utcnow().isoformat()})}\n\n"
+            while True:
+                if q:
+                    event = q.pop(0)
+                    yield f"data: {json.dumps(event)}\n\n"
+                else:
+                    yield f": keepalive\n\n"
+                    time.sleep(2)
+        except GeneratorExit:
+            unsubscribe_sse(q)
+        finally:
+            unsubscribe_sse(q)
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        }
+    )
+
+
+@app.route("/api/agents/sessions", methods=["GET"])
+@require_login
+def agent_sessions():
+    return jsonify({"sessions": get_agent_sessions()})
+
+
+@app.route("/api/templates", methods=["GET"])
+@require_login
+def list_templates():
+    return jsonify({"templates": get_templates()})
+
+
+@app.route("/api/templates/<template_id>", methods=["GET"])
+@require_login
+def get_template_detail(template_id):
+    template = get_template(template_id)
+    if not template:
+        return jsonify({"error": "Template not found"}), 404
+    return jsonify(template)
+
+
+@app.route("/api/templates/<template_id>/install", methods=["POST"])
+@require_admin
+def install_template(template_id):
+    template = get_template(template_id)
+    if not template:
+        return jsonify({"error": "Template not found"}), 404
+
+    installed = []
+    skipped = []
+    for rule_name, rule_data in template["rules"].items():
+        success, error = add_rule(
+            rule_name, rule_data["value"], rule_data["description"], rule_data["severity"],
+            display_name=rule_data.get("display_name"),
+            hint=rule_data.get("hint"),
+        )
+        if success:
+            installed.append(rule_name)
+        else:
+            skipped.append(rule_name)
+
+    return jsonify({
+        "status": "installed",
+        "template": template_id,
+        "installed_rules": installed,
+        "skipped_rules": skipped,
+        "message": f"Installed {len(installed)} rules, skipped {len(skipped)} (already exist).",
+    })
+
+
+@app.route("/api/digest", methods=["GET"])
+@require_login
+def weekly_digest():
+    return jsonify(get_weekly_digest())
 
 
 if __name__ == "__main__":

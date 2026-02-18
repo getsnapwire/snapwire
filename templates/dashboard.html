@@ -388,6 +388,10 @@
             <button class="tab" data-tab="log" data-tooltip="A history of everything the firewall has checked, and what happened" data-tooltip-pos="bottom">Audit Log</button>
             <button class="tab" data-tab="rules" data-tooltip="The rules that define what your AI agent can and cannot do" data-tooltip-pos="bottom">Constitution</button>
             <button class="tab" data-tab="test" data-tooltip="Try out a fake action to see how the firewall would respond" data-tooltip-pos="bottom">Test Firewall</button>
+            <button class="tab" data-tab="keys" data-tooltip="Generate and manage API keys for your AI agents" data-tooltip-pos="bottom">API Keys</button>
+            <button class="tab" data-tab="stream" data-tooltip="Watch agent actions happen in real-time" data-tooltip-pos="bottom">Live Stream</button>
+            <button class="tab" data-tab="agents" data-tooltip="View action history grouped by agent" data-tooltip-pos="bottom">Agents</button>
+            <button class="tab" data-tab="digest" data-tooltip="Weekly safety summary report" data-tooltip-pos="bottom">Digest</button>
             {% if user and user.role == 'admin' %}
             <button class="tab" data-tab="admin" data-tooltip="Manage users, roles, and access controls" data-tooltip-pos="bottom">Admin</button>
             {% endif %}
@@ -411,6 +415,10 @@
 
         <div id="panel-rules" class="panel">
             <div id="add-rule-section">
+                <div style="margin-bottom:16px;">
+                    <h4 style="font-size:14px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Rule Template Packs</h4>
+                    <div id="template-packs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:16px;"></div>
+                </div>
                 <button class="btn btn-test" id="toggle-add-form" onclick="toggleAddForm()" style="margin-bottom: 16px;" data-tooltip="Create a new rule to control what your AI agent is allowed to do" data-tooltip-pos="bottom">+ Add an Amendment</button>
                 <div id="add-rule-form" class="test-panel" style="margin-bottom: 20px; display: none;">
                     <h3>Draft a New Amendment</h3>
@@ -490,6 +498,89 @@
             </div>
         </div>
         {% endif %}
+
+        <div id="panel-keys" class="panel">
+            <div class="test-panel">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <div>
+                        <h3>API Keys</h3>
+                        <p style="color:var(--text-secondary);font-size:13px;margin-top:4px;">Generate API keys to connect your AI agents to the firewall. Each key can be named for easy tracking.</p>
+                    </div>
+                    {% if user and user.role == 'admin' %}
+                    <button class="btn btn-test" onclick="showCreateKeyForm()">+ New API Key</button>
+                    {% endif %}
+                </div>
+                <div id="create-key-form" style="display:none;margin-bottom:20px;padding:20px;background:var(--bg-secondary);border-radius:12px;border:1px solid var(--border);">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Key Name</label>
+                            <input type="text" id="new-key-name" placeholder="e.g., My GPT Agent">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Agent Name (optional)</label>
+                            <input type="text" id="new-key-agent" placeholder="e.g., customer-support-bot">
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:12px;">
+                        <button class="btn btn-approve" onclick="createApiKey()">Generate Key</button>
+                        <button class="btn" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);" onclick="document.getElementById('create-key-form').style.display='none'">Cancel</button>
+                    </div>
+                </div>
+                <div id="new-key-display" style="display:none;margin-bottom:20px;padding:20px;background:rgba(45,212,168,0.08);border:1px solid rgba(45,212,168,0.3);border-radius:12px;">
+                    <p style="font-weight:600;color:var(--accent-green);margin-bottom:8px;">Your new API key (copy it now, it won't be shown again):</p>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <code id="new-key-value" style="flex:1;padding:10px 14px;background:var(--bg-primary);border-radius:8px;font-family:'Fira Code',monospace;font-size:13px;word-break:break-all;border:1px solid var(--border);"></code>
+                        <button class="btn" style="background:var(--accent-blue);color:white;white-space:nowrap;" onclick="copyKey()">Copy</button>
+                    </div>
+                    <p style="font-size:12px;color:var(--text-secondary);margin-top:8px;">Usage: Include in your API request headers as <code style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;">Authorization: Bearer YOUR_KEY</code></p>
+                </div>
+                <div id="api-keys-list"></div>
+            </div>
+        </div>
+
+        <div id="panel-stream" class="panel">
+            <div class="test-panel">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <div>
+                        <h3>Live Action Stream</h3>
+                        <p style="color:var(--text-secondary);font-size:13px;margin-top:4px;">Watch agent actions as they happen in real time.</p>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div id="stream-status" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border);font-size:12px;color:var(--text-secondary);">
+                            <span id="stream-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text-secondary);"></span>
+                            <span id="stream-label">Disconnected</span>
+                        </div>
+                        <button class="btn" id="stream-toggle" style="background:var(--accent-green);color:var(--bg-primary);padding:8px 16px;font-size:13px;" onclick="toggleStream()">Connect</button>
+                    </div>
+                </div>
+                <div id="stream-events" style="max-height:500px;overflow-y:auto;"></div>
+                <div id="stream-empty" style="text-align:center;padding:40px;color:var(--text-secondary);">
+                    <div style="font-size:40px;margin-bottom:12px;">&#128225;</div>
+                    <p>Click "Connect" to start watching live agent activity.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-agents" class="panel">
+            <div class="test-panel">
+                <h3>Agent Sessions</h3>
+                <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">View the activity history of each connected agent.</p>
+                <div id="agent-sessions-list"></div>
+            </div>
+        </div>
+
+        <div id="panel-digest" class="panel">
+            <div class="test-panel">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <div>
+                        <h3>Weekly Safety Digest</h3>
+                        <p style="color:var(--text-secondary);font-size:13px;margin-top:4px;">A summary of your firewall's activity over the past 7 days.</p>
+                    </div>
+                    <button class="btn btn-test" onclick="fetchDigest()" style="padding:8px 16px;font-size:13px;">Refresh</button>
+                </div>
+                <div id="digest-content"></div>
+            </div>
+        </div>
 
         <div id="panel-test" class="panel">
             <div class="test-panel">
@@ -1294,15 +1385,278 @@
             }
         }
 
+        function showCreateKeyForm() {
+            document.getElementById('create-key-form').style.display = 'block';
+            document.getElementById('new-key-display').style.display = 'none';
+        }
+
+        async function createApiKey() {
+            const name = document.getElementById('new-key-name').value.trim();
+            const agentName = document.getElementById('new-key-agent').value.trim();
+            if (!name) { alert('Please enter a key name'); return; }
+            try {
+                const res = await fetch('/api/api-keys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, agent_name: agentName || null })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('create-key-form').style.display = 'none';
+                    document.getElementById('new-key-display').style.display = 'block';
+                    document.getElementById('new-key-value').textContent = data.key;
+                    document.getElementById('new-key-name').value = '';
+                    document.getElementById('new-key-agent').value = '';
+                    fetchApiKeys();
+                } else {
+                    alert(data.error || 'Failed to create key');
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        function copyKey() {
+            const key = document.getElementById('new-key-value').textContent;
+            navigator.clipboard.writeText(key).then(() => {
+                const btn = event.target;
+                btn.textContent = 'Copied!';
+                setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+            });
+        }
+
+        async function fetchApiKeys() {
+            try {
+                const res = await fetch('/api/api-keys');
+                const data = await res.json();
+                const keys = data.api_keys || [];
+                const container = document.getElementById('api-keys-list');
+                if (keys.length === 0) {
+                    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);"><div style="font-size:40px;margin-bottom:12px;">&#128273;</div><p>No API keys yet. Create one to connect your first agent.</p></div>';
+                    return;
+                }
+                container.innerHTML = keys.map(k => `
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);margin-bottom:8px;">
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:14px;color:var(--text-primary);">${k.name}</div>
+                            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">
+                                <code style="background:var(--bg-primary);padding:1px 6px;border-radius:4px;font-family:'Fira Code',monospace;">${k.key_prefix}...</code>
+                                ${k.agent_name ? ' &middot; Agent: ' + k.agent_name : ''}
+                                ${k.last_used_at ? ' &middot; Last used: ' + new Date(k.last_used_at).toLocaleDateString() : ' &middot; Never used'}
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:6px;">
+                            <button class="admin-toggle-btn ${k.is_active ? 'active' : 'revoked'}" onclick="toggleApiKey('${k.id}')">${k.is_active ? 'Active' : 'Disabled'}</button>
+                            <button class="icon-btn icon-btn-danger" onclick="deleteApiKey('${k.id}', '${k.name}')" title="Delete key">&#128465;</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { console.error('API keys error:', e); }
+        }
+
+        async function toggleApiKey(id) {
+            try {
+                const res = await fetch('/api/api-keys/' + id + '/toggle', { method: 'PATCH' });
+                if (res.ok) fetchApiKeys();
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function deleteApiKey(id, name) {
+            if (!confirm('Delete API key "' + name + '"? Any agents using this key will lose access.')) return;
+            try {
+                const res = await fetch('/api/api-keys/' + id, { method: 'DELETE' });
+                if (res.ok) fetchApiKeys();
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        let eventSource = null;
+        let streamEvents = [];
+
+        function toggleStream() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+                document.getElementById('stream-dot').style.background = 'var(--text-secondary)';
+                document.getElementById('stream-label').textContent = 'Disconnected';
+                document.getElementById('stream-toggle').textContent = 'Connect';
+                document.getElementById('stream-toggle').style.background = 'var(--accent-green)';
+                return;
+            }
+            eventSource = new EventSource('/api/stream');
+            document.getElementById('stream-dot').style.background = 'var(--accent-green)';
+            document.getElementById('stream-dot').style.animation = 'pulse-anim 2s infinite';
+            document.getElementById('stream-label').textContent = 'Connected';
+            document.getElementById('stream-toggle').textContent = 'Disconnect';
+            document.getElementById('stream-toggle').style.background = 'var(--accent-red)';
+            document.getElementById('stream-empty').style.display = 'none';
+
+            eventSource.onmessage = function(e) {
+                try {
+                    const event = JSON.parse(e.data);
+                    if (event.type === 'connected') return;
+                    streamEvents.unshift(event);
+                    if (streamEvents.length > 100) streamEvents = streamEvents.slice(0, 100);
+                    renderStreamEvents();
+                } catch (err) {}
+            };
+            eventSource.onerror = function() {
+                document.getElementById('stream-dot').style.background = 'var(--accent-yellow)';
+                document.getElementById('stream-label').textContent = 'Reconnecting...';
+            };
+        }
+
+        function renderStreamEvents() {
+            const container = document.getElementById('stream-events');
+            const typeColors = {
+                action_blocked: 'var(--accent-red)',
+                action_allowed: 'var(--accent-green)',
+                action_resolved: 'var(--accent-blue)',
+            };
+            const typeIcons = {
+                action_blocked: '&#128721;',
+                action_allowed: '&#9989;',
+                action_resolved: '&#9878;&#65039;',
+            };
+            container.innerHTML = streamEvents.map(ev => {
+                const color = typeColors[ev.type] || 'var(--text-secondary)';
+                const icon = typeIcons[ev.type] || '&#128196;';
+                const d = ev.data || {};
+                const time = ev.time ? new Date(ev.time).toLocaleTimeString() : '';
+                return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;animation:slideIn 0.3s ease;">
+                    <span style="font-size:18px;">${icon}</span>
+                    <div style="flex:1;">
+                        <span style="color:${color};font-weight:600;">${ev.type.replace(/_/g, ' ')}</span>
+                        <span style="color:var(--text-secondary);"> &middot; ${d.tool_name || ''}</span>
+                        ${d.agent_id && d.agent_id !== 'unknown' ? '<span style="color:var(--text-secondary);"> &middot; Agent: ' + d.agent_id + '</span>' : ''}
+                    </div>
+                    <span style="font-size:12px;color:var(--text-secondary);white-space:nowrap;">${time}</span>
+                </div>`;
+            }).join('');
+        }
+
+        async function fetchAgentSessions() {
+            try {
+                const res = await fetch('/api/agents/sessions');
+                const data = await res.json();
+                const sessions = data.sessions || {};
+                const container = document.getElementById('agent-sessions-list');
+                const entries = Object.entries(sessions);
+                if (entries.length === 0) {
+                    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);"><div style="font-size:40px;margin-bottom:12px;">&#129302;</div><p>No agent sessions recorded yet. Send a tool call through the API to see agent activity here.</p></div>';
+                    return;
+                }
+                container.innerHTML = entries.map(([agentId, session]) => {
+                    const actions = session.actions || [];
+                    const allowed = actions.filter(a => ['allowed','approved','auto-approved'].includes(a.status)).length;
+                    const blocked = actions.filter(a => !['allowed','approved','auto-approved'].includes(a.status)).length;
+                    return `<div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                            <div>
+                                <h4 style="font-size:15px;font-weight:600;color:var(--text-primary);margin:0;">&#129302; ${agentId}</h4>
+                                <span style="font-size:12px;color:var(--text-secondary);">${session.action_count} total actions</span>
+                            </div>
+                            <div style="display:flex;gap:12px;">
+                                <span style="font-size:13px;color:var(--accent-green);">${allowed} allowed</span>
+                                <span style="font-size:13px;color:var(--accent-red);">${blocked} blocked</span>
+                            </div>
+                        </div>
+                        <div style="max-height:200px;overflow-y:auto;">
+                            ${actions.slice(-10).reverse().map(a => {
+                                const statusColor = ['allowed','approved','auto-approved'].includes(a.status) ? 'var(--accent-green)' : a.status === 'pending' ? 'var(--accent-yellow)' : 'var(--accent-red)';
+                                return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;">
+                                    <span style="width:8px;height:8px;border-radius:50%;background:${statusColor};flex-shrink:0;"></span>
+                                    <span style="font-family:'Fira Code',monospace;color:var(--text-primary);">${a.tool_call?.tool_name || 'unknown'}</span>
+                                    <span style="color:var(--text-secondary);">${a.status}</span>
+                                    <span style="margin-left:auto;color:var(--text-secondary);">${a.created_at ? new Date(a.created_at).toLocaleTimeString() : ''}</span>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (e) { console.error('Agent sessions error:', e); }
+        }
+
+        async function fetchDigest() {
+            const container = document.getElementById('digest-content');
+            container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);"><span class="loading"></span> Loading digest...</div>';
+            try {
+                const res = await fetch('/api/digest');
+                const d = await res.json();
+                if (d.total_audited === 0) {
+                    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);"><div style="font-size:40px;margin-bottom:12px;">&#128202;</div><p>No activity in the past 7 days. Start using the firewall to see your digest here.</p></div>';
+                    return;
+                }
+                const topViolations = Object.entries(d.top_violations || {});
+                const topAgents = Object.entries(d.top_agents || {});
+                container.innerHTML = `
+                    <div style="background:var(--bg-secondary);border-radius:12px;border:1px solid var(--border);padding:20px;margin-bottom:16px;">
+                        <h4 style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:16px;">${d.period}</h4>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px;">
+                            <div><div style="font-size:24px;font-weight:700;color:var(--text-primary);">${d.total_audited}</div><div style="font-size:12px;color:var(--text-secondary);">Total Audited</div></div>
+                            <div><div style="font-size:24px;font-weight:700;color:var(--accent-green);">${d.allowed}</div><div style="font-size:12px;color:var(--text-secondary);">Allowed</div></div>
+                            <div><div style="font-size:24px;font-weight:700;color:var(--accent-red);">${d.blocked}</div><div style="font-size:12px;color:var(--text-secondary);">Blocked</div></div>
+                            <div><div style="font-size:24px;font-weight:700;color:var(--accent-yellow);">${d.denied}</div><div style="font-size:12px;color:var(--text-secondary);">Denied</div></div>
+                            <div><div style="font-size:24px;font-weight:700;color:var(--accent-purple);">${d.approval_rate}%</div><div style="font-size:12px;color:var(--text-secondary);">Approval Rate</div></div>
+                        </div>
+                    </div>
+                    ${topViolations.length > 0 ? `<div style="background:var(--bg-secondary);border-radius:12px;border:1px solid var(--border);padding:20px;margin-bottom:16px;">
+                        <h4 style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Top Violated Rules</h4>
+                        ${topViolations.map(([rule, count]) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;"><span style="color:var(--text-primary);">${rule}</span><span style="color:var(--accent-red);font-weight:600;">${count}</span></div>`).join('')}
+                    </div>` : ''}
+                    ${topAgents.length > 0 ? `<div style="background:var(--bg-secondary);border-radius:12px;border:1px solid var(--border);padding:20px;">
+                        <h4 style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Most Active Agents</h4>
+                        ${topAgents.map(([agent, count]) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;"><span style="color:var(--text-primary);">&#129302; ${agent}</span><span style="color:var(--accent-blue);font-weight:600;">${count} actions</span></div>`).join('')}
+                    </div>` : ''}
+                `;
+            } catch (e) { container.innerHTML = '<div style="color:var(--accent-red);padding:20px;">Error loading digest: ' + e.message + '</div>'; }
+        }
+
+        async function fetchTemplates() {
+            try {
+                const res = await fetch('/api/templates');
+                const data = await res.json();
+                const templates = data.templates || {};
+                const container = document.getElementById('template-packs');
+                if (!container) return;
+                const entries = Object.entries(templates);
+                if (entries.length === 0) return;
+                container.innerHTML = entries.map(([id, t]) => `
+                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:16px;transition:border-color 0.2s;cursor:pointer;" onmouseover="this.style.borderColor='var(--accent-purple)'" onmouseout="this.style.borderColor='var(--border)'">
+                        <div style="font-weight:600;font-size:14px;color:var(--text-primary);margin-bottom:4px;">${t.display_name}</div>
+                        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">${t.description}</div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-size:11px;color:var(--text-secondary);">${t.rule_count} rules</span>
+                            <button class="btn" style="background:var(--accent-purple);color:white;padding:5px 14px;font-size:12px;border-radius:6px;" onclick="installTemplate('${id}')">Install</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { console.error('Templates error:', e); }
+        }
+
+        async function installTemplate(id) {
+            if (!confirm('Install this rule pack? Existing rules with the same names will be skipped.')) return;
+            try {
+                const res = await fetch('/api/templates/' + id + '/install', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message);
+                    fetchRules();
+                } else {
+                    alert(data.error || 'Failed to install template');
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
         fetchPending();
         fetchAuditLog();
         fetchRules();
         fetchStats();
+        fetchApiKeys();
+        fetchTemplates();
         if (CURRENT_USER_ROLE === 'admin') fetchUsers();
 
         setInterval(fetchPending, POLL_INTERVAL);
         setInterval(fetchAuditLog, POLL_INTERVAL * 2);
         setInterval(fetchStats, POLL_INTERVAL * 2);
+        setInterval(fetchAgentSessions, POLL_INTERVAL * 3);
     </script>
 </body>
 </html>
