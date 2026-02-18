@@ -388,6 +388,7 @@
                 <img src="{{ user.profile_image_url }}" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">
                 {% endif %}
                 <span style="font-size:13px;color:var(--text-secondary);">{{ user.first_name or user.email or 'User' }}</span>
+                <button id="theme-toggle-btn" onclick="toggleDarkMode()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:14px;line-height:1;" data-tooltip="Toggle light/dark mode" data-tooltip-pos="bottom">&#x1F319;</button>
                 <a href="/auth/logout" style="font-size:12px;color:var(--accent-red);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,77,106,0.3);border-radius:6px;" data-tooltip="Sign out of your account" data-tooltip-pos="bottom">Sign Out</a>
             </div>
             {% endif %}
@@ -483,6 +484,7 @@
             <button class="tab" data-tab="blast" data-tooltip="Control how fast agents can make calls — prevents runaway loops and rate-limits suspicious activity" data-tooltip-pos="bottom">Blast Radius</button>
             {% endif %}
             <button class="tab" data-tab="org" data-tooltip="Manage your organization members and settings" data-tooltip-pos="bottom">Organization</button>
+            <button class="tab" data-tab="analytics" data-tooltip="Usage analytics with charts and trends over time" data-tooltip-pos="bottom">Analytics</button>
             <button class="tab" data-tab="account" data-tooltip="Your account settings and usage stats" data-tooltip-pos="bottom">Account</button>
             <button class="tab" data-tab="quickstart" data-tooltip="Get started with the Agentic Firewall" data-tooltip-pos="bottom">Quick Start</button>
         </div>
@@ -759,7 +761,7 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
                     <div>
                         <h3>&#128276; Notifications</h3>
-                        <p style="color:var(--text-secondary);font-size:13px;">Configure Slack and notification preferences for blocked actions.</p>
+                        <p style="color:var(--text-secondary);font-size:13px;">Configure Slack, email, and notification preferences for blocked actions.</p>
                     </div>
                 </div>
 
@@ -797,6 +799,39 @@
                         <button class="btn btn-approve" onclick="saveNotificationSettings()">Save Notification Settings</button>
                     </div>
                     <div id="notif-save-status" style="display:none;margin-top:10px;font-size:13px;padding:8px 14px;border-radius:8px;"></div>
+                </div>
+
+                <div style="padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);margin-bottom:16px;">
+                    <h4 style="margin-bottom:12px;font-size:14px;">&#x2709; Email Notifications</h4>
+                    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Receive email alerts for blocked actions and critical violations. Requires a connected email service (SendGrid or Resend).</p>
+
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;display:block;">Email Address</label>
+                        <input type="email" id="notif-email-address" placeholder="alerts@yourcompany.com" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font-size:13px;box-sizing:border-box;">
+                    </div>
+
+                    <div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:16px;">
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-primary);cursor:pointer;">
+                            <input type="checkbox" id="notif-email-enabled" style="accent-color:var(--accent-blue);width:16px;height:16px;cursor:pointer;">
+                            Enable email alerts
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-primary);cursor:pointer;">
+                            <input type="checkbox" id="notif-email-on-block" checked style="accent-color:var(--accent-blue);width:16px;height:16px;cursor:pointer;">
+                            On blocked actions
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-primary);cursor:pointer;">
+                            <input type="checkbox" id="notif-email-on-critical" checked style="accent-color:var(--accent-red);width:16px;height:16px;cursor:pointer;">
+                            On critical violations
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-primary);cursor:pointer;">
+                            <input type="checkbox" id="notif-email-digest" style="accent-color:var(--accent-purple);width:16px;height:16px;cursor:pointer;">
+                            Weekly digest summary
+                        </label>
+                    </div>
+
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-approve" onclick="saveNotificationSettings()">Save Email Settings</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -999,6 +1034,63 @@
             <div id="org-no-org" style="display:none;">
                 <p style="color:var(--text-secondary);margin-bottom:16px;">You are currently in your personal workspace. Create or join an organization to collaborate with your team.</p>
                 <button class="btn" onclick="showCreateOrgModal()" style="background:var(--accent-purple);border:none;color:#fff;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">Create Organization</button>
+            </div>
+        </div>
+
+        <div id="panel-analytics" class="panel">
+            <h3 style="margin-bottom:16px;">Usage Analytics</h3>
+            <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+                <button class="analytics-range-btn active" onclick="loadAnalytics(7, this)" style="background:var(--accent-blue);border:none;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">7 Days</button>
+                <button class="analytics-range-btn" onclick="loadAnalytics(14, this)" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">14 Days</button>
+                <button class="analytics-range-btn" onclick="loadAnalytics(30, this)" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">30 Days</button>
+                <button class="analytics-range-btn" onclick="loadAnalytics(90, this)" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">90 Days</button>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                    <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Actions Over Time</h4>
+                    <div id="analytics-timeline-chart" style="height:220px;position:relative;"></div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                    <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Risk Score Trend</h4>
+                    <div id="analytics-risk-chart" style="height:220px;position:relative;"></div>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                    <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Top Tools Called</h4>
+                    <div id="analytics-tools-chart" style="min-height:200px;"></div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                    <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Summary</h4>
+                    <div id="analytics-summary" style="display:flex;flex-direction:column;gap:12px;">
+                        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+                            <span style="color:var(--text-secondary);font-size:13px;">Total Actions</span>
+                            <span id="analytics-total" style="font-weight:700;color:var(--text-primary);font-size:15px;">-</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+                            <span style="color:var(--text-secondary);font-size:13px;">Allowed</span>
+                            <span id="analytics-allowed" style="font-weight:700;color:var(--accent-green);font-size:15px;">-</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+                            <span style="color:var(--text-secondary);font-size:13px;">Blocked</span>
+                            <span id="analytics-blocked" style="font-weight:700;color:var(--accent-red);font-size:15px;">-</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+                            <span style="color:var(--text-secondary);font-size:13px;">Avg Risk Score</span>
+                            <span id="analytics-avg-risk" style="font-weight:700;color:var(--accent-yellow);font-size:15px;">-</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:10px 0;">
+                            <span style="color:var(--text-secondary);font-size:13px;">Peak Risk Score</span>
+                            <span id="analytics-max-risk" style="font-weight:700;color:var(--accent-red);font-size:15px;">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="analytics-empty" style="display:none;text-align:center;padding:40px;color:var(--text-secondary);">
+                <div style="font-size:36px;margin-bottom:12px;">&#x1F4CA;</div>
+                <p style="font-size:14px;">No analytics data yet. Actions will appear here once your agents start calling the API.</p>
             </div>
         </div>
 
@@ -1275,6 +1367,7 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                 if (tabName === 'vault') loadVault();
                 if (tabName === 'honeypots') loadHoneypots();
                 if (tabName === 'blast') loadBlastRadius();
+                if (tabName === 'analytics') loadAnalytics(7);
             });
         });
 
@@ -2882,6 +2975,11 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                 const threshold = data.notify_threshold_risk_score || 70;
                 document.getElementById('notif-threshold').value = threshold;
                 document.getElementById('notif-threshold-display').textContent = threshold;
+                document.getElementById('notif-email-enabled').checked = !!data.email_enabled;
+                document.getElementById('notif-email-address').value = data.email_address || '';
+                document.getElementById('notif-email-on-block').checked = data.email_on_block !== false;
+                document.getElementById('notif-email-on-critical').checked = data.email_on_critical !== false;
+                document.getElementById('notif-email-digest').checked = !!data.email_digest;
             } catch (e) { console.error('Notification settings error:', e); }
         }
 
@@ -2892,6 +2990,11 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                 notify_on_block: document.getElementById('notif-on-block').checked,
                 notify_on_critical: document.getElementById('notif-on-critical').checked,
                 notify_threshold_risk_score: parseInt(document.getElementById('notif-threshold').value),
+                email_enabled: document.getElementById('notif-email-enabled').checked,
+                email_address: document.getElementById('notif-email-address').value.trim(),
+                email_on_block: document.getElementById('notif-email-on-block').checked,
+                email_on_critical: document.getElementById('notif-email-on-critical').checked,
+                email_digest: document.getElementById('notif-email-digest').checked,
             };
             try {
                 const res = await fetch('/api/notifications/settings', {
@@ -3352,6 +3455,154 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
         }
         setInterval(checkLockoutBanner, 15000);
         checkLockoutBanner();
+
+        async function loadAnalytics(days = 7, btn = null) {
+            if (btn) {
+                document.querySelectorAll('.analytics-range-btn').forEach(b => {
+                    b.style.background = 'var(--bg-secondary)';
+                    b.style.color = 'var(--text-primary)';
+                    b.style.border = '1px solid var(--border)';
+                    b.style.fontWeight = '400';
+                });
+                btn.style.background = 'var(--accent-blue)';
+                btn.style.color = '#fff';
+                btn.style.border = 'none';
+                btn.style.fontWeight = '600';
+            }
+            try {
+                const res = await fetch(`/api/analytics/timeline?days=${days}`);
+                const data = await res.json();
+
+                if (!data.timeline || data.timeline.length === 0) {
+                    document.getElementById('analytics-empty').style.display = 'block';
+                    return;
+                }
+                document.getElementById('analytics-empty').style.display = 'none';
+
+                let totalAll = 0, totalAllowed = 0, totalBlocked = 0;
+                data.timeline.forEach(d => { totalAll += d.total; totalAllowed += d.allowed; totalBlocked += d.blocked; });
+                document.getElementById('analytics-total').textContent = totalAll;
+                document.getElementById('analytics-allowed').textContent = totalAllowed;
+                document.getElementById('analytics-blocked').textContent = totalBlocked;
+
+                if (data.risk_timeline && data.risk_timeline.length > 0) {
+                    const lastRisk = data.risk_timeline[data.risk_timeline.length - 1];
+                    const avgRisks = data.risk_timeline.map(r => r.avg_risk);
+                    const overallAvg = (avgRisks.reduce((a,b) => a+b, 0) / avgRisks.length).toFixed(1);
+                    const maxRisk = Math.max(...data.risk_timeline.map(r => r.max_risk));
+                    document.getElementById('analytics-avg-risk').textContent = overallAvg;
+                    document.getElementById('analytics-max-risk').textContent = maxRisk;
+                }
+
+                renderTimelineChart(data.timeline);
+                renderRiskChart(data.risk_timeline || []);
+                renderToolsChart(data.top_tools || []);
+            } catch(e) { console.error('Analytics error:', e); }
+        }
+
+        function renderTimelineChart(timeline) {
+            const container = document.getElementById('analytics-timeline-chart');
+            if (!timeline.length) { container.innerHTML = '<p style="color:var(--text-secondary);font-size:13px;text-align:center;padding-top:80px;">No data</p>'; return; }
+            const maxVal = Math.max(...timeline.map(d => d.total), 1);
+            const barWidth = Math.max(Math.floor((container.clientWidth - 40) / timeline.length) - 4, 8);
+            let html = '<div style="display:flex;align-items:flex-end;gap:3px;height:180px;padding-top:10px;">';
+            timeline.forEach(d => {
+                const aH = Math.max((d.allowed / maxVal) * 160, 0);
+                const bH = Math.max((d.blocked / maxVal) * 160, 0);
+                const pH = Math.max((d.pending / maxVal) * 160, 0);
+                const dateLabel = d.date.slice(5);
+                html += `<div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;" title="${d.date}: ${d.allowed} allowed, ${d.blocked} blocked, ${d.pending} pending">`;
+                html += `<div style="display:flex;flex-direction:column;justify-content:flex-end;height:160px;width:${barWidth}px;max-width:28px;">`;
+                if (pH > 0) html += `<div style="background:var(--accent-yellow);height:${pH}px;border-radius:3px 3px 0 0;min-height:2px;"></div>`;
+                if (bH > 0) html += `<div style="background:var(--accent-red);height:${bH}px;min-height:2px;"></div>`;
+                if (aH > 0) html += `<div style="background:var(--accent-green);height:${aH}px;border-radius:${pH+bH===0?'3px 3px ':''}0 0;min-height:2px;"></div>`;
+                html += '</div>';
+                if (timeline.length <= 14) html += `<span style="font-size:9px;color:var(--text-secondary);margin-top:4px;white-space:nowrap;">${dateLabel}</span>`;
+                html += '</div>';
+            });
+            html += '</div>';
+            html += '<div style="display:flex;gap:16px;margin-top:8px;justify-content:center;">';
+            html += '<span style="font-size:11px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--accent-green);display:inline-block;"></span>Allowed</span>';
+            html += '<span style="font-size:11px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--accent-red);display:inline-block;"></span>Blocked</span>';
+            html += '<span style="font-size:11px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--accent-yellow);display:inline-block;"></span>Pending</span>';
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function renderRiskChart(riskData) {
+            const container = document.getElementById('analytics-risk-chart');
+            if (!riskData.length) { container.innerHTML = '<p style="color:var(--text-secondary);font-size:13px;text-align:center;padding-top:80px;">No data</p>'; return; }
+            const maxRisk = Math.max(...riskData.map(d => d.max_risk), 100);
+            const w = container.clientWidth - 20;
+            const h = 170;
+            const points = riskData.map((d, i) => {
+                const x = (i / Math.max(riskData.length - 1, 1)) * w + 10;
+                const yAvg = h - (d.avg_risk / maxRisk) * h;
+                const yMax = h - (d.max_risk / maxRisk) * h;
+                return { x, yAvg, yMax, date: d.date, avg: d.avg_risk, max: d.max_risk };
+            });
+            let svgAvg = points.map((p, i) => `${i===0?'M':'L'}${p.x},${p.yAvg}`).join(' ');
+            let svgMax = points.map((p, i) => `${i===0?'M':'L'}${p.x},${p.yMax}`).join(' ');
+            let html = `<svg width="100%" height="${h+30}" viewBox="0 0 ${w+20} ${h+30}" style="overflow:visible;">`;
+            html += `<path d="${svgMax}" fill="none" stroke="var(--accent-red)" stroke-width="1.5" opacity="0.4" stroke-dasharray="4 3"/>`;
+            html += `<path d="${svgAvg}" fill="none" stroke="var(--accent-yellow)" stroke-width="2.5"/>`;
+            points.forEach(p => {
+                html += `<circle cx="${p.x}" cy="${p.yAvg}" r="3" fill="var(--accent-yellow)"><title>${p.date}: avg ${p.avg}, max ${p.max}</title></circle>`;
+            });
+            html += '</svg>';
+            html += '<div style="display:flex;gap:16px;justify-content:center;">';
+            html += '<span style="font-size:11px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;"><span style="width:12px;height:2px;background:var(--accent-yellow);display:inline-block;"></span>Avg Risk</span>';
+            html += '<span style="font-size:11px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;"><span style="width:12px;height:2px;background:var(--accent-red);display:inline-block;border-top:1px dashed var(--accent-red);"></span>Peak Risk</span>';
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function renderToolsChart(tools) {
+            const container = document.getElementById('analytics-tools-chart');
+            if (!tools.length) { container.innerHTML = '<p style="color:var(--text-secondary);font-size:13px;text-align:center;padding-top:60px;">No tool data yet</p>'; return; }
+            const maxCount = Math.max(...tools.map(t => t.count), 1);
+            const colors = ['var(--accent-blue)', 'var(--accent-purple)', 'var(--accent-green)', 'var(--accent-yellow)', 'var(--accent-red)'];
+            let html = '';
+            tools.forEach((t, i) => {
+                const pct = (t.count / maxCount) * 100;
+                const color = colors[i % colors.length];
+                html += `<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">`;
+                html += `<span style="min-width:120px;font-size:12px;color:var(--text-primary);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${t.tool_name}">${t.tool_name}</span>`;
+                html += `<div style="flex:1;height:20px;background:var(--bg-secondary);border-radius:4px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${color};border-radius:4px;transition:width 0.5s;"></div></div>`;
+                html += `<span style="min-width:36px;font-size:12px;color:var(--text-secondary);font-weight:600;text-align:right;">${t.count}</span>`;
+                html += '</div>';
+            });
+            container.innerHTML = html;
+        }
+
+        function toggleDarkMode() {
+            const root = document.documentElement;
+            const isDark = root.getAttribute('data-theme') !== 'light';
+            if (isDark) {
+                root.setAttribute('data-theme', 'light');
+                localStorage.setItem('agentic-theme', 'light');
+            } else {
+                root.setAttribute('data-theme', 'dark');
+                localStorage.setItem('agentic-theme', 'dark');
+            }
+            updateThemeIcon();
+        }
+
+        function updateThemeIcon() {
+            const btn = document.getElementById('theme-toggle-btn');
+            if (!btn) return;
+            const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+            btn.innerHTML = isLight ? '&#x2600;&#xFE0F;' : '&#x1F319;';
+            btn.title = isLight ? 'Switch to dark mode' : 'Switch to light mode';
+        }
+
+        (function initTheme() {
+            const saved = localStorage.getItem('agentic-theme');
+            if (saved === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+            updateThemeIcon();
+        })();
     </script>
 </body>
 </html>

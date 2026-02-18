@@ -11,11 +11,11 @@ Key capabilities include:
 - **Commercialization Focus**: Built for market potential with features supporting enterprise deployment and user engagement.
 
 ## User Preferences
-- Dark-themed dashboard UI
+- Dashboard supports dark/light mode toggle (default: dark, saved in localStorage)
 - Browser notifications for blocked actions
 - Constitutional theme: "amendments" not "guardrails"
 - Plain-language explanations everywhere
-- Modern SaaS-style landing page for marketing
+- Modern SaaS-style landing page with light theme for marketing
 
 ## System Architecture
 The Agentic Firewall is built with a Python Flask backend and a PostgreSQL database utilizing SQLAlchemy for ORM.
@@ -24,11 +24,12 @@ The Agentic Firewall is built with a Python Flask backend and a PostgreSQL datab
 -   **Multi-Tenancy**: Implemented at the database level with `tenant_id` columns across relevant models. Each user receives a personal tenant upon first login, and organizations provide shared tenant spaces. A dashboard workspace switcher allows seamless switching between tenants.
 -   **Authentication**: Utilizes Replit Auth (OpenID Connect) via Flask-Dance and Flask-Login for dashboard access, and API key authentication for agent-facing endpoints (`/api/intercept`).
 -   **AI Auditor**: Leverages Claude via Replit AI Integrations (Anthropic) for constitutional rule auditing, deception detection, and tool safety grading.
--   **Frontend**: Consists of a modern landing page (`login.html`) and a dashboard (`dashboard.html`) featuring polling and Server-Sent Events (SSE) for real-time updates.
+-   **Frontend**: Consists of a modern landing page (`login.html`), pricing page (`pricing.html`), API docs page (`docs.html`), and a dashboard (`dashboard.html`) featuring polling and Server-Sent Events (SSE) for real-time updates. Dashboard includes dark/light mode toggle.
 -   **Security**: Incorporates input sanitization (SQL/prompt injection, path traversal), rate limiting per API key, and secure credential handling via the Identity Vault.
 -   **Rule Management**: Constitution rules are database-backed and tenant-scoped, supporting versioning, import/export, and rollback. An AI Rule Builder (NLP) and Visual Rule Builder enhance rule creation.
 -   **Action Resolution**: Blocked actions are managed in a queue, with support for manual approval/denial, bulk operations, auto-approval for recurring actions, and auto-denial after a timeout. Webhook callbacks notify agents of resolution outcomes.
--   **Monitoring & Notifications**: Features a comprehensive audit log, dashboard analytics, real-time activity streams via SSE, and Slack/webhook integrations for critical alerts.
+-   **Monitoring & Notifications**: Features a comprehensive audit log, usage analytics with charts (timeline, risk trends, top tools), real-time activity streams via SSE, Slack/webhook integrations, and email notification settings for critical alerts.
+-   **Public Pages**: Pricing page with three tiers (Free/Pro/Enterprise) and full API documentation page with Python/Node.js SDK examples.
 
 **UI/UX Decisions:**
 -   User-friendly dashboard with rule cards, toggle switches, number steppers, and "why it matters" hints.

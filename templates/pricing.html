@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing — Agentic Firewall</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --white: #ffffff; --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
+            --gray-300: #d1d5db; --gray-400: #9ca3af; --gray-500: #6b7280; --gray-600: #4b5563;
+            --gray-700: #374151; --gray-800: #1f2937; --gray-900: #111827;
+            --blue-50: #eff6ff; --blue-100: #dbeafe; --blue-500: #3b82f6; --blue-600: #2563eb;
+            --purple-500: #8b5cf6; --purple-600: #7c3aed;
+            --green-500: #10b981; --green-600: #059669;
+        }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--white); color: var(--gray-900); -webkit-font-smoothing: antialiased; }
+
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--gray-200); padding: 0 32px; height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; color: var(--gray-900); text-decoration: none; }
+        .nav-logo .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--blue-600), var(--purple-600)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; }
+        .nav-links { display: flex; align-items: center; gap: 32px; }
+        .nav-links a { font-size: 14px; font-weight: 500; color: var(--gray-600); text-decoration: none; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--gray-900); }
+        .nav-btn { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; color: var(--white); background: var(--gray-900); transition: all 0.2s; }
+        .nav-btn:hover { background: var(--gray-700); }
+
+        .page-hero {
+            padding: 140px 32px 60px; text-align: center;
+            background: linear-gradient(180deg, var(--white) 0%, var(--gray-50) 100%);
+        }
+        .page-hero h1 { font-size: 44px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 16px; }
+        .page-hero p { font-size: 18px; color: var(--gray-500); max-width: 520px; margin: 0 auto; line-height: 1.7; }
+
+        .pricing-grid {
+            max-width: 1100px; margin: 0 auto; padding: 40px 32px 96px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+        }
+
+        .plan-card {
+            background: var(--white); border: 1px solid var(--gray-200); border-radius: 16px;
+            padding: 36px 28px; display: flex; flex-direction: column; position: relative; transition: all 0.25s;
+        }
+        .plan-card:hover { border-color: var(--gray-300); box-shadow: 0 8px 32px rgba(0,0,0,0.06); transform: translateY(-2px); }
+        .plan-card.featured { border-color: var(--blue-500); box-shadow: 0 0 0 1px var(--blue-500); }
+        .plan-card.featured::before {
+            content: 'Most Popular'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--blue-600), var(--purple-600)); color: white;
+            font-size: 12px; font-weight: 700; padding: 4px 16px; border-radius: 100px;
+        }
+
+        .plan-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+        .plan-desc { font-size: 14px; color: var(--gray-500); margin-bottom: 24px; line-height: 1.5; }
+        .plan-price { font-size: 42px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; }
+        .plan-price span { font-size: 16px; font-weight: 500; color: var(--gray-400); }
+        .plan-billing { font-size: 13px; color: var(--gray-400); margin-bottom: 28px; }
+
+        .plan-features { list-style: none; flex: 1; margin-bottom: 28px; }
+        .plan-features li {
+            font-size: 14px; color: var(--gray-600); padding: 8px 0; display: flex; align-items: flex-start; gap: 10px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .plan-features li:last-child { border-bottom: none; }
+        .plan-features .check { color: var(--green-500); font-weight: 700; flex-shrink: 0; font-size: 16px; }
+
+        .plan-btn {
+            display: block; text-align: center; padding: 13px 24px; border-radius: 10px;
+            font-size: 15px; font-weight: 600; text-decoration: none; transition: all 0.2s;
+        }
+        .plan-btn-primary { background: var(--gray-900); color: var(--white); }
+        .plan-btn-primary:hover { background: var(--gray-700); }
+        .plan-btn-outline { border: 1px solid var(--gray-300); color: var(--gray-700); background: var(--white); }
+        .plan-btn-outline:hover { border-color: var(--gray-400); background: var(--gray-50); }
+
+        .plan-note {
+            max-width: 680px; margin: 0 auto; text-align: center; padding: 0 32px 96px;
+            font-size: 14px; color: var(--gray-400); line-height: 1.7;
+        }
+
+        .footer { border-top: 1px solid var(--gray-200); padding: 32px; text-align: center; background: var(--white); }
+        .footer-brand { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--gray-500); margin-bottom: 8px; }
+        .footer-brand .logo-sm { width: 20px; height: 20px; background: linear-gradient(135deg, var(--blue-600), var(--purple-600)); border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: white; }
+        .footer p { font-size: 13px; color: var(--gray-400); }
+
+        @media (max-width: 768px) {
+            .pricing-grid { grid-template-columns: 1fr; max-width: 440px; }
+            .page-hero h1 { font-size: 32px; }
+            .nav-links a:not(.nav-btn) { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-logo"><span class="logo-icon">&#x1F6E1;</span> Agentic Firewall</a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/docs">API Docs</a>
+            <a href="{{ login_url }}" class="nav-btn">Sign In</a>
+        </div>
+    </nav>
+
+    <section class="page-hero">
+        <h1>Simple, transparent pricing</h1>
+        <p>Start free, scale as your AI agent fleet grows. Every plan includes all security features.</p>
+    </section>
+
+    <div class="pricing-grid">
+        <div class="plan-card">
+            <div class="plan-name">Starter</div>
+            <div class="plan-desc">For individuals and hobby projects getting started with AI safety.</div>
+            <div class="plan-price">Free</div>
+            <div class="plan-billing">No credit card required</div>
+            <ul class="plan-features">
+                <li><span class="check">&#x2713;</span> Up to 500 API calls/month</li>
+                <li><span class="check">&#x2713;</span> 5 constitutional rules</li>
+                <li><span class="check">&#x2713;</span> 1 API key</li>
+                <li><span class="check">&#x2713;</span> Tool Safety Catalog</li>
+                <li><span class="check">&#x2713;</span> Blast Radius Governor</li>
+                <li><span class="check">&#x2713;</span> Browser notifications</li>
+                <li><span class="check">&#x2713;</span> Community support</li>
+            </ul>
+            <a href="{{ login_url }}" class="plan-btn plan-btn-outline">Get Started</a>
+        </div>
+
+        <div class="plan-card featured">
+            <div class="plan-name">Pro</div>
+            <div class="plan-desc">For teams running AI agents in production with advanced security needs.</div>
+            <div class="plan-price">$49<span>/mo</span></div>
+            <div class="plan-billing">per workspace, billed monthly</div>
+            <ul class="plan-features">
+                <li><span class="check">&#x2713;</span> Up to 10,000 API calls/month</li>
+                <li><span class="check">&#x2713;</span> Unlimited rules</li>
+                <li><span class="check">&#x2713;</span> 10 API keys</li>
+                <li><span class="check">&#x2713;</span> Identity Vault</li>
+                <li><span class="check">&#x2713;</span> Honeypot Tripwires</li>
+                <li><span class="check">&#x2713;</span> Deception Detection</li>
+                <li><span class="check">&#x2713;</span> Slack & email alerts</li>
+                <li><span class="check">&#x2713;</span> Organization support (5 members)</li>
+                <li><span class="check">&#x2713;</span> Priority support</li>
+            </ul>
+            <a href="{{ login_url }}" class="plan-btn plan-btn-primary">Start Pro Trial</a>
+        </div>
+
+        <div class="plan-card">
+            <div class="plan-name">Enterprise</div>
+            <div class="plan-desc">For organizations with compliance requirements and large-scale deployments.</div>
+            <div class="plan-price">Custom</div>
+            <div class="plan-billing">tailored to your needs</div>
+            <ul class="plan-features">
+                <li><span class="check">&#x2713;</span> Unlimited API calls</li>
+                <li><span class="check">&#x2713;</span> Unlimited everything</li>
+                <li><span class="check">&#x2713;</span> SSO / SAML integration</li>
+                <li><span class="check">&#x2713;</span> Custom audit log retention</li>
+                <li><span class="check">&#x2713;</span> Webhook integrations</li>
+                <li><span class="check">&#x2713;</span> Dedicated account manager</li>
+                <li><span class="check">&#x2713;</span> SLA guarantee</li>
+                <li><span class="check">&#x2713;</span> On-premises option</li>
+            </ul>
+            <a href="mailto:sales@agenticfirewall.com" class="plan-btn plan-btn-outline">Contact Sales</a>
+        </div>
+    </div>
+
+    <div class="plan-note">
+        All plans include the full Agentic Firewall security stack: constitutional auditing, real-time monitoring, and the human-in-the-loop approval queue. Higher tiers unlock advanced features and higher usage limits.
+    </div>
+
+    <footer class="footer">
+        <div class="footer-brand"><span class="logo-sm">&#x1F6E1;</span> Agentic Firewall</div>
+        <p>AI safety and governance platform</p>
+    </footer>
+</body>
+</html>

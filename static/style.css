@@ -898,3 +898,103 @@ body {
         overflow-x: auto;
     }
 }
+
+[data-theme="light"] {
+    --bg-primary: #f8f9fb;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --border: #e2e5ea;
+    --text-primary: #1a1d27;
+    --text-secondary: #6b7280;
+    --accent-red: #ef4444;
+    --accent-green: #10b981;
+    --accent-yellow: #f59e0b;
+    --accent-blue: #3b82f6;
+    --accent-purple: #8b5cf6;
+}
+
+[data-theme="light"] .header {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e5ea;
+}
+
+[data-theme="light"] .tab {
+    color: #4b5563;
+}
+
+[data-theme="light"] .tab:hover {
+    background: #f3f4f6;
+    color: #1a1d27;
+}
+
+[data-theme="light"] .tab.active {
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+[data-theme="light"] .status-active {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+    background: #f9fafb;
+    color: #1a1d27;
+    border-color: #d1d5db;
+}
+
+[data-theme="light"] .stat-card {
+    background: #ffffff;
+    border-color: #e2e5ea;
+}
+
+[data-theme="light"] .action-card {
+    background: #ffffff;
+    border-color: #e2e5ea;
+}
+
+[data-theme="light"] .action-card:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+[data-theme="light"] .log-entry {
+    background: #ffffff;
+    border-color: #e2e5ea;
+}
+
+[data-theme="light"] .admin-table th {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+[data-theme="light"] .admin-table td {
+    border-color: #e2e5ea;
+    color: #374151;
+}
+
+[data-theme="light"] .rule-card {
+    background: #ffffff;
+    border-color: #e2e5ea;
+}
+
+[data-theme="light"] .btn-approve {
+    background: #10b981;
+}
+
+[data-theme="light"] .btn-deny {
+    background: #ef4444;
+}
+
+[data-theme="light"] .workspace-bar {
+    background: rgba(59, 130, 246, 0.05) !important;
+}
+
+[data-theme="light"] #theme-toggle-btn {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    color: #374151;
+}

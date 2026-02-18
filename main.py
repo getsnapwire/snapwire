@@ -118,6 +118,17 @@ def dashboard():
     return render_template("dashboard.html", user=current_user)
 
 
+@app.route("/pricing")
+def pricing_page():
+    return render_template("pricing.html", login_url=url_for("replit_auth.login"))
+
+
+@app.route("/docs")
+def docs_page():
+    base_url = request.url_root.rstrip("/")
+    return render_template("docs.html", login_url=url_for("replit_auth.login"), base_url=base_url)
+
+
 @app.route("/api/intercept", methods=["POST"])
 def intercept_tool_call():
     data = request.get_json()
@@ -1211,8 +1222,16 @@ def get_notification_settings():
     tenant_id = get_current_tenant_id()
     notif = NotificationSetting.query.filter_by(tenant_id=tenant_id).first()
     if not notif:
-        return jsonify({"slack_webhook_url": "", "notify_on_block": True, "notify_on_critical": False, "notify_threshold_risk_score": 70})
-    return jsonify({"slack_webhook_url": notif.slack_webhook_url, "notify_on_block": notif.notify_on_block, "notify_on_critical": notif.notify_on_critical, "notify_threshold_risk_score": notif.notify_threshold_risk_score})
+        return jsonify({"slack_webhook_url": "", "notify_on_block": True, "notify_on_critical": False, "notify_threshold_risk_score": 70,
+                        "email_enabled": False, "email_address": "", "email_on_block": True, "email_on_critical": True, "email_digest": False})
+    return jsonify({
+        "slack_webhook_url": notif.slack_webhook_url, "notify_on_block": notif.notify_on_block,
+        "notify_on_critical": notif.notify_on_critical, "notify_threshold_risk_score": notif.notify_threshold_risk_score,
+        "email_enabled": notif.email_enabled or False, "email_address": notif.email_address or "",
+        "email_on_block": notif.email_on_block if notif.email_on_block is not None else True,
+        "email_on_critical": notif.email_on_critical if notif.email_on_critical is not None else True,
+        "email_digest": notif.email_digest or False,
+    })
 
 
 @app.route("/api/notifications/settings", methods=["PUT"])
@@ -1241,12 +1260,31 @@ def update_notification_settings():
         except (ValueError, TypeError):
             return jsonify({"error": "'notify_threshold_risk_score' must be an integer"}), 400
 
+    if "email_enabled" in data:
+        notif.email_enabled = bool(data["email_enabled"])
+    if "email_address" in data:
+        email_val = data["email_address"].strip()
+        if email_val and "@" not in email_val:
+            return jsonify({"error": "Invalid email address format"}), 400
+        notif.email_address = email_val
+    if "email_on_block" in data:
+        notif.email_on_block = bool(data["email_on_block"])
+    if "email_on_critical" in data:
+        notif.email_on_critical = bool(data["email_on_critical"])
+    if "email_digest" in data:
+        notif.email_digest = bool(data["email_digest"])
+
     db.session.commit()
     return jsonify({"status": "updated", "settings": {
         "slack_webhook_url": notif.slack_webhook_url,
         "notify_on_block": notif.notify_on_block,
         "notify_on_critical": notif.notify_on_critical,
         "notify_threshold_risk_score": notif.notify_threshold_risk_score,
+        "email_enabled": notif.email_enabled or False,
+        "email_address": notif.email_address or "",
+        "email_on_block": notif.email_on_block if notif.email_on_block is not None else True,
+        "email_on_critical": notif.email_on_critical if notif.email_on_critical is not None else True,
+        "email_digest": notif.email_digest or False,
     }})
 
 
@@ -1701,6 +1739,81 @@ def modify_vault_entry(entry_id):
     if not result:
         return jsonify({"error": "Vault entry not found"}), 404
     return jsonify({"entry": result})
+
+
+@app.route("/api/analytics/timeline", methods=["GET"])
+@require_login
+def analytics_timeline():
+    from sqlalchemy import func, cast, Date
+    tenant_id = get_current_tenant_id()
+    try:
+        days = max(1, min(365, int(request.args.get("days", 30))))
+    except (ValueError, TypeError):
+        days = 30
+
+    cutoff = datetime.utcnow() - __import__('datetime').timedelta(days=days)
+
+    query = AuditLogEntry.query.filter(AuditLogEntry.created_at >= cutoff)
+    if tenant_id:
+        query = query.filter_by(tenant_id=tenant_id)
+
+    rows = db.session.query(
+        cast(AuditLogEntry.created_at, Date).label("day"),
+        AuditLogEntry.status,
+        func.count().label("cnt")
+    ).filter(AuditLogEntry.created_at >= cutoff)
+    if tenant_id:
+        rows = rows.filter(AuditLogEntry.tenant_id == tenant_id)
+    rows = rows.group_by("day", AuditLogEntry.status).order_by("day").all()
+
+    timeline = {}
+    for row in rows:
+        d = row.day.isoformat() if row.day else "unknown"
+        if d not in timeline:
+            timeline[d] = {"date": d, "allowed": 0, "blocked": 0, "pending": 0, "total": 0}
+        if row.status in ("allowed", "approved", "auto-approved"):
+            timeline[d]["allowed"] += row.cnt
+        elif row.status in ("blocked", "denied", "blocked-sanitizer", "blocked-honeypot", "blocked-blast-radius", "blocked-catalog"):
+            timeline[d]["blocked"] += row.cnt
+        elif row.status == "pending":
+            timeline[d]["pending"] += row.cnt
+        timeline[d]["total"] += row.cnt
+
+    sorted_data = sorted(timeline.values(), key=lambda x: x["date"])
+
+    risk_rows = db.session.query(
+        cast(AuditLogEntry.created_at, Date).label("day"),
+        func.avg(AuditLogEntry.risk_score).label("avg_risk"),
+        func.max(AuditLogEntry.risk_score).label("max_risk")
+    ).filter(AuditLogEntry.created_at >= cutoff)
+    if tenant_id:
+        risk_rows = risk_rows.filter(AuditLogEntry.tenant_id == tenant_id)
+    risk_rows = risk_rows.group_by("day").order_by("day").all()
+
+    risk_timeline = []
+    for row in risk_rows:
+        risk_timeline.append({
+            "date": row.day.isoformat() if row.day else "unknown",
+            "avg_risk": round(float(row.avg_risk or 0), 1),
+            "max_risk": int(row.max_risk or 0),
+        })
+
+    top_tools = db.session.query(
+        AuditLogEntry.tool_name,
+        func.count().label("cnt")
+    ).filter(AuditLogEntry.created_at >= cutoff)
+    if tenant_id:
+        top_tools = top_tools.filter(AuditLogEntry.tenant_id == tenant_id)
+    top_tools = top_tools.group_by(AuditLogEntry.tool_name).order_by(func.count().desc()).limit(10).all()
+
+    tools_data = [{"tool_name": t.tool_name, "count": t.cnt} for t in top_tools]
+
+    return jsonify({
+        "timeline": sorted_data,
+        "risk_timeline": risk_timeline,
+        "top_tools": tools_data,
+        "days": days,
+    })
 
 
 if __name__ == "__main__":

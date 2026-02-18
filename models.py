@@ -271,6 +271,11 @@ class NotificationSetting(db.Model):
     notify_on_block = db.Column(db.Boolean, default=True)
     notify_on_critical = db.Column(db.Boolean, default=False)
     notify_threshold_risk_score = db.Column(db.Integer, default=70)
+    email_enabled = db.Column(db.Boolean, default=False)
+    email_address = db.Column(db.String, default='')
+    email_on_block = db.Column(db.Boolean, default=True)
+    email_on_critical = db.Column(db.Boolean, default=True)
+    email_digest = db.Column(db.Boolean, default=False)
 
 
 class UsageRecord(db.Model):
