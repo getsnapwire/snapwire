@@ -1183,7 +1183,10 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                     <span style="font-size:13px;">Enabled</span>
                 </div>
             </div>
-            <button onclick="saveBlastConfig()" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13px;">Save Settings</button>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:14px;">
+                <button onclick="saveBlastConfig()" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13px;">Save Settings</button>
+                <span style="font-size:12px;color:var(--text-secondary);">Recommended: 5 calls / 60s window for most setups. Increase for high-frequency agents.</span>
+            </div>
         </div>
 
         <div id="br-lockout-section" style="margin-bottom:20px;">

@@ -4,19 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agentic Firewall — AI Safety & Control Platform</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .lp-nav {
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --blue-50: #eff6ff;
+            --blue-100: #dbeafe;
+            --blue-500: #3b82f6;
+            --blue-600: #2563eb;
+            --blue-700: #1d4ed8;
+            --purple-50: #faf5ff;
+            --purple-500: #8b5cf6;
+            --purple-600: #7c3aed;
+            --green-50: #ecfdf5;
+            --green-500: #10b981;
+            --green-600: #059669;
+            --red-50: #fef2f2;
+            --red-500: #ef4444;
+            --amber-50: #fffbeb;
+            --amber-500: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--white);
+            color: var(--gray-900);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .nav {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 100;
-            background: rgba(15, 17, 23, 0.85);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--gray-200);
             padding: 0 32px;
             height: 64px;
             display: flex;
@@ -24,21 +62,21 @@
             justify-content: space-between;
         }
 
-        .lp-logo {
+        .nav-logo {
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 700;
-            color: var(--text-primary);
+            color: var(--gray-900);
             text-decoration: none;
         }
 
-        .lp-logo .shield-icon {
-            width: 28px;
-            height: 28px;
-            background: linear-gradient(135deg, var(--accent-red), var(--accent-purple));
-            border-radius: 7px;
+        .nav-logo .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--blue-600), var(--purple-600));
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -46,444 +84,487 @@
             color: white;
         }
 
-        .lp-nav-btn {
-            padding: 9px 22px;
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-600);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--gray-900);
+        }
+
+        .nav-btn {
+            padding: 8px 20px;
             border-radius: 8px;
             font-size: 14px;
             font-weight: 600;
             text-decoration: none;
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-            background: transparent;
-            transition: all 0.25s;
+            color: var(--white);
+            background: var(--gray-900);
+            transition: all 0.2s;
         }
 
-        .lp-nav-btn:hover {
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
-            background: rgba(77, 139, 255, 0.08);
+        .nav-btn:hover {
+            background: var(--gray-700);
         }
 
-        .lp-hero {
-            position: relative;
-            padding: 160px 32px 120px;
+        .hero {
+            padding: 140px 32px 100px;
             text-align: center;
+            background: linear-gradient(180deg, var(--white) 0%, var(--gray-50) 100%);
+            position: relative;
             overflow: hidden;
         }
 
-        .lp-hero::before {
+        .hero::before {
             content: '';
             position: absolute;
-            top: -200px;
+            top: 60px;
             left: 50%;
             transform: translateX(-50%);
             width: 800px;
             height: 800px;
-            background: radial-gradient(circle, rgba(77, 139, 255, 0.08) 0%, rgba(155, 109, 255, 0.04) 40%, transparent 70%);
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.03) 40%, transparent 70%);
             pointer-events: none;
         }
 
-        .lp-hero::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image:
-                linear-gradient(rgba(45, 49, 72, 0.08) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(45, 49, 72, 0.08) 1px, transparent 1px);
-            background-size: 60px 60px;
-            pointer-events: none;
-            mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, black 20%, transparent 100%);
-            -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, black 20%, transparent 100%);
-        }
-
-        .lp-hero-content {
+        .hero-content {
             position: relative;
             z-index: 1;
-            max-width: 720px;
+            max-width: 740px;
             margin: 0 auto;
         }
 
-        .lp-badge {
+        .hero-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
             padding: 6px 16px;
-            border-radius: 20px;
-            background: rgba(45, 212, 168, 0.1);
-            border: 1px solid rgba(45, 212, 168, 0.25);
-            color: var(--accent-green);
+            border-radius: 100px;
+            background: var(--blue-50);
+            border: 1px solid var(--blue-100);
+            color: var(--blue-600);
             font-size: 13px;
             font-weight: 600;
-            margin-bottom: 32px;
+            margin-bottom: 28px;
         }
 
-        .lp-badge-dot {
+        .hero-badge-dot {
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: var(--accent-green);
+            background: var(--green-500);
+            animation: pulse 2s ease-in-out infinite;
         }
 
-        .lp-h1 {
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .hero h1 {
             font-size: 56px;
             font-weight: 800;
-            line-height: 1.1;
+            line-height: 1.08;
             margin-bottom: 24px;
-            letter-spacing: -1.5px;
-            color: var(--text-primary);
+            letter-spacing: -2px;
+            color: var(--gray-900);
         }
 
-        .lp-h1 span {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--blue-600), var(--purple-500));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .lp-hero-sub {
+        .hero-sub {
             font-size: 19px;
             line-height: 1.7;
-            color: var(--text-secondary);
+            color: var(--gray-500);
             margin-bottom: 40px;
-            max-width: 560px;
+            max-width: 540px;
             margin-left: auto;
             margin-right: auto;
         }
 
-        .lp-cta-group {
+        .cta-group {
             display: flex;
-            gap: 16px;
+            gap: 12px;
             justify-content: center;
             align-items: center;
             flex-wrap: wrap;
         }
 
-        .lp-cta {
+        .cta {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 14px 32px;
+            padding: 14px 28px;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             text-decoration: none;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
-        .lp-cta-primary {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            color: white;
-            box-shadow: 0 4px 24px rgba(77, 139, 255, 0.3);
+        .cta-primary {
+            background: var(--gray-900);
+            color: var(--white);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
 
-        .lp-cta-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 32px rgba(77, 139, 255, 0.4);
+        .cta-primary:hover {
+            background: var(--gray-700);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
-        .lp-cta-secondary {
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
+        .cta-secondary {
+            color: var(--gray-600);
+            border: 1px solid var(--gray-300);
+            background: var(--white);
         }
 
-        .lp-cta-secondary:hover {
-            color: var(--text-primary);
-            border-color: rgba(255, 255, 255, 0.2);
+        .cta-secondary:hover {
+            color: var(--gray-900);
+            border-color: var(--gray-400);
+            background: var(--gray-50);
         }
 
-        .lp-section {
-            padding: 100px 32px;
-            max-width: 1120px;
+        .section {
+            padding: 96px 32px;
+            max-width: 1140px;
             margin: 0 auto;
         }
 
-        .lp-section-label {
+        .section-label {
             text-align: center;
             font-size: 13px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--accent-blue);
-            margin-bottom: 16px;
+            letter-spacing: 1.5px;
+            color: var(--blue-600);
+            margin-bottom: 12px;
         }
 
-        .lp-section-title {
+        .section-title {
             text-align: center;
             font-size: 36px;
             font-weight: 700;
             letter-spacing: -0.5px;
-            color: var(--text-primary);
+            color: var(--gray-900);
             margin-bottom: 16px;
         }
 
-        .lp-section-desc {
+        .section-desc {
             text-align: center;
             font-size: 17px;
-            color: var(--text-secondary);
+            color: var(--gray-500);
             max-width: 560px;
-            margin: 0 auto 60px;
-            line-height: 1.6;
+            margin: 0 auto 56px;
+            line-height: 1.7;
         }
 
-        .lp-steps {
+        .divider {
+            max-width: 1140px;
+            margin: 0 auto;
+            border: none;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .steps {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 32px;
+            gap: 40px;
             position: relative;
         }
 
-        .lp-steps::before {
+        .steps::before {
             content: '';
             position: absolute;
-            top: 44px;
+            top: 36px;
             left: 16.67%;
             right: 16.67%;
             height: 2px;
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-green));
-            opacity: 0.3;
+            background: linear-gradient(90deg, var(--blue-500), var(--purple-500), var(--green-500));
+            opacity: 0.2;
         }
 
-        .lp-step {
+        .step {
             text-align: center;
             position: relative;
         }
 
-        .lp-step-num {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
+        .step-num {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 20px;
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 800;
             position: relative;
             z-index: 1;
         }
 
-        .lp-step:nth-child(1) .lp-step-num {
-            background: rgba(77, 139, 255, 0.15);
-            color: var(--accent-blue);
-            border: 1px solid rgba(77, 139, 255, 0.3);
+        .step:nth-child(1) .step-num {
+            background: var(--blue-50);
+            color: var(--blue-600);
+            border: 1px solid var(--blue-100);
         }
 
-        .lp-step:nth-child(2) .lp-step-num {
-            background: rgba(155, 109, 255, 0.15);
-            color: var(--accent-purple);
-            border: 1px solid rgba(155, 109, 255, 0.3);
+        .step:nth-child(2) .step-num {
+            background: var(--purple-50);
+            color: var(--purple-600);
+            border: 1px solid rgba(139, 92, 246, 0.15);
         }
 
-        .lp-step:nth-child(3) .lp-step-num {
-            background: rgba(45, 212, 168, 0.15);
-            color: var(--accent-green);
-            border: 1px solid rgba(45, 212, 168, 0.3);
+        .step:nth-child(3) .step-num {
+            background: var(--green-50);
+            color: var(--green-600);
+            border: 1px solid rgba(16, 185, 129, 0.15);
         }
 
-        .lp-step-icon {
-            font-size: 20px;
-            margin-bottom: 2px;
-        }
-
-        .lp-step h3 {
-            font-size: 20px;
+        .step h3 {
+            font-size: 18px;
             font-weight: 700;
-            margin-bottom: 10px;
-            color: var(--text-primary);
+            margin-bottom: 8px;
+            color: var(--gray-900);
         }
 
-        .lp-step p {
+        .step p {
             font-size: 15px;
-            color: var(--text-secondary);
+            color: var(--gray-500);
             line-height: 1.6;
         }
 
-        .lp-features {
+        .features {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px;
         }
 
-        .lp-feature-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 32px;
-            transition: all 0.3s;
+        .feature-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 14px;
+            padding: 28px;
+            transition: all 0.25s;
         }
 
-        .lp-feature-card:hover {
-            border-color: rgba(77, 139, 255, 0.3);
+        .feature-card:hover {
+            border-color: var(--gray-300);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
             transform: translateY(-2px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
-        .lp-feature-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+        .feature-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             font-size: 20px;
         }
 
-        .lp-feature-card:nth-child(1) .lp-feature-icon {
-            background: rgba(77, 139, 255, 0.12);
-            color: var(--accent-blue);
-            border: 1px solid rgba(77, 139, 255, 0.2);
-        }
+        .feature-card:nth-child(1) .feature-icon { background: var(--blue-50); color: var(--blue-600); }
+        .feature-card:nth-child(2) .feature-icon { background: var(--purple-50); color: var(--purple-600); }
+        .feature-card:nth-child(3) .feature-icon { background: var(--green-50); color: var(--green-600); }
+        .feature-card:nth-child(4) .feature-icon { background: var(--amber-50); color: var(--amber-500); }
+        .feature-card:nth-child(5) .feature-icon { background: var(--red-50); color: var(--red-500); }
+        .feature-card:nth-child(6) .feature-icon { background: rgba(139, 92, 246, 0.06); color: var(--purple-500); }
 
-        .lp-feature-card:nth-child(2) .lp-feature-icon {
-            background: rgba(155, 109, 255, 0.12);
-            color: var(--accent-purple);
-            border: 1px solid rgba(155, 109, 255, 0.2);
-        }
-
-        .lp-feature-card:nth-child(3) .lp-feature-icon {
-            background: rgba(45, 212, 168, 0.12);
-            color: var(--accent-green);
-            border: 1px solid rgba(45, 212, 168, 0.2);
-        }
-
-        .lp-feature-card:nth-child(4) .lp-feature-icon {
-            background: rgba(255, 184, 77, 0.12);
-            color: var(--accent-yellow);
-            border: 1px solid rgba(255, 184, 77, 0.2);
-        }
-
-        .lp-feature-card h3 {
-            font-size: 18px;
+        .feature-card h3 {
+            font-size: 16px;
             font-weight: 700;
-            margin-bottom: 10px;
-            color: var(--text-primary);
+            margin-bottom: 8px;
+            color: var(--gray-900);
         }
 
-        .lp-feature-card p {
-            font-size: 15px;
-            color: var(--text-secondary);
-            line-height: 1.6;
+        .feature-card p {
+            font-size: 14px;
+            color: var(--gray-500);
+            line-height: 1.65;
         }
 
-        .lp-why {
+        .why-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 32px;
+            gap: 24px;
         }
 
-        .lp-why-card {
+        .why-card {
             text-align: center;
             padding: 40px 24px;
-            border-radius: 16px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
         }
 
-        .lp-why-icon {
-            width: 56px;
-            height: 56px;
+        .why-icon {
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 24px;
+            margin: 0 auto 18px;
+            font-size: 22px;
         }
 
-        .lp-why-card:nth-child(1) .lp-why-icon {
-            background: rgba(45, 212, 168, 0.12);
-            color: var(--accent-green);
-        }
+        .why-card:nth-child(1) .why-icon { background: var(--green-50); color: var(--green-600); }
+        .why-card:nth-child(2) .why-icon { background: var(--blue-50); color: var(--blue-600); }
+        .why-card:nth-child(3) .why-icon { background: var(--amber-50); color: var(--amber-500); }
 
-        .lp-why-card:nth-child(2) .lp-why-icon {
-            background: rgba(77, 139, 255, 0.12);
-            color: var(--accent-blue);
-        }
-
-        .lp-why-card:nth-child(3) .lp-why-icon {
-            background: rgba(255, 184, 77, 0.12);
-            color: var(--accent-yellow);
-        }
-
-        .lp-why-card h3 {
-            font-size: 18px;
+        .why-card h3 {
+            font-size: 17px;
             font-weight: 700;
-            margin-bottom: 10px;
-            color: var(--text-primary);
+            margin-bottom: 8px;
+            color: var(--gray-900);
         }
 
-        .lp-why-card p {
+        .why-card p {
             font-size: 14px;
-            color: var(--text-secondary);
+            color: var(--gray-500);
             line-height: 1.7;
         }
 
-        .lp-final-cta {
-            text-align: center;
-            padding: 100px 32px;
-            position: relative;
+        .faq-section {
+            background: var(--gray-50);
+        }
+
+        .faq-list {
+            max-width: 720px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .faq-item {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
             overflow: hidden;
         }
 
-        .lp-final-cta::before {
-            content: '';
-            position: absolute;
-            bottom: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(155, 109, 255, 0.06) 0%, rgba(77, 139, 255, 0.03) 40%, transparent 70%);
-            pointer-events: none;
+        .faq-question {
+            width: 100%;
+            padding: 18px 24px;
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-900);
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
         }
 
-        .lp-final-cta-content {
-            position: relative;
-            z-index: 1;
+        .faq-question:hover {
+            background: var(--gray-50);
         }
 
-        .lp-final-cta h2 {
-            font-size: 40px;
+        .faq-arrow {
+            font-size: 12px;
+            color: var(--gray-400);
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        .faq-item.open .faq-arrow {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .faq-answer-inner {
+            padding: 0 24px 18px;
+            font-size: 14px;
+            color: var(--gray-500);
+            line-height: 1.7;
+        }
+
+        .faq-item.open .faq-answer {
+            max-height: 300px;
+        }
+
+        .final-cta {
+            text-align: center;
+            padding: 96px 32px;
+            background: var(--gray-900);
+            color: var(--white);
+        }
+
+        .final-cta h2 {
+            font-size: 38px;
             font-weight: 800;
             margin-bottom: 16px;
             letter-spacing: -0.5px;
-            color: var(--text-primary);
         }
 
-        .lp-final-cta p {
+        .final-cta p {
             font-size: 17px;
-            color: var(--text-secondary);
-            margin-bottom: 36px;
+            color: var(--gray-400);
+            margin-bottom: 32px;
             max-width: 480px;
             margin-left: auto;
             margin-right: auto;
-            line-height: 1.6;
+            line-height: 1.7;
         }
 
-        .lp-footer {
-            border-top: 1px solid var(--border);
+        .final-cta .cta-primary {
+            background: var(--white);
+            color: var(--gray-900);
+        }
+
+        .final-cta .cta-primary:hover {
+            background: var(--gray-100);
+        }
+
+        .footer {
+            border-top: 1px solid var(--gray-200);
             padding: 32px;
             text-align: center;
+            background: var(--white);
         }
 
-        .lp-footer-brand {
+        .footer-brand {
             display: inline-flex;
             align-items: center;
             gap: 8px;
             font-size: 14px;
             font-weight: 600;
-            color: var(--text-secondary);
+            color: var(--gray-500);
             margin-bottom: 8px;
         }
 
-        .lp-footer-brand .shield-icon-sm {
+        .footer-brand .logo-sm {
             width: 20px;
             height: 20px;
-            background: linear-gradient(135deg, var(--accent-red), var(--accent-purple));
+            background: linear-gradient(135deg, var(--blue-600), var(--purple-600));
             border-radius: 5px;
             display: inline-flex;
             align-items: center;
@@ -492,220 +573,257 @@
             color: white;
         }
 
-        .lp-footer p {
+        .footer p {
             font-size: 13px;
-            color: var(--text-secondary);
-            opacity: 0.5;
-        }
-
-        .lp-divider {
-            max-width: 1120px;
-            margin: 0 auto;
-            border: none;
-            border-top: 1px solid var(--border);
+            color: var(--gray-400);
         }
 
         @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(30px); }
+            from { opacity: 0; transform: translateY(24px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .lp-animate {
-            animation: fadeUp 0.7s ease forwards;
-        }
-
-        .lp-animate-delay-1 { animation-delay: 0.1s; opacity: 0; }
-        .lp-animate-delay-2 { animation-delay: 0.2s; opacity: 0; }
-        .lp-animate-delay-3 { animation-delay: 0.3s; opacity: 0; }
-        .lp-animate-delay-4 { animation-delay: 0.4s; opacity: 0; }
+        .animate { animation: fadeUp 0.6s ease forwards; }
+        .animate-d1 { animation-delay: 0.1s; opacity: 0; }
+        .animate-d2 { animation-delay: 0.2s; opacity: 0; }
+        .animate-d3 { animation-delay: 0.3s; opacity: 0; }
 
         @media (max-width: 768px) {
-            .lp-hero {
-                padding: 120px 20px 80px;
-            }
+            .hero { padding: 120px 20px 80px; }
+            .hero h1 { font-size: 36px; letter-spacing: -1px; }
+            .hero-sub { font-size: 16px; }
+            .section { padding: 64px 20px; }
+            .section-title { font-size: 28px; }
+            .steps { grid-template-columns: 1fr; gap: 32px; }
+            .steps::before { display: none; }
+            .features { grid-template-columns: 1fr; }
+            .why-grid { grid-template-columns: 1fr; }
+            .final-cta h2 { font-size: 28px; }
+            .nav { padding: 0 16px; }
+            .nav-links a:not(.nav-btn) { display: none; }
+            .cta-secondary { display: none; }
+        }
 
-            .lp-h1 {
-                font-size: 36px;
-                letter-spacing: -1px;
-            }
-
-            .lp-hero-sub {
-                font-size: 16px;
-            }
-
-            .lp-section {
-                padding: 60px 20px;
-            }
-
-            .lp-section-title {
-                font-size: 28px;
-            }
-
-            .lp-steps {
-                grid-template-columns: 1fr;
-                gap: 40px;
-            }
-
-            .lp-steps::before {
-                display: none;
-            }
-
-            .lp-features {
-                grid-template-columns: 1fr;
-            }
-
-            .lp-why {
-                grid-template-columns: 1fr;
-                gap: 16px;
-            }
-
-            .lp-final-cta h2 {
-                font-size: 28px;
-            }
-
-            .lp-nav {
-                padding: 0 16px;
-            }
-
-            .lp-cta-secondary {
-                display: none;
-            }
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .features { grid-template-columns: repeat(2, 1fr); }
         }
 
         @media (max-width: 480px) {
-            .lp-h1 {
-                font-size: 28px;
-            }
-
-            .lp-feature-card {
-                padding: 24px;
-            }
+            .hero h1 { font-size: 28px; }
+            .feature-card { padding: 20px; }
         }
     </style>
 </head>
 <body>
-    <nav class="lp-nav">
-        <a href="/" class="lp-logo">
-            <span class="shield-icon">&#x26E8;</span>
+    <nav class="nav">
+        <a href="/" class="nav-logo">
+            <span class="logo-icon">&#x1F6E1;</span>
             Agentic Firewall
         </a>
-        <a href="{{ login_url }}" class="lp-nav-btn">Sign In</a>
+        <div class="nav-links">
+            <a href="#how-it-works">How It Works</a>
+            <a href="#features">Features</a>
+            <a href="#faq">FAQ</a>
+            <a href="{{ login_url }}" class="nav-btn">Sign In</a>
+        </div>
     </nav>
 
-    <section class="lp-hero">
-        <div class="lp-hero-content">
-            <div class="lp-badge lp-animate">
-                <span class="lp-badge-dot"></span>
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge animate">
+                <span class="hero-badge-dot"></span>
                 AI Safety Platform
             </div>
-            <h1 class="lp-h1 lp-animate lp-animate-delay-1">Your AI agents.<br><span>Your rules.</span></h1>
-            <p class="lp-hero-sub lp-animate lp-animate-delay-2">
+            <h1 class="animate animate-d1">Your AI agents.<br><span>Your rules.</span></h1>
+            <p class="hero-sub animate animate-d2">
                 Monitor, audit, and control every action your AI agents take. Define constitutional rules, enforce compliance, and keep humans in the loop.
             </p>
-            <div class="lp-cta-group lp-animate lp-animate-delay-3">
-                <a href="{{ login_url }}" class="lp-cta lp-cta-primary">
-                    Get Started
-                    <span>&rarr;</span>
+            <div class="cta-group animate animate-d3">
+                <a href="{{ login_url }}" class="cta cta-primary">
+                    Get Started <span>&rarr;</span>
                 </a>
-                <a href="#how-it-works" class="lp-cta lp-cta-secondary">See How It Works</a>
+                <a href="#how-it-works" class="cta cta-secondary">See How It Works</a>
             </div>
         </div>
     </section>
 
-    <hr class="lp-divider">
+    <hr class="divider">
 
-    <section id="how-it-works" class="lp-section">
-        <p class="lp-section-label">How It Works</p>
-        <h2 class="lp-section-title">Three layers of protection</h2>
-        <p class="lp-section-desc">Every action your AI agents attempt passes through a structured review process before execution.</p>
-        <div class="lp-steps">
-            <div class="lp-step">
-                <div class="lp-step-num">1</div>
+    <section id="how-it-works" class="section">
+        <p class="section-label">How It Works</p>
+        <h2 class="section-title">Three layers of protection</h2>
+        <p class="section-desc">Every action your AI agents attempt passes through a structured review process before execution.</p>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
                 <h3>Intercept</h3>
                 <p>Every AI-initiated action is captured in real time before it reaches external systems or makes any changes.</p>
             </div>
-            <div class="lp-step">
-                <div class="lp-step-num">2</div>
+            <div class="step">
+                <div class="step-num">2</div>
                 <h3>Audit</h3>
                 <p>Each action is evaluated against your constitutional rules, checking for policy violations and risk levels.</p>
             </div>
-            <div class="lp-step">
-                <div class="lp-step-num">3</div>
+            <div class="step">
+                <div class="step-num">3</div>
                 <h3>Approve</h3>
                 <p>High-risk actions are held for human review. You decide what gets through and what gets blocked.</p>
             </div>
         </div>
     </section>
 
-    <hr class="lp-divider">
+    <hr class="divider">
 
-    <section class="lp-section">
-        <p class="lp-section-label">Features</p>
-        <h2 class="lp-section-title">Everything you need to govern AI</h2>
-        <p class="lp-section-desc">A complete toolkit for organizations deploying autonomous AI agents in production.</p>
-        <div class="lp-features">
-            <div class="lp-feature-card">
-                <div class="lp-feature-icon">&#x25C9;</div>
+    <section id="features" class="section">
+        <p class="section-label">Features</p>
+        <h2 class="section-title">Everything you need to govern AI</h2>
+        <p class="section-desc">A complete toolkit for organizations deploying autonomous AI agents in production.</p>
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">&#x25C9;</div>
                 <h3>Real-Time Monitoring</h3>
                 <p>Watch every agent action as it happens. Live dashboard shows pending, approved, and blocked actions with full context and risk scores.</p>
             </div>
-            <div class="lp-feature-card">
-                <div class="lp-feature-icon">&#x2696;</div>
+            <div class="feature-card">
+                <div class="feature-icon">&#x2696;</div>
                 <h3>Constitutional Rules Engine</h3>
                 <p>Define your organization's AI constitution with granular rules. Set boundaries on what agents can and cannot do, with configurable severity levels.</p>
             </div>
-            <div class="lp-feature-card">
-                <div class="lp-feature-icon">&#x2714;</div>
-                <h3>Human-in-the-Loop Approval</h3>
-                <p>High-risk actions automatically pause for human review. Approve or deny with a single click, with full audit context at your fingertips.</p>
+            <div class="feature-card">
+                <div class="feature-icon">&#x1F6E1;</div>
+                <h3>Tool Safety Catalog</h3>
+                <p>Every tool is automatically graded A through F by AI. Unsafe tools are auto-blocked, safe tools are fast-tracked, and you control everything in between.</p>
             </div>
-            <div class="lp-feature-card">
-                <div class="lp-feature-icon">&#x2630;</div>
-                <h3>Complete Audit Trail</h3>
-                <p>Every action, decision, and rule evaluation is logged immutably. Generate compliance reports and trace any action back to its source.</p>
+            <div class="feature-card">
+                <div class="feature-icon">&#x26A0;</div>
+                <h3>Blast Radius Governor</h3>
+                <p>Automatic rate limiting stops runaway agents. If an agent makes too many calls too fast, it's locked out instantly to prevent damage.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#x1F3AF;</div>
+                <h3>Honeypot Tripwires</h3>
+                <p>Plant fake "decoy" tools that no legitimate agent should ever call. If one triggers, you know there's a breach and the API key is auto-locked.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#x1F510;</div>
+                <h3>Identity Vault</h3>
+                <p>Securely inject credentials into approved tool calls. Your agents never see or store raw API keys, reducing your attack surface.</p>
             </div>
         </div>
     </section>
 
-    <hr class="lp-divider">
+    <hr class="divider">
 
-    <section class="lp-section">
-        <p class="lp-section-label">Why It Matters</p>
-        <h2 class="lp-section-title">Deploy AI agents with confidence</h2>
-        <p class="lp-section-desc">As AI agents become more autonomous, the need for governance and control becomes critical.</p>
-        <div class="lp-why">
-            <div class="lp-why-card">
-                <div class="lp-why-icon">&#x2693;</div>
+    <section class="section">
+        <p class="section-label">Why It Matters</p>
+        <h2 class="section-title">Deploy AI agents with confidence</h2>
+        <p class="section-desc">As AI agents become more autonomous, the need for governance and control becomes critical.</p>
+        <div class="why-grid">
+            <div class="why-card">
+                <div class="why-icon">&#x2693;</div>
                 <h3>Build Trust</h3>
                 <p>Demonstrate to stakeholders that your AI systems operate within defined boundaries with transparent oversight and accountability.</p>
             </div>
-            <div class="lp-why-card">
-                <div class="lp-why-icon">&#x2731;</div>
+            <div class="why-card">
+                <div class="why-icon">&#x2731;</div>
                 <h3>Ensure Safety</h3>
                 <p>Prevent unintended consequences by catching risky actions before they execute. Define guardrails that evolve with your needs.</p>
             </div>
-            <div class="lp-why-card">
-                <div class="lp-why-icon">&#x2637;</div>
+            <div class="why-card">
+                <div class="why-icon">&#x2637;</div>
                 <h3>Stay Compliant</h3>
                 <p>Meet regulatory requirements with comprehensive audit logs, policy enforcement, and documented human oversight of AI decisions.</p>
             </div>
         </div>
     </section>
 
-    <section class="lp-final-cta">
-        <div class="lp-final-cta-content">
-            <h2>Ready to take control?</h2>
-            <p>Start governing your AI agents today. Set up your firewall in minutes and gain full visibility into every action.</p>
-            <a href="{{ login_url }}" class="lp-cta lp-cta-primary">
-                Get Started
-                <span>&rarr;</span>
-            </a>
+    <hr class="divider">
+
+    <section id="faq" class="section faq-section">
+        <p class="section-label">FAQ</p>
+        <h2 class="section-title">Frequently asked questions</h2>
+        <p class="section-desc">Everything you need to know about the Agentic Firewall.</p>
+        <div class="faq-list">
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    What is the Agentic Firewall?
+                    <span class="faq-arrow">&#x25BC;</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        The Agentic Firewall sits between your AI agents and the tools they use. Before any agent can send an email, modify a file, call an API, or take any action, the firewall intercepts it, checks it against your rules, and either approves it automatically or holds it for your review. Think of it like an approval workflow for everything your AI does.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    How do I integrate it with my AI agents?
+                    <span class="faq-arrow">&#x25BC;</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        You generate an API key from the dashboard, then send a simple POST request to the /api/intercept endpoint before each tool call your agent makes. The firewall responds with "allowed", "blocked", or "pending" so your agent knows whether to proceed. It takes about 5 minutes to integrate with any agent framework.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    What are constitutional rules?
+                    <span class="faq-arrow">&#x25BC;</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Constitutional rules are the policies you define for what your AI agents can and cannot do. For example: "Never delete production databases", "Don't send emails to external addresses without approval", or "Block any file modifications over 10 files at once". You can write them in plain English and the AI auditor evaluates every action against them.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    What happens when an action is blocked?
+                    <span class="faq-arrow">&#x25BC;</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Blocked actions go into a review queue where you (or your team) can approve or deny them with a single click. You get browser notifications and optional Slack alerts when something needs your attention. If no one reviews an action within 30 minutes, it's automatically denied as a safety measure.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    Can I use it with a team?
+                    <span class="faq-arrow">&#x25BC;</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Yes. Every user gets their own personal workspace, and you can create organizations to share rules, API keys, and review queues with your team. Organizations support roles (owner, admin, member) so you can control who can change rules and who can only view the dashboard.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    What's the Tool Safety Catalog?
+                    <span class="faq-arrow">&#x25BC;</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Every tool your agents use is automatically tracked and graded from A (safe, read-only) to F (dangerous, destructive). The firewall uses AI to assign these grades based on what the tool does. You can override grades, auto-block F-rated tools, and fast-track A/B-rated tools for automatic approval.
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
-    <footer class="lp-footer">
-        <div class="lp-footer-brand">
-            <span class="shield-icon-sm">&#x26E8;</span>
+    <section class="final-cta">
+        <h2>Ready to take control?</h2>
+        <p>Start governing your AI agents today. Set up your firewall in minutes and gain full visibility into every action.</p>
+        <a href="{{ login_url }}" class="cta cta-primary">
+            Get Started <span>&rarr;</span>
+        </a>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-brand">
+            <span class="logo-sm">&#x1F6E1;</span>
             Agentic Firewall
         </div>
         <p>AI safety and governance platform</p>
@@ -721,6 +839,11 @@
                 }
             });
         });
+
+        function toggleFaq(btn) {
+            const item = btn.parentElement;
+            item.classList.toggle('open');
+        }
     </script>
 </body>
 </html>
