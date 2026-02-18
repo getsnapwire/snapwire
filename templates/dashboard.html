@@ -466,6 +466,9 @@
             {% if user and user.role == 'admin' %}
             <button class="tab" data-tab="settings" data-tooltip="Rate limits and webhook configuration" data-tooltip-pos="bottom">Settings</button>
             <button class="tab" data-tab="admin" data-tooltip="Manage users, roles, and access controls" data-tooltip-pos="bottom">Admin</button>
+            <button class="tab" data-tab="catalog" data-tooltip="View and manage the tool safety catalog" data-tooltip-pos="bottom">Tool Catalog</button>
+            <button class="tab" data-tab="vault" data-tooltip="Manage credential vault for secure tool access" data-tooltip-pos="bottom">Identity Vault</button>
+            <button class="tab" data-tab="honeypots" data-tooltip="Set up honeypot decoy tools to detect breaches" data-tooltip-pos="bottom">Honeypots</button>
             {% endif %}
             <button class="tab" data-tab="org" data-tooltip="Manage your organization members and settings" data-tooltip-pos="bottom">Organization</button>
             <button class="tab" data-tab="account" data-tooltip="Your account settings and usage stats" data-tooltip-pos="bottom">Account</button>
@@ -1098,6 +1101,83 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
         </div>
     </div>
 
+    <div id="panel-catalog" class="panel">
+        <h3 style="margin-bottom:16px;">Tool Safe Catalog</h3>
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Every tool an agent uses is tracked here with a safety grade. Unknown tools are auto-graded by AI. Only approved A/B-grade tools can be auto-approved.</p>
+        <div id="catalog-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        <div id="catalog-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No tools in catalog yet. Tools appear here when agents use them.</div>
+    </div>
+
+    <div id="panel-vault" class="panel">
+        <h3 style="margin-bottom:16px;">Identity Vault</h3>
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Map tools to secret keys stored in Replit Secrets. When a tool call is approved, the firewall injects the real credential — the agent never sees the raw key.</p>
+        <div style="margin-bottom:16px;">
+            <button onclick="showAddVaultModal()" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">+ Add Vault Entry</button>
+        </div>
+        <div id="vault-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        <div id="vault-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No vault entries configured. Add tool-to-secret mappings above.</div>
+    </div>
+
+    <div id="panel-honeypots" class="panel">
+        <h3 style="margin-bottom:16px;">Honeypot Tripwires</h3>
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Create fake "decoy" tools. If any agent tries to call one, it's a sign of a breach — the API key is automatically locked and you get an alert.</p>
+        <div style="margin-bottom:16px;">
+            <button onclick="showAddHoneypotModal()" style="background:var(--accent-red);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">+ Add Honeypot</button>
+        </div>
+        <div id="honeypot-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        <h4 style="margin-top:24px;margin-bottom:12px;color:var(--text-secondary);font-size:14px;">Recent Alerts</h4>
+        <div id="honeypot-alerts" style="display:flex;flex-direction:column;gap:8px;"></div>
+        <div id="honeypot-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No honeypots configured yet.</div>
+    </div>
+
+    <div id="add-vault-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:450px;width:90%;">
+            <h3 style="margin-bottom:16px;">Add Vault Entry</h3>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Tool Name</label>
+                <input type="text" id="vault-tool-name" placeholder="e.g. send_email" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Secret Key Name (from Replit Secrets)</label>
+                <input type="text" id="vault-secret-key" placeholder="e.g. GMAIL_API_KEY" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Header Name</label>
+                <input type="text" id="vault-header-name" value="Authorization" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Header Prefix</label>
+                <input type="text" id="vault-header-prefix" value="Bearer " style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button onclick="hideAddVaultModal()" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:8px 16px;border-radius:8px;cursor:pointer;">Cancel</button>
+                <button onclick="addVaultEntry()" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-honeypot-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:450px;width:90%;">
+            <h3 style="margin-bottom:16px;">Add Honeypot Tripwire</h3>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Fake Tool Name</label>
+                <input type="text" id="honeypot-tool-name" placeholder="e.g. admin_emergency_reset" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Description (visible to you)</label>
+                <input type="text" id="honeypot-description" placeholder="Decoy admin tool" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Alert Message</label>
+                <input type="text" id="honeypot-alert-msg" placeholder="BREACH: Agent attempted to call admin tool" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button onclick="hideAddHoneypotModal()" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:8px 16px;border-radius:8px;cursor:pointer;">Cancel</button>
+                <button onclick="addHoneypot()" style="background:var(--accent-red);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;">Add Honeypot</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const POLL_INTERVAL = 5000;
         const CURRENT_USER_ID = '{{ user.id }}';
@@ -1118,6 +1198,9 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                 document.getElementById('panel-' + tabName).classList.add('active');
                 if (tabName === 'org') loadOrgPanel();
                 if (tabName === 'account') loadAccountPanel();
+                if (tabName === 'catalog') loadCatalog();
+                if (tabName === 'vault') loadVault();
+                if (tabName === 'honeypots') loadHoneypots();
             });
         });
 
@@ -2952,6 +3035,155 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                 });
                 alert('Display name saved!');
             } catch(e) { alert('Failed to save'); }
+        }
+
+        // === TOOL CATALOG ===
+        async function loadCatalog() {
+            try {
+                const resp = await fetch('/api/catalog');
+                const data = await resp.json();
+                const list = document.getElementById('catalog-list');
+                const empty = document.getElementById('catalog-empty');
+                if (!data.catalog || data.catalog.length === 0) {
+                    list.innerHTML = '';
+                    empty.style.display = 'block';
+                    return;
+                }
+                empty.style.display = 'none';
+                const gradeColors = {A:'var(--accent-green)',B:'#6fcf97',C:'var(--accent-yellow)',D:'var(--accent-red)',F:'#ff4444',U:'var(--text-secondary)'};
+                list.innerHTML = data.catalog.map(t => `
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:14px;">
+                        <div style="width:36px;height:36px;border-radius:8px;background:${gradeColors[t.safety_grade]||'var(--bg-secondary)'};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;">${t.safety_grade}</div>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:14px;font-family:'Fira Code',monospace;">${t.tool_name}</div>
+                            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Status: <span style="color:${t.status==='approved'?'var(--accent-green)':t.status==='blocked'?'var(--accent-red)':'var(--accent-yellow)'}">${t.status}</span> | Calls: ${t.call_count} | First seen: ${t.first_seen ? new Date(t.first_seen).toLocaleDateString() : 'N/A'}</div>
+                            ${t.description ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${t.description}</div>` : ''}
+                        </div>
+                        <div style="display:flex;gap:6px;">
+                            <button onclick="updateCatalogTool(${t.id},'approved')" style="background:var(--accent-green);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;" title="Approve">Approve</button>
+                            <button onclick="updateCatalogTool(${t.id},'blocked')" style="background:var(--accent-red);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;" title="Block">Block</button>
+                            <button onclick="regradeCatalogTool(${t.id})" style="background:var(--accent-blue);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;" title="Re-grade with AI">Re-grade</button>
+                            <button onclick="deleteCatalogTool(${t.id})" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-secondary);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) { console.error('Failed to load catalog', e); }
+        }
+        async function updateCatalogTool(id, status) {
+            await fetch(`/api/catalog/${id}/status`, {method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
+            loadCatalog();
+        }
+        async function regradeCatalogTool(id) {
+            await fetch(`/api/catalog/${id}/regrade`, {method:'POST'});
+            loadCatalog();
+        }
+        async function deleteCatalogTool(id) {
+            if (!confirm('Remove this tool from the catalog?')) return;
+            await fetch(`/api/catalog/${id}`, {method:'DELETE'});
+            loadCatalog();
+        }
+
+        // === IDENTITY VAULT ===
+        function showAddVaultModal() { document.getElementById('add-vault-modal').style.display = 'flex'; }
+        function hideAddVaultModal() { document.getElementById('add-vault-modal').style.display = 'none'; }
+        async function loadVault() {
+            try {
+                const resp = await fetch('/api/vault');
+                const data = await resp.json();
+                const list = document.getElementById('vault-list');
+                const empty = document.getElementById('vault-empty');
+                if (!data.entries || data.entries.length === 0) {
+                    list.innerHTML = '';
+                    empty.style.display = 'block';
+                    return;
+                }
+                empty.style.display = 'none';
+                list.innerHTML = data.entries.map(e => `
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:14px;">
+                        <div style="font-size:20px;">&#128274;</div>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:14px;font-family:'Fira Code',monospace;">${e.tool_name}</div>
+                            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Secret: ${e.secret_key_name} ${e.secret_exists ? '<span style="color:var(--accent-green);">(configured)</span>' : '<span style="color:var(--accent-red);">(missing)</span>'}</div>
+                            <div style="font-size:12px;color:var(--text-secondary);">Header: ${e.header_name}: ${e.header_prefix}***</div>
+                        </div>
+                        <button onclick="deleteVaultEntry(${e.id})" style="background:var(--accent-red);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;">Remove</button>
+                    </div>
+                `).join('');
+            } catch(e) { console.error('Failed to load vault', e); }
+        }
+        async function addVaultEntry() {
+            const tool_name = document.getElementById('vault-tool-name').value.trim();
+            const secret_key = document.getElementById('vault-secret-key').value.trim();
+            const header_name = document.getElementById('vault-header-name').value.trim();
+            const header_prefix = document.getElementById('vault-header-prefix').value;
+            if (!tool_name || !secret_key) return alert('Tool name and secret key are required');
+            const resp = await fetch('/api/vault', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool_name,secret_key,header_name,header_prefix})});
+            if (resp.ok) { hideAddVaultModal(); loadVault(); } else { const d = await resp.json(); alert(d.error || 'Failed'); }
+        }
+        async function deleteVaultEntry(id) {
+            if (!confirm('Remove this vault entry?')) return;
+            await fetch(`/api/vault/${id}`, {method:'DELETE'});
+            loadVault();
+        }
+
+        // === HONEYPOTS ===
+        function showAddHoneypotModal() { document.getElementById('add-honeypot-modal').style.display = 'flex'; }
+        function hideAddHoneypotModal() { document.getElementById('add-honeypot-modal').style.display = 'none'; }
+        async function loadHoneypots() {
+            try {
+                const resp = await fetch('/api/honeypots');
+                const data = await resp.json();
+                const list = document.getElementById('honeypot-list');
+                const empty = document.getElementById('honeypot-empty');
+                if (!data.honeypots || data.honeypots.length === 0) {
+                    list.innerHTML = '';
+                    empty.style.display = 'block';
+                } else {
+                    empty.style.display = 'none';
+                    list.innerHTML = data.honeypots.map(h => `
+                        <div style="background:var(--bg-card);border:1px solid ${h.is_active?'var(--accent-red)':'var(--border)'};border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:14px;">
+                            <div style="font-size:20px;">${h.is_active ? '&#127909;' : '&#9940;'}</div>
+                            <div style="flex:1;">
+                                <div style="font-weight:600;font-size:14px;font-family:'Fira Code',monospace;">${h.tool_name}</div>
+                                <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${h.description || ''}</div>
+                                <div style="font-size:12px;color:var(--text-secondary);">Triggers: ${h.trigger_count} ${h.last_triggered_at ? '| Last: '+new Date(h.last_triggered_at).toLocaleString() : ''}</div>
+                            </div>
+                            <button onclick="toggleHoneypot(${h.id})" style="background:${h.is_active?'var(--accent-yellow)':'var(--accent-green)'};border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;">${h.is_active?'Disable':'Enable'}</button>
+                            <button onclick="deleteHoneypotItem(${h.id})" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-secondary);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;">Delete</button>
+                        </div>
+                    `).join('');
+                }
+                const alertResp = await fetch('/api/honeypots/alerts');
+                const alertData = await alertResp.json();
+                const alertsDiv = document.getElementById('honeypot-alerts');
+                if (alertData.alerts && alertData.alerts.length > 0) {
+                    alertsDiv.innerHTML = alertData.alerts.map(a => `
+                        <div style="background:rgba(255,77,77,0.08);border:1px solid rgba(255,77,77,0.3);border-radius:10px;padding:12px 16px;">
+                            <div style="font-weight:600;color:var(--accent-red);font-size:13px;">BREACH ALERT: ${a.honeypot_tool_name}</div>
+                            <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Agent: ${a.agent_id} | API Key Locked: ${a.api_key_locked?'Yes':'No'} | ${new Date(a.triggered_at).toLocaleString()}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    alertsDiv.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;">No alerts triggered. Good news!</div>';
+                }
+            } catch(e) { console.error('Failed to load honeypots', e); }
+        }
+        async function addHoneypot() {
+            const tool_name = document.getElementById('honeypot-tool-name').value.trim();
+            const description = document.getElementById('honeypot-description').value.trim();
+            const alert_message = document.getElementById('honeypot-alert-msg').value.trim();
+            if (!tool_name) return alert('Tool name is required');
+            const resp = await fetch('/api/honeypots', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool_name,description,alert_message})});
+            if (resp.ok) { hideAddHoneypotModal(); loadHoneypots(); } else { const d = await resp.json(); alert(d.error || 'Failed'); }
+        }
+        async function toggleHoneypot(id) {
+            await fetch(`/api/honeypots/${id}/toggle`, {method:'PATCH'});
+            loadHoneypots();
+        }
+        async function deleteHoneypotItem(id) {
+            if (!confirm('Delete this honeypot?')) return;
+            await fetch(`/api/honeypots/${id}`, {method:'DELETE'});
+            loadHoneypots();
         }
     </script>
 </body>

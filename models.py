@@ -280,3 +280,131 @@ class UsageRecord(db.Model):
     month = db.Column(db.String, nullable=False)
     api_calls = db.Column(db.Integer, default=0)
     __table_args__ = (UniqueConstraint('tenant_id', 'month', name='uq_tenant_month'),)
+
+
+class ToolCatalog(db.Model):
+    __tablename__ = 'tool_catalog'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=False, index=True)
+    tool_name = db.Column(db.String, nullable=False)
+    safety_grade = db.Column(db.String(1), default='U')
+    status = db.Column(db.String, default='pending_review')
+    description = db.Column(db.Text, nullable=True)
+    safety_analysis = db.Column(db.Text, nullable=True)
+    auto_approve = db.Column(db.Boolean, default=False)
+    reviewed_by = db.Column(db.String, nullable=True)
+    reviewed_at = db.Column(db.DateTime, nullable=True)
+    first_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    call_count = db.Column(db.Integer, default=0)
+    __table_args__ = (UniqueConstraint('tenant_id', 'tool_name', name='uq_tenant_tool'),)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "tool_name": self.tool_name,
+            "safety_grade": self.safety_grade,
+            "status": self.status,
+            "description": self.description,
+            "safety_analysis": self.safety_analysis,
+            "auto_approve": self.auto_approve,
+            "reviewed_by": self.reviewed_by,
+            "reviewed_at": self.reviewed_at.isoformat() if self.reviewed_at else None,
+            "first_seen": self.first_seen.isoformat() if self.first_seen else None,
+            "call_count": self.call_count,
+        }
+
+
+class BlastRadiusConfig(db.Model):
+    __tablename__ = 'blast_radius_config'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, unique=True, nullable=False)
+    max_calls = db.Column(db.Integer, default=5)
+    window_seconds = db.Column(db.Integer, default=60)
+    enabled = db.Column(db.Boolean, default=True)
+    lockout_seconds = db.Column(db.Integer, default=300)
+
+
+class BlastRadiusEvent(db.Model):
+    __tablename__ = 'blast_radius_events'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=False, index=True)
+    agent_id = db.Column(db.String, nullable=False)
+    api_key_id = db.Column(db.String, nullable=True)
+    triggered_at = db.Column(db.DateTime, default=datetime.utcnow)
+    call_count = db.Column(db.Integer, default=0)
+    window_seconds = db.Column(db.Integer, default=60)
+
+
+class VaultEntry(db.Model):
+    __tablename__ = 'vault_entries'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=False, index=True)
+    tool_name = db.Column(db.String, nullable=False)
+    secret_key = db.Column(db.String, nullable=False)
+    header_name = db.Column(db.String, default='Authorization')
+    header_prefix = db.Column(db.String, default='Bearer ')
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    __table_args__ = (UniqueConstraint('tenant_id', 'tool_name', name='uq_tenant_vault_tool'),)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "tool_name": self.tool_name,
+            "secret_key": self.secret_key,
+            "header_name": self.header_name,
+            "header_prefix": self.header_prefix,
+            "description": self.description,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class HoneypotTool(db.Model):
+    __tablename__ = 'honeypot_tools'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=False, index=True)
+    tool_name = db.Column(db.String, nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    alert_message = db.Column(db.Text, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    trigger_count = db.Column(db.Integer, default=0)
+    last_triggered_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    __table_args__ = (UniqueConstraint('tenant_id', 'tool_name', name='uq_tenant_honeypot'),)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "tool_name": self.tool_name,
+            "description": self.description,
+            "alert_message": self.alert_message,
+            "is_active": self.is_active,
+            "trigger_count": self.trigger_count,
+            "last_triggered_at": self.last_triggered_at.isoformat() if self.last_triggered_at else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class HoneypotAlert(db.Model):
+    __tablename__ = 'honeypot_alerts'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=False, index=True)
+    honeypot_tool_name = db.Column(db.String, nullable=False)
+    agent_id = db.Column(db.String, nullable=False)
+    api_key_id = db.Column(db.String, nullable=True)
+    tool_params = db.Column(db.Text, nullable=True)
+    intent = db.Column(db.Text, nullable=True)
+    api_key_locked = db.Column(db.Boolean, default=False)
+    triggered_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "honeypot_tool_name": self.honeypot_tool_name,
+            "agent_id": self.agent_id,
+            "api_key_id": self.api_key_id,
+            "tool_params": self.tool_params,
+            "intent": self.intent,
+            "api_key_locked": self.api_key_locked,
+            "triggered_at": self.triggered_at.isoformat() if self.triggered_at else None,
+        }

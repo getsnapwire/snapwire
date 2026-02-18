@@ -43,6 +43,12 @@ import src.rate_limiter as rate_limiter_module
 from src.input_sanitizer import sanitize_parameters
 from src.nlp_rule_builder import parse_natural_language_rule, detect_rule_conflicts, test_rule_against_action
 from src.notifications import send_slack_notification, send_notification_to_configured_webhooks
+from src.tool_catalog import check_tool_catalog, get_catalog, update_tool_status, regrade_tool
+from src.blast_radius import check_blast_radius, get_blast_radius_config, update_blast_radius_config, get_blast_radius_events, clear_lockout
+from src.honeypot import check_honeypot, get_honeypots, create_honeypot, delete_honeypot, toggle_honeypot, get_honeypot_alerts
+from src.vault import get_vault_entries, create_vault_entry, delete_vault_entry, update_vault_entry, get_vault_credentials
+from src.deception import analyze_deception
+from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent
 
 
 def require_admin(f):
@@ -160,12 +166,86 @@ def intercept_tool_call():
             "threats": threats,
         }), 403
 
+    honeypot_result = check_honeypot(
+        data["tool_name"], tenant_id, agent_id,
+        api_key_id=api_key_id, params=params, intent=data.get("intent", "")
+    )
+    if honeypot_result:
+        log_action(
+            {"tool_name": data["tool_name"], "parameters": params, "intent": data.get("intent", ""), "context": data.get("context", "")},
+            {"allowed": False, "violations": [{"rule": "honeypot_tripwire", "severity": "critical", "reason": honeypot_result["alert_message"]}], "risk_score": 100, "analysis": honeypot_result["alert_message"]},
+            "blocked-honeypot",
+            agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id,
+        )
+        return jsonify({
+            "status": "blocked",
+            "message": "SECURITY ALERT: This action has been blocked and your API key has been locked.",
+            "alert": honeypot_result["alert_message"],
+        }), 403
+
+    blast_check = check_blast_radius(agent_id, tenant_id, api_key_id=api_key_id)
+    if not blast_check.get("allowed", True):
+        log_action(
+            {"tool_name": data["tool_name"], "parameters": params, "intent": data.get("intent", ""), "context": data.get("context", "")},
+            {"allowed": False, "violations": [{"rule": "blast_radius", "severity": "high", "reason": blast_check["message"]}], "risk_score": 80, "analysis": blast_check["message"]},
+            "blocked-blast-radius",
+            agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id,
+        )
+        try:
+            notif = NotificationSetting.query.filter_by(tenant_id=tenant_id).first()
+            if notif and notif.slack_webhook_url:
+                send_slack_notification(notif.slack_webhook_url, {
+                    "tool_name": data["tool_name"], "agent_id": agent_id, "risk_score": 80,
+                    "analysis": blast_check["message"], "violations": [{"rule": "blast_radius", "severity": "high", "reason": blast_check["message"]}],
+                })
+        except Exception:
+            pass
+        return jsonify({
+            "status": "blocked",
+            "message": blast_check["message"],
+            "blast_radius": blast_check,
+        }), 429
+
+    catalog_result = check_tool_catalog(data["tool_name"], params, tenant_id)
+    if catalog_result.get("allowed") is False:
+        log_action(
+            {"tool_name": data["tool_name"], "parameters": params, "intent": data.get("intent", ""), "context": data.get("context", "")},
+            {"allowed": False, "violations": [{"rule": "tool_catalog", "severity": "high", "reason": f"Tool '{data['tool_name']}' is blocked in the tool catalog."}], "risk_score": 70, "analysis": f"Tool blocked by catalog: {catalog_result.get('reason')}"},
+            "blocked-catalog",
+            agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id,
+        )
+        return jsonify({
+            "status": "blocked",
+            "message": f"Tool '{data['tool_name']}' is not approved in your tool catalog.",
+            "catalog": catalog_result.get("entry"),
+        }), 403
+
     tool_call = {
         "tool_name": data["tool_name"],
         "parameters": params,
         "intent": data.get("intent", ""),
         "context": data.get("context", ""),
     }
+
+    inner_monologue = data.get("inner_monologue")
+    deception_result = None
+    if inner_monologue:
+        try:
+            deception_result = analyze_deception(tool_call, inner_monologue)
+            if deception_result and deception_result.get("deceptive") and deception_result.get("confidence", 0) >= 70:
+                log_action(
+                    tool_call,
+                    {"allowed": False, "violations": [{"rule": "deception_detector", "severity": "critical", "reason": deception_result.get("analysis", "Deceptive intent detected")}], "risk_score": 90, "analysis": deception_result.get("analysis", "")},
+                    "blocked-deception",
+                    agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id,
+                )
+                return jsonify({
+                    "status": "blocked",
+                    "message": "DECEPTION DETECTED: The agent's reasoning does not match its intended action.",
+                    "deception_analysis": deception_result,
+                }), 403
+        except Exception:
+            pass
 
     try:
         audit_result = audit_tool_call(tool_call, tenant_id=tenant_id)
@@ -182,9 +262,18 @@ def intercept_tool_call():
     if shadow_violations:
         response_extra["shadow_violations"] = shadow_violations
 
+    if deception_result and not deception_result.get("deceptive"):
+        response_extra["deception_check"] = {"clear": True, "confidence": deception_result.get("confidence", 0)}
+
+    if catalog_result and catalog_result.get("entry"):
+        response_extra["catalog_grade"] = catalog_result["entry"].get("safety_grade", "U")
+
     if audit_result.get("allowed", False):
         log_action(tool_call, audit_result, "allowed", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id)
         _track_usage(tenant_id)
+        vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
+        if vault_creds:
+            response_extra["vault_credentials"] = vault_creds
         return jsonify({
             "status": "allowed",
             "audit": audit_result,
@@ -195,6 +284,9 @@ def intercept_tool_call():
         if check_auto_approve(tool_call, audit_result, agent_id, tenant_id=tenant_id):
             log_action(tool_call, audit_result, "auto-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id)
             _track_usage(tenant_id)
+            vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
+            if vault_creds:
+                response_extra["vault_credentials"] = vault_creds
             return jsonify({
                 "status": "auto-approved",
                 "audit": audit_result,
@@ -1430,6 +1522,178 @@ def remove_org_member(org_id, user_id):
     db.session.delete(target)
     db.session.commit()
     return jsonify({"status": "removed", "user_id": user_id})
+
+
+@app.route("/api/catalog", methods=["GET"])
+@require_login
+def list_catalog():
+    tenant_id = get_current_tenant_id()
+    return jsonify({"catalog": get_catalog(tenant_id)})
+
+
+@app.route("/api/catalog/<int:tool_id>/status", methods=["PATCH"])
+@require_admin
+def update_catalog_status(tool_id):
+    tenant_id = get_current_tenant_id()
+    data = request.get_json()
+    if not data or "status" not in data:
+        return jsonify({"error": "Must provide 'status'"}), 400
+    entry = ToolCatalog.query.filter_by(id=tool_id, tenant_id=tenant_id).first()
+    if not entry:
+        return jsonify({"error": "Tool not found"}), 404
+    result = update_tool_status(tool_id, data["status"], data.get("safety_grade"), current_user.first_name)
+    return jsonify({"tool": result})
+
+
+@app.route("/api/catalog/<int:tool_id>/regrade", methods=["POST"])
+@require_admin
+def regrade_catalog_tool(tool_id):
+    tenant_id = get_current_tenant_id()
+    entry = ToolCatalog.query.filter_by(id=tool_id, tenant_id=tenant_id).first()
+    if not entry:
+        return jsonify({"error": "Tool not found"}), 404
+    result = regrade_tool(tool_id)
+    return jsonify({"tool": result})
+
+
+@app.route("/api/catalog/<int:tool_id>", methods=["DELETE"])
+@require_admin
+def delete_catalog_tool(tool_id):
+    tenant_id = get_current_tenant_id()
+    entry = ToolCatalog.query.filter_by(id=tool_id, tenant_id=tenant_id).first()
+    if not entry:
+        return jsonify({"error": "Tool not found"}), 404
+    db.session.delete(entry)
+    db.session.commit()
+    return jsonify({"status": "deleted"})
+
+
+@app.route("/api/blast-radius/config", methods=["GET"])
+@require_login
+def get_br_config():
+    tenant_id = get_current_tenant_id()
+    return jsonify(get_blast_radius_config(tenant_id))
+
+
+@app.route("/api/blast-radius/config", methods=["PATCH"])
+@require_admin
+def update_br_config():
+    tenant_id = get_current_tenant_id()
+    data = request.get_json() or {}
+    result = update_blast_radius_config(
+        tenant_id,
+        max_calls=data.get("max_calls"),
+        window_seconds=data.get("window_seconds"),
+        enabled=data.get("enabled"),
+        lockout_seconds=data.get("lockout_seconds"),
+    )
+    return jsonify(result)
+
+
+@app.route("/api/blast-radius/events", methods=["GET"])
+@require_login
+def list_br_events():
+    tenant_id = get_current_tenant_id()
+    return jsonify({"events": get_blast_radius_events(tenant_id)})
+
+
+@app.route("/api/blast-radius/clear/<agent_id>", methods=["POST"])
+@require_admin
+def clear_br_lockout(agent_id):
+    tenant_id = get_current_tenant_id()
+    clear_lockout(tenant_id, agent_id)
+    return jsonify({"status": "cleared", "agent_id": agent_id})
+
+
+@app.route("/api/honeypots", methods=["GET"])
+@require_login
+def list_honeypots():
+    tenant_id = get_current_tenant_id()
+    return jsonify({"honeypots": get_honeypots(tenant_id)})
+
+
+@app.route("/api/honeypots", methods=["POST"])
+@require_admin
+def add_honeypot():
+    tenant_id = get_current_tenant_id()
+    data = request.get_json()
+    if not data or "tool_name" not in data:
+        return jsonify({"error": "Must provide 'tool_name'"}), 400
+    result = create_honeypot(tenant_id, data["tool_name"], data.get("description"), data.get("alert_message"))
+    if not result:
+        return jsonify({"error": "Honeypot with that name already exists"}), 409
+    return jsonify({"honeypot": result}), 201
+
+
+@app.route("/api/honeypots/<int:honeypot_id>", methods=["DELETE"])
+@require_admin
+def remove_honeypot(honeypot_id):
+    tenant_id = get_current_tenant_id()
+    if delete_honeypot(honeypot_id, tenant_id):
+        return jsonify({"status": "deleted"})
+    return jsonify({"error": "Honeypot not found"}), 404
+
+
+@app.route("/api/honeypots/<int:honeypot_id>/toggle", methods=["PATCH"])
+@require_admin
+def toggle_honeypot_status(honeypot_id):
+    tenant_id = get_current_tenant_id()
+    result = toggle_honeypot(honeypot_id, tenant_id)
+    if not result:
+        return jsonify({"error": "Honeypot not found"}), 404
+    return jsonify({"honeypot": result})
+
+
+@app.route("/api/honeypots/alerts", methods=["GET"])
+@require_login
+def list_honeypot_alerts():
+    tenant_id = get_current_tenant_id()
+    return jsonify({"alerts": get_honeypot_alerts(tenant_id)})
+
+
+@app.route("/api/vault", methods=["GET"])
+@require_login
+def list_vault():
+    tenant_id = get_current_tenant_id()
+    return jsonify({"entries": get_vault_entries(tenant_id)})
+
+
+@app.route("/api/vault", methods=["POST"])
+@require_admin
+def add_vault_entry():
+    tenant_id = get_current_tenant_id()
+    data = request.get_json()
+    if not data or "tool_name" not in data or "secret_key" not in data:
+        return jsonify({"error": "Must provide 'tool_name' and 'secret_key'"}), 400
+    result = create_vault_entry(
+        tenant_id, data["tool_name"], data["secret_key"],
+        data.get("header_name", "Authorization"),
+        data.get("header_prefix", "Bearer "),
+        data.get("description"),
+    )
+    if not result:
+        return jsonify({"error": "Vault entry for that tool already exists"}), 409
+    return jsonify({"entry": result}), 201
+
+
+@app.route("/api/vault/<int:entry_id>", methods=["DELETE"])
+@require_admin
+def remove_vault_entry(entry_id):
+    tenant_id = get_current_tenant_id()
+    if delete_vault_entry(entry_id, tenant_id):
+        return jsonify({"status": "deleted"})
+    return jsonify({"error": "Vault entry not found"}), 404
+
+
+@app.route("/api/vault/<int:entry_id>", methods=["PATCH"])
+@require_admin
+def modify_vault_entry(entry_id):
+    tenant_id = get_current_tenant_id()
+    data = request.get_json() or {}
+    result = update_vault_entry(entry_id, tenant_id, data.get("header_name"), data.get("header_prefix"), data.get("description"))
+    if not result:
+        return jsonify({"error": "Vault entry not found"}), 404
+    return jsonify({"entry": result})
 
 
 if __name__ == "__main__":
