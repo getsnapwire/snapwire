@@ -191,9 +191,44 @@ def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None):
     return entry.to_dict()
 
 
-def get_audit_log(limit=50):
+def get_audit_log(limit=50, status=None, agent_id=None, rule_name=None,
+                   tool_name=None, search=None, date_from=None, date_to=None):
     from models import AuditLogEntry
-    entries = AuditLogEntry.query.order_by(AuditLogEntry.created_at.desc()).limit(limit).all()
+    from sqlalchemy import or_
+    from datetime import datetime as dt
+
+    query = AuditLogEntry.query
+
+    if status:
+        query = query.filter(AuditLogEntry.status == status)
+    if agent_id:
+        query = query.filter(AuditLogEntry.agent_id == agent_id)
+    if tool_name:
+        query = query.filter(AuditLogEntry.tool_name.ilike(f"%{tool_name}%"))
+    if rule_name:
+        query = query.filter(AuditLogEntry.violations_json.ilike(f"%{rule_name}%"))
+    if search:
+        pattern = f"%{search}%"
+        query = query.filter(or_(
+            AuditLogEntry.tool_name.ilike(pattern),
+            AuditLogEntry.intent.ilike(pattern),
+            AuditLogEntry.context.ilike(pattern),
+            AuditLogEntry.analysis.ilike(pattern),
+        ))
+    if date_from:
+        try:
+            df = dt.fromisoformat(date_from)
+            query = query.filter(AuditLogEntry.created_at >= df)
+        except (ValueError, TypeError):
+            pass
+    if date_to:
+        try:
+            dto = dt.fromisoformat(date_to)
+            query = query.filter(AuditLogEntry.created_at <= dto)
+        except (ValueError, TypeError):
+            pass
+
+    entries = query.order_by(AuditLogEntry.created_at.desc()).limit(limit).all()
     return [e.to_dict() for e in entries]
 
 

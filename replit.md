@@ -4,6 +4,12 @@
 An AI-powered firewall that intercepts agent tool calls, audits them against a set of constitutional rules using Claude, and blocks actions that violate the rules. Blocked actions are queued for manual human approval or denial via a web dashboard with browser notifications. Authentication required via Replit Auth. Designed for commercialization with admin panel, user management, API key management, and real-time monitoring.
 
 ## Recent Changes
+- 2026-02-18: Added Slack/webhook notification system for critical blocked actions with configurable thresholds
+- 2026-02-18: Added webhook management panel (persistent webhook URLs per agent, test webhooks)
+- 2026-02-18: Added rate limiting configuration UI (per-agent limits, usage visualization)
+- 2026-02-18: Added rule import/export (JSON export/import for constitution portability)
+- 2026-02-18: Built multi-agent comparison dashboard with per-agent trust scores and violation stats
+- 2026-02-18: Added audit log search & filters (date range, agent, status, rule name, keyword search)
 - 2026-02-18: Added dashboard UI for AI Rule Builder (NLP), Visual Rule Builder (dropdowns), shadow mode toggles, rule history with rollback, and policy sandbox
 - 2026-02-18: Added API key management (generate, revoke, toggle keys per agent)
 - 2026-02-18: Added webhook callback system (agents receive approve/deny results via POST)
@@ -28,28 +34,35 @@ An AI-powered firewall that intercepts agent tool calls, audits them against a s
 
 ## Architecture
 - **Backend**: Python Flask (app.py + main.py) on port 5000
-- **Database**: PostgreSQL via SQLAlchemy (users, OAuth sessions, roles, API keys)
+- **Database**: PostgreSQL via SQLAlchemy (users, OAuth sessions, roles, API keys, audit logs, pending actions, webhooks, rule versions)
 - **Auth**: Replit Auth (OpenID Connect) via Flask-Dance + Flask-Login; API key auth for agent endpoints
 - **Roles**: Admin (full access) and Viewer (read-only dashboard access)
 - **AI Auditor**: Claude Sonnet 4.5 via Replit AI Integrations (Anthropic)
 - **Frontend**: Landing page (login.html) + Dashboard (dashboard.html) with polling + SSE
-- **Config**: constitution.json for rules
-- **Webhooks**: POST callbacks to agents when actions are resolved
+- **Config**: constitution.json for rules, notification_settings.json for notification preferences
+- **Webhooks**: POST callbacks to agents when actions are resolved + persistent webhook configs
+- **Notifications**: Slack webhook integration for critical blocked actions
 - **Auto-rules**: Auto-approve after 5 consecutive approvals; auto-deny after 30-minute timeout
+- **Security**: Input sanitization (SQL/prompt injection, path traversal), rate limiting per API key
 
 ## Project Structure
 ```
 app.py                   # Flask app factory, SQLAlchemy setup
 main.py                  # Routes, API endpoints, admin endpoints, SSE, API keys
 replit_auth.py           # Replit Auth (OpenID Connect) integration
-models.py                # User, OAuth, ApiKey database models
+models.py                # User, OAuth, ApiKey, AuditLogEntry, PendingAction, WebhookConfig, RuleVersion models
 constitution.json        # Constitutional rules configuration
+notification_settings.json # Notification preferences (auto-created)
 src/
   __init__.py
-  constitution.py        # Rules loading and management
+  constitution.py        # Rules loading, management, versioning, import/export
   auditor.py             # Claude-powered tool call auditor
   action_queue.py        # Action queue, webhooks, SSE, sessions, auto-approve/deny, digest
   rule_templates.py      # Pre-built rule template packs
+  nlp_rule_builder.py    # AI-powered natural language rule parsing and conflict detection
+  rate_limiter.py        # Per-API-key rate limiting with sliding window
+  input_sanitizer.py     # Input sanitization for SQL injection, prompt injection, path traversal
+  notifications.py       # Slack and webhook notification system
 templates/
   dashboard.html         # Main dashboard UI with all tabs
   login.html             # Modern landing page / homepage
@@ -59,19 +72,29 @@ static/
 ```
 
 ## Key API Endpoints
-- `POST /api/intercept` - Submit a tool call for audit (API key or no auth -- for agent use)
+- `POST /api/intercept` - Submit a tool call for audit (API key required)
 - `GET /api/actions/pending` - List blocked actions awaiting approval (auth required)
 - `GET /api/actions/<id>` - Get action status (API key or auth -- for agents to poll)
 - `POST /api/actions/<id>/resolve` - Approve or deny a blocked action (admin only)
 - `POST /api/actions/bulk-resolve` - Bulk approve/deny multiple actions (admin only)
-- `GET /api/audit-log` - View audit history (auth required)
+- `GET /api/audit-log` - View audit history with filters: status, agent_id, tool_name, rule_name, search, date_from, date_to (auth required)
 - `GET /api/audit-log/export` - Download audit log as CSV (auth required)
 - `GET /api/stats` - Dashboard analytics and metrics (auth required)
 - `GET /api/constitution` - View current rules (auth required)
+- `GET /api/constitution/export` - Download constitution as JSON file (auth required)
+- `POST /api/constitution/import` - Import rules from JSON (admin only, supports overwrite flag)
 - `PUT /api/constitution/rules/<name>` - Update a rule value (admin only)
 - `POST /api/constitution/rules` - Create a new rule (admin only)
 - `DELETE /api/constitution/rules/<name>` - Delete a rule (admin only)
 - `PATCH /api/constitution/rules/<name>` - Update rule value, description, and severity (admin only)
+- `PATCH /api/constitution/rules/<name>/mode` - Update rule mode: enforce/shadow/disabled (admin only)
+- `GET /api/constitution/history` - View rule change history (auth required)
+- `POST /api/constitution/rollback/<id>` - Rollback a rule change (admin only)
+- `POST /api/sandbox/test` - Sandbox test a tool call without recording it (auth required)
+
+## Rule Builder Endpoints
+- `POST /api/rules/parse` - AI-powered natural language rule parsing (admin only)
+- `POST /api/rules/conflicts` - Check for rule conflicts (auth required)
 
 ## API Key Endpoints
 - `GET /api/api-keys` - List user's API keys (auth required)
@@ -79,10 +102,30 @@ static/
 - `DELETE /api/api-keys/<id>` - Revoke an API key (admin only)
 - `PATCH /api/api-keys/<id>/toggle` - Enable/disable an API key (admin only)
 
-## Real-Time & Agent Endpoints
-- `GET /api/stream` - Server-Sent Events live action stream (auth required)
+## Agent & Trust Score Endpoints
+- `GET /api/agents/trust-scores` - Get per-agent trust scores and violation stats (auth required)
+- `GET /api/agents/<agent_id>/actions` - Get recent actions for a specific agent (auth required)
 - `GET /api/agents/sessions` - View agent session history (auth required)
+
+## Real-Time Endpoints
+- `GET /api/stream` - Server-Sent Events live action stream (auth required)
 - `GET /api/digest` - Weekly safety digest summary (auth required)
+
+## Webhook Management Endpoints
+- `GET /api/webhooks` - List webhook configurations (auth required)
+- `POST /api/webhooks` - Create a webhook config (admin only)
+- `DELETE /api/webhooks/<id>` - Delete a webhook (admin only)
+- `PATCH /api/webhooks/<id>/toggle` - Enable/disable a webhook (admin only)
+- `POST /api/webhooks/<id>/test` - Send a test webhook (admin only)
+
+## Rate Limiting Endpoints
+- `GET /api/rate-limits` - Get rate limit config and per-key usage (admin only)
+- `PATCH /api/rate-limits/global` - Update global rate limit (admin only)
+
+## Notification Endpoints
+- `GET /api/notifications/settings` - View notification settings (auth required)
+- `PUT /api/notifications/settings` - Update notification settings (admin only)
+- `POST /api/notifications/test-slack` - Send a test Slack notification (admin only)
 
 ## Template Endpoints
 - `GET /api/templates` - List available rule template packs (auth required)
@@ -99,12 +142,12 @@ static/
 - `/auth/logout` - Log out and end session
 
 ## User Roles
-- **Admin** - Full access: manage rules, approve/deny actions, manage users, API keys
+- **Admin** - Full access: manage rules, approve/deny actions, manage users, API keys, webhooks, rate limits, notifications
 - **Viewer** - Read-only: view dashboard, stats, audit log (cannot modify rules or manage users)
 - First user to sign in gets admin role by default
 
 ## Webhook Integration
-When submitting a tool call to `/api/intercept`, include a `webhook_url` field. When the action is resolved (approved/denied/auto-denied), the firewall will POST the result to that URL with the action details.
+When submitting a tool call to `/api/intercept`, include a `webhook_url` field. When the action is resolved (approved/denied/auto-denied), the firewall will POST the result to that URL with the action details. Persistent webhooks can also be configured via the Settings panel.
 
 ## API Key Authentication
 Include `Authorization: Bearer af_YOUR_KEY` header when calling `/api/intercept` or `/api/actions/<id>`. API keys are managed from the dashboard's API Keys tab.
@@ -112,7 +155,6 @@ Include `Authorization: Bearer af_YOUR_KEY` header when calling `/api/intercept`
 ## User Preferences
 - Dark-themed dashboard UI
 - Browser notifications for blocked actions
-- In-memory action queue (no database for actions)
 - Constitutional theme: "amendments" not "guardrails"
 - Plain-language explanations everywhere
 - Modern SaaS-style landing page for marketing

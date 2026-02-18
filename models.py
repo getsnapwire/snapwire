@@ -162,6 +162,20 @@ class AutoApproveCount(db.Model):
     __table_args__ = (UniqueConstraint('rule_name', 'agent_id', name='uq_rule_agent'),)
 
 
+class WebhookConfig(db.Model):
+    __tablename__ = 'webhook_configs'
+    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4())[:8])
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    name = db.Column(db.String, nullable=False)
+    url = db.Column(db.String, nullable=False)
+    agent_filter = db.Column(db.String, nullable=True)
+    event_types = db.Column(db.String, default='all')
+    is_active = db.Column(db.Boolean, default=True)
+    last_triggered_at = db.Column(db.DateTime, nullable=True)
+    trigger_count = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class RuleVersion(db.Model):
     __tablename__ = 'rule_versions'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

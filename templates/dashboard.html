@@ -173,6 +173,69 @@
             color: var(--accent-blue);
         }
 
+        .audit-filter-bar {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }
+        .audit-filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .audit-filter-input,
+        .audit-filter-select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .audit-filter-input:focus,
+        .audit-filter-select:focus {
+            border-color: var(--accent-blue);
+        }
+        .audit-filter-search { flex: 1; min-width: 180px; }
+        .audit-filter-select { min-width: 130px; }
+        .audit-filter-agent { width: 120px; }
+        .audit-filter-date { width: 140px; }
+        .audit-filter-date::-webkit-calendar-picker-indicator {
+            filter: invert(0.7);
+        }
+        .audit-filter-btn {
+            background: var(--accent-blue) !important;
+            color: #fff !important;
+            border: none !important;
+            padding: 8px 20px !important;
+            border-radius: 8px !important;
+            font-size: 13px !important;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .audit-filter-btn:hover { opacity: 0.85; }
+        .audit-filter-btn-clear {
+            background: var(--bg-secondary) !important;
+            color: var(--text-secondary) !important;
+            border: 1px solid var(--border) !important;
+            padding: 8px 16px !important;
+            border-radius: 8px !important;
+            font-size: 13px !important;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .audit-filter-btn-clear:hover {
+            border-color: var(--accent-blue) !important;
+            color: var(--text-primary) !important;
+        }
+
         .admin-table-wrap {
             overflow-x: auto;
         }
@@ -394,6 +457,7 @@
             <button class="tab" data-tab="agents" data-tooltip="View action history grouped by agent" data-tooltip-pos="bottom">Agents</button>
             <button class="tab" data-tab="digest" data-tooltip="Weekly safety summary report" data-tooltip-pos="bottom">Digest</button>
             {% if user and user.role == 'admin' %}
+            <button class="tab" data-tab="settings" data-tooltip="Rate limits and webhook configuration" data-tooltip-pos="bottom">Settings</button>
             <button class="tab" data-tab="admin" data-tooltip="Manage users, roles, and access controls" data-tooltip-pos="bottom">Admin</button>
             {% endif %}
         </div>
@@ -411,11 +475,62 @@
             <div class="export-toolbar">
                 <a href="/api/audit-log/export" class="btn-export" download>&#128229; Export CSV</a>
             </div>
+            <div class="audit-filter-bar">
+                <div class="audit-filter-row">
+                    <input type="text" id="audit-filter-search" placeholder="Search tools, intents, analysis..." class="audit-filter-input audit-filter-search">
+                    <select id="audit-filter-status" class="audit-filter-select">
+                        <option value="">All Statuses</option>
+                        <option value="allowed">Allowed</option>
+                        <option value="blocked">Blocked</option>
+                        <option value="denied">Denied</option>
+                        <option value="approved">Approved</option>
+                        <option value="auto-approved">Auto-Approved</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                    <input type="text" id="audit-filter-agent" placeholder="Agent ID" class="audit-filter-input audit-filter-agent">
+                    <input type="date" id="audit-filter-from" class="audit-filter-input audit-filter-date" title="From date">
+                    <input type="date" id="audit-filter-to" class="audit-filter-input audit-filter-date" title="To date">
+                    <button class="btn audit-filter-btn" onclick="applyAuditFilters()">Search</button>
+                    <button class="btn audit-filter-btn-clear" onclick="clearAuditFilters()">Clear</button>
+                </div>
+            </div>
             <div id="audit-log-list"></div>
+        </div>
+
+        <div id="import-modal-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:560px;width:90%;max-height:80vh;overflow-y:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <h3 style="margin:0;font-size:18px;color:var(--text-primary);">&#128229; Import Rules</h3>
+                    <button onclick="closeImportModal()" style="background:none;border:none;color:var(--text-secondary);font-size:20px;cursor:pointer;">&times;</button>
+                </div>
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;display:block;">Select JSON file</label>
+                    <input type="file" id="import-file-input" accept=".json" onchange="previewImportFile()" style="width:100%;padding:10px;border:1px dashed var(--border);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:13px;cursor:pointer;">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text-secondary);">
+                        <input type="checkbox" id="import-overwrite" style="width:16px;height:16px;accent-color:var(--accent-blue);cursor:pointer;">
+                        <span>Overwrite existing rules (if unchecked, existing rules are skipped)</span>
+                    </label>
+                </div>
+                <div id="import-preview" style="display:none;margin-bottom:16px;">
+                    <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Rules to Import</h4>
+                    <div id="import-preview-list" style="max-height:250px;overflow-y:auto;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:13px;"></div>
+                </div>
+                <div id="import-result" style="display:none;margin-bottom:16px;padding:12px;border-radius:8px;font-size:13px;"></div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;">
+                    <button onclick="closeImportModal()" class="btn" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);padding:8px 20px;border-radius:8px;font-size:13px;cursor:pointer;">Cancel</button>
+                    <button id="import-confirm-btn" onclick="confirmImport()" class="btn btn-approve" style="padding:8px 20px;border-radius:8px;font-size:13px;" disabled>Import</button>
+                </div>
+            </div>
         </div>
 
         <div id="panel-rules" class="panel">
             <div id="add-rule-section">
+                <div class="export-toolbar" style="justify-content:flex-start;gap:10px;margin-bottom:16px;">
+                    <button class="btn-export" onclick="exportRules()">&#128230; Export Rules</button>
+                    <button class="btn-export" onclick="openImportModal()">&#128229; Import Rules</button>
+                </div>
                 <div style="margin-bottom:16px;">
                     <h4 style="font-size:14px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Rule Template Packs</h4>
                     <div id="template-packs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:16px;"></div>
@@ -530,6 +645,139 @@
         </div>
 
         {% if user and user.role == 'admin' %}
+        <div id="panel-settings" class="panel">
+            <div class="test-panel" style="margin-bottom:24px;">
+                <h3>&#9881; Rate Limits</h3>
+                <p style="color:var(--text-secondary);margin-bottom:16px;font-size:13px;">Configure global rate limiting for API keys. Changes take effect immediately.</p>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">
+                    <label style="font-size:14px;font-weight:600;color:var(--text-primary);white-space:nowrap;">Global Rate Limit:</label>
+                    <input type="number" id="global-rate-limit-input" min="1" max="1000" style="width:100px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font-size:14px;font-family:'Fira Code',monospace;">
+                    <span style="font-size:13px;color:var(--text-secondary);">requests / minute</span>
+                    <button class="btn btn-approve" onclick="updateGlobalRateLimit()" style="margin-left:auto;">Update</button>
+                </div>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>API Key</th>
+                                <th>Agent</th>
+                                <th>Usage</th>
+                                <th>Remaining</th>
+                                <th>Reset At</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rate-limits-body">
+                            <tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:24px;">Loading rate limits...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="test-panel">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                    <div>
+                        <h3>&#128279; Webhook Endpoints</h3>
+                        <p style="color:var(--text-secondary);font-size:13px;">Configure webhooks to receive notifications when events occur.</p>
+                    </div>
+                    <button class="btn btn-approve" onclick="showWebhookForm()">+ Add Webhook</button>
+                </div>
+
+                <div id="webhook-form" style="display:none;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);margin-bottom:20px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                        <div class="form-group">
+                            <label style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;display:block;">Name</label>
+                            <input type="text" id="webhook-name" placeholder="e.g. Slack Alerts" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font-size:13px;">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;display:block;">URL</label>
+                            <input type="url" id="webhook-url" placeholder="https://hooks.example.com/webhook" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font-size:13px;">
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                        <div class="form-group">
+                            <label style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;display:block;">Agent Filter (optional)</label>
+                            <input type="text" id="webhook-agent-filter" placeholder="Leave empty for all agents" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font-size:13px;">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;display:block;">Event Types</label>
+                            <div style="display:flex;gap:12px;flex-wrap:wrap;padding-top:4px;">
+                                <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-primary);cursor:pointer;">
+                                    <input type="checkbox" class="webhook-event-type" value="all" checked style="accent-color:var(--accent-blue);"> All
+                                </label>
+                                <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-primary);cursor:pointer;">
+                                    <input type="checkbox" class="webhook-event-type" value="blocked" style="accent-color:var(--accent-red);"> Blocked
+                                </label>
+                                <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-primary);cursor:pointer;">
+                                    <input type="checkbox" class="webhook-event-type" value="resolved" style="accent-color:var(--accent-blue);"> Resolved
+                                </label>
+                                <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-primary);cursor:pointer;">
+                                    <input type="checkbox" class="webhook-event-type" value="allowed" style="accent-color:var(--accent-green);"> Allowed
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-approve" onclick="createWebhook()">Create Webhook</button>
+                        <button class="btn" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);" onclick="document.getElementById('webhook-form').style.display='none'">Cancel</button>
+                    </div>
+                </div>
+
+                <div id="webhooks-list">
+                    <div style="text-align:center;padding:40px;color:var(--text-secondary);">
+                        <div style="font-size:40px;margin-bottom:12px;">&#128279;</div>
+                        <p>Loading webhooks...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-panel">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                    <div>
+                        <h3>&#128276; Notifications</h3>
+                        <p style="color:var(--text-secondary);font-size:13px;">Configure Slack and notification preferences for blocked actions.</p>
+                    </div>
+                </div>
+
+                <div style="padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);margin-bottom:16px;">
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;display:block;">Slack Webhook URL</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="url" id="notif-slack-url" placeholder="https://hooks.slack.com/services/..." style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font-size:13px;font-family:'Fira Code',monospace;">
+                            <button class="btn" style="background:var(--accent-purple);color:#fff;padding:8px 16px;font-size:13px;border:none;border-radius:8px;cursor:pointer;white-space:nowrap;" onclick="testSlackNotification()">Test Slack</button>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;flex-wrap:wrap;gap:20px;margin-bottom:16px;">
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-primary);cursor:pointer;">
+                            <input type="checkbox" id="notif-on-block" style="accent-color:var(--accent-blue);width:16px;height:16px;cursor:pointer;">
+                            Notify on blocked actions
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-primary);cursor:pointer;">
+                            <input type="checkbox" id="notif-on-critical" style="accent-color:var(--accent-red);width:16px;height:16px;cursor:pointer;">
+                            Notify on critical violations only
+                        </label>
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;display:block;">Risk Score Threshold: <span id="notif-threshold-display" style="color:var(--accent-blue);font-weight:600;font-family:'Fira Code',monospace;">70</span></label>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <span style="font-size:12px;color:var(--text-secondary);">0</span>
+                            <input type="range" id="notif-threshold" min="0" max="100" value="70" oninput="document.getElementById('notif-threshold-display').textContent=this.value" style="flex:1;accent-color:var(--accent-blue);cursor:pointer;">
+                            <span style="font-size:12px;color:var(--text-secondary);">100</span>
+                        </div>
+                        <p style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Only send notifications when risk score meets or exceeds this threshold.</p>
+                    </div>
+
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-approve" onclick="saveNotificationSettings()">Save Notification Settings</button>
+                    </div>
+                    <div id="notif-save-status" style="display:none;margin-top:10px;font-size:13px;padding:8px 14px;border-radius:8px;"></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if user and user.role == 'admin' %}
         <div id="panel-admin" class="panel">
             <div class="test-panel">
                 <h3>User Management</h3>
@@ -620,11 +868,21 @@
         </div>
 
         <div id="panel-agents" class="panel">
-            <div class="test-panel">
-                <h3>Agent Sessions</h3>
-                <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">View the activity history of each connected agent.</p>
-                <div id="agent-sessions-list"></div>
+            <div id="agents-summary-strip" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
+                    <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Total Agents</div>
+                    <div id="agents-total-count" style="font-size:28px;font-weight:700;color:var(--text-primary);font-family:'Fira Code',monospace;">0</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
+                    <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Avg Trust Score</div>
+                    <div id="agents-avg-trust" style="font-size:28px;font-weight:700;color:var(--accent-blue);font-family:'Fira Code',monospace;">—</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
+                    <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Highest Risk</div>
+                    <div id="agents-highest-risk" style="font-size:16px;font-weight:600;color:var(--accent-red);font-family:'Fira Code',monospace;word-break:break-all;">—</div>
+                </div>
             </div>
+            <div id="agent-sessions-list"></div>
         </div>
 
         <div id="panel-digest" class="panel">
@@ -843,9 +1101,36 @@
             }
         }
 
+        function applyAuditFilters() {
+            fetchAuditLog();
+        }
+
+        function clearAuditFilters() {
+            document.getElementById('audit-filter-search').value = '';
+            document.getElementById('audit-filter-status').value = '';
+            document.getElementById('audit-filter-agent').value = '';
+            document.getElementById('audit-filter-from').value = '';
+            document.getElementById('audit-filter-to').value = '';
+            fetchAuditLog();
+        }
+
         async function fetchAuditLog() {
             try {
-                const res = await fetch('/api/audit-log');
+                const params = new URLSearchParams();
+                const search = document.getElementById('audit-filter-search')?.value?.trim();
+                const status = document.getElementById('audit-filter-status')?.value;
+                const agentId = document.getElementById('audit-filter-agent')?.value?.trim();
+                const dateFrom = document.getElementById('audit-filter-from')?.value;
+                const dateTo = document.getElementById('audit-filter-to')?.value;
+
+                if (search) params.set('search', search);
+                if (status) params.set('status', status);
+                if (agentId) params.set('agent_id', agentId);
+                if (dateFrom) params.set('date_from', dateFrom);
+                if (dateTo) params.set('date_to', dateTo);
+
+                const qs = params.toString();
+                const res = await fetch('/api/audit-log' + (qs ? '?' + qs : ''));
                 const data = await res.json();
                 const log = data.log || [];
 
@@ -857,7 +1142,7 @@
                     container.innerHTML = `
                         <div class="empty-state">
                             <div class="icon">&#128220;</div>
-                            <p>No audit entries yet. Test the firewall to generate some!</p>
+                            <p>No audit entries found matching your filters.</p>
                         </div>`;
                     return;
                 }
@@ -1650,44 +1935,91 @@
 
         async function fetchAgentSessions() {
             try {
-                const res = await fetch('/api/agents/sessions');
+                const res = await fetch('/api/agents/trust-scores');
                 const data = await res.json();
-                const sessions = data.sessions || {};
+                const agents = data.agents || [];
                 const container = document.getElementById('agent-sessions-list');
-                const entries = Object.entries(sessions);
-                if (entries.length === 0) {
+
+                document.getElementById('agents-total-count').textContent = agents.length;
+                if (agents.length > 0) {
+                    const avg = (agents.reduce((s, a) => s + a.trust_score, 0) / agents.length).toFixed(1);
+                    document.getElementById('agents-avg-trust').textContent = avg;
+                    document.getElementById('agents-highest-risk').textContent = agents[0].agent_id;
+                } else {
+                    document.getElementById('agents-avg-trust').textContent = '—';
+                    document.getElementById('agents-highest-risk').textContent = '—';
+                }
+
+                if (agents.length === 0) {
                     container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);"><div style="font-size:40px;margin-bottom:12px;">&#129302;</div><p>No agent sessions recorded yet. Send a tool call through the API to see agent activity here.</p></div>';
                     return;
                 }
-                container.innerHTML = entries.map(([agentId, session]) => {
-                    const actions = session.actions || [];
-                    const allowed = actions.filter(a => ['allowed','approved','auto-approved'].includes(a.status)).length;
-                    const blocked = actions.filter(a => !['allowed','approved','auto-approved'].includes(a.status)).length;
-                    return `<div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                            <div>
-                                <h4 style="font-size:15px;font-weight:600;color:var(--text-primary);margin:0;">&#129302; ${agentId}</h4>
-                                <span style="font-size:12px;color:var(--text-secondary);">${session.action_count} total actions</span>
+
+                container.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;">' + agents.map(agent => {
+                    const ts = agent.trust_score;
+                    const circleColor = ts > 80 ? 'var(--accent-green)' : ts >= 50 ? 'var(--accent-yellow)' : 'var(--accent-red)';
+                    const lastActive = agent.last_active ? new Date(agent.last_active).toLocaleString() : 'N/A';
+                    const detailsId = 'agent-details-' + agent.agent_id.replace(/[^a-zA-Z0-9]/g, '_');
+                    return `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px;">
+                        <div style="display:flex;align-items:center;gap:14px;">
+                            <div style="width:52px;height:52px;border-radius:50%;border:3px solid ${circleColor};display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">
+                                <span style="font-size:16px;font-weight:700;color:${circleColor};font-family:'Fira Code',monospace;">${ts}</span>
                             </div>
-                            <div style="display:flex;gap:12px;">
-                                <span style="font-size:13px;color:var(--accent-green);">${allowed} allowed</span>
-                                <span style="font-size:13px;color:var(--accent-red);">${blocked} blocked</span>
+                            <div style="flex:1;min-width:0;">
+                                <h4 style="font-size:15px;font-weight:600;color:var(--text-primary);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">&#129302; ${agent.agent_id}</h4>
+                                <span style="font-size:12px;color:var(--text-secondary);">Last active: ${lastActive}</span>
                             </div>
                         </div>
-                        <div style="max-height:200px;overflow-y:auto;">
-                            ${actions.slice(-10).reverse().map(a => {
-                                const statusColor = ['allowed','approved','auto-approved'].includes(a.status) ? 'var(--accent-green)' : a.status === 'pending' ? 'var(--accent-yellow)' : 'var(--accent-red)';
-                                return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;">
-                                    <span style="width:8px;height:8px;border-radius:50%;background:${statusColor};flex-shrink:0;"></span>
-                                    <span style="font-family:'Fira Code',monospace;color:var(--text-primary);">${a.tool_call?.tool_name || 'unknown'}</span>
-                                    <span style="color:var(--text-secondary);">${a.status}</span>
-                                    <span style="margin-left:auto;color:var(--text-secondary);">${a.created_at ? new Date(a.created_at).toLocaleTimeString() : ''}</span>
-                                </div>`;
-                            }).join('')}
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+                            <div style="text-align:center;padding:8px;background:var(--bg-secondary);border-radius:8px;">
+                                <div style="font-size:18px;font-weight:700;color:var(--text-primary);font-family:'Fira Code',monospace;">${agent.total_actions}</div>
+                                <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;">Total</div>
+                            </div>
+                            <div style="text-align:center;padding:8px;background:var(--bg-secondary);border-radius:8px;">
+                                <div style="font-size:18px;font-weight:700;color:var(--accent-green);font-family:'Fira Code',monospace;">${agent.allowed_count}</div>
+                                <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;">Allowed</div>
+                            </div>
+                            <div style="text-align:center;padding:8px;background:var(--bg-secondary);border-radius:8px;">
+                                <div style="font-size:18px;font-weight:700;color:var(--accent-red);font-family:'Fira Code',monospace;">${agent.blocked_count}</div>
+                                <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;">Blocked</div>
+                            </div>
                         </div>
+                        ${agent.most_common_violation ? `<div style="font-size:12px;color:var(--text-secondary);"><span style="color:var(--accent-yellow);">&#9888;</span> Top violation: <span style="color:var(--text-primary);font-family:'Fira Code',monospace;">${agent.most_common_violation}</span></div>` : ''}
+                        <button onclick="toggleAgentDetails('${agent.agent_id}', '${detailsId}')" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--accent-blue);padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;">View Details</button>
+                        <div id="${detailsId}" style="display:none;max-height:250px;overflow-y:auto;border-top:1px solid var(--border);padding-top:10px;"></div>
+                    </div>`;
+                }).join('') + '</div>';
+            } catch (e) { console.error('Agent sessions error:', e); }
+        }
+
+        async function toggleAgentDetails(agentId, containerId) {
+            const container = document.getElementById(containerId);
+            if (container.style.display !== 'none') {
+                container.style.display = 'none';
+                return;
+            }
+            container.innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:12px;">Loading...</div>';
+            container.style.display = 'block';
+            try {
+                const res = await fetch('/api/agents/' + encodeURIComponent(agentId) + '/actions');
+                const data = await res.json();
+                const actions = data.actions || [];
+                if (actions.length === 0) {
+                    container.innerHTML = '<div style="color:var(--text-secondary);font-size:12px;padding:8px 0;">No actions found.</div>';
+                    return;
+                }
+                container.innerHTML = actions.map(a => {
+                    const statusColor = ['allowed','approved','auto-approved'].includes(a.status) ? 'var(--accent-green)' : a.status === 'pending' ? 'var(--accent-yellow)' : 'var(--accent-red)';
+                    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;">
+                        <span style="width:8px;height:8px;border-radius:50%;background:${statusColor};flex-shrink:0;"></span>
+                        <span style="font-family:'Fira Code',monospace;color:var(--text-primary);">${a.tool_call?.tool_name || 'unknown'}</span>
+                        <span style="color:${statusColor};font-weight:600;">${a.status}</span>
+                        <span style="margin-left:auto;color:var(--text-secondary);">${a.created_at ? new Date(a.created_at).toLocaleString() : ''}</span>
                     </div>`;
                 }).join('');
-            } catch (e) { console.error('Agent sessions error:', e); }
+            } catch (e) {
+                container.innerHTML = '<div style="color:var(--accent-red);font-size:12px;padding:8px 0;">Failed to load actions.</div>';
+            }
         }
 
         async function fetchDigest() {
@@ -1964,6 +2296,334 @@
             } catch (e) { alert('Error: ' + e.message); }
         }
 
+        let importFileData = null;
+
+        function exportRules() {
+            window.location.href = '/api/constitution/export';
+        }
+
+        function openImportModal() {
+            document.getElementById('import-modal-overlay').style.display = 'flex';
+            document.getElementById('import-file-input').value = '';
+            document.getElementById('import-overwrite').checked = false;
+            document.getElementById('import-preview').style.display = 'none';
+            document.getElementById('import-preview-list').innerHTML = '';
+            document.getElementById('import-result').style.display = 'none';
+            document.getElementById('import-confirm-btn').disabled = true;
+            importFileData = null;
+        }
+
+        function closeImportModal() {
+            document.getElementById('import-modal-overlay').style.display = 'none';
+            importFileData = null;
+        }
+
+        function previewImportFile() {
+            const fileInput = document.getElementById('import-file-input');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    const rules = data.rules || data;
+                    if (typeof rules !== 'object' || Array.isArray(rules)) {
+                        alert('Invalid format: expected a JSON object with a "rules" key or a rules object.');
+                        return;
+                    }
+                    importFileData = rules;
+                    const entries = Object.entries(rules);
+                    const previewList = document.getElementById('import-preview-list');
+                    const existing = Object.keys(currentRulesData);
+
+                    previewList.innerHTML = entries.map(([name, config]) => {
+                        const exists = existing.includes(name);
+                        const displayName = config.display_name || name.replace(/_/g, ' ');
+                        const sev = config.severity || 'unknown';
+                        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+                            <span style="flex:1;color:var(--text-primary);font-weight:500;">${displayName}</span>
+                            <span class="severity-badge severity-${sev}" style="font-size:11px;">${sev}</span>
+                            ${exists ? '<span style="font-size:11px;padding:2px 8px;border-radius:6px;background:rgba(255,200,0,0.15);color:var(--accent-yellow);">Exists</span>' : '<span style="font-size:11px;padding:2px 8px;border-radius:6px;background:rgba(45,212,168,0.15);color:var(--accent-green);">New</span>'}
+                        </div>`;
+                    }).join('');
+
+                    document.getElementById('import-preview').style.display = 'block';
+                    document.getElementById('import-confirm-btn').disabled = false;
+                } catch (err) {
+                    alert('Failed to parse JSON file: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        async function confirmImport() {
+            if (!importFileData) return;
+            const btn = document.getElementById('import-confirm-btn');
+            btn.disabled = true;
+            btn.textContent = 'Importing...';
+
+            const overwrite = document.getElementById('import-overwrite').checked;
+            try {
+                const res = await fetch('/api/constitution/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rules: importFileData, overwrite })
+                });
+                const data = await res.json();
+                const resultDiv = document.getElementById('import-result');
+                if (res.ok) {
+                    resultDiv.style.display = 'block';
+                    resultDiv.style.background = 'rgba(45,212,168,0.1)';
+                    resultDiv.style.border = '1px solid rgba(45,212,168,0.3)';
+                    resultDiv.style.color = 'var(--text-primary)';
+                    resultDiv.innerHTML = `<strong>&#9989; Import Complete</strong><br>
+                        Imported: <strong>${data.imported_count}</strong> &middot;
+                        Updated: <strong>${data.updated_count}</strong> &middot;
+                        Skipped: <strong>${data.skipped_count}</strong>
+                        ${data.errors.length > 0 ? '<br>Errors: ' + data.errors.map(e => e.rule + ': ' + e.error).join(', ') : ''}`;
+                    fetchRules();
+                    setTimeout(() => closeImportModal(), 2000);
+                } else {
+                    resultDiv.style.display = 'block';
+                    resultDiv.style.background = 'rgba(255,77,106,0.1)';
+                    resultDiv.style.border = '1px solid rgba(255,77,106,0.3)';
+                    resultDiv.style.color = 'var(--accent-red)';
+                    resultDiv.textContent = data.error || 'Import failed';
+                }
+            } catch (e) {
+                alert('Import error: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Import';
+            }
+        }
+
+        async function fetchRateLimits() {
+            if (CURRENT_USER_ROLE !== 'admin') return;
+            try {
+                const res = await fetch('/api/rate-limits');
+                const data = await res.json();
+                document.getElementById('global-rate-limit-input').value = data.global_limit;
+                const tbody = document.getElementById('rate-limits-body');
+                const keys = data.keys || [];
+                if (keys.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:24px;">No active API keys.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = keys.map(k => {
+                    const pct = k.limit > 0 ? Math.round((k.request_count / k.limit) * 100) : 0;
+                    const barColor = pct > 80 ? 'var(--accent-red)' : pct > 50 ? 'var(--accent-yellow)' : 'var(--accent-green)';
+                    const resetTime = k.reset_at ? new Date(k.reset_at * 1000).toLocaleTimeString() : '-';
+                    return `<tr>
+                        <td style="font-weight:600;">${k.key_name}</td>
+                        <td style="color:var(--text-secondary);">${k.agent_name || '-'}</td>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <div style="flex:1;height:8px;background:var(--bg-secondary);border-radius:4px;overflow:hidden;min-width:80px;">
+                                    <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px;transition:width 0.3s;"></div>
+                                </div>
+                                <span style="font-family:'Fira Code',monospace;font-size:12px;white-space:nowrap;">${k.request_count} / ${k.limit}</span>
+                            </div>
+                        </td>
+                        <td style="font-family:'Fira Code',monospace;font-size:13px;color:${k.requests_remaining < 10 ? 'var(--accent-red)' : 'var(--accent-green)'};">${k.requests_remaining}</td>
+                        <td style="font-size:12px;color:var(--text-secondary);">${resetTime}</td>
+                    </tr>`;
+                }).join('');
+            } catch (e) { console.error('Rate limits error:', e); }
+        }
+
+        async function updateGlobalRateLimit() {
+            const input = document.getElementById('global-rate-limit-input');
+            const limit = parseInt(input.value);
+            if (isNaN(limit) || limit < 1 || limit > 1000) {
+                alert('Rate limit must be between 1 and 1000');
+                return;
+            }
+            try {
+                const res = await fetch('/api/rate-limits/global', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ limit: limit })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    input.style.borderColor = 'var(--accent-green)';
+                    setTimeout(() => { input.style.borderColor = ''; }, 2000);
+                    fetchRateLimits();
+                } else {
+                    alert(data.error || 'Failed to update rate limit');
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        function showWebhookForm() {
+            document.getElementById('webhook-form').style.display = 'block';
+            document.getElementById('webhook-name').value = '';
+            document.getElementById('webhook-url').value = '';
+            document.getElementById('webhook-agent-filter').value = '';
+            document.querySelectorAll('.webhook-event-type').forEach(cb => { cb.checked = cb.value === 'all'; });
+        }
+
+        async function createWebhook() {
+            const name = document.getElementById('webhook-name').value.trim();
+            const url = document.getElementById('webhook-url').value.trim();
+            const agentFilter = document.getElementById('webhook-agent-filter').value.trim();
+            const checkedTypes = Array.from(document.querySelectorAll('.webhook-event-type:checked')).map(cb => cb.value);
+            const eventTypes = checkedTypes.includes('all') ? 'all' : checkedTypes.join(',');
+
+            if (!name || !url) { alert('Please enter a name and URL'); return; }
+
+            try {
+                const res = await fetch('/api/webhooks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, url, agent_filter: agentFilter || null, event_types: eventTypes })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('webhook-form').style.display = 'none';
+                    fetchWebhooks();
+                } else {
+                    alert(data.error || 'Failed to create webhook');
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function fetchWebhooks() {
+            if (CURRENT_USER_ROLE !== 'admin') return;
+            try {
+                const res = await fetch('/api/webhooks');
+                const data = await res.json();
+                const webhooks = data.webhooks || [];
+                const container = document.getElementById('webhooks-list');
+                if (webhooks.length === 0) {
+                    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);"><div style="font-size:40px;margin-bottom:12px;">&#128279;</div><p>No webhooks configured yet. Add one to receive event notifications.</p></div>';
+                    return;
+                }
+                container.innerHTML = webhooks.map(w => {
+                    const lastTriggered = w.last_triggered_at ? new Date(w.last_triggered_at).toLocaleString() : 'Never';
+                    const created = w.created_at ? new Date(w.created_at).toLocaleDateString() : '-';
+                    return `<div style="padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);margin-bottom:10px;${!w.is_active ? 'opacity:0.6;' : ''}">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <span style="font-size:18px;">&#128279;</span>
+                                <div>
+                                    <div style="font-weight:600;font-size:14px;color:var(--text-primary);">${w.name}</div>
+                                    <div style="font-size:12px;color:var(--text-secondary);font-family:'Fira Code',monospace;margin-top:2px;word-break:break-all;">${w.url}</div>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:6px;align-items:center;">
+                                <button class="admin-toggle-btn ${w.is_active ? 'active' : 'revoked'}" onclick="toggleWebhook('${w.id}')">${w.is_active ? 'Active' : 'Inactive'}</button>
+                                <button class="btn" style="background:var(--accent-blue);color:#fff;padding:5px 12px;font-size:12px;border:none;border-radius:6px;cursor:pointer;" onclick="testWebhook('${w.id}')">Test</button>
+                                <button class="icon-btn icon-btn-danger" onclick="deleteWebhook('${w.id}', '${w.name.replace(/'/g, "\\'")}')" title="Delete webhook">&#128465;</button>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:16px;font-size:12px;color:var(--text-secondary);flex-wrap:wrap;">
+                            ${w.agent_filter ? '<span>Agent: <strong style="color:var(--text-primary);">' + w.agent_filter + '</strong></span>' : '<span>All agents</span>'}
+                            <span>Events: <strong style="color:var(--text-primary);">${w.event_types}</strong></span>
+                            <span>Triggers: <strong style="color:var(--text-primary);">${w.trigger_count}</strong></span>
+                            <span>Last triggered: ${lastTriggered}</span>
+                            <span>Created: ${created}</span>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (e) { console.error('Webhooks error:', e); }
+        }
+
+        async function deleteWebhook(id, name) {
+            if (!confirm('Delete webhook "' + name + '"? This cannot be undone.')) return;
+            try {
+                const res = await fetch('/api/webhooks/' + id, { method: 'DELETE' });
+                if (res.ok) fetchWebhooks();
+                else alert('Failed to delete webhook');
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function toggleWebhook(id) {
+            try {
+                const res = await fetch('/api/webhooks/' + id + '/toggle', { method: 'PATCH' });
+                if (res.ok) fetchWebhooks();
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function testWebhook(id) {
+            try {
+                const res = await fetch('/api/webhooks/' + id + '/test', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || 'Test webhook sent!');
+                    fetchWebhooks();
+                } else {
+                    alert(data.error || 'Test failed');
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function fetchNotificationSettings() {
+            if (CURRENT_USER_ROLE !== 'admin') return;
+            try {
+                const res = await fetch('/api/notifications/settings');
+                const data = await res.json();
+                document.getElementById('notif-slack-url').value = data.slack_webhook_url || '';
+                document.getElementById('notif-on-block').checked = !!data.notify_on_block;
+                document.getElementById('notif-on-critical').checked = !!data.notify_on_critical;
+                const threshold = data.notify_threshold_risk_score || 70;
+                document.getElementById('notif-threshold').value = threshold;
+                document.getElementById('notif-threshold-display').textContent = threshold;
+            } catch (e) { console.error('Notification settings error:', e); }
+        }
+
+        async function saveNotificationSettings() {
+            const statusEl = document.getElementById('notif-save-status');
+            const payload = {
+                slack_webhook_url: document.getElementById('notif-slack-url').value.trim(),
+                notify_on_block: document.getElementById('notif-on-block').checked,
+                notify_on_critical: document.getElementById('notif-on-critical').checked,
+                notify_threshold_risk_score: parseInt(document.getElementById('notif-threshold').value),
+            };
+            try {
+                const res = await fetch('/api/notifications/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    statusEl.style.display = 'block';
+                    statusEl.style.background = 'rgba(45,212,168,0.1)';
+                    statusEl.style.color = 'var(--accent-green)';
+                    statusEl.style.border = '1px solid rgba(45,212,168,0.3)';
+                    statusEl.textContent = 'Notification settings saved successfully.';
+                    setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+                } else {
+                    statusEl.style.display = 'block';
+                    statusEl.style.background = 'rgba(255,77,106,0.1)';
+                    statusEl.style.color = 'var(--accent-red)';
+                    statusEl.style.border = '1px solid rgba(255,77,106,0.3)';
+                    statusEl.textContent = data.error || 'Failed to save settings.';
+                }
+            } catch (e) {
+                statusEl.style.display = 'block';
+                statusEl.style.background = 'rgba(255,77,106,0.1)';
+                statusEl.style.color = 'var(--accent-red)';
+                statusEl.style.border = '1px solid rgba(255,77,106,0.3)';
+                statusEl.textContent = 'Error: ' + e.message;
+            }
+        }
+
+        async function testSlackNotification() {
+            try {
+                const res = await fetch('/api/notifications/test-slack', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || 'Test Slack notification sent!');
+                } else {
+                    alert(data.error || 'Failed to send test notification.');
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
         fetchPending();
         fetchAuditLog();
         fetchRules();
@@ -1971,12 +2631,20 @@
         fetchApiKeys();
         fetchTemplates();
         fetchRuleHistory();
-        if (CURRENT_USER_ROLE === 'admin') fetchUsers();
+        if (CURRENT_USER_ROLE === 'admin') {
+            fetchUsers();
+            fetchRateLimits();
+            fetchWebhooks();
+            fetchNotificationSettings();
+        }
 
         setInterval(fetchPending, POLL_INTERVAL);
         setInterval(fetchAuditLog, POLL_INTERVAL * 2);
         setInterval(fetchStats, POLL_INTERVAL * 2);
         setInterval(fetchAgentSessions, POLL_INTERVAL * 3);
+        if (CURRENT_USER_ROLE === 'admin') {
+            setInterval(fetchRateLimits, 10000);
+        }
     </script>
 </body>
 </html>

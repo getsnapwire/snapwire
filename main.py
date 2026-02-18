@@ -13,7 +13,7 @@ from flask_login import current_user
 
 from app import app, db
 from replit_auth import require_login, make_replit_blueprint
-from models import User, ApiKey, RuleVersion
+from models import User, ApiKey, RuleVersion, AuditLogEntry, WebhookConfig
 from src.constitution import (
     load_constitution, update_rule, add_rule, delete_rule, update_rule_full,
     get_rule_history, restore_rule_version,
@@ -36,9 +36,36 @@ from src.action_queue import (
     get_weekly_digest,
 )
 from src.rule_templates import get_templates, get_template
-from src.rate_limiter import check_rate_limit
+from src.rate_limiter import check_rate_limit, get_rate_limit_info, RATE_LIMIT_PER_MINUTE
+import src.rate_limiter as rate_limiter_module
 from src.input_sanitizer import sanitize_parameters
 from src.nlp_rule_builder import parse_natural_language_rule, detect_rule_conflicts, test_rule_against_action
+from src.notifications import send_slack_notification, send_notification_to_configured_webhooks
+
+
+NOTIFICATION_SETTINGS_FILE = "notification_settings.json"
+NOTIFICATION_DEFAULTS = {
+    "slack_webhook_url": "",
+    "notify_on_block": True,
+    "notify_on_critical": False,
+    "notify_threshold_risk_score": 70,
+}
+
+
+def load_notification_settings():
+    try:
+        with open(NOTIFICATION_SETTINGS_FILE, "r") as f:
+            settings = json.load(f)
+            merged = {**NOTIFICATION_DEFAULTS, **settings}
+            return merged
+    except (FileNotFoundError, json.JSONDecodeError):
+        save_notification_settings(NOTIFICATION_DEFAULTS)
+        return dict(NOTIFICATION_DEFAULTS)
+
+
+def save_notification_settings(settings):
+    with open(NOTIFICATION_SETTINGS_FILE, "w") as f:
+        json.dump(settings, f, indent=2)
 
 
 def require_admin(f):
@@ -181,6 +208,35 @@ def intercept_tool_call():
             })
 
         action_id = add_pending_action(tool_call, audit_result, webhook_url=webhook_url, agent_id=agent_id, api_key_id=api_key_id)
+
+        try:
+            notif_settings = load_notification_settings()
+            risk_score = audit_result.get("risk_score", 0)
+            threshold = notif_settings.get("notify_threshold_risk_score", 70)
+            should_notify = False
+            if notif_settings.get("notify_on_block") and risk_score >= threshold:
+                should_notify = True
+            if notif_settings.get("notify_on_critical"):
+                violations = audit_result.get("violations", [])
+                has_critical = any(v.get("severity") == "critical" for v in violations)
+                if has_critical:
+                    should_notify = True
+            if should_notify:
+                notification_data = {
+                    "tool_name": tool_call.get("tool_name"),
+                    "agent_id": agent_id,
+                    "risk_score": risk_score,
+                    "analysis": audit_result.get("analysis", ""),
+                    "violations": audit_result.get("violations", []),
+                    "action_id": action_id,
+                }
+                slack_url = notif_settings.get("slack_webhook_url")
+                if slack_url:
+                    send_slack_notification(slack_url, notification_data)
+                send_notification_to_configured_webhooks(notification_data, event_type="blocked")
+        except Exception:
+            pass
+
         return jsonify({
             "status": "blocked",
             "action_id": action_id,
@@ -233,13 +289,116 @@ def resolve(action_id):
 @require_login
 def audit_log():
     limit = request.args.get("limit", 50, type=int)
-    return jsonify({"log": get_audit_log(limit)})
+    status = request.args.get("status")
+    agent_id = request.args.get("agent_id")
+    rule_name = request.args.get("rule_name")
+    tool_name = request.args.get("tool_name")
+    search = request.args.get("search")
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+    return jsonify({"log": get_audit_log(
+        limit=limit, status=status, agent_id=agent_id, rule_name=rule_name,
+        tool_name=tool_name, search=search, date_from=date_from, date_to=date_to,
+    )})
 
 
 @app.route("/api/constitution", methods=["GET"])
 @require_login
 def get_constitution():
     return jsonify(load_constitution())
+
+
+@app.route("/api/constitution/export", methods=["GET"])
+@require_login
+def export_constitution():
+    constitution = load_constitution()
+    rules = constitution.get("rules", {})
+    export_data = {
+        "exported_at": datetime.utcnow().isoformat() + "Z",
+        "version": constitution.get("version", "1.0"),
+        "version_count": 1,
+        "rule_count": len(rules),
+        "rules": rules,
+        "audit_settings": constitution.get("audit_settings", {}),
+    }
+    return Response(
+        json.dumps(export_data, indent=2),
+        mimetype="application/json",
+        headers={"Content-Disposition": "attachment; filename=constitution_export.json"},
+    )
+
+
+@app.route("/api/constitution/import", methods=["POST"])
+@require_admin
+def import_constitution():
+    data = request.get_json()
+    if not data or "rules" not in data:
+        return jsonify({"error": "Must provide 'rules' object"}), 400
+
+    rules = data["rules"]
+    if not isinstance(rules, dict):
+        return jsonify({"error": "'rules' must be an object"}), 400
+
+    overwrite = data.get("overwrite", False)
+    required_fields = ["value", "description", "severity"]
+
+    imported_count = 0
+    skipped_count = 0
+    updated_count = 0
+    errors = []
+
+    for rule_name, rule_data in rules.items():
+        missing = [f for f in required_fields if f not in rule_data]
+        if missing:
+            errors.append({"rule": rule_name, "error": f"Missing fields: {', '.join(missing)}"})
+            continue
+
+        if rule_data["severity"] not in ("critical", "high", "medium"):
+            errors.append({"rule": rule_name, "error": "Invalid severity"})
+            continue
+
+        existing = load_constitution().get("rules", {})
+        if rule_name in existing:
+            if overwrite:
+                success = update_rule_full(
+                    rule_name,
+                    value=rule_data.get("value"),
+                    description=rule_data.get("description"),
+                    severity=rule_data.get("severity"),
+                    display_name=rule_data.get("display_name"),
+                    hint=rule_data.get("hint"),
+                    mode=rule_data.get("mode"),
+                    changed_by=current_user.first_name,
+                )
+                if success:
+                    updated_count += 1
+                else:
+                    errors.append({"rule": rule_name, "error": "Failed to update"})
+            else:
+                skipped_count += 1
+        else:
+            success, error = add_rule(
+                rule_name,
+                rule_data["value"],
+                rule_data["description"],
+                rule_data["severity"],
+                display_name=rule_data.get("display_name"),
+                hint=rule_data.get("hint"),
+                mode=rule_data.get("mode", "enforce"),
+                changed_by=current_user.first_name,
+            )
+            if success:
+                imported_count += 1
+            else:
+                errors.append({"rule": rule_name, "error": error or "Failed to add"})
+
+    return jsonify({
+        "status": "completed",
+        "imported_count": imported_count,
+        "skipped_count": skipped_count,
+        "updated_count": updated_count,
+        "errors": errors,
+    })
 
 
 @app.route("/api/constitution/rules/<rule_name>", methods=["PUT"])
@@ -635,6 +794,91 @@ def agent_sessions():
     return jsonify({"sessions": get_agent_sessions()})
 
 
+@app.route("/api/agents/trust-scores", methods=["GET"])
+@require_login
+def agent_trust_scores():
+    from sqlalchemy import func
+    from collections import Counter
+
+    entries = AuditLogEntry.query.all()
+    agents = {}
+    for entry in entries:
+        aid = entry.agent_id or "unknown"
+        if aid not in agents:
+            agents[aid] = {
+                "agent_id": aid,
+                "total_actions": 0,
+                "allowed_count": 0,
+                "blocked_count": 0,
+                "denied_count": 0,
+                "violations": [],
+                "severity_penalties": 0,
+                "last_active": None,
+                "first_seen": None,
+            }
+        a = agents[aid]
+        a["total_actions"] += 1
+        if entry.status in ("allowed", "approved", "auto-approved"):
+            a["allowed_count"] += 1
+        elif entry.status == "denied":
+            a["denied_count"] += 1
+        else:
+            a["blocked_count"] += 1
+
+        if entry.created_at:
+            ts = entry.created_at.isoformat()
+            if a["last_active"] is None or ts > a["last_active"]:
+                a["last_active"] = ts
+            if a["first_seen"] is None or ts < a["first_seen"]:
+                a["first_seen"] = ts
+
+        if entry.violations_json:
+            try:
+                violations = json.loads(entry.violations_json)
+                for v in violations:
+                    rule = v.get("rule", "unknown")
+                    severity = v.get("severity", "medium")
+                    a["violations"].append(rule)
+                    if severity == "critical":
+                        a["severity_penalties"] += 10
+                    elif severity == "high":
+                        a["severity_penalties"] += 5
+                    elif severity == "medium":
+                        a["severity_penalties"] += 2
+            except Exception:
+                pass
+
+    results = []
+    for aid, a in agents.items():
+        base = (a["allowed_count"] / a["total_actions"] * 100) if a["total_actions"] > 0 else 100
+        trust = round(max(0, min(100, base - a["severity_penalties"])), 1)
+        violation_counts = Counter(a["violations"])
+        most_common = violation_counts.most_common(1)[0][0] if violation_counts else None
+        results.append({
+            "agent_id": aid,
+            "total_actions": a["total_actions"],
+            "allowed_count": a["allowed_count"],
+            "blocked_count": a["blocked_count"],
+            "denied_count": a["denied_count"],
+            "trust_score": trust,
+            "most_common_violation": most_common,
+            "last_active": a["last_active"],
+            "first_seen": a["first_seen"],
+        })
+
+    results.sort(key=lambda x: x["trust_score"])
+    return jsonify({"agents": results})
+
+
+@app.route("/api/agents/<agent_id>/actions", methods=["GET"])
+@require_login
+def agent_actions(agent_id):
+    entries = AuditLogEntry.query.filter_by(agent_id=agent_id).order_by(
+        AuditLogEntry.created_at.desc()
+    ).limit(50).all()
+    return jsonify({"actions": [e.to_dict() for e in entries]})
+
+
 @app.route("/api/templates", methods=["GET"])
 @require_login
 def list_templates():
@@ -684,6 +928,195 @@ def install_template(template_id):
 @require_login
 def weekly_digest():
     return jsonify(get_weekly_digest())
+
+
+@app.route("/api/rate-limits", methods=["GET"])
+@require_admin
+def get_rate_limits():
+    keys = ApiKey.query.filter_by(is_active=True).all()
+    key_usage = []
+    for key in keys:
+        info = get_rate_limit_info(key.id)
+        key_usage.append({
+            "key_id": key.id,
+            "key_name": key.name,
+            "agent_name": key.agent_name,
+            "limit": info["limit"],
+            "request_count": info["request_count"],
+            "requests_remaining": info["requests_remaining"],
+            "reset_at": info["reset_at"],
+        })
+    return jsonify({
+        "global_limit": rate_limiter_module.RATE_LIMIT_PER_MINUTE,
+        "keys": key_usage,
+    })
+
+
+@app.route("/api/rate-limits/global", methods=["PATCH"])
+@require_admin
+def update_global_rate_limit():
+    data = request.get_json()
+    if not data or "limit" not in data:
+        return jsonify({"error": "Must provide 'limit'"}), 400
+    try:
+        limit = int(data["limit"])
+    except (ValueError, TypeError):
+        return jsonify({"error": "'limit' must be an integer"}), 400
+    if limit < 1 or limit > 1000:
+        return jsonify({"error": "'limit' must be between 1 and 1000"}), 400
+    rate_limiter_module.RATE_LIMIT_PER_MINUTE = limit
+    return jsonify({"status": "updated", "global_limit": limit})
+
+
+@app.route("/api/webhooks", methods=["GET"])
+@require_login
+def list_webhooks():
+    webhooks = WebhookConfig.query.filter_by(user_id=current_user.id).order_by(WebhookConfig.created_at.desc()).all()
+    return jsonify({
+        "webhooks": [{
+            "id": w.id,
+            "name": w.name,
+            "url": w.url,
+            "agent_filter": w.agent_filter,
+            "event_types": w.event_types,
+            "is_active": w.is_active,
+            "last_triggered_at": w.last_triggered_at.isoformat() if w.last_triggered_at else None,
+            "trigger_count": w.trigger_count,
+            "created_at": w.created_at.isoformat() if w.created_at else None,
+        } for w in webhooks]
+    })
+
+
+@app.route("/api/webhooks", methods=["POST"])
+@require_admin
+def create_webhook():
+    data = request.get_json()
+    if not data or "name" not in data or "url" not in data:
+        return jsonify({"error": "Must provide 'name' and 'url'"}), 400
+    webhook = WebhookConfig(
+        user_id=current_user.id,
+        name=data["name"],
+        url=data["url"],
+        agent_filter=data.get("agent_filter") or None,
+        event_types=data.get("event_types", "all"),
+    )
+    db.session.add(webhook)
+    db.session.commit()
+    return jsonify({
+        "id": webhook.id,
+        "name": webhook.name,
+        "url": webhook.url,
+        "agent_filter": webhook.agent_filter,
+        "event_types": webhook.event_types,
+        "is_active": webhook.is_active,
+    }), 201
+
+
+@app.route("/api/webhooks/<webhook_id>", methods=["DELETE"])
+@require_admin
+def delete_webhook(webhook_id):
+    webhook = WebhookConfig.query.filter_by(id=webhook_id, user_id=current_user.id).first()
+    if not webhook:
+        return jsonify({"error": "Webhook not found"}), 404
+    db.session.delete(webhook)
+    db.session.commit()
+    return jsonify({"status": "deleted", "id": webhook_id})
+
+
+@app.route("/api/webhooks/<webhook_id>/toggle", methods=["PATCH"])
+@require_admin
+def toggle_webhook(webhook_id):
+    webhook = WebhookConfig.query.filter_by(id=webhook_id, user_id=current_user.id).first()
+    if not webhook:
+        return jsonify({"error": "Webhook not found"}), 404
+    webhook.is_active = not webhook.is_active
+    db.session.commit()
+    return jsonify({"status": "active" if webhook.is_active else "inactive", "id": webhook_id})
+
+
+@app.route("/api/webhooks/<webhook_id>/test", methods=["POST"])
+@require_admin
+def test_webhook(webhook_id):
+    import requests as http_requests
+    webhook = WebhookConfig.query.filter_by(id=webhook_id, user_id=current_user.id).first()
+    if not webhook:
+        return jsonify({"error": "Webhook not found"}), 404
+    test_payload = {
+        "event": "test",
+        "message": "This is a test webhook from Agentic Firewall",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "webhook_id": webhook.id,
+        "webhook_name": webhook.name,
+    }
+    try:
+        resp = http_requests.post(webhook.url, json=test_payload, timeout=10)
+        webhook.last_triggered_at = datetime.utcnow()
+        webhook.trigger_count += 1
+        db.session.commit()
+        return jsonify({
+            "status": "sent",
+            "response_code": resp.status_code,
+            "message": f"Test webhook sent. Got HTTP {resp.status_code}.",
+        })
+    except Exception as e:
+        return jsonify({"error": f"Failed to send test webhook: {str(e)}"}), 502
+
+
+@app.route("/api/notifications/settings", methods=["GET"])
+@require_login
+def get_notification_settings():
+    settings = load_notification_settings()
+    return jsonify(settings)
+
+
+@app.route("/api/notifications/settings", methods=["PUT"])
+@require_admin
+def update_notification_settings():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No JSON payload provided"}), 400
+
+    current = load_notification_settings()
+
+    if "slack_webhook_url" in data:
+        current["slack_webhook_url"] = data["slack_webhook_url"]
+    if "notify_on_block" in data:
+        current["notify_on_block"] = bool(data["notify_on_block"])
+    if "notify_on_critical" in data:
+        current["notify_on_critical"] = bool(data["notify_on_critical"])
+    if "notify_threshold_risk_score" in data:
+        try:
+            score = int(data["notify_threshold_risk_score"])
+            current["notify_threshold_risk_score"] = max(0, min(100, score))
+        except (ValueError, TypeError):
+            return jsonify({"error": "'notify_threshold_risk_score' must be an integer"}), 400
+
+    save_notification_settings(current)
+    return jsonify({"status": "updated", "settings": current})
+
+
+@app.route("/api/notifications/test-slack", methods=["POST"])
+@require_admin
+def test_slack_notification():
+    settings = load_notification_settings()
+    slack_url = settings.get("slack_webhook_url")
+    if not slack_url:
+        return jsonify({"error": "No Slack webhook URL configured. Save one first."}), 400
+
+    test_data = {
+        "tool_name": "test_action",
+        "agent_id": "test-agent",
+        "risk_score": 85,
+        "analysis": "This is a test notification from the Agentic Firewall.",
+        "violations": [
+            {"rule": "test_rule", "severity": "high", "reason": "Test violation for notification verification"}
+        ],
+    }
+
+    success = send_slack_notification(slack_url, test_data)
+    if success:
+        return jsonify({"status": "sent", "message": "Test Slack notification sent. Check your Slack channel."})
+    return jsonify({"error": "Failed to send test notification"}), 500
 
 
 if __name__ == "__main__":
