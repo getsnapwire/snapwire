@@ -1,62 +1,61 @@
 import uuid
+import json
 import threading
-import time
-import hashlib
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict
 
-_lock = threading.Lock()
-_pending_actions = {}
-_audit_log = []
 _sse_queues = []
-_agent_sessions = defaultdict(list)
-_auto_approve_counts = defaultdict(lambda: defaultdict(int))  # rule -> agent_id -> consecutive_approvals
+_sse_lock = threading.Lock()
 
 
 def _publish_event(event_type, data):
-    """Push event to all SSE subscribers."""
-    dead = []
-    for q in _sse_queues:
-        try:
-            q.append({"type": event_type, "data": data, "time": datetime.utcnow().isoformat()})
-        except Exception:
-            dead.append(q)
-    for q in dead:
-        _sse_queues.remove(q)
+    with _sse_lock:
+        dead = []
+        for q in _sse_queues:
+            try:
+                q.append({"type": event_type, "data": data, "time": datetime.utcnow().isoformat()})
+            except Exception:
+                dead.append(q)
+        for q in dead:
+            _sse_queues.remove(q)
 
 
 def subscribe_sse():
-    """Create a new SSE subscription queue."""
     q = []
-    _sse_queues.append(q)
+    with _sse_lock:
+        _sse_queues.append(q)
     return q
 
 
 def unsubscribe_sse(q):
-    """Remove an SSE subscription queue."""
-    if q in _sse_queues:
-        _sse_queues.remove(q)
+    with _sse_lock:
+        if q in _sse_queues:
+            _sse_queues.remove(q)
 
 
 def add_pending_action(tool_call, audit_result, webhook_url=None, agent_id=None, api_key_id=None):
+    from app import db
+    from models import PendingAction
+
     action_id = str(uuid.uuid4())[:8]
-    with _lock:
-        action = {
-            "id": action_id,
-            "tool_call": tool_call,
-            "audit_result": audit_result,
-            "status": "pending",
-            "created_at": datetime.utcnow().isoformat(),
-            "resolved_at": None,
-            "resolved_by": None,
-            "webhook_url": webhook_url,
-            "agent_id": agent_id or "unknown",
-            "api_key_id": api_key_id,
-        }
-        _pending_actions[action_id] = action
-        if agent_id:
-            _agent_sessions[agent_id].append(action_id)
+    action = PendingAction(
+        id=action_id,
+        tool_name=tool_call.get("tool_name", "unknown"),
+        tool_params=json.dumps(tool_call.get("parameters", {})),
+        intent=tool_call.get("intent", ""),
+        context=tool_call.get("context", ""),
+        status="pending",
+        risk_score=audit_result.get("risk_score", 0),
+        violations_json=json.dumps(audit_result.get("violations", [])),
+        analysis=audit_result.get("analysis", ""),
+        agent_id=agent_id or "unknown",
+        api_key_id=api_key_id,
+        webhook_url=webhook_url,
+    )
+    db.session.add(action)
+    db.session.commit()
+
     _publish_event("action_blocked", {
         "id": action_id,
         "tool_name": tool_call.get("tool_name", "unknown"),
@@ -66,16 +65,15 @@ def add_pending_action(tool_call, audit_result, webhook_url=None, agent_id=None,
     return action_id
 
 
-def _send_webhook(webhook_url, action):
-    """Send webhook callback in a background thread."""
+def _send_webhook(webhook_url, action_dict):
     def _do_send():
         try:
             payload = {
-                "action_id": action["id"],
-                "status": action["status"],
-                "tool_call": action["tool_call"],
-                "resolved_at": action.get("resolved_at"),
-                "resolved_by": action.get("resolved_by"),
+                "action_id": action_dict["id"],
+                "status": action_dict["status"],
+                "tool_call": action_dict["tool_call"],
+                "resolved_at": action_dict.get("resolved_at"),
+                "resolved_by": action_dict.get("resolved_by"),
             }
             requests.post(webhook_url, json=payload, timeout=10)
         except Exception:
@@ -85,253 +83,364 @@ def _send_webhook(webhook_url, action):
 
 
 def resolve_action(action_id, decision, resolved_by="user"):
-    with _lock:
-        if action_id not in _pending_actions:
-            return None
-        action = _pending_actions[action_id]
-        if action["status"] != "pending":
-            return None
-        action["status"] = decision
-        action["resolved_at"] = datetime.utcnow().isoformat()
-        action["resolved_by"] = resolved_by
-        _audit_log.append(dict(action))
+    from app import db
+    from models import PendingAction, AuditLogEntry, AutoApproveCount
 
-        agent_id = action.get("agent_id", "unknown")
-        violations = action.get("audit_result", {}).get("violations", [])
-        for v in violations:
-            rule = v.get("rule", "unknown")
-            if decision == "approved":
-                _auto_approve_counts[rule][agent_id] = _auto_approve_counts[rule][agent_id] + 1
-            else:
-                _auto_approve_counts[rule][agent_id] = 0
+    action = PendingAction.query.filter_by(id=action_id, status="pending").first()
+    if not action:
+        return None
 
-        webhook_url = action.get("webhook_url")
-        if webhook_url:
-            _send_webhook(webhook_url, action)
+    action.status = decision
+    action.resolved_at = datetime.utcnow()
+    action.resolved_by = resolved_by
+
+    log_entry = AuditLogEntry(
+        id=action.id,
+        tool_name=action.tool_name,
+        tool_params=action.tool_params,
+        intent=action.intent,
+        context=action.context,
+        status=decision,
+        risk_score=action.risk_score,
+        violations_json=action.violations_json,
+        analysis=action.analysis,
+        agent_id=action.agent_id,
+        api_key_id=action.api_key_id,
+        created_at=action.created_at,
+    )
+    db.session.add(log_entry)
+
+    violations = []
+    if action.violations_json:
+        try:
+            violations = json.loads(action.violations_json)
+        except Exception:
+            pass
+
+    for v in violations:
+        rule = v.get("rule", "unknown")
+        counter = AutoApproveCount.query.filter_by(rule_name=rule, agent_id=action.agent_id).first()
+        if not counter:
+            counter = AutoApproveCount(rule_name=rule, agent_id=action.agent_id, consecutive_approvals=0)
+            db.session.add(counter)
+        if decision == "approved":
+            counter.consecutive_approvals += 1
+        else:
+            counter.consecutive_approvals = 0
+
+    db.session.commit()
+
+    result = action.to_dict()
+
+    if action.webhook_url:
+        _send_webhook(action.webhook_url, result)
 
     _publish_event("action_resolved", {
         "id": action_id,
         "status": decision,
-        "tool_name": action["tool_call"].get("tool_name", "unknown"),
-        "agent_id": agent_id,
+        "tool_name": action.tool_name,
+        "agent_id": action.agent_id,
     })
-    return action
+    return result
 
 
 def get_pending_actions():
-    with _lock:
-        return [
-            a for a in _pending_actions.values() if a["status"] == "pending"
-        ]
+    from models import PendingAction
+    actions = PendingAction.query.filter_by(status="pending").order_by(PendingAction.created_at.desc()).all()
+    return [a.to_dict() for a in actions]
 
 
 def get_action(action_id):
-    with _lock:
-        return _pending_actions.get(action_id)
+    from models import PendingAction, AuditLogEntry
+    action = PendingAction.query.filter_by(id=action_id).first()
+    if action:
+        return action.to_dict()
+    entry = AuditLogEntry.query.filter_by(id=action_id).first()
+    if entry:
+        return entry.to_dict()
+    return None
 
 
 def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None):
-    entry = {
-        "id": str(uuid.uuid4())[:8],
-        "tool_call": tool_call,
-        "audit_result": audit_result,
-        "status": status,
-        "created_at": datetime.utcnow().isoformat(),
-        "agent_id": agent_id or "unknown",
-        "api_key_id": api_key_id,
-    }
-    with _lock:
-        _audit_log.append(entry)
-        if agent_id:
-            _agent_sessions[agent_id].append(entry["id"])
+    from app import db
+    from models import AuditLogEntry
+
+    entry_id = str(uuid.uuid4())[:8]
+    entry = AuditLogEntry(
+        id=entry_id,
+        tool_name=tool_call.get("tool_name", "unknown"),
+        tool_params=json.dumps(tool_call.get("parameters", {})),
+        intent=tool_call.get("intent", ""),
+        context=tool_call.get("context", ""),
+        status=status,
+        risk_score=audit_result.get("risk_score", 0),
+        violations_json=json.dumps(audit_result.get("violations", [])),
+        analysis=audit_result.get("analysis", ""),
+        agent_id=agent_id or "unknown",
+        api_key_id=api_key_id,
+    )
+    db.session.add(entry)
+    db.session.commit()
+
     _publish_event("action_allowed", {
-        "id": entry["id"],
+        "id": entry_id,
         "tool_name": tool_call.get("tool_name", "unknown"),
         "agent_id": agent_id or "unknown",
         "status": status,
     })
-    return entry
+    return entry.to_dict()
 
 
 def get_audit_log(limit=50):
-    with _lock:
-        return list(reversed(_audit_log[-limit:]))
+    from models import AuditLogEntry
+    entries = AuditLogEntry.query.order_by(AuditLogEntry.created_at.desc()).limit(limit).all()
+    return [e.to_dict() for e in entries]
 
 
 def get_stats():
-    with _lock:
-        total = len(_audit_log) + len([a for a in _pending_actions.values() if a["status"] == "pending"])
-        allowed = len([e for e in _audit_log if e.get("status") in ("allowed", "approved")])
-        blocked = len([e for e in _audit_log if e.get("status") not in ("allowed", "approved")])
-        pending = len([a for a in _pending_actions.values() if a["status"] == "pending"])
-        denied = len([e for e in _audit_log if e.get("status") == "denied"])
+    from models import AuditLogEntry, PendingAction
+    from sqlalchemy import func
 
-        rule_violations = {}
-        for entry in _audit_log:
-            violations = entry.get("audit_result", {}).get("violations", [])
-            for v in violations:
-                rule = v.get("rule", "unknown")
-                rule_violations[rule] = rule_violations.get(rule, 0) + 1
-        for action in _pending_actions.values():
-            if action["status"] == "pending":
-                violations = action.get("audit_result", {}).get("violations", [])
+    total_log = AuditLogEntry.query.count()
+    pending_count = PendingAction.query.filter_by(status="pending").count()
+    total = total_log + pending_count
+
+    allowed = AuditLogEntry.query.filter(AuditLogEntry.status.in_(["allowed", "approved", "auto-approved"])).count()
+    denied = AuditLogEntry.query.filter(AuditLogEntry.status == "denied").count()
+    blocked = total_log - allowed
+
+    approval_rate = round((allowed / (allowed + denied)) * 100, 1) if (allowed + denied) > 0 else 0
+
+    rule_violations = {}
+    all_entries = AuditLogEntry.query.all()
+    for entry in all_entries:
+        if entry.violations_json:
+            try:
+                violations = json.loads(entry.violations_json)
                 for v in violations:
                     rule = v.get("rule", "unknown")
                     rule_violations[rule] = rule_violations.get(rule, 0) + 1
+            except Exception:
+                pass
+    pending_actions = PendingAction.query.filter_by(status="pending").all()
+    for action in pending_actions:
+        if action.violations_json:
+            try:
+                violations = json.loads(action.violations_json)
+                for v in violations:
+                    rule = v.get("rule", "unknown")
+                    rule_violations[rule] = rule_violations.get(rule, 0) + 1
+            except Exception:
+                pass
 
-        recent = []
-        all_entries = list(_audit_log) + [a for a in _pending_actions.values() if a["status"] == "pending"]
-        all_entries.sort(key=lambda x: x.get("created_at", ""), reverse=True)
-        for entry in all_entries[:10]:
-            recent.append({
-                "id": entry.get("id"),
-                "tool_name": entry.get("tool_call", {}).get("tool_name", "unknown"),
-                "status": entry.get("status"),
-                "time": entry.get("created_at"),
-                "agent_id": entry.get("agent_id", "unknown"),
-            })
+    recent_entries = AuditLogEntry.query.order_by(AuditLogEntry.created_at.desc()).limit(10).all()
+    recent_pending = PendingAction.query.filter_by(status="pending").order_by(PendingAction.created_at.desc()).limit(10).all()
+    recent_all = sorted(
+        [e.to_dict() for e in recent_entries] + [a.to_dict() for a in recent_pending],
+        key=lambda x: x.get("created_at", ""),
+        reverse=True,
+    )[:10]
+    recent = [{
+        "id": r.get("id"),
+        "tool_name": r.get("tool_call", {}).get("tool_name", "unknown"),
+        "status": r.get("status"),
+        "time": r.get("created_at"),
+        "agent_id": r.get("agent_id", "unknown"),
+    } for r in recent_all]
 
-        approval_rate = round((allowed / (allowed + denied)) * 100, 1) if (allowed + denied) > 0 else 0
+    agent_stats = defaultdict(lambda: {"total": 0, "blocked": 0, "allowed": 0})
+    for entry in all_entries:
+        aid = entry.agent_id or "unknown"
+        agent_stats[aid]["total"] += 1
+        if entry.status in ("allowed", "approved", "auto-approved"):
+            agent_stats[aid]["allowed"] += 1
+        else:
+            agent_stats[aid]["blocked"] += 1
+    for action in pending_actions:
+        aid = action.agent_id or "unknown"
+        agent_stats[aid]["total"] += 1
+        agent_stats[aid]["blocked"] += 1
 
-        agent_stats = defaultdict(lambda: {"total": 0, "blocked": 0, "allowed": 0})
-        for entry in _audit_log:
-            aid = entry.get("agent_id", "unknown")
-            agent_stats[aid]["total"] += 1
-            if entry.get("status") in ("allowed", "approved"):
-                agent_stats[aid]["allowed"] += 1
-            else:
-                agent_stats[aid]["blocked"] += 1
-        for action in _pending_actions.values():
-            if action["status"] == "pending":
-                aid = action.get("agent_id", "unknown")
-                agent_stats[aid]["total"] += 1
-                agent_stats[aid]["blocked"] += 1
-
-        return {
-            "total_audited": total,
-            "allowed": allowed,
-            "blocked": blocked,
-            "pending": pending,
-            "denied": denied,
-            "approval_rate": approval_rate,
-            "violations_by_rule": rule_violations,
-            "recent_activity": recent,
-            "agent_stats": dict(agent_stats),
-        }
+    return {
+        "total_audited": total,
+        "allowed": allowed,
+        "blocked": blocked,
+        "pending": pending_count,
+        "denied": denied,
+        "approval_rate": approval_rate,
+        "violations_by_rule": rule_violations,
+        "recent_activity": recent,
+        "agent_stats": dict(agent_stats),
+    }
 
 
 def bulk_resolve(action_ids, decision, resolved_by="user"):
+    from app import db
+    from models import PendingAction, AuditLogEntry
+
     results = []
     webhooks_to_send = []
-    with _lock:
-        for action_id in action_ids:
-            if action_id in _pending_actions and _pending_actions[action_id]["status"] == "pending":
-                action = _pending_actions[action_id]
-                action["status"] = decision
-                action["resolved_at"] = datetime.utcnow().isoformat()
-                action["resolved_by"] = resolved_by
-                _audit_log.append(dict(action))
-                results.append(action_id)
-                if action.get("webhook_url"):
-                    webhooks_to_send.append((action["webhook_url"], dict(action)))
+
+    for action_id in action_ids:
+        action = PendingAction.query.filter_by(id=action_id, status="pending").first()
+        if action:
+            action.status = decision
+            action.resolved_at = datetime.utcnow()
+            action.resolved_by = resolved_by
+
+            log_entry = AuditLogEntry(
+                id=action.id,
+                tool_name=action.tool_name,
+                tool_params=action.tool_params,
+                intent=action.intent,
+                context=action.context,
+                status=decision,
+                risk_score=action.risk_score,
+                violations_json=action.violations_json,
+                analysis=action.analysis,
+                agent_id=action.agent_id,
+                api_key_id=action.api_key_id,
+                created_at=action.created_at,
+            )
+            db.session.add(log_entry)
+            results.append(action_id)
+
+            if action.webhook_url:
+                webhooks_to_send.append((action.webhook_url, action.to_dict()))
+
+    db.session.commit()
+
     for url, action_data in webhooks_to_send:
         _send_webhook(url, action_data)
+
     return results
 
 
 def get_agent_sessions():
-    with _lock:
-        sessions = {}
-        for agent_id, action_ids in _agent_sessions.items():
-            actions = []
-            for aid in action_ids:
-                if aid in _pending_actions:
-                    actions.append(_pending_actions[aid])
-                else:
-                    for entry in _audit_log:
-                        if entry.get("id") == aid:
-                            actions.append(entry)
-                            break
-            sessions[agent_id] = {
-                "agent_id": agent_id,
-                "action_count": len(actions),
-                "actions": actions[-20:],
-            }
-        return sessions
+    from models import AuditLogEntry, PendingAction
 
+    sessions = {}
 
-def get_auto_approve_status():
-    with _lock:
-        return dict(_auto_approve_counts)
+    entries = AuditLogEntry.query.order_by(AuditLogEntry.created_at.desc()).all()
+    for entry in entries:
+        aid = entry.agent_id or "unknown"
+        if aid not in sessions:
+            sessions[aid] = {"agent_id": aid, "action_count": 0, "actions": []}
+        sessions[aid]["action_count"] += 1
+        if len(sessions[aid]["actions"]) < 20:
+            sessions[aid]["actions"].append(entry.to_dict())
+
+    pending = PendingAction.query.filter_by(status="pending").order_by(PendingAction.created_at.desc()).all()
+    for action in pending:
+        aid = action.agent_id or "unknown"
+        if aid not in sessions:
+            sessions[aid] = {"agent_id": aid, "action_count": 0, "actions": []}
+        sessions[aid]["action_count"] += 1
+        if len(sessions[aid]["actions"]) < 20:
+            sessions[aid]["actions"].append(action.to_dict())
+
+    return sessions
 
 
 def check_auto_approve(tool_call, audit_result, agent_id, threshold=5):
+    from models import AutoApproveCount
+
     violations = audit_result.get("violations", [])
     if not violations:
         return False
-    with _lock:
-        for v in violations:
-            rule = v.get("rule", "unknown")
-            if v.get("severity") == "critical":
-                return False
-            count = _auto_approve_counts.get(rule, {}).get(agent_id, 0)
-            if count < threshold:
-                return False
-        return True
+
+    for v in violations:
+        rule = v.get("rule", "unknown")
+        if v.get("severity") == "critical":
+            return False
+        counter = AutoApproveCount.query.filter_by(rule_name=rule, agent_id=agent_id).first()
+        count = counter.consecutive_approvals if counter else 0
+        if count < threshold:
+            return False
+    return True
 
 
 def auto_deny_expired(timeout_minutes=30):
-    now = datetime.utcnow()
-    expired = []
+    from app import db
+    from models import PendingAction, AuditLogEntry
+
+    cutoff = datetime.utcnow() - timedelta(minutes=timeout_minutes)
+    expired_actions = PendingAction.query.filter(
+        PendingAction.status == "pending",
+        PendingAction.created_at < cutoff,
+    ).all()
+
     webhooks_to_send = []
-    with _lock:
-        for action_id, action in _pending_actions.items():
-            if action["status"] == "pending":
-                created = datetime.fromisoformat(action["created_at"])
-                if (now - created).total_seconds() > timeout_minutes * 60:
-                    action["status"] = "denied"
-                    action["resolved_at"] = now.isoformat()
-                    action["resolved_by"] = "auto-timeout"
-                    _audit_log.append(dict(action))
-                    expired.append(action_id)
-                    if action.get("webhook_url"):
-                        webhooks_to_send.append((action["webhook_url"], dict(action)))
+    expired_ids = []
+    for action in expired_actions:
+        action.status = "denied"
+        action.resolved_at = datetime.utcnow()
+        action.resolved_by = "auto-timeout"
+
+        log_entry = AuditLogEntry(
+            id=action.id,
+            tool_name=action.tool_name,
+            tool_params=action.tool_params,
+            intent=action.intent,
+            context=action.context,
+            status="denied",
+            risk_score=action.risk_score,
+            violations_json=action.violations_json,
+            analysis=action.analysis,
+            agent_id=action.agent_id,
+            api_key_id=action.api_key_id,
+            created_at=action.created_at,
+        )
+        db.session.add(log_entry)
+        expired_ids.append(action.id)
+
+        if action.webhook_url:
+            webhooks_to_send.append((action.webhook_url, action.to_dict()))
+
+    if expired_actions:
+        db.session.commit()
+
     for url, action_data in webhooks_to_send:
         _send_webhook(url, action_data)
-    return expired
+
+    return expired_ids
 
 
 def get_weekly_digest():
-    with _lock:
-        now = datetime.utcnow()
-        week_ago = datetime(now.year, now.month, now.day)
-        from datetime import timedelta
-        week_ago = now - timedelta(days=7)
-        
-        week_entries = [e for e in _audit_log if e.get("created_at", "") >= week_ago.isoformat()]
-        total = len(week_entries)
-        allowed = len([e for e in week_entries if e.get("status") in ("allowed", "approved")])
-        blocked = len([e for e in week_entries if e.get("status") not in ("allowed", "approved")])
-        denied = len([e for e in week_entries if e.get("status") == "denied"])
-        
-        top_violations = {}
-        for entry in week_entries:
-            for v in entry.get("audit_result", {}).get("violations", []):
-                rule = v.get("rule", "unknown")
-                top_violations[rule] = top_violations.get(rule, 0) + 1
-        
-        top_agents = {}
-        for entry in week_entries:
-            aid = entry.get("agent_id", "unknown")
-            top_agents[aid] = top_agents.get(aid, 0) + 1
-        
-        return {
-            "period": f"{week_ago.strftime('%b %d')} - {now.strftime('%b %d, %Y')}",
-            "total_audited": total,
-            "allowed": allowed,
-            "blocked": blocked,
-            "denied": denied,
-            "approval_rate": round((allowed / (allowed + denied)) * 100, 1) if (allowed + denied) > 0 else 0,
-            "top_violations": dict(sorted(top_violations.items(), key=lambda x: x[1], reverse=True)[:5]),
-            "top_agents": dict(sorted(top_agents.items(), key=lambda x: x[1], reverse=True)[:5]),
-        }
+    from models import AuditLogEntry
+
+    now = datetime.utcnow()
+    week_ago = now - timedelta(days=7)
+
+    entries = AuditLogEntry.query.filter(AuditLogEntry.created_at >= week_ago).all()
+    total = len(entries)
+    allowed = len([e for e in entries if e.status in ("allowed", "approved", "auto-approved")])
+    denied = len([e for e in entries if e.status == "denied"])
+    blocked = total - allowed
+
+    top_violations = {}
+    for entry in entries:
+        if entry.violations_json:
+            try:
+                violations = json.loads(entry.violations_json)
+                for v in violations:
+                    rule = v.get("rule", "unknown")
+                    top_violations[rule] = top_violations.get(rule, 0) + 1
+            except Exception:
+                pass
+
+    top_agents = {}
+    for entry in entries:
+        aid = entry.agent_id or "unknown"
+        top_agents[aid] = top_agents.get(aid, 0) + 1
+
+    return {
+        "period": f"{week_ago.strftime('%b %d')} - {now.strftime('%b %d, %Y')}",
+        "total_audited": total,
+        "allowed": allowed,
+        "blocked": blocked,
+        "denied": denied,
+        "approval_rate": round((allowed / (allowed + denied)) * 100, 1) if (allowed + denied) > 0 else 0,
+        "top_violations": dict(sorted(top_violations.items(), key=lambda x: x[1], reverse=True)[:5]),
+        "top_agents": dict(sorted(top_agents.items(), key=lambda x: x[1], reverse=True)[:5]),
+    }

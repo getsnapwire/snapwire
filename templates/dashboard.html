@@ -387,7 +387,8 @@
             <button class="tab active" data-tab="pending" data-tooltip="Actions that were blocked and need your decision to allow or deny" data-tooltip-pos="bottom">Pending Approvals</button>
             <button class="tab" data-tab="log" data-tooltip="A history of everything the firewall has checked, and what happened" data-tooltip-pos="bottom">Audit Log</button>
             <button class="tab" data-tab="rules" data-tooltip="The rules that define what your AI agent can and cannot do" data-tooltip-pos="bottom">Constitution</button>
-            <button class="tab" data-tab="test" data-tooltip="Try out a fake action to see how the firewall would respond" data-tooltip-pos="bottom">Test Firewall</button>
+            <button class="tab" data-tab="test" data-tooltip="Try out a fake action to see how the firewall would respond (sandbox - nothing actually runs)" data-tooltip-pos="bottom">Sandbox</button>
+            <button class="tab" data-tab="history" data-tooltip="View all changes made to rules with rollback capability" data-tooltip-pos="bottom">Rule History</button>
             <button class="tab" data-tab="keys" data-tooltip="Generate and manage API keys for your AI agents" data-tooltip-pos="bottom">API Keys</button>
             <button class="tab" data-tab="stream" data-tooltip="Watch agent actions happen in real-time" data-tooltip-pos="bottom">Live Stream</button>
             <button class="tab" data-tab="agents" data-tooltip="View action history grouped by agent" data-tooltip-pos="bottom">Agents</button>
@@ -419,7 +420,64 @@
                     <h4 style="font-size:14px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Rule Template Packs</h4>
                     <div id="template-packs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:16px;"></div>
                 </div>
-                <button class="btn btn-test" id="toggle-add-form" onclick="toggleAddForm()" style="margin-bottom: 16px;" data-tooltip="Create a new rule to control what your AI agent is allowed to do" data-tooltip-pos="bottom">+ Add an Amendment</button>
+
+                <div class="test-panel" style="margin-bottom:20px;border:1px solid rgba(77,139,255,0.3);background:rgba(77,139,255,0.05);">
+                    <h3 style="margin-bottom:4px;">AI Rule Builder</h3>
+                    <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Describe a rule in plain English and our AI will create it for you.</p>
+                    <div style="display:flex;gap:10px;margin-bottom:12px;">
+                        <input type="text" id="nlp-rule-input" placeholder="e.g., Block any agent from spending more than $200 on a single purchase" style="flex:1;">
+                        <button class="btn btn-test" id="nlp-parse-btn" onclick="parseNLPRule()" style="white-space:nowrap;">Generate Rule</button>
+                    </div>
+                    <div id="nlp-result" style="display:none;"></div>
+                </div>
+
+                <div class="test-panel" style="margin-bottom:20px;border:1px solid rgba(168,85,247,0.3);background:rgba(168,85,247,0.05);">
+                    <h3 style="margin-bottom:4px;">Visual Rule Builder</h3>
+                    <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Build a rule by selecting options from the dropdowns below.</p>
+                    <div style="display:grid;grid-template-columns:auto 1fr auto 1fr auto 1fr;gap:10px;align-items:center;margin-bottom:16px;">
+                        <span style="font-weight:600;color:var(--accent-purple);font-size:13px;">WHEN</span>
+                        <select id="vb-action" style="width:100%;">
+                            <option value="spend">Agent tries to spend money</option>
+                            <option value="delete">Agent tries to delete files/data</option>
+                            <option value="access_sensitive">Agent accesses sensitive data</option>
+                            <option value="api_call">Agent calls external APIs</option>
+                            <option value="modify_files">Agent modifies files</option>
+                            <option value="batch_operation">Agent runs batch operations</option>
+                            <option value="network">Agent makes network requests</option>
+                        </select>
+                        <span style="font-weight:600;color:var(--accent-purple);font-size:13px;">AND</span>
+                        <select id="vb-condition" style="width:100%;">
+                            <option value="exceeds">Amount exceeds limit</option>
+                            <option value="any">Any occurrence</option>
+                            <option value="count_exceeds">Count exceeds limit</option>
+                        </select>
+                        <span style="font-weight:600;color:var(--accent-purple);font-size:13px;">THEN</span>
+                        <select id="vb-outcome" style="width:100%;">
+                            <option value="block">Block the action</option>
+                            <option value="shadow">Monitor only (shadow mode)</option>
+                        </select>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Limit value (if applicable)</label>
+                            <input type="number" id="vb-limit" placeholder="e.g., 50" value="50">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Importance level</label>
+                            <select id="vb-severity">
+                                <option value="critical">Critical</option>
+                                <option value="high" selected>High</option>
+                                <option value="medium">Medium</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-approve" onclick="createVisualRule()" style="width:100%;">Create Rule</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-test" id="toggle-add-form" onclick="toggleAddForm()" style="margin-bottom: 16px;" data-tooltip="Create a new rule to control what your AI agent is allowed to do" data-tooltip-pos="bottom">+ Add an Amendment Manually</button>
                 <div id="add-rule-form" class="test-panel" style="margin-bottom: 20px; display: none;">
                     <h3>Draft a New Amendment</h3>
                     <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 13px;">
@@ -582,11 +640,24 @@
             </div>
         </div>
 
+        <div id="panel-history" class="panel">
+            <div class="test-panel">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <div>
+                        <h3>Rule Change History</h3>
+                        <p style="color:var(--text-secondary);font-size:13px;margin-top:4px;">Every change to your constitution is tracked. Roll back any change with one click.</p>
+                    </div>
+                    <button class="btn btn-test" onclick="fetchRuleHistory()" style="padding:8px 16px;font-size:13px;">Refresh</button>
+                </div>
+                <div id="rule-history-list"></div>
+            </div>
+        </div>
+
         <div id="panel-test" class="panel">
             <div class="test-panel">
-                <h3>Test a Tool Call</h3>
+                <h3>Policy Sandbox</h3>
                 <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 13px;">
-                    Simulate an agent tool call to see how the firewall responds. Nothing here will actually run -- it's just a safe way to test your rules.
+                    Test how your rules would respond to a tool call without actually running anything. Includes input safety scanning and shadow mode detection.
                 </p>
 
                 <div class="presets" data-tooltip="Click any example to auto-fill the form with a sample scenario" data-tooltip-pos="bottom">
@@ -614,8 +685,8 @@
                     <input type="text" id="test-context" placeholder="Why is the agent doing this?">
                 </div>
 
-                <button class="btn btn-test" id="test-submit" onclick="submitTest()" data-tooltip="Send this test action through the firewall to see if it would be allowed or blocked" data-tooltip-pos="bottom">
-                    Run Audit
+                <button class="btn btn-test" id="test-submit" onclick="submitTest()" data-tooltip="Run a sandbox test to see if this action would be allowed or blocked" data-tooltip-pos="bottom">
+                    Run Sandbox Test
                 </button>
 
                 <div id="test-result" class="result-panel"></div>
@@ -1048,14 +1119,25 @@
                     const severityLabel = severityLabels[config.severity] || config.severity;
                     const escapedConfig = JSON.stringify(config).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
+                    const mode = config.mode || 'enforce';
+                    const modeColors = { enforce: 'var(--accent-green)', shadow: 'var(--accent-yellow)', disabled: 'var(--text-secondary)' };
+                    const modeLabels = { enforce: 'Enforcing', shadow: 'Shadow Mode', disabled: 'Disabled' };
+                    const modeIcons = { enforce: '&#128994;', shadow: '&#128992;', disabled: '&#9899;' };
+
                     return `
-                    <div class="rule-card-v2" id="rule-card-${name}">
+                    <div class="rule-card-v2" id="rule-card-${name}" style="${mode === 'disabled' ? 'opacity:0.5;' : mode === 'shadow' ? 'border-color:rgba(255,200,0,0.3);' : ''}">
                         <div class="rule-card-header">
                             <div class="rule-card-title">
                                 <h4>${displayName}</h4>
                                 <span class="severity-badge severity-${config.severity}">${severityLabel}</span>
+                                <span style="font-size:11px;padding:2px 8px;border-radius:6px;background:${modeColors[mode]}20;color:${modeColors[mode]};font-weight:600;margin-left:4px;">${modeIcons[mode]} ${modeLabels[mode]}</span>
                             </div>
                             <div class="rule-card-actions">
+                                <select onchange="updateRuleMode('${name}', this.value)" style="font-size:11px;padding:4px 8px;border-radius:6px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);cursor:pointer;" title="Change rule mode">
+                                    <option value="enforce" ${mode === 'enforce' ? 'selected' : ''}>Enforce</option>
+                                    <option value="shadow" ${mode === 'shadow' ? 'selected' : ''}>Shadow</option>
+                                    <option value="disabled" ${mode === 'disabled' ? 'selected' : ''}>Disabled</option>
+                                </select>
                                 <button class="icon-btn" onclick='startEditRule("${name}", JSON.parse(decodeURIComponent("${encodeURIComponent(JSON.stringify(config))}")))' title="Edit amendment">&#9998;</button>
                                 <button class="icon-btn icon-btn-danger" onclick="deleteRule('${name}', '${displayName.replace(/'/g, "\\'")}')" title="Repeal amendment">&#10005;</button>
                             </div>
@@ -1141,12 +1223,12 @@
             }
 
             btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> Auditing...';
+            btn.innerHTML = '<span class="loading"></span> Testing in sandbox...';
             resultPanel.style.display = 'block';
-            resultPanel.textContent = 'Sending tool call to Claude for audit...';
+            resultPanel.textContent = 'Running sandbox test against your rules...';
 
             try {
-                const res = await fetch('/api/intercept', {
+                const res = await fetch('/api/sandbox/test', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1158,22 +1240,56 @@
                 });
 
                 const data = await res.json();
-                resultPanel.textContent = JSON.stringify(data, null, 2);
 
-                if (data.status === 'blocked') {
-                    resultPanel.style.borderColor = 'var(--accent-red)';
-                } else {
-                    resultPanel.style.borderColor = 'var(--accent-green)';
+                let html = '<div style="font-family:\'Fira Code\',monospace;font-size:13px;">';
+                html += `<div style="padding:12px;border-radius:8px;margin-bottom:12px;${data.would_be_blocked ? 'background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.3);' : 'background:rgba(45,212,168,0.1);border:1px solid rgba(45,212,168,0.3);'}">`;
+                html += `<span style="font-weight:700;font-size:15px;">${data.would_be_blocked ? '&#128721; WOULD BE BLOCKED' : '&#9989; WOULD BE ALLOWED'}</span>`;
+                html += `<span style="margin-left:12px;font-size:12px;color:var(--text-secondary);">Sandbox - no action taken</span>`;
+                html += '</div>';
+
+                if (data.audit?.analysis) {
+                    html += `<div style="padding:10px;background:var(--bg-secondary);border-radius:8px;margin-bottom:12px;font-size:13px;color:var(--text-secondary);">${data.audit.analysis}</div>`;
                 }
 
-                fetchPending();
-                fetchAuditLog();
+                if (data.audit?.violations?.length > 0) {
+                    html += '<div style="margin-bottom:12px;"><strong style="color:var(--accent-red);">Violations:</strong>';
+                    data.audit.violations.forEach(v => {
+                        html += `<div style="padding:8px 12px;margin-top:6px;background:var(--bg-secondary);border-radius:6px;border-left:3px solid var(--accent-red);"><strong>${v.rule}</strong> (${v.severity}) - ${v.reason}</div>`;
+                    });
+                    html += '</div>';
+                }
+
+                if (data.shadow_violations?.length > 0) {
+                    html += '<div style="margin-bottom:12px;"><strong style="color:var(--accent-yellow);">Shadow Mode Detections (not blocking):</strong>';
+                    data.shadow_violations.forEach(v => {
+                        html += `<div style="padding:8px 12px;margin-top:6px;background:var(--bg-secondary);border-radius:6px;border-left:3px solid var(--accent-yellow);"><strong>${v.rule}</strong> (${v.severity}) - ${v.reason}</div>`;
+                    });
+                    html += '</div>';
+                }
+
+                if (!data.input_sanitization?.safe) {
+                    html += '<div style="margin-bottom:12px;"><strong style="color:var(--accent-red);">&#9888; Input Security Threats Detected:</strong>';
+                    (data.input_sanitization?.threats || []).forEach(t => {
+                        html += `<div style="padding:8px 12px;margin-top:6px;background:rgba(255,77,77,0.08);border-radius:6px;border-left:3px solid var(--accent-red);"><strong>${t.type}</strong> (${t.severity}) - ${t.description}</div>`;
+                    });
+                    html += '</div>';
+                } else {
+                    html += '<div style="color:var(--accent-green);font-size:13px;">&#9989; Input sanitization passed - no security threats found</div>';
+                }
+
+                if (data.audit?.risk_score !== undefined) {
+                    html += `<div style="margin-top:12px;font-size:13px;">Risk Score: <strong>${data.audit.risk_score}/100</strong></div>`;
+                }
+
+                html += '</div>';
+                resultPanel.innerHTML = html;
+                resultPanel.style.borderColor = data.would_be_blocked ? 'var(--accent-red)' : 'var(--accent-green)';
             } catch (e) {
                 resultPanel.textContent = 'Error: ' + e.message;
                 resultPanel.style.borderColor = 'var(--accent-red)';
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = 'Run Audit';
+                btn.innerHTML = 'Run Sandbox Test';
             }
         }
 
@@ -1645,12 +1761,216 @@
             } catch (e) { alert('Error: ' + e.message); }
         }
 
+        async function parseNLPRule() {
+            const input = document.getElementById('nlp-rule-input').value.trim();
+            if (!input) { alert('Please describe a rule in plain English'); return; }
+
+            const btn = document.getElementById('nlp-parse-btn');
+            const resultDiv = document.getElementById('nlp-result');
+            btn.disabled = true;
+            btn.textContent = 'Thinking...';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;">AI is analyzing your description...</div>';
+
+            try {
+                const res = await fetch('/api/rules/parse', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ description: input })
+                });
+                const data = await res.json();
+                if (res.ok && data.rule) {
+                    const r = data.rule;
+                    resultDiv.innerHTML = `
+                        <div style="background:var(--bg-secondary);border-radius:10px;padding:16px;border:1px solid var(--border);">
+                            <h4 style="margin-bottom:8px;color:var(--accent-blue);">Generated Rule Preview</h4>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;margin-bottom:12px;">
+                                <div><strong>Name:</strong> ${r.display_name || r.name}</div>
+                                <div><strong>Severity:</strong> <span class="severity-badge severity-${r.severity}">${r.severity}</span></div>
+                                <div><strong>Value:</strong> ${JSON.stringify(r.value)}</div>
+                                <div><strong>Type:</strong> ${typeof r.value}</div>
+                            </div>
+                            <div style="font-size:13px;margin-bottom:8px;"><strong>Description:</strong> ${r.description}</div>
+                            ${r.hint ? `<div style="font-size:13px;margin-bottom:12px;color:var(--text-secondary);"><strong>Why it matters:</strong> ${r.hint}</div>` : ''}
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn btn-approve" onclick="installNLPRule()">Add This Rule</button>
+                                <button class="btn" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);" onclick="document.getElementById('nlp-result').style.display='none'">Cancel</button>
+                            </div>
+                        </div>`;
+                    window._nlpGeneratedRule = r;
+                } else {
+                    resultDiv.innerHTML = `<div style="color:var(--accent-red);">Error: ${data.error || 'Failed to parse'}</div>`;
+                }
+            } catch (e) {
+                resultDiv.innerHTML = `<div style="color:var(--accent-red);">Error: ${e.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Generate Rule';
+            }
+        }
+
+        async function installNLPRule() {
+            const r = window._nlpGeneratedRule;
+            if (!r) return;
+            try {
+                const conflictRes = await fetch('/api/rules/conflicts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rule: r })
+                });
+                const conflictData = await conflictRes.json();
+                if (conflictData.has_conflicts) {
+                    const conflicts = conflictData.conflicts.map(c => `- ${c.conflicting_rule}: ${c.reason}`).join('\n');
+                    if (!confirm(`Warning: This rule may conflict with existing rules:\n\n${conflicts}\n\nInstall anyway?`)) return;
+                }
+
+                const res = await fetch('/api/constitution/rules', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: r.name,
+                        value: r.value,
+                        description: r.description,
+                        severity: r.severity,
+                        display_name: r.display_name,
+                        hint: r.hint,
+                    })
+                });
+                if (res.ok) {
+                    document.getElementById('nlp-result').style.display = 'none';
+                    document.getElementById('nlp-rule-input').value = '';
+                    fetchRules();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Failed to add rule');
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function createVisualRule() {
+            const actionMap = {
+                spend: { name: 'max_spend_visual', display: 'Spending Limit', desc: 'Maximum amount an agent can spend in a single action', hint: 'Prevents large unauthorized purchases' },
+                delete: { name: 'allow_deletion_visual', display: 'File/Data Deletion', desc: 'Can the agent permanently delete files or data?', hint: 'Protects against accidental data loss', boolVal: false },
+                access_sensitive: { name: 'allow_sensitive_visual', display: 'Sensitive Data Access', desc: 'Can the agent view passwords, tokens, or personal info?', hint: 'Keeps private data safe', boolVal: false },
+                api_call: { name: 'allow_api_calls_visual', display: 'External API Calls', desc: 'Can the agent connect to outside services?', hint: 'Controls what services the agent can reach', boolVal: true },
+                modify_files: { name: 'max_files_visual', display: 'File Modification Limit', desc: 'Maximum files the agent can change at once', hint: 'Limits blast radius of changes' },
+                batch_operation: { name: 'max_batch_visual', display: 'Batch Operation Limit', desc: 'Maximum items in a single batch operation', hint: 'Prevents massive bulk changes' },
+                network: { name: 'allow_network_visual', display: 'Network Access', desc: 'Can the agent send data over the internet?', hint: 'Controls outbound connections', boolVal: true },
+            };
+
+            const action = document.getElementById('vb-action').value;
+            const condition = document.getElementById('vb-condition').value;
+            const outcome = document.getElementById('vb-outcome').value;
+            const limit = parseInt(document.getElementById('vb-limit').value) || 50;
+            const severity = document.getElementById('vb-severity').value;
+            const template = actionMap[action];
+            if (!template) return;
+
+            const isBool = template.boolVal !== undefined;
+            const value = isBool ? (condition === 'any' ? false : template.boolVal) : limit;
+            const mode = outcome === 'shadow' ? 'shadow' : 'enforce';
+
+            try {
+                const res = await fetch('/api/constitution/rules', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: template.name,
+                        value: value,
+                        description: template.desc,
+                        severity: severity,
+                        display_name: template.display,
+                        hint: template.hint,
+                        mode: mode,
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    fetchRules();
+                } else {
+                    alert(data.error || 'Failed to create rule');
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function updateRuleMode(ruleName, mode) {
+            try {
+                const res = await fetch(`/api/constitution/rules/${ruleName}/mode`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode: mode })
+                });
+                if (res.ok) fetchRules();
+                else alert('Failed to update mode');
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function fetchRuleHistory() {
+            try {
+                const res = await fetch('/api/constitution/history');
+                const data = await res.json();
+                const history = data.history || [];
+                const container = document.getElementById('rule-history-list');
+
+                if (history.length === 0) {
+                    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);"><div style="font-size:40px;margin-bottom:12px;">&#128220;</div><p>No rule changes recorded yet. Changes will appear here when rules are created, updated, or deleted.</p></div>';
+                    return;
+                }
+
+                const actionIcons = { create: '&#10133;', update: '&#9998;', delete: '&#128465;', rollback: '&#8634;' };
+                const actionColors = { create: 'var(--accent-green)', update: 'var(--accent-blue)', delete: 'var(--accent-red)', rollback: 'var(--accent-yellow)' };
+
+                container.innerHTML = history.map(v => {
+                    const icon = actionIcons[v.action] || '&#128196;';
+                    const color = actionColors[v.action] || 'var(--text-secondary)';
+                    const time = v.created_at ? new Date(v.created_at).toLocaleString() : '';
+                    let changeDetail = '';
+                    if (v.old_value && v.new_value && v.action === 'update') {
+                        changeDetail = `<span style="text-decoration:line-through;color:var(--accent-red);">${v.old_value}</span> &rarr; <span style="color:var(--accent-green);">${v.new_value}</span>`;
+                    } else if (v.action === 'create' && v.new_value) {
+                        changeDetail = `Set to: <span style="color:var(--accent-green);">${v.new_value}</span>`;
+                    } else if (v.action === 'delete' && v.old_value) {
+                        changeDetail = `Was: <span style="text-decoration:line-through;color:var(--accent-red);">${v.old_value}</span>`;
+                    }
+
+                    return `<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);margin-bottom:8px;">
+                        <span style="font-size:20px;">${icon}</span>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:14px;color:${color};">${v.action.charAt(0).toUpperCase() + v.action.slice(1)}: ${v.rule_name}</div>
+                            ${changeDetail ? `<div style="font-size:12px;margin-top:4px;">${changeDetail}</div>` : ''}
+                            <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">
+                                ${v.changed_by ? 'by ' + v.changed_by + ' &middot; ' : ''}${time}
+                            </div>
+                        </div>
+                        ${v.old_config && v.action !== 'rollback' ? `<button class="btn" style="background:var(--accent-yellow);color:var(--bg-primary);padding:6px 12px;font-size:12px;white-space:nowrap;" onclick="rollbackRule(${v.id})" title="Restore to the state before this change">Rollback</button>` : ''}
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                console.error('Rule history error:', e);
+            }
+        }
+
+        async function rollbackRule(versionId) {
+            if (!confirm('Roll back this rule change? This will restore the rule to its previous state.')) return;
+            try {
+                const res = await fetch('/api/constitution/rollback/' + versionId, { method: 'POST' });
+                if (res.ok) {
+                    fetchRules();
+                    fetchRuleHistory();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Rollback failed');
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
         fetchPending();
         fetchAuditLog();
         fetchRules();
         fetchStats();
         fetchApiKeys();
         fetchTemplates();
+        fetchRuleHistory();
         if (CURRENT_USER_ROLE === 'admin') fetchUsers();
 
         setInterval(fetchPending, POLL_INTERVAL);

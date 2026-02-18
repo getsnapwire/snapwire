@@ -38,6 +38,7 @@ Rules for your analysis:
 - Assess the risk_score based on potential harm (0 = no risk, 100 = maximum risk)
 - If no violations are found, return allowed: true with an empty violations array
 - IMPORTANT: Write all reasons and analysis in simple, everyday language. No technical jargon. Explain things the way you would to a friend who doesn't work in tech.
+- If a rule is marked as [SHADOW MODE - monitor only], still flag violations but note they are shadow-mode violations
 - Always return valid JSON and nothing else"""
 
 
@@ -58,8 +59,10 @@ def is_rate_limit_error(exception):
     retry=retry_if_exception(is_rate_limit_error),
     reraise=True,
 )
-def audit_tool_call(tool_call):
+def audit_tool_call(tool_call, dry_run=False):
     rules_summary = get_rules_summary()
+
+    dry_run_note = "\n\nNOTE: This is a DRY RUN / SANDBOX test. Analyze normally but this is for testing purposes only." if dry_run else ""
 
     user_message = f"""Constitutional Rules:
 {rules_summary}
@@ -68,7 +71,7 @@ Agent Tool Call to Audit:
 - Tool Name: {tool_call.get('tool_name', 'unknown')}
 - Parameters: {json.dumps(tool_call.get('parameters', {}), indent=2)}
 - Stated Intent: {tool_call.get('intent', 'No intent provided')}
-- Context: {tool_call.get('context', 'No context provided')}
+- Context: {tool_call.get('context', 'No context provided')}{dry_run_note}
 
 Analyze this tool call against the constitutional rules and return your assessment as JSON."""
 
@@ -101,5 +104,32 @@ Analyze this tool call against the constitutional rules and return your assessme
             "risk_score": 75,
             "analysis": response_text,
         }
+
+    rules = get_rules()
+    if not dry_run:
+        shadow_violations = []
+        enforce_violations = []
+        for v in result.get("violations", []):
+            rule_name = v.get("rule", "")
+            rule_config = rules.get(rule_name, {})
+            mode = rule_config.get("mode", "enforce")
+            if mode == "shadow":
+                v["shadow_mode"] = True
+                shadow_violations.append(v)
+            elif mode != "disabled":
+                enforce_violations.append(v)
+
+        if enforce_violations:
+            result["allowed"] = False
+            result["violations"] = enforce_violations
+            result["shadow_violations"] = shadow_violations
+        elif shadow_violations:
+            result["allowed"] = True
+            result["violations"] = []
+            result["shadow_violations"] = shadow_violations
+        else:
+            result["allowed"] = True
+            result["violations"] = []
+            result["shadow_violations"] = []
 
     return result

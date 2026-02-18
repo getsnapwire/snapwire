@@ -4,6 +4,7 @@
 An AI-powered firewall that intercepts agent tool calls, audits them against a set of constitutional rules using Claude, and blocks actions that violate the rules. Blocked actions are queued for manual human approval or denial via a web dashboard with browser notifications. Authentication required via Replit Auth. Designed for commercialization with admin panel, user management, API key management, and real-time monitoring.
 
 ## Recent Changes
+- 2026-02-18: Added dashboard UI for AI Rule Builder (NLP), Visual Rule Builder (dropdowns), shadow mode toggles, rule history with rollback, and policy sandbox
 - 2026-02-18: Added API key management (generate, revoke, toggle keys per agent)
 - 2026-02-18: Added webhook callback system (agents receive approve/deny results via POST)
 - 2026-02-18: Added rule template presets (Safe Browsing, Financial Compliance, Code Safety, Data Protection)

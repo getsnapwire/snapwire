@@ -13,8 +13,11 @@ from flask_login import current_user
 
 from app import app, db
 from replit_auth import require_login, make_replit_blueprint
-from models import User, ApiKey
-from src.constitution import load_constitution, update_rule, add_rule, delete_rule, update_rule_full
+from models import User, ApiKey, RuleVersion
+from src.constitution import (
+    load_constitution, update_rule, add_rule, delete_rule, update_rule_full,
+    get_rule_history, restore_rule_version,
+)
 from src.auditor import audit_tool_call
 from src.action_queue import (
     add_pending_action,
@@ -33,6 +36,9 @@ from src.action_queue import (
     get_weekly_digest,
 )
 from src.rule_templates import get_templates, get_template
+from src.rate_limiter import check_rate_limit
+from src.input_sanitizer import sanitize_parameters
+from src.nlp_rule_builder import parse_natural_language_rule, detect_rule_conflicts, test_rule_against_action
 
 
 def require_admin(f):
@@ -99,6 +105,14 @@ def intercept_tool_call():
     if not api_key and not current_user.is_authenticated:
         return jsonify({"error": "Authentication required. Provide an API key via Authorization header or sign in."}), 401
 
+    if api_key:
+        allowed, remaining, reset_at = check_rate_limit(api_key.id)
+        if not allowed:
+            return jsonify({
+                "error": "Rate limit exceeded. Please slow down.",
+                "rate_limit": {"remaining": 0, "reset_at": reset_at},
+            }), 429
+
     agent_id = data.get("agent_id", api_key.agent_name if api_key else None) or "unknown"
     webhook_url = data.get("webhook_url")
     api_key_id = api_key.id if api_key else None
@@ -108,9 +122,27 @@ def intercept_tool_call():
         if field not in data:
             return jsonify({"error": f"Missing required field: {field}"}), 400
 
+    params = data.get("parameters", {})
+    sanitization = sanitize_parameters(params)
+    if not sanitization["safe"]:
+        threats = sanitization["threats"]
+        threat_summary = "; ".join([f"{t['type']}: {t['description']}" for t in threats[:3]])
+        log_action(
+            {"tool_name": data["tool_name"], "parameters": params, "intent": data.get("intent", ""), "context": data.get("context", "")},
+            {"allowed": False, "violations": [{"rule": "input_sanitization", "severity": "critical", "reason": f"Malicious input detected: {threat_summary}"}], "risk_score": 95, "analysis": f"Input blocked by sanitizer: {threat_summary}"},
+            "blocked-sanitizer",
+            agent_id=agent_id,
+            api_key_id=api_key_id,
+        )
+        return jsonify({
+            "status": "blocked",
+            "message": "Tool call blocked: potentially malicious input detected.",
+            "threats": threats,
+        }), 403
+
     tool_call = {
         "tool_name": data["tool_name"],
-        "parameters": data.get("parameters", {}),
+        "parameters": params,
         "intent": data.get("intent", ""),
         "context": data.get("context", ""),
     }
@@ -120,37 +152,44 @@ def intercept_tool_call():
     except Exception as e:
         return jsonify({"error": f"Audit failed: {str(e)}"}), 500
 
+    shadow_violations = audit_result.pop("shadow_violations", [])
+
+    response_extra = {}
+    if api_key:
+        _, remaining, reset_at = check_rate_limit(api_key.id)
+        response_extra["rate_limit"] = {"remaining": remaining, "reset_at": reset_at}
+
+    if shadow_violations:
+        response_extra["shadow_violations"] = shadow_violations
+
     if audit_result.get("allowed", False):
         log_action(tool_call, audit_result, "allowed", agent_id=agent_id, api_key_id=api_key_id)
-        return jsonify(
-            {
-                "status": "allowed",
-                "audit": audit_result,
-                "message": "Tool call passed all constitutional checks.",
-            }
-        )
+        return jsonify({
+            "status": "allowed",
+            "audit": audit_result,
+            "message": "Tool call passed all constitutional checks.",
+            **response_extra,
+        })
     else:
         if check_auto_approve(tool_call, audit_result, agent_id):
             log_action(tool_call, audit_result, "auto-approved", agent_id=agent_id, api_key_id=api_key_id)
-            return jsonify(
-                {
-                    "status": "auto-approved",
-                    "audit": audit_result,
-                    "message": "Tool call auto-approved based on previous approval history.",
-                }
-            )
+            return jsonify({
+                "status": "auto-approved",
+                "audit": audit_result,
+                "message": "Tool call auto-approved based on previous approval history.",
+                **response_extra,
+            })
 
         action_id = add_pending_action(tool_call, audit_result, webhook_url=webhook_url, agent_id=agent_id, api_key_id=api_key_id)
-        return jsonify(
-            {
-                "status": "blocked",
-                "action_id": action_id,
-                "audit": audit_result,
-                "message": "Tool call blocked. Awaiting manual approval.",
-                "approval_url": f"/api/actions/{action_id}/resolve",
-                "poll_url": f"/api/actions/{action_id}",
-            }
-        ), 403
+        return jsonify({
+            "status": "blocked",
+            "action_id": action_id,
+            "audit": audit_result,
+            "message": "Tool call blocked. Awaiting manual approval.",
+            "approval_url": f"/api/actions/{action_id}/resolve",
+            "poll_url": f"/api/actions/{action_id}",
+            **response_extra,
+        }), 403
 
 
 @app.route("/api/actions/pending", methods=["GET"])
@@ -210,7 +249,7 @@ def update_constitution_rule(rule_name):
     if not data or "value" not in data:
         return jsonify({"error": "Must provide 'value'"}), 400
 
-    success = update_rule(rule_name, data["value"])
+    success = update_rule(rule_name, data["value"], changed_by=current_user.first_name)
     if success:
         return jsonify({"status": "updated", "rule": rule_name, "value": data["value"]})
     return jsonify({"error": "Rule not found"}), 404
@@ -235,10 +274,16 @@ def create_constitution_rule():
     if not rule_name:
         return jsonify({"error": "Rule name cannot be empty"}), 400
 
+    mode = data.get("mode", "enforce")
+    if mode not in ("enforce", "shadow", "disabled"):
+        return jsonify({"error": "Mode must be 'enforce', 'shadow', or 'disabled'"}), 400
+
     success, error = add_rule(
         rule_name, data["value"], data["description"], data["severity"],
         display_name=data.get("display_name"),
         hint=data.get("hint"),
+        mode=mode,
+        changed_by=current_user.first_name,
     )
     if success:
         return jsonify({"status": "created", "rule": rule_name}), 201
@@ -248,7 +293,7 @@ def create_constitution_rule():
 @app.route("/api/constitution/rules/<rule_name>", methods=["DELETE"])
 @require_admin
 def delete_constitution_rule(rule_name):
-    success = delete_rule(rule_name)
+    success = delete_rule(rule_name, changed_by=current_user.first_name)
     if success:
         return jsonify({"status": "deleted", "rule": rule_name})
     return jsonify({"error": "Rule not found"}), 404
@@ -268,10 +313,106 @@ def patch_constitution_rule(rule_name):
         severity=data.get("severity"),
         display_name=data.get("display_name"),
         hint=data.get("hint"),
+        mode=data.get("mode"),
+        changed_by=current_user.first_name,
     )
     if success:
         return jsonify({"status": "updated", "rule": rule_name})
     return jsonify({"error": "Rule not found"}), 404
+
+
+@app.route("/api/constitution/rules/<rule_name>/mode", methods=["PATCH"])
+@require_admin
+def update_rule_mode(rule_name):
+    data = request.get_json()
+    if not data or "mode" not in data:
+        return jsonify({"error": "Must provide 'mode'"}), 400
+    mode = data["mode"]
+    if mode not in ("enforce", "shadow", "disabled"):
+        return jsonify({"error": "Mode must be 'enforce', 'shadow', or 'disabled'"}), 400
+    success = update_rule_full(rule_name, mode=mode, changed_by=current_user.first_name)
+    if success:
+        return jsonify({"status": "updated", "rule": rule_name, "mode": mode})
+    return jsonify({"error": "Rule not found"}), 404
+
+
+@app.route("/api/constitution/history", methods=["GET"])
+@require_login
+def rule_history():
+    rule_name = request.args.get("rule_name")
+    history = get_rule_history(rule_name)
+    return jsonify({"history": history})
+
+
+@app.route("/api/constitution/rollback/<int:version_id>", methods=["POST"])
+@require_admin
+def rollback_rule(version_id):
+    success, error = restore_rule_version(version_id, changed_by=current_user.first_name)
+    if success:
+        return jsonify({"status": "rolled back", "version_id": version_id})
+    return jsonify({"error": error}), 404
+
+
+@app.route("/api/rules/parse", methods=["POST"])
+@require_admin
+def parse_rule_nlp():
+    data = request.get_json()
+    if not data or "description" not in data:
+        return jsonify({"error": "Must provide 'description' (plain English rule)"}), 400
+
+    try:
+        result = parse_natural_language_rule(data["description"])
+        return jsonify({"rule": result})
+    except Exception as e:
+        return jsonify({"error": f"Failed to parse rule: {str(e)}"}), 500
+
+
+@app.route("/api/rules/conflicts", methods=["POST"])
+@require_login
+def check_conflicts():
+    data = request.get_json()
+    if not data or "rule" not in data:
+        return jsonify({"error": "Must provide 'rule' object"}), 400
+
+    existing_rules = load_constitution().get("rules", {})
+    try:
+        conflicts = detect_rule_conflicts(data["rule"], existing_rules)
+        return jsonify({"conflicts": conflicts, "has_conflicts": len(conflicts) > 0})
+    except Exception as e:
+        return jsonify({"error": f"Conflict check failed: {str(e)}"}), 500
+
+
+@app.route("/api/sandbox/test", methods=["POST"])
+@require_login
+def sandbox_test():
+    data = request.get_json()
+    if not data or "tool_name" not in data:
+        return jsonify({"error": "Must provide 'tool_name'"}), 400
+
+    tool_call = {
+        "tool_name": data["tool_name"],
+        "parameters": data.get("parameters", {}),
+        "intent": data.get("intent", ""),
+        "context": data.get("context", ""),
+    }
+
+    sanitization = sanitize_parameters(data.get("parameters", {}))
+
+    try:
+        audit_result = audit_tool_call(tool_call, dry_run=True)
+    except Exception as e:
+        return jsonify({"error": f"Sandbox test failed: {str(e)}"}), 500
+
+    shadow_violations = audit_result.pop("shadow_violations", [])
+
+    return jsonify({
+        "dry_run": True,
+        "message": "This is a sandbox test. No action was actually taken.",
+        "would_be_blocked": not audit_result.get("allowed", False),
+        "audit": audit_result,
+        "shadow_violations": shadow_violations,
+        "input_sanitization": sanitization,
+    })
 
 
 @app.route("/api/notifications/poll", methods=["GET"])
@@ -523,6 +664,7 @@ def install_template(template_id):
             rule_name, rule_data["value"], rule_data["description"], rule_data["severity"],
             display_name=rule_data.get("display_name"),
             hint=rule_data.get("hint"),
+            changed_by=current_user.first_name,
         )
         if success:
             installed.append(rule_name)
