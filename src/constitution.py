@@ -1,31 +1,59 @@
 import json
-import os
-
-CONSTITUTION_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "constitution.json")
 
 
-def load_constitution():
-    with open(CONSTITUTION_PATH, "r") as f:
-        return json.load(f)
+def _get_tenant_id():
+    try:
+        from src.tenant import get_current_tenant_id
+        return get_current_tenant_id()
+    except Exception:
+        return None
 
 
-def save_constitution(constitution):
-    with open(CONSTITUTION_PATH, "w") as f:
-        json.dump(constitution, f, indent=2)
+def load_constitution(tenant_id=None):
+    from models import ConstitutionRule
+    if tenant_id is None:
+        tenant_id = _get_tenant_id()
+    if not tenant_id:
+        return {"version": "1.0", "rules": {}, "audit_settings": {"log_all_actions": True, "require_approval_on_block": True, "auto_approve_low_severity": False}}
+
+    rules = ConstitutionRule.query.filter_by(tenant_id=tenant_id).all()
+    rules_dict = {}
+    for r in rules:
+        try:
+            val = json.loads(r.value)
+        except (json.JSONDecodeError, TypeError):
+            val = r.value
+        rules_dict[r.rule_name] = {
+            "value": val,
+            "display_name": r.display_name or r.rule_name.replace("_", " ").title(),
+            "description": r.description or "",
+            "hint": r.hint or "",
+            "severity": r.severity or "medium",
+            "mode": r.mode or "enforce",
+        }
+    return {
+        "version": "1.0",
+        "rules": rules_dict,
+        "audit_settings": {
+            "log_all_actions": True,
+            "require_approval_on_block": True,
+            "auto_approve_low_severity": False,
+        },
+    }
 
 
-def get_rules():
-    constitution = load_constitution()
+def get_rules(tenant_id=None):
+    constitution = load_constitution(tenant_id)
     return constitution.get("rules", {})
 
 
-def get_audit_settings():
-    constitution = load_constitution()
+def get_audit_settings(tenant_id=None):
+    constitution = load_constitution(tenant_id)
     return constitution.get("audit_settings", {})
 
 
-def get_rules_summary():
-    rules = get_rules()
+def get_rules_summary(tenant_id=None):
+    rules = get_rules(tenant_id)
     summary_lines = []
     for rule_name, rule_config in rules.items():
         mode = rule_config.get("mode", "enforce")
@@ -39,7 +67,7 @@ def get_rules_summary():
     return "\n".join(summary_lines)
 
 
-def _record_version(rule_name, action, old_config=None, new_config=None, changed_by=None):
+def _record_version(rule_name, action, old_config=None, new_config=None, changed_by=None, tenant_id=None):
     try:
         from app import db
         from models import RuleVersion
@@ -51,6 +79,7 @@ def _record_version(rule_name, action, old_config=None, new_config=None, changed
             old_config=json.dumps(old_config) if old_config else None,
             new_config=json.dumps(new_config) if new_config else None,
             changed_by=changed_by,
+            tenant_id=tenant_id,
         )
         db.session.add(version)
         db.session.commit()
@@ -58,96 +87,152 @@ def _record_version(rule_name, action, old_config=None, new_config=None, changed
         pass
 
 
-def update_rule(rule_name, new_value, changed_by=None):
-    constitution = load_constitution()
-    if rule_name in constitution["rules"]:
-        old_config = dict(constitution["rules"][rule_name])
-        constitution["rules"][rule_name]["value"] = new_value
-        save_constitution(constitution)
-        _record_version(rule_name, "update", old_config, constitution["rules"][rule_name], changed_by)
-        return True
-    return False
+def update_rule(rule_name, new_value, changed_by=None, tenant_id=None):
+    from app import db
+    from models import ConstitutionRule
+    if tenant_id is None:
+        tenant_id = _get_tenant_id()
+    rule = ConstitutionRule.query.filter_by(tenant_id=tenant_id, rule_name=rule_name).first()
+    if not rule:
+        return False
+    old_config = {"value": json.loads(rule.value) if rule.value else None}
+    rule.value = json.dumps(new_value)
+    db.session.commit()
+    new_config = {"value": new_value}
+    _record_version(rule_name, "update", old_config, new_config, changed_by, tenant_id)
+    return True
 
 
-def add_rule(rule_name, value, description, severity, display_name=None, hint=None, mode="enforce", changed_by=None):
-    constitution = load_constitution()
-    if rule_name in constitution["rules"]:
+def add_rule(rule_name, value, description, severity, display_name=None, hint=None, mode="enforce", changed_by=None, tenant_id=None):
+    from app import db
+    from models import ConstitutionRule
+    if tenant_id is None:
+        tenant_id = _get_tenant_id()
+    existing = ConstitutionRule.query.filter_by(tenant_id=tenant_id, rule_name=rule_name).first()
+    if existing:
         return False, "Rule already exists"
-    rule_data = {
-        "value": value,
-        "display_name": display_name or rule_name.replace("_", " ").title(),
-        "description": description,
-        "hint": hint or "",
-        "severity": severity,
-        "mode": mode,
-    }
-    constitution["rules"][rule_name] = rule_data
-    save_constitution(constitution)
-    _record_version(rule_name, "create", None, rule_data, changed_by)
+    rule = ConstitutionRule(
+        tenant_id=tenant_id,
+        rule_name=rule_name,
+        value=json.dumps(value),
+        display_name=display_name or rule_name.replace("_", " ").title(),
+        description=description,
+        hint=hint or "",
+        severity=severity,
+        mode=mode,
+    )
+    db.session.add(rule)
+    db.session.commit()
+    rule_data = {"value": value, "description": description, "severity": severity, "mode": mode}
+    _record_version(rule_name, "create", None, rule_data, changed_by, tenant_id)
     return True, None
 
 
-def delete_rule(rule_name, changed_by=None):
-    constitution = load_constitution()
-    if rule_name not in constitution["rules"]:
+def delete_rule(rule_name, changed_by=None, tenant_id=None):
+    from app import db
+    from models import ConstitutionRule
+    if tenant_id is None:
+        tenant_id = _get_tenant_id()
+    rule = ConstitutionRule.query.filter_by(tenant_id=tenant_id, rule_name=rule_name).first()
+    if not rule:
         return False
-    old_config = dict(constitution["rules"][rule_name])
-    del constitution["rules"][rule_name]
-    save_constitution(constitution)
-    _record_version(rule_name, "delete", old_config, None, changed_by)
+    try:
+        old_val = json.loads(rule.value)
+    except Exception:
+        old_val = rule.value
+    old_config = {"value": old_val, "description": rule.description, "severity": rule.severity}
+    db.session.delete(rule)
+    db.session.commit()
+    _record_version(rule_name, "delete", old_config, None, changed_by, tenant_id)
     return True
 
 
-def update_rule_full(rule_name, value=None, description=None, severity=None, display_name=None, hint=None, mode=None, changed_by=None):
-    constitution = load_constitution()
-    if rule_name not in constitution["rules"]:
+def update_rule_full(rule_name, value=None, description=None, severity=None, display_name=None, hint=None, mode=None, changed_by=None, tenant_id=None):
+    from app import db
+    from models import ConstitutionRule
+    if tenant_id is None:
+        tenant_id = _get_tenant_id()
+    rule = ConstitutionRule.query.filter_by(tenant_id=tenant_id, rule_name=rule_name).first()
+    if not rule:
         return False
-    old_config = dict(constitution["rules"][rule_name])
-    rule = constitution["rules"][rule_name]
+    try:
+        old_val = json.loads(rule.value)
+    except Exception:
+        old_val = rule.value
+    old_config = {"value": old_val, "description": rule.description, "severity": rule.severity, "mode": rule.mode}
     if value is not None:
-        rule["value"] = value
+        rule.value = json.dumps(value)
     if description is not None:
-        rule["description"] = description
+        rule.description = description
     if severity is not None:
-        rule["severity"] = severity
+        rule.severity = severity
     if display_name is not None:
-        rule["display_name"] = display_name
+        rule.display_name = display_name
     if hint is not None:
-        rule["hint"] = hint
+        rule.hint = hint
     if mode is not None:
-        rule["mode"] = mode
-    save_constitution(constitution)
-    _record_version(rule_name, "update", old_config, rule, changed_by)
+        rule.mode = mode
+    db.session.commit()
+    try:
+        new_val = json.loads(rule.value)
+    except Exception:
+        new_val = rule.value
+    new_config = {"value": new_val, "description": rule.description, "severity": rule.severity, "mode": rule.mode}
+    _record_version(rule_name, "update", old_config, new_config, changed_by, tenant_id)
     return True
 
 
-def get_rule_history(rule_name=None):
+def get_rule_history(rule_name=None, tenant_id=None):
     from models import RuleVersion
+    if tenant_id is None:
+        tenant_id = _get_tenant_id()
     query = RuleVersion.query
+    if tenant_id:
+        query = query.filter_by(tenant_id=tenant_id)
     if rule_name:
         query = query.filter_by(rule_name=rule_name)
     versions = query.order_by(RuleVersion.created_at.desc()).limit(100).all()
     return [v.to_dict() for v in versions]
 
 
-def restore_rule_version(version_id, changed_by=None):
+def restore_rule_version(version_id, changed_by=None, tenant_id=None):
     from app import db
-    from models import RuleVersion
+    from models import RuleVersion, ConstitutionRule
+    if tenant_id is None:
+        tenant_id = _get_tenant_id()
     version = RuleVersion.query.get(version_id)
     if not version or not version.old_config:
         return False, "Version not found or no previous config to restore"
+    if version.tenant_id and version.tenant_id != tenant_id:
+        return False, "Version not found"
 
     old_config = json.loads(version.old_config)
-    constitution = load_constitution()
 
     if version.action == "delete":
-        constitution["rules"][version.rule_name] = old_config
+        existing = ConstitutionRule.query.filter_by(tenant_id=tenant_id, rule_name=version.rule_name).first()
+        if not existing:
+            rule = ConstitutionRule(
+                tenant_id=tenant_id,
+                rule_name=version.rule_name,
+                value=json.dumps(old_config.get("value")),
+                display_name=old_config.get("display_name"),
+                description=old_config.get("description"),
+                hint=old_config.get("hint"),
+                severity=old_config.get("severity", "medium"),
+                mode=old_config.get("mode", "enforce"),
+            )
+            db.session.add(rule)
     elif version.action in ("create", "update"):
-        if version.rule_name in constitution["rules"]:
-            constitution["rules"][version.rule_name] = old_config
-        else:
-            constitution["rules"][version.rule_name] = old_config
+        rule = ConstitutionRule.query.filter_by(tenant_id=tenant_id, rule_name=version.rule_name).first()
+        if rule:
+            rule.value = json.dumps(old_config.get("value"))
+            if "description" in old_config:
+                rule.description = old_config["description"]
+            if "severity" in old_config:
+                rule.severity = old_config["severity"]
+            if "mode" in old_config:
+                rule.mode = old_config["mode"]
 
-    save_constitution(constitution)
-    _record_version(version.rule_name, "rollback", None, old_config, changed_by)
+    db.session.commit()
+    _record_version(version.rule_name, "rollback", None, old_config, changed_by, tenant_id)
     return True, None

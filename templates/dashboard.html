@@ -394,6 +394,13 @@
         </div>
     </div>
 
+    <div class="workspace-bar" id="workspace-bar" style="background:rgba(77,139,255,0.08);border-bottom:1px solid var(--border);padding:8px 32px;display:flex;align-items:center;gap:12px;font-size:13px;">
+        <span style="color:var(--text-secondary);">Workspace:</span>
+        <select id="workspace-select" onchange="switchWorkspace(this.value)" style="background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:13px;cursor:pointer;">
+        </select>
+        <button class="btn btn-sm" onclick="showCreateOrgModal()" style="margin-left:auto;font-size:12px;padding:4px 12px;background:var(--accent-purple);border:none;color:#fff;border-radius:6px;cursor:pointer;">+ New Organization</button>
+    </div>
+
     <div class="container">
         <div id="activity-summary-banner" class="activity-summary-banner" style="display:none;">
             <span class="icon">&#128200;</span>
@@ -460,6 +467,9 @@
             <button class="tab" data-tab="settings" data-tooltip="Rate limits and webhook configuration" data-tooltip-pos="bottom">Settings</button>
             <button class="tab" data-tab="admin" data-tooltip="Manage users, roles, and access controls" data-tooltip-pos="bottom">Admin</button>
             {% endif %}
+            <button class="tab" data-tab="org" data-tooltip="Manage your organization members and settings" data-tooltip-pos="bottom">Organization</button>
+            <button class="tab" data-tab="account" data-tooltip="Your account settings and usage stats" data-tooltip-pos="bottom">Account</button>
+            <button class="tab" data-tab="quickstart" data-tooltip="Get started with the Agentic Firewall" data-tooltip-pos="bottom">Quick Start</button>
         </div>
 
         <div id="panel-pending" class="panel active">
@@ -950,6 +960,142 @@
                 <div id="test-result" class="result-panel"></div>
             </div>
         </div>
+
+        <div id="panel-org" class="panel">
+            <h3 style="margin-bottom:16px;">Organization</h3>
+            <div id="org-details" style="display:none;">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+                    <h4 id="org-name" style="margin-bottom:8px;"></h4>
+                    <p style="color:var(--text-secondary);font-size:13px;">Slug: <span id="org-slug"></span></p>
+                    <p style="color:var(--text-secondary);font-size:13px;">Your role: <span id="org-your-role"></span></p>
+                </div>
+                <div style="display:flex;gap:10px;margin-bottom:16px;">
+                    <button class="btn" onclick="generateInviteLink()" style="background:var(--accent-blue);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;">Generate Invite Link</button>
+                    <button class="btn" onclick="leaveOrg()" style="background:var(--accent-red);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;">Leave Organization</button>
+                </div>
+                <div id="invite-link-display" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:16px;">
+                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">Share this invite link:</p>
+                    <input type="text" id="invite-link-url" readonly style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:13px;font-family:'Fira Code',monospace;">
+                    <button onclick="navigator.clipboard.writeText(document.getElementById('invite-link-url').value)" style="margin-top:6px;font-size:12px;background:var(--accent-purple);border:none;color:#fff;padding:4px 12px;border-radius:6px;cursor:pointer;">Copy Link</button>
+                </div>
+                <h4 style="margin-bottom:12px;">Members</h4>
+                <div id="org-members-list"></div>
+            </div>
+            <div id="org-no-org" style="display:none;">
+                <p style="color:var(--text-secondary);margin-bottom:16px;">You are currently in your personal workspace. Create or join an organization to collaborate with your team.</p>
+                <button class="btn" onclick="showCreateOrgModal()" style="background:var(--accent-purple);border:none;color:#fff;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">Create Organization</button>
+            </div>
+        </div>
+
+        <div id="panel-account" class="panel">
+            <h3 style="margin-bottom:16px;">Account Settings</h3>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+                <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+                    <img id="account-avatar" src="" alt="Avatar" style="width:48px;height:48px;border-radius:50%;background:var(--bg-secondary);">
+                    <div>
+                        <div id="account-name" style="font-weight:600;font-size:16px;"></div>
+                        <div id="account-email" style="color:var(--text-secondary);font-size:13px;"></div>
+                    </div>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Display Name</label>
+                    <input type="text" id="account-display-name" placeholder="Your display name" style="width:300px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;">
+                    <button onclick="saveDisplayName()" style="margin-left:8px;background:var(--accent-blue);border:none;color:#fff;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;">Save</button>
+                </div>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                <h4 style="margin-bottom:12px;">Usage This Month</h4>
+                <div id="usage-stats" style="display:flex;gap:20px;">
+                    <div class="stat-card">
+                        <div class="label">API Calls</div>
+                        <div class="value" id="usage-api-calls" style="color:var(--accent-blue);">0</div>
+                    </div>
+                </div>
+                <div id="usage-history" style="margin-top:16px;"></div>
+            </div>
+        </div>
+
+        <div id="panel-quickstart" class="panel">
+            <h3 style="margin-bottom:16px;">Quick Start Guide</h3>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;">
+                <h4 style="color:var(--accent-blue);margin-bottom:12px;">Step 1: Generate an API Key</h4>
+                <p style="color:var(--text-secondary);font-size:14px;margin-bottom:12px;">Go to the <a href="#" onclick="document.querySelector('[data-tab=keys]').click();return false;" style="color:var(--accent-purple);">API Keys</a> tab and create a key for your agent.</p>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;">
+                <h4 style="color:var(--accent-blue);margin-bottom:12px;">Step 2: Send Tool Calls to the Firewall</h4>
+                <p style="color:var(--text-secondary);font-size:14px;margin-bottom:12px;">Point your AI agent to use this endpoint before executing any tool:</p>
+                <pre style="background:var(--bg-secondary);padding:16px;border-radius:8px;font-family:'Fira Code',monospace;font-size:13px;overflow-x:auto;color:var(--text-primary);"><code>POST /api/intercept
+Authorization: Bearer af_YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "tool_name": "delete_file",
+  "parameters": {"path": "/important.txt"},
+  "intent": "Clean up old files",
+  "agent_id": "my-agent",
+  "webhook_url": "https://your-app.com/callback"
+}</code></pre>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;">
+                <h4 style="color:var(--accent-blue);margin-bottom:12px;">Step 3: Handle the Response</h4>
+                <p style="color:var(--text-secondary);font-size:14px;margin-bottom:12px;">If the action is <span style="color:var(--accent-green);">allowed</span>, proceed. If <span style="color:var(--accent-red);">blocked</span>, the response includes an action_id you can poll for approval:</p>
+                <pre style="background:var(--bg-secondary);padding:16px;border-radius:8px;font-family:'Fira Code',monospace;font-size:13px;overflow-x:auto;color:var(--text-primary);"><code>GET /api/actions/{action_id}
+Authorization: Bearer af_YOUR_API_KEY
+
+# Response: {"status": "approved"} or {"status": "pending"}</code></pre>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;">
+                <h4 style="color:var(--accent-blue);margin-bottom:12px;">Step 4: Configure Your Rules</h4>
+                <p style="color:var(--text-secondary);font-size:14px;">Go to the <a href="#" onclick="document.querySelector('[data-tab=rules]').click();return false;" style="color:var(--accent-purple);">Constitution</a> tab to customize your safety rules, or install a <a href="#" onclick="document.querySelector('[data-tab=rules]').click();return false;" style="color:var(--accent-purple);">template pack</a> to get started quickly.</p>
+            </div>
+            <div style="background:rgba(77,139,255,0.08);border:1px solid rgba(77,139,255,0.25);border-radius:12px;padding:20px;">
+                <h4 style="color:var(--accent-blue);margin-bottom:8px;">Python Example</h4>
+                <pre style="background:var(--bg-secondary);padding:16px;border-radius:8px;font-family:'Fira Code',monospace;font-size:13px;overflow-x:auto;color:var(--text-primary);"><code>import requests
+
+API_KEY = "af_your_key_here"
+FIREWALL_URL = "https://your-app.replit.app"
+
+def check_with_firewall(tool_name, params, intent=""):
+    resp = requests.post(
+        f"{FIREWALL_URL}/api/intercept",
+        headers={"Authorization": f"Bearer {API_KEY}"},
+        json={
+            "tool_name": tool_name,
+            "parameters": params,
+            "intent": intent,
+        }
+    )
+    result = resp.json()
+    if result["status"] == "allowed":
+        return True  # Safe to proceed
+    elif result["status"] == "blocked":
+        print(f"Blocked! Action ID: {result['action_id']}")
+        return False  # Wait for human approval
+    return result["status"] == "auto-approved"
+
+# Usage
+if check_with_firewall("send_email", {"to": "user@example.com"}):
+    send_email(to="user@example.com")</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div id="create-org-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:400px;width:90%;">
+            <h3 style="margin-bottom:16px;">Create Organization</h3>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Organization Name</label>
+                <input type="text" id="new-org-name" placeholder="My Team" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">URL Slug (optional)</label>
+                <input type="text" id="new-org-slug" placeholder="my-team" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button onclick="hideCreateOrgModal()" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:8px 16px;border-radius:8px;cursor:pointer;">Cancel</button>
+                <button onclick="createOrg()" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;">Create</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -968,7 +1114,10 @@
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
                 tab.classList.add('active');
-                document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+                const tabName = tab.dataset.tab;
+                document.getElementById('panel-' + tabName).classList.add('active');
+                if (tabName === 'org') loadOrgPanel();
+                if (tabName === 'account') loadAccountPanel();
             });
         });
 
@@ -2631,6 +2780,7 @@
         fetchApiKeys();
         fetchTemplates();
         fetchRuleHistory();
+        loadWorkspaces();
         if (CURRENT_USER_ROLE === 'admin') {
             fetchUsers();
             fetchRateLimits();
@@ -2644,6 +2794,164 @@
         setInterval(fetchAgentSessions, POLL_INTERVAL * 3);
         if (CURRENT_USER_ROLE === 'admin') {
             setInterval(fetchRateLimits, 10000);
+        }
+
+        async function loadWorkspaces() {
+            try {
+                const resp = await fetch('/api/tenant/current');
+                const data = await resp.json();
+                const select = document.getElementById('workspace-select');
+                if (!select) return;
+                select.innerHTML = '';
+                (data.tenants || []).forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = JSON.stringify({id: t.id, type: t.type});
+                    opt.textContent = t.name + (t.role ? ` (${t.role})` : '');
+                    if (data.current_tenant && t.id === data.current_tenant.id) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            } catch(e) { console.error('Failed to load workspaces', e); }
+        }
+
+        async function switchWorkspace(val) {
+            try {
+                const parsed = JSON.parse(val);
+                await fetch('/api/tenant/switch', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({tenant_id: parsed.id, tenant_type: parsed.type})
+                });
+                window.location.reload();
+            } catch(e) { console.error('Failed to switch workspace', e); }
+        }
+
+        function showCreateOrgModal() {
+            const modal = document.getElementById('create-org-modal');
+            modal.style.display = 'flex';
+        }
+        function hideCreateOrgModal() {
+            document.getElementById('create-org-modal').style.display = 'none';
+        }
+
+        async function createOrg() {
+            const name = document.getElementById('new-org-name').value.trim();
+            const slug = document.getElementById('new-org-slug').value.trim();
+            if (!name) return alert('Please enter an organization name');
+            try {
+                const resp = await fetch('/api/orgs', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name, slug: slug || undefined})
+                });
+                const data = await resp.json();
+                if (resp.ok) {
+                    hideCreateOrgModal();
+                    await fetch('/api/tenant/switch', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({tenant_id: data.id, tenant_type: 'org'})
+                    });
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Failed to create organization');
+                }
+            } catch(e) { alert('Failed to create organization'); }
+        }
+
+        async function loadOrgPanel() {
+            try {
+                const tenantResp = await fetch('/api/tenant/current');
+                const tenantData = await tenantResp.json();
+                const current = tenantData.current_tenant;
+                if (!current || current.type !== 'org') {
+                    document.getElementById('org-details').style.display = 'none';
+                    document.getElementById('org-no-org').style.display = 'block';
+                    return;
+                }
+                document.getElementById('org-no-org').style.display = 'none';
+                document.getElementById('org-details').style.display = 'block';
+                const resp = await fetch(`/api/orgs/${current.id}`);
+                const org = await resp.json();
+                document.getElementById('org-name').textContent = org.name;
+                document.getElementById('org-slug').textContent = org.slug;
+                document.getElementById('org-your-role').textContent = org.your_role;
+                const list = document.getElementById('org-members-list');
+                list.innerHTML = (org.members || []).map(m => `
+                    <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid var(--border);">
+                        <img src="${m.profile_image_url || ''}" style="width:32px;height:32px;border-radius:50%;background:var(--bg-secondary);" onerror="this.style.display='none'">
+                        <div style="flex:1;">
+                            <div style="font-weight:500;font-size:14px;">${m.first_name || ''} ${m.last_name || ''}</div>
+                            <div style="color:var(--text-secondary);font-size:12px;">${m.email || ''}</div>
+                        </div>
+                        <span style="font-size:12px;padding:2px 8px;border-radius:4px;background:${m.role==='owner'?'var(--accent-purple)':m.role==='admin'?'var(--accent-blue)':'var(--bg-secondary)'};color:#fff;">${m.role}</span>
+                    </div>
+                `).join('');
+            } catch(e) { console.error('Failed to load org', e); }
+        }
+
+        async function generateInviteLink() {
+            try {
+                const tenantResp = await fetch('/api/tenant/current');
+                const tenantData = await tenantResp.json();
+                const current = tenantData.current_tenant;
+                if (!current || current.type !== 'org') return;
+                const resp = await fetch(`/api/orgs/${current.id}/invite`, {method: 'POST'});
+                const data = await resp.json();
+                if (resp.ok) {
+                    document.getElementById('invite-link-display').style.display = 'block';
+                    document.getElementById('invite-link-url').value = data.invite_url;
+                } else {
+                    alert(data.error || 'Failed to generate invite');
+                }
+            } catch(e) { alert('Failed to generate invite'); }
+        }
+
+        async function leaveOrg() {
+            if (!confirm('Are you sure you want to leave this organization?')) return;
+            try {
+                const tenantResp = await fetch('/api/tenant/current');
+                const tenantData = await tenantResp.json();
+                const current = tenantData.current_tenant;
+                if (!current || current.type !== 'org') return;
+                const accountResp = await fetch('/api/account');
+                const account = await accountResp.json();
+                const resp = await fetch(`/api/orgs/${current.id}/members/${account.id}`, {method: 'DELETE'});
+                if (resp.ok) { window.location.reload(); }
+                else { const data = await resp.json(); alert(data.error || 'Failed to leave'); }
+            } catch(e) { alert('Failed to leave organization'); }
+        }
+
+        async function loadAccountPanel() {
+            try {
+                const resp = await fetch('/api/account');
+                const data = await resp.json();
+                const avatar = document.getElementById('account-avatar');
+                if (data.profile_image_url) avatar.src = data.profile_image_url;
+                document.getElementById('account-name').textContent = `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'User';
+                document.getElementById('account-email').textContent = data.email || '';
+                document.getElementById('account-display-name').value = data.display_name || '';
+                document.getElementById('usage-api-calls').textContent = data.usage_this_month || 0;
+
+                const usageResp = await fetch('/api/usage');
+                const usageData = await usageResp.json();
+                const historyDiv = document.getElementById('usage-history');
+                if (usageData.usage && usageData.usage.length > 0) {
+                    historyDiv.innerHTML = '<h4 style="margin-bottom:8px;font-size:14px;color:var(--text-secondary);">Monthly History</h4>' +
+                        usageData.usage.map(u => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>${u.month}</span><span style="color:var(--accent-blue);font-family:'Fira Code',monospace;">${u.api_calls} calls</span></div>`).join('');
+                }
+            } catch(e) { console.error('Failed to load account', e); }
+        }
+
+        async function saveDisplayName() {
+            const name = document.getElementById('account-display-name').value.trim();
+            try {
+                await fetch('/api/account', {
+                    method: 'PATCH',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({display_name: name})
+                });
+                alert('Display name saved!');
+            } catch(e) { alert('Failed to save'); }
         }
     </script>
 </body>

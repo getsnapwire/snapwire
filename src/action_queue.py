@@ -34,13 +34,14 @@ def unsubscribe_sse(q):
             _sse_queues.remove(q)
 
 
-def add_pending_action(tool_call, audit_result, webhook_url=None, agent_id=None, api_key_id=None):
+def add_pending_action(tool_call, audit_result, webhook_url=None, agent_id=None, api_key_id=None, tenant_id=None):
     from app import db
     from models import PendingAction
 
     action_id = str(uuid.uuid4())[:8]
     action = PendingAction(
         id=action_id,
+        tenant_id=tenant_id,
         tool_name=tool_call.get("tool_name", "unknown"),
         tool_params=json.dumps(tool_call.get("parameters", {})),
         intent=tool_call.get("intent", ""),
@@ -82,11 +83,14 @@ def _send_webhook(webhook_url, action_dict):
     thread.start()
 
 
-def resolve_action(action_id, decision, resolved_by="user"):
+def resolve_action(action_id, decision, resolved_by="user", tenant_id=None):
     from app import db
     from models import PendingAction, AuditLogEntry, AutoApproveCount
 
-    action = PendingAction.query.filter_by(id=action_id, status="pending").first()
+    query = PendingAction.query.filter_by(id=action_id, status="pending")
+    if tenant_id:
+        query = query.filter_by(tenant_id=tenant_id)
+    action = query.first()
     if not action:
         return None
 
@@ -96,6 +100,7 @@ def resolve_action(action_id, decision, resolved_by="user"):
 
     log_entry = AuditLogEntry(
         id=action.id,
+        tenant_id=action.tenant_id,
         tool_name=action.tool_name,
         tool_params=action.tool_params,
         intent=action.intent,
@@ -119,9 +124,14 @@ def resolve_action(action_id, decision, resolved_by="user"):
 
     for v in violations:
         rule = v.get("rule", "unknown")
-        counter = AutoApproveCount.query.filter_by(rule_name=rule, agent_id=action.agent_id).first()
+        counter = AutoApproveCount.query.filter_by(
+            rule_name=rule, agent_id=action.agent_id, tenant_id=action.tenant_id
+        ).first()
         if not counter:
-            counter = AutoApproveCount(rule_name=rule, agent_id=action.agent_id, consecutive_approvals=0)
+            counter = AutoApproveCount(
+                rule_name=rule, agent_id=action.agent_id,
+                tenant_id=action.tenant_id, consecutive_approvals=0
+            )
             db.session.add(counter)
         if decision == "approved":
             counter.consecutive_approvals += 1
@@ -144,30 +154,40 @@ def resolve_action(action_id, decision, resolved_by="user"):
     return result
 
 
-def get_pending_actions():
+def get_pending_actions(tenant_id=None):
     from models import PendingAction
-    actions = PendingAction.query.filter_by(status="pending").order_by(PendingAction.created_at.desc()).all()
+    query = PendingAction.query.filter_by(status="pending")
+    if tenant_id:
+        query = query.filter_by(tenant_id=tenant_id)
+    actions = query.order_by(PendingAction.created_at.desc()).all()
     return [a.to_dict() for a in actions]
 
 
-def get_action(action_id):
+def get_action(action_id, tenant_id=None):
     from models import PendingAction, AuditLogEntry
-    action = PendingAction.query.filter_by(id=action_id).first()
+    query = PendingAction.query.filter_by(id=action_id)
+    if tenant_id:
+        query = query.filter_by(tenant_id=tenant_id)
+    action = query.first()
     if action:
         return action.to_dict()
-    entry = AuditLogEntry.query.filter_by(id=action_id).first()
+    log_query = AuditLogEntry.query.filter_by(id=action_id)
+    if tenant_id:
+        log_query = log_query.filter_by(tenant_id=tenant_id)
+    entry = log_query.first()
     if entry:
         return entry.to_dict()
     return None
 
 
-def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None):
+def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None, tenant_id=None):
     from app import db
     from models import AuditLogEntry
 
     entry_id = str(uuid.uuid4())[:8]
     entry = AuditLogEntry(
         id=entry_id,
+        tenant_id=tenant_id,
         tool_name=tool_call.get("tool_name", "unknown"),
         tool_params=json.dumps(tool_call.get("parameters", {})),
         intent=tool_call.get("intent", ""),
@@ -192,12 +212,14 @@ def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None):
 
 
 def get_audit_log(limit=50, status=None, agent_id=None, rule_name=None,
-                   tool_name=None, search=None, date_from=None, date_to=None):
+                   tool_name=None, search=None, date_from=None, date_to=None, tenant_id=None):
     from models import AuditLogEntry
     from sqlalchemy import or_
     from datetime import datetime as dt
 
     query = AuditLogEntry.query
+    if tenant_id:
+        query = query.filter_by(tenant_id=tenant_id)
 
     if status:
         query = query.filter(AuditLogEntry.status == status)
@@ -232,22 +254,30 @@ def get_audit_log(limit=50, status=None, agent_id=None, rule_name=None,
     return [e.to_dict() for e in entries]
 
 
-def get_stats():
+def get_stats(tenant_id=None):
     from models import AuditLogEntry, PendingAction
     from sqlalchemy import func
 
-    total_log = AuditLogEntry.query.count()
-    pending_count = PendingAction.query.filter_by(status="pending").count()
+    log_query = AuditLogEntry.query
+    pending_query = PendingAction.query.filter_by(status="pending")
+    if tenant_id:
+        log_query = log_query.filter_by(tenant_id=tenant_id)
+        pending_query = pending_query.filter_by(tenant_id=tenant_id)
+
+    total_log = log_query.count()
+    pending_count = pending_query.count()
     total = total_log + pending_count
 
-    allowed = AuditLogEntry.query.filter(AuditLogEntry.status.in_(["allowed", "approved", "auto-approved"])).count()
-    denied = AuditLogEntry.query.filter(AuditLogEntry.status == "denied").count()
+    allowed_query = log_query.filter(AuditLogEntry.status.in_(["allowed", "approved", "auto-approved"]))
+    denied_query = log_query.filter(AuditLogEntry.status == "denied")
+    allowed = allowed_query.count()
+    denied = denied_query.count()
     blocked = total_log - allowed
 
     approval_rate = round((allowed / (allowed + denied)) * 100, 1) if (allowed + denied) > 0 else 0
 
     rule_violations = {}
-    all_entries = AuditLogEntry.query.all()
+    all_entries = log_query.all()
     for entry in all_entries:
         if entry.violations_json:
             try:
@@ -257,7 +287,7 @@ def get_stats():
                     rule_violations[rule] = rule_violations.get(rule, 0) + 1
             except Exception:
                 pass
-    pending_actions = PendingAction.query.filter_by(status="pending").all()
+    pending_actions = pending_query.all()
     for action in pending_actions:
         if action.violations_json:
             try:
@@ -268,8 +298,13 @@ def get_stats():
             except Exception:
                 pass
 
-    recent_entries = AuditLogEntry.query.order_by(AuditLogEntry.created_at.desc()).limit(10).all()
-    recent_pending = PendingAction.query.filter_by(status="pending").order_by(PendingAction.created_at.desc()).limit(10).all()
+    recent_log_query = AuditLogEntry.query
+    recent_pending_query = PendingAction.query.filter_by(status="pending")
+    if tenant_id:
+        recent_log_query = recent_log_query.filter_by(tenant_id=tenant_id)
+        recent_pending_query = recent_pending_query.filter_by(tenant_id=tenant_id)
+    recent_entries = recent_log_query.order_by(AuditLogEntry.created_at.desc()).limit(10).all()
+    recent_pending = recent_pending_query.order_by(PendingAction.created_at.desc()).limit(10).all()
     recent_all = sorted(
         [e.to_dict() for e in recent_entries] + [a.to_dict() for a in recent_pending],
         key=lambda x: x.get("created_at", ""),
@@ -309,7 +344,7 @@ def get_stats():
     }
 
 
-def bulk_resolve(action_ids, decision, resolved_by="user"):
+def bulk_resolve(action_ids, decision, resolved_by="user", tenant_id=None):
     from app import db
     from models import PendingAction, AuditLogEntry
 
@@ -317,7 +352,10 @@ def bulk_resolve(action_ids, decision, resolved_by="user"):
     webhooks_to_send = []
 
     for action_id in action_ids:
-        action = PendingAction.query.filter_by(id=action_id, status="pending").first()
+        query = PendingAction.query.filter_by(id=action_id, status="pending")
+        if tenant_id:
+            query = query.filter_by(tenant_id=tenant_id)
+        action = query.first()
         if action:
             action.status = decision
             action.resolved_at = datetime.utcnow()
@@ -325,6 +363,7 @@ def bulk_resolve(action_ids, decision, resolved_by="user"):
 
             log_entry = AuditLogEntry(
                 id=action.id,
+                tenant_id=action.tenant_id,
                 tool_name=action.tool_name,
                 tool_params=action.tool_params,
                 intent=action.intent,
@@ -351,12 +390,15 @@ def bulk_resolve(action_ids, decision, resolved_by="user"):
     return results
 
 
-def get_agent_sessions():
+def get_agent_sessions(tenant_id=None):
     from models import AuditLogEntry, PendingAction
 
     sessions = {}
 
-    entries = AuditLogEntry.query.order_by(AuditLogEntry.created_at.desc()).all()
+    query = AuditLogEntry.query
+    if tenant_id:
+        query = query.filter_by(tenant_id=tenant_id)
+    entries = query.order_by(AuditLogEntry.created_at.desc()).all()
     for entry in entries:
         aid = entry.agent_id or "unknown"
         if aid not in sessions:
@@ -365,7 +407,10 @@ def get_agent_sessions():
         if len(sessions[aid]["actions"]) < 20:
             sessions[aid]["actions"].append(entry.to_dict())
 
-    pending = PendingAction.query.filter_by(status="pending").order_by(PendingAction.created_at.desc()).all()
+    pending_query = PendingAction.query.filter_by(status="pending")
+    if tenant_id:
+        pending_query = pending_query.filter_by(tenant_id=tenant_id)
+    pending = pending_query.order_by(PendingAction.created_at.desc()).all()
     for action in pending:
         aid = action.agent_id or "unknown"
         if aid not in sessions:
@@ -377,7 +422,7 @@ def get_agent_sessions():
     return sessions
 
 
-def check_auto_approve(tool_call, audit_result, agent_id, threshold=5):
+def check_auto_approve(tool_call, audit_result, agent_id, threshold=5, tenant_id=None):
     from models import AutoApproveCount
 
     violations = audit_result.get("violations", [])
@@ -388,7 +433,10 @@ def check_auto_approve(tool_call, audit_result, agent_id, threshold=5):
         rule = v.get("rule", "unknown")
         if v.get("severity") == "critical":
             return False
-        counter = AutoApproveCount.query.filter_by(rule_name=rule, agent_id=agent_id).first()
+        query_filters = {"rule_name": rule, "agent_id": agent_id}
+        if tenant_id:
+            query_filters["tenant_id"] = tenant_id
+        counter = AutoApproveCount.query.filter_by(**query_filters).first()
         count = counter.consecutive_approvals if counter else 0
         if count < threshold:
             return False
@@ -414,6 +462,7 @@ def auto_deny_expired(timeout_minutes=30):
 
         log_entry = AuditLogEntry(
             id=action.id,
+            tenant_id=action.tenant_id,
             tool_name=action.tool_name,
             tool_params=action.tool_params,
             intent=action.intent,
@@ -441,13 +490,16 @@ def auto_deny_expired(timeout_minutes=30):
     return expired_ids
 
 
-def get_weekly_digest():
+def get_weekly_digest(tenant_id=None):
     from models import AuditLogEntry
 
     now = datetime.utcnow()
     week_ago = now - timedelta(days=7)
 
-    entries = AuditLogEntry.query.filter(AuditLogEntry.created_at >= week_ago).all()
+    query = AuditLogEntry.query.filter(AuditLogEntry.created_at >= week_ago)
+    if tenant_id:
+        query = query.filter_by(tenant_id=tenant_id)
+    entries = query.all()
     total = len(entries)
     allowed = len([e for e in entries if e.status in ("allowed", "approved", "auto-approved")])
     denied = len([e for e in entries if e.status == "denied"])

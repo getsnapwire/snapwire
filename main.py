@@ -14,6 +14,8 @@ from flask_login import current_user
 from app import app, db
 from replit_auth import require_login, make_replit_blueprint
 from models import User, ApiKey, RuleVersion, AuditLogEntry, WebhookConfig
+from models import Organization, OrgMembership, ConstitutionRule, NotificationSetting, UsageRecord
+from src.tenant import get_current_tenant_id, get_tenant_id_for_api_key, is_tenant_admin, get_user_tenants, switch_tenant
 from src.constitution import (
     load_constitution, update_rule, add_rule, delete_rule, update_rule_full,
     get_rule_history, restore_rule_version,
@@ -43,37 +45,12 @@ from src.nlp_rule_builder import parse_natural_language_rule, detect_rule_confli
 from src.notifications import send_slack_notification, send_notification_to_configured_webhooks
 
 
-NOTIFICATION_SETTINGS_FILE = "notification_settings.json"
-NOTIFICATION_DEFAULTS = {
-    "slack_webhook_url": "",
-    "notify_on_block": True,
-    "notify_on_critical": False,
-    "notify_threshold_risk_score": 70,
-}
-
-
-def load_notification_settings():
-    try:
-        with open(NOTIFICATION_SETTINGS_FILE, "r") as f:
-            settings = json.load(f)
-            merged = {**NOTIFICATION_DEFAULTS, **settings}
-            return merged
-    except (FileNotFoundError, json.JSONDecodeError):
-        save_notification_settings(NOTIFICATION_DEFAULTS)
-        return dict(NOTIFICATION_DEFAULTS)
-
-
-def save_notification_settings(settings):
-    with open(NOTIFICATION_SETTINGS_FILE, "w") as f:
-        json.dump(settings, f, indent=2)
-
-
 def require_admin(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
             return jsonify({"error": "Authentication required"}), 401
-        if current_user.role != 'admin':
+        if not is_tenant_admin(current_user):
             return jsonify({"error": "Admin access required"}), 403
         return f(*args, **kwargs)
     return decorated_function
@@ -90,6 +67,19 @@ def authenticate_api_key():
             db.session.commit()
             return api_key
     return None
+
+
+def _track_usage(tenant_id):
+    if not tenant_id:
+        return
+    month = datetime.utcnow().strftime('%Y-%m')
+    record = UsageRecord.query.filter_by(tenant_id=tenant_id, month=month).first()
+    if record:
+        record.api_calls += 1
+    else:
+        record = UsageRecord(tenant_id=tenant_id, month=month, api_calls=1)
+        db.session.add(record)
+    db.session.commit()
 
 
 app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
@@ -132,6 +122,8 @@ def intercept_tool_call():
     if not api_key and not current_user.is_authenticated:
         return jsonify({"error": "Authentication required. Provide an API key via Authorization header or sign in."}), 401
 
+    tenant_id = get_tenant_id_for_api_key(api_key) if api_key else get_current_tenant_id()
+
     if api_key:
         allowed, remaining, reset_at = check_rate_limit(api_key.id)
         if not allowed:
@@ -160,6 +152,7 @@ def intercept_tool_call():
             "blocked-sanitizer",
             agent_id=agent_id,
             api_key_id=api_key_id,
+            tenant_id=tenant_id,
         )
         return jsonify({
             "status": "blocked",
@@ -175,7 +168,7 @@ def intercept_tool_call():
     }
 
     try:
-        audit_result = audit_tool_call(tool_call)
+        audit_result = audit_tool_call(tool_call, tenant_id=tenant_id)
     except Exception as e:
         return jsonify({"error": f"Audit failed: {str(e)}"}), 500
 
@@ -190,7 +183,8 @@ def intercept_tool_call():
         response_extra["shadow_violations"] = shadow_violations
 
     if audit_result.get("allowed", False):
-        log_action(tool_call, audit_result, "allowed", agent_id=agent_id, api_key_id=api_key_id)
+        log_action(tool_call, audit_result, "allowed", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id)
+        _track_usage(tenant_id)
         return jsonify({
             "status": "allowed",
             "audit": audit_result,
@@ -198,8 +192,9 @@ def intercept_tool_call():
             **response_extra,
         })
     else:
-        if check_auto_approve(tool_call, audit_result, agent_id):
-            log_action(tool_call, audit_result, "auto-approved", agent_id=agent_id, api_key_id=api_key_id)
+        if check_auto_approve(tool_call, audit_result, agent_id, tenant_id=tenant_id):
+            log_action(tool_call, audit_result, "auto-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id)
+            _track_usage(tenant_id)
             return jsonify({
                 "status": "auto-approved",
                 "audit": audit_result,
@@ -207,10 +202,16 @@ def intercept_tool_call():
                 **response_extra,
             })
 
-        action_id = add_pending_action(tool_call, audit_result, webhook_url=webhook_url, agent_id=agent_id, api_key_id=api_key_id)
+        action_id = add_pending_action(tool_call, audit_result, webhook_url=webhook_url, agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id)
 
         try:
-            notif_settings = load_notification_settings()
+            notif = NotificationSetting.query.filter_by(tenant_id=tenant_id).first()
+            notif_settings = {
+                "slack_webhook_url": notif.slack_webhook_url if notif else "",
+                "notify_on_block": notif.notify_on_block if notif else True,
+                "notify_on_critical": notif.notify_on_critical if notif else False,
+                "notify_threshold_risk_score": notif.notify_threshold_risk_score if notif else 70,
+            }
             risk_score = audit_result.get("risk_score", 0)
             threshold = notif_settings.get("notify_threshold_risk_score", 70)
             should_notify = False
@@ -237,6 +238,7 @@ def intercept_tool_call():
         except Exception:
             pass
 
+        _track_usage(tenant_id)
         return jsonify({
             "status": "blocked",
             "action_id": action_id,
@@ -251,7 +253,8 @@ def intercept_tool_call():
 @app.route("/api/actions/pending", methods=["GET"])
 @require_login
 def list_pending():
-    return jsonify({"pending_actions": get_pending_actions()})
+    tenant_id = get_current_tenant_id()
+    return jsonify({"pending_actions": get_pending_actions(tenant_id=tenant_id)})
 
 
 @app.route("/api/actions/<action_id>", methods=["GET"])
@@ -259,10 +262,9 @@ def get_action_detail(action_id):
     api_key = authenticate_api_key()
     if not api_key and not current_user.is_authenticated:
         return jsonify({"error": "Authentication required"}), 401
-    action = get_action(action_id)
+    tenant_id = api_key.tenant_id if api_key else get_current_tenant_id()
+    action = get_action(action_id, tenant_id=tenant_id)
     if not action:
-        return jsonify({"error": "Action not found"}), 404
-    if api_key and action.get("api_key_id") != api_key.id:
         return jsonify({"error": "Action not found"}), 404
     return jsonify(action)
 
@@ -278,7 +280,8 @@ def resolve(action_id):
     if decision not in ("approved", "denied"):
         return jsonify({"error": "Decision must be 'approved' or 'denied'"}), 400
 
-    result = resolve_action(action_id, decision)
+    tenant_id = get_current_tenant_id()
+    result = resolve_action(action_id, decision, tenant_id=tenant_id)
     if not result:
         return jsonify({"error": "Action not found or already resolved"}), 404
 
@@ -288,6 +291,7 @@ def resolve(action_id):
 @app.route("/api/audit-log", methods=["GET"])
 @require_login
 def audit_log():
+    tenant_id = get_current_tenant_id()
     limit = request.args.get("limit", 50, type=int)
     status = request.args.get("status")
     agent_id = request.args.get("agent_id")
@@ -299,19 +303,22 @@ def audit_log():
     return jsonify({"log": get_audit_log(
         limit=limit, status=status, agent_id=agent_id, rule_name=rule_name,
         tool_name=tool_name, search=search, date_from=date_from, date_to=date_to,
+        tenant_id=tenant_id,
     )})
 
 
 @app.route("/api/constitution", methods=["GET"])
 @require_login
 def get_constitution():
-    return jsonify(load_constitution())
+    tenant_id = get_current_tenant_id()
+    return jsonify(load_constitution(tenant_id))
 
 
 @app.route("/api/constitution/export", methods=["GET"])
 @require_login
 def export_constitution():
-    constitution = load_constitution()
+    tenant_id = get_current_tenant_id()
+    constitution = load_constitution(tenant_id)
     rules = constitution.get("rules", {})
     export_data = {
         "exported_at": datetime.utcnow().isoformat() + "Z",
@@ -331,6 +338,7 @@ def export_constitution():
 @app.route("/api/constitution/import", methods=["POST"])
 @require_admin
 def import_constitution():
+    tenant_id = get_current_tenant_id()
     data = request.get_json()
     if not data or "rules" not in data:
         return jsonify({"error": "Must provide 'rules' object"}), 400
@@ -357,7 +365,7 @@ def import_constitution():
             errors.append({"rule": rule_name, "error": "Invalid severity"})
             continue
 
-        existing = load_constitution().get("rules", {})
+        existing = load_constitution(tenant_id).get("rules", {})
         if rule_name in existing:
             if overwrite:
                 success = update_rule_full(
@@ -369,6 +377,7 @@ def import_constitution():
                     hint=rule_data.get("hint"),
                     mode=rule_data.get("mode"),
                     changed_by=current_user.first_name,
+                    tenant_id=tenant_id,
                 )
                 if success:
                     updated_count += 1
@@ -386,6 +395,7 @@ def import_constitution():
                 hint=rule_data.get("hint"),
                 mode=rule_data.get("mode", "enforce"),
                 changed_by=current_user.first_name,
+                tenant_id=tenant_id,
             )
             if success:
                 imported_count += 1
@@ -404,11 +414,12 @@ def import_constitution():
 @app.route("/api/constitution/rules/<rule_name>", methods=["PUT"])
 @require_admin
 def update_constitution_rule(rule_name):
+    tenant_id = get_current_tenant_id()
     data = request.get_json()
     if not data or "value" not in data:
         return jsonify({"error": "Must provide 'value'"}), 400
 
-    success = update_rule(rule_name, data["value"], changed_by=current_user.first_name)
+    success = update_rule(rule_name, data["value"], changed_by=current_user.first_name, tenant_id=tenant_id)
     if success:
         return jsonify({"status": "updated", "rule": rule_name, "value": data["value"]})
     return jsonify({"error": "Rule not found"}), 404
@@ -417,6 +428,7 @@ def update_constitution_rule(rule_name):
 @app.route("/api/constitution/rules", methods=["POST"])
 @require_admin
 def create_constitution_rule():
+    tenant_id = get_current_tenant_id()
     data = request.get_json()
     if not data:
         return jsonify({"error": "No JSON payload provided"}), 400
@@ -443,6 +455,7 @@ def create_constitution_rule():
         hint=data.get("hint"),
         mode=mode,
         changed_by=current_user.first_name,
+        tenant_id=tenant_id,
     )
     if success:
         return jsonify({"status": "created", "rule": rule_name}), 201
@@ -452,7 +465,8 @@ def create_constitution_rule():
 @app.route("/api/constitution/rules/<rule_name>", methods=["DELETE"])
 @require_admin
 def delete_constitution_rule(rule_name):
-    success = delete_rule(rule_name, changed_by=current_user.first_name)
+    tenant_id = get_current_tenant_id()
+    success = delete_rule(rule_name, changed_by=current_user.first_name, tenant_id=tenant_id)
     if success:
         return jsonify({"status": "deleted", "rule": rule_name})
     return jsonify({"error": "Rule not found"}), 404
@@ -461,6 +475,7 @@ def delete_constitution_rule(rule_name):
 @app.route("/api/constitution/rules/<rule_name>", methods=["PATCH"])
 @require_admin
 def patch_constitution_rule(rule_name):
+    tenant_id = get_current_tenant_id()
     data = request.get_json()
     if not data:
         return jsonify({"error": "No JSON payload provided"}), 400
@@ -474,6 +489,7 @@ def patch_constitution_rule(rule_name):
         hint=data.get("hint"),
         mode=data.get("mode"),
         changed_by=current_user.first_name,
+        tenant_id=tenant_id,
     )
     if success:
         return jsonify({"status": "updated", "rule": rule_name})
@@ -483,13 +499,14 @@ def patch_constitution_rule(rule_name):
 @app.route("/api/constitution/rules/<rule_name>/mode", methods=["PATCH"])
 @require_admin
 def update_rule_mode(rule_name):
+    tenant_id = get_current_tenant_id()
     data = request.get_json()
     if not data or "mode" not in data:
         return jsonify({"error": "Must provide 'mode'"}), 400
     mode = data["mode"]
     if mode not in ("enforce", "shadow", "disabled"):
         return jsonify({"error": "Mode must be 'enforce', 'shadow', or 'disabled'"}), 400
-    success = update_rule_full(rule_name, mode=mode, changed_by=current_user.first_name)
+    success = update_rule_full(rule_name, mode=mode, changed_by=current_user.first_name, tenant_id=tenant_id)
     if success:
         return jsonify({"status": "updated", "rule": rule_name, "mode": mode})
     return jsonify({"error": "Rule not found"}), 404
@@ -498,15 +515,17 @@ def update_rule_mode(rule_name):
 @app.route("/api/constitution/history", methods=["GET"])
 @require_login
 def rule_history():
+    tenant_id = get_current_tenant_id()
     rule_name = request.args.get("rule_name")
-    history = get_rule_history(rule_name)
+    history = get_rule_history(rule_name, tenant_id=tenant_id)
     return jsonify({"history": history})
 
 
 @app.route("/api/constitution/rollback/<int:version_id>", methods=["POST"])
 @require_admin
 def rollback_rule(version_id):
-    success, error = restore_rule_version(version_id, changed_by=current_user.first_name)
+    tenant_id = get_current_tenant_id()
+    success, error = restore_rule_version(version_id, changed_by=current_user.first_name, tenant_id=tenant_id)
     if success:
         return jsonify({"status": "rolled back", "version_id": version_id})
     return jsonify({"error": error}), 404
@@ -529,11 +548,12 @@ def parse_rule_nlp():
 @app.route("/api/rules/conflicts", methods=["POST"])
 @require_login
 def check_conflicts():
+    tenant_id = get_current_tenant_id()
     data = request.get_json()
     if not data or "rule" not in data:
         return jsonify({"error": "Must provide 'rule' object"}), 400
 
-    existing_rules = load_constitution().get("rules", {})
+    existing_rules = load_constitution(tenant_id).get("rules", {})
     try:
         conflicts = detect_rule_conflicts(data["rule"], existing_rules)
         return jsonify({"conflicts": conflicts, "has_conflicts": len(conflicts) > 0})
@@ -544,6 +564,7 @@ def check_conflicts():
 @app.route("/api/sandbox/test", methods=["POST"])
 @require_login
 def sandbox_test():
+    tenant_id = get_current_tenant_id()
     data = request.get_json()
     if not data or "tool_name" not in data:
         return jsonify({"error": "Must provide 'tool_name'"}), 400
@@ -558,7 +579,7 @@ def sandbox_test():
     sanitization = sanitize_parameters(data.get("parameters", {}))
 
     try:
-        audit_result = audit_tool_call(tool_call, dry_run=True)
+        audit_result = audit_tool_call(tool_call, dry_run=True, tenant_id=tenant_id)
     except Exception as e:
         return jsonify({"error": f"Sandbox test failed: {str(e)}"}), 500
 
@@ -584,7 +605,8 @@ def poll_notifications():
 @app.route("/api/stats", methods=["GET"])
 @require_login
 def api_stats():
-    return jsonify(get_stats())
+    tenant_id = get_current_tenant_id()
+    return jsonify(get_stats(tenant_id=tenant_id))
 
 
 @app.route("/api/actions/bulk-resolve", methods=["POST"])
@@ -598,14 +620,16 @@ def bulk_resolve_actions():
     if decision not in ("approved", "denied"):
         return jsonify({"error": "Decision must be 'approved' or 'denied'"}), 400
 
-    resolved = bulk_resolve(data["action_ids"], decision, resolved_by=current_user.first_name or "user")
+    tenant_id = get_current_tenant_id()
+    resolved = bulk_resolve(data["action_ids"], decision, resolved_by=current_user.first_name or "user", tenant_id=tenant_id)
     return jsonify({"status": "resolved", "resolved_count": len(resolved), "resolved_ids": resolved})
 
 
 @app.route("/api/audit-log/export", methods=["GET"])
 @require_login
 def export_audit_log():
-    log = get_audit_log(limit=10000)
+    tenant_id = get_current_tenant_id()
+    log = get_audit_log(limit=10000, tenant_id=tenant_id)
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["ID", "Status", "Tool Name", "Intent", "Risk Score", "Violations", "Analysis", "Agent", "Time"])
@@ -636,7 +660,16 @@ def export_audit_log():
 @app.route("/api/admin/users", methods=["GET"])
 @require_admin
 def list_users():
-    users = User.query.order_by(User.created_at.desc()).all()
+    tenant_id = get_current_tenant_id()
+    tenant_type = current_user.active_tenant_type or 'personal'
+    if tenant_type == 'org':
+        memberships = OrgMembership.query.filter_by(org_id=tenant_id).all()
+        user_ids = [m.user_id for m in memberships]
+        users = User.query.filter(User.id.in_(user_ids)).order_by(User.created_at.desc()).all()
+        membership_map = {m.user_id: m.role for m in memberships}
+    else:
+        users = [current_user]
+        membership_map = {}
     return jsonify({
         "users": [{
             "id": u.id,
@@ -644,7 +677,7 @@ def list_users():
             "first_name": u.first_name,
             "last_name": u.last_name,
             "profile_image_url": u.profile_image_url,
-            "role": u.role,
+            "role": membership_map.get(u.id, u.role),
             "is_active": u.is_active,
             "last_login_at": u.last_login_at.isoformat() if u.last_login_at else None,
             "created_at": u.created_at.isoformat() if u.created_at else None,
@@ -690,7 +723,8 @@ def update_user_access(user_id):
 @app.route("/api/api-keys", methods=["GET"])
 @require_login
 def list_api_keys():
-    keys = ApiKey.query.filter_by(user_id=current_user.id).order_by(ApiKey.created_at.desc()).all()
+    tenant_id = get_current_tenant_id()
+    keys = ApiKey.query.filter_by(tenant_id=tenant_id).order_by(ApiKey.created_at.desc()).all()
     return jsonify({
         "api_keys": [{
             "id": k.id,
@@ -707,6 +741,7 @@ def list_api_keys():
 @app.route("/api/api-keys", methods=["POST"])
 @require_admin
 def create_api_key():
+    tenant_id = get_current_tenant_id()
     data = request.get_json()
     if not data or "name" not in data:
         return jsonify({"error": "Must provide 'name'"}), 400
@@ -723,6 +758,7 @@ def create_api_key():
         key_prefix=raw_key[:12],
         agent_name=data.get("agent_name"),
     )
+    api_key.tenant_id = tenant_id
     db.session.add(api_key)
     db.session.commit()
 
@@ -739,7 +775,8 @@ def create_api_key():
 @app.route("/api/api-keys/<key_id>", methods=["DELETE"])
 @require_admin
 def revoke_api_key(key_id):
-    api_key = ApiKey.query.filter_by(id=key_id, user_id=current_user.id).first()
+    tenant_id = get_current_tenant_id()
+    api_key = ApiKey.query.filter_by(id=key_id, tenant_id=tenant_id).first()
     if not api_key:
         return jsonify({"error": "API key not found"}), 404
     db.session.delete(api_key)
@@ -750,7 +787,8 @@ def revoke_api_key(key_id):
 @app.route("/api/api-keys/<key_id>/toggle", methods=["PATCH"])
 @require_admin
 def toggle_api_key(key_id):
-    api_key = ApiKey.query.filter_by(id=key_id, user_id=current_user.id).first()
+    tenant_id = get_current_tenant_id()
+    api_key = ApiKey.query.filter_by(id=key_id, tenant_id=tenant_id).first()
     if not api_key:
         return jsonify({"error": "API key not found"}), 404
     api_key.is_active = not api_key.is_active
@@ -791,16 +829,18 @@ def sse_stream():
 @app.route("/api/agents/sessions", methods=["GET"])
 @require_login
 def agent_sessions():
-    return jsonify({"sessions": get_agent_sessions()})
+    tenant_id = get_current_tenant_id()
+    return jsonify({"sessions": get_agent_sessions(tenant_id=tenant_id)})
 
 
 @app.route("/api/agents/trust-scores", methods=["GET"])
 @require_login
 def agent_trust_scores():
+    tenant_id = get_current_tenant_id()
     from sqlalchemy import func
     from collections import Counter
 
-    entries = AuditLogEntry.query.all()
+    entries = AuditLogEntry.query.filter_by(tenant_id=tenant_id).all()
     agents = {}
     for entry in entries:
         aid = entry.agent_id or "unknown"
@@ -873,7 +913,8 @@ def agent_trust_scores():
 @app.route("/api/agents/<agent_id>/actions", methods=["GET"])
 @require_login
 def agent_actions(agent_id):
-    entries = AuditLogEntry.query.filter_by(agent_id=agent_id).order_by(
+    tenant_id = get_current_tenant_id()
+    entries = AuditLogEntry.query.filter_by(agent_id=agent_id, tenant_id=tenant_id).order_by(
         AuditLogEntry.created_at.desc()
     ).limit(50).all()
     return jsonify({"actions": [e.to_dict() for e in entries]})
@@ -897,6 +938,7 @@ def get_template_detail(template_id):
 @app.route("/api/templates/<template_id>/install", methods=["POST"])
 @require_admin
 def install_template(template_id):
+    tenant_id = get_current_tenant_id()
     template = get_template(template_id)
     if not template:
         return jsonify({"error": "Template not found"}), 404
@@ -909,6 +951,7 @@ def install_template(template_id):
             display_name=rule_data.get("display_name"),
             hint=rule_data.get("hint"),
             changed_by=current_user.first_name,
+            tenant_id=tenant_id,
         )
         if success:
             installed.append(rule_name)
@@ -927,13 +970,15 @@ def install_template(template_id):
 @app.route("/api/digest", methods=["GET"])
 @require_login
 def weekly_digest():
-    return jsonify(get_weekly_digest())
+    tenant_id = get_current_tenant_id()
+    return jsonify(get_weekly_digest(tenant_id=tenant_id))
 
 
 @app.route("/api/rate-limits", methods=["GET"])
 @require_admin
 def get_rate_limits():
-    keys = ApiKey.query.filter_by(is_active=True).all()
+    tenant_id = get_current_tenant_id()
+    keys = ApiKey.query.filter_by(tenant_id=tenant_id, is_active=True).all()
     key_usage = []
     for key in keys:
         info = get_rate_limit_info(key.id)
@@ -971,7 +1016,8 @@ def update_global_rate_limit():
 @app.route("/api/webhooks", methods=["GET"])
 @require_login
 def list_webhooks():
-    webhooks = WebhookConfig.query.filter_by(user_id=current_user.id).order_by(WebhookConfig.created_at.desc()).all()
+    tenant_id = get_current_tenant_id()
+    webhooks = WebhookConfig.query.filter_by(tenant_id=tenant_id).order_by(WebhookConfig.created_at.desc()).all()
     return jsonify({
         "webhooks": [{
             "id": w.id,
@@ -990,6 +1036,7 @@ def list_webhooks():
 @app.route("/api/webhooks", methods=["POST"])
 @require_admin
 def create_webhook():
+    tenant_id = get_current_tenant_id()
     data = request.get_json()
     if not data or "name" not in data or "url" not in data:
         return jsonify({"error": "Must provide 'name' and 'url'"}), 400
@@ -1000,6 +1047,7 @@ def create_webhook():
         agent_filter=data.get("agent_filter") or None,
         event_types=data.get("event_types", "all"),
     )
+    webhook.tenant_id = tenant_id
     db.session.add(webhook)
     db.session.commit()
     return jsonify({
@@ -1015,7 +1063,8 @@ def create_webhook():
 @app.route("/api/webhooks/<webhook_id>", methods=["DELETE"])
 @require_admin
 def delete_webhook(webhook_id):
-    webhook = WebhookConfig.query.filter_by(id=webhook_id, user_id=current_user.id).first()
+    tenant_id = get_current_tenant_id()
+    webhook = WebhookConfig.query.filter_by(id=webhook_id, tenant_id=tenant_id).first()
     if not webhook:
         return jsonify({"error": "Webhook not found"}), 404
     db.session.delete(webhook)
@@ -1026,7 +1075,8 @@ def delete_webhook(webhook_id):
 @app.route("/api/webhooks/<webhook_id>/toggle", methods=["PATCH"])
 @require_admin
 def toggle_webhook(webhook_id):
-    webhook = WebhookConfig.query.filter_by(id=webhook_id, user_id=current_user.id).first()
+    tenant_id = get_current_tenant_id()
+    webhook = WebhookConfig.query.filter_by(id=webhook_id, tenant_id=tenant_id).first()
     if not webhook:
         return jsonify({"error": "Webhook not found"}), 404
     webhook.is_active = not webhook.is_active
@@ -1037,8 +1087,9 @@ def toggle_webhook(webhook_id):
 @app.route("/api/webhooks/<webhook_id>/test", methods=["POST"])
 @require_admin
 def test_webhook(webhook_id):
+    tenant_id = get_current_tenant_id()
     import requests as http_requests
-    webhook = WebhookConfig.query.filter_by(id=webhook_id, user_id=current_user.id).first()
+    webhook = WebhookConfig.query.filter_by(id=webhook_id, tenant_id=tenant_id).first()
     if not webhook:
         return jsonify({"error": "Webhook not found"}), 404
     test_payload = {
@@ -1065,41 +1116,54 @@ def test_webhook(webhook_id):
 @app.route("/api/notifications/settings", methods=["GET"])
 @require_login
 def get_notification_settings():
-    settings = load_notification_settings()
-    return jsonify(settings)
+    tenant_id = get_current_tenant_id()
+    notif = NotificationSetting.query.filter_by(tenant_id=tenant_id).first()
+    if not notif:
+        return jsonify({"slack_webhook_url": "", "notify_on_block": True, "notify_on_critical": False, "notify_threshold_risk_score": 70})
+    return jsonify({"slack_webhook_url": notif.slack_webhook_url, "notify_on_block": notif.notify_on_block, "notify_on_critical": notif.notify_on_critical, "notify_threshold_risk_score": notif.notify_threshold_risk_score})
 
 
 @app.route("/api/notifications/settings", methods=["PUT"])
 @require_admin
 def update_notification_settings():
+    tenant_id = get_current_tenant_id()
     data = request.get_json()
     if not data:
         return jsonify({"error": "No JSON payload provided"}), 400
 
-    current = load_notification_settings()
+    notif = NotificationSetting.query.filter_by(tenant_id=tenant_id).first()
+    if not notif:
+        notif = NotificationSetting(tenant_id=tenant_id)
+        db.session.add(notif)
 
     if "slack_webhook_url" in data:
-        current["slack_webhook_url"] = data["slack_webhook_url"]
+        notif.slack_webhook_url = data["slack_webhook_url"]
     if "notify_on_block" in data:
-        current["notify_on_block"] = bool(data["notify_on_block"])
+        notif.notify_on_block = bool(data["notify_on_block"])
     if "notify_on_critical" in data:
-        current["notify_on_critical"] = bool(data["notify_on_critical"])
+        notif.notify_on_critical = bool(data["notify_on_critical"])
     if "notify_threshold_risk_score" in data:
         try:
             score = int(data["notify_threshold_risk_score"])
-            current["notify_threshold_risk_score"] = max(0, min(100, score))
+            notif.notify_threshold_risk_score = max(0, min(100, score))
         except (ValueError, TypeError):
             return jsonify({"error": "'notify_threshold_risk_score' must be an integer"}), 400
 
-    save_notification_settings(current)
-    return jsonify({"status": "updated", "settings": current})
+    db.session.commit()
+    return jsonify({"status": "updated", "settings": {
+        "slack_webhook_url": notif.slack_webhook_url,
+        "notify_on_block": notif.notify_on_block,
+        "notify_on_critical": notif.notify_on_critical,
+        "notify_threshold_risk_score": notif.notify_threshold_risk_score,
+    }})
 
 
 @app.route("/api/notifications/test-slack", methods=["POST"])
 @require_admin
 def test_slack_notification():
-    settings = load_notification_settings()
-    slack_url = settings.get("slack_webhook_url")
+    tenant_id = get_current_tenant_id()
+    notif = NotificationSetting.query.filter_by(tenant_id=tenant_id).first()
+    slack_url = notif.slack_webhook_url if notif else ""
     if not slack_url:
         return jsonify({"error": "No Slack webhook URL configured. Save one first."}), 400
 
@@ -1117,6 +1181,255 @@ def test_slack_notification():
     if success:
         return jsonify({"status": "sent", "message": "Test Slack notification sent. Check your Slack channel."})
     return jsonify({"error": "Failed to send test notification"}), 500
+
+
+@app.route("/api/tenant/current", methods=["GET"])
+@require_login
+def get_current_tenant():
+    tenant_id = get_current_tenant_id()
+    tenants = get_user_tenants(current_user)
+    current = next((t for t in tenants if t["id"] == tenant_id), tenants[0] if tenants else None)
+    return jsonify({"current_tenant": current, "tenants": tenants})
+
+
+@app.route("/api/tenant/switch", methods=["POST"])
+@require_login
+def switch_workspace():
+    data = request.get_json()
+    if not data or "tenant_id" not in data:
+        return jsonify({"error": "Must provide 'tenant_id'"}), 400
+    tenant_type = data.get("tenant_type", "personal")
+    success, error = switch_tenant(current_user, data["tenant_id"], tenant_type)
+    if not success:
+        return jsonify({"error": error}), 403
+    return jsonify({"status": "switched", "tenant_id": data["tenant_id"], "tenant_type": tenant_type})
+
+
+@app.route("/api/account", methods=["GET"])
+@require_login
+def get_account():
+    tenant_id = get_current_tenant_id()
+    month = datetime.utcnow().strftime('%Y-%m')
+    usage = UsageRecord.query.filter_by(tenant_id=tenant_id, month=month).first()
+    return jsonify({
+        "id": current_user.id,
+        "email": current_user.email,
+        "first_name": current_user.first_name,
+        "last_name": current_user.last_name,
+        "display_name": current_user.display_name,
+        "profile_image_url": current_user.profile_image_url,
+        "role": current_user.role,
+        "onboarded": current_user.onboarded,
+        "active_tenant_id": current_user.active_tenant_id,
+        "active_tenant_type": current_user.active_tenant_type,
+        "usage_this_month": usage.api_calls if usage else 0,
+    })
+
+
+@app.route("/api/account", methods=["PATCH"])
+@require_login
+def update_account():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No JSON payload provided"}), 400
+    if "display_name" in data:
+        current_user.display_name = data["display_name"]
+    if "onboarded" in data:
+        current_user.onboarded = bool(data["onboarded"])
+    db.session.commit()
+    return jsonify({"status": "updated"})
+
+
+@app.route("/api/usage", methods=["GET"])
+@require_login
+def get_usage():
+    tenant_id = get_current_tenant_id()
+    records = UsageRecord.query.filter_by(tenant_id=tenant_id).order_by(UsageRecord.month.desc()).limit(12).all()
+    return jsonify({"usage": [{"month": r.month, "api_calls": r.api_calls} for r in records]})
+
+
+@app.route("/api/orgs", methods=["GET"])
+@require_login
+def list_orgs():
+    memberships = OrgMembership.query.filter_by(user_id=current_user.id).all()
+    orgs = []
+    for m in memberships:
+        org = Organization.query.get(m.org_id)
+        if org:
+            member_count = OrgMembership.query.filter_by(org_id=org.id).count()
+            orgs.append({
+                "id": org.id,
+                "name": org.name,
+                "slug": org.slug,
+                "role": m.role,
+                "member_count": member_count,
+                "created_at": org.created_at.isoformat() if org.created_at else None,
+            })
+    return jsonify({"organizations": orgs})
+
+
+@app.route("/api/orgs", methods=["POST"])
+@require_login
+def create_org():
+    data = request.get_json()
+    if not data or "name" not in data:
+        return jsonify({"error": "Must provide 'name'"}), 400
+    name = data["name"].strip()
+    if not name or len(name) < 2:
+        return jsonify({"error": "Organization name must be at least 2 characters"}), 400
+    slug = data.get("slug", "").strip().lower().replace(" ", "-")
+    if not slug:
+        import re
+        slug = re.sub(r'[^a-z0-9-]', '', name.lower().replace(" ", "-"))
+    existing = Organization.query.filter_by(slug=slug).first()
+    if existing:
+        return jsonify({"error": "An organization with this URL slug already exists"}), 409
+    import uuid
+    org = Organization(
+        id=str(uuid.uuid4())[:8],
+        name=name,
+        slug=slug,
+        created_by=current_user.id,
+    )
+    db.session.add(org)
+    membership = OrgMembership(
+        org_id=org.id,
+        user_id=current_user.id,
+        role="owner",
+    )
+    db.session.add(membership)
+    db.session.commit()
+    from src.tenant import _install_default_rules
+    _install_default_rules(org.id)
+    return jsonify({
+        "id": org.id,
+        "name": org.name,
+        "slug": org.slug,
+        "role": "owner",
+    }), 201
+
+
+@app.route("/api/orgs/<org_id>", methods=["GET"])
+@require_login
+def get_org(org_id):
+    membership = OrgMembership.query.filter_by(org_id=org_id, user_id=current_user.id).first()
+    if not membership:
+        return jsonify({"error": "Organization not found"}), 404
+    org = Organization.query.get(org_id)
+    if not org:
+        return jsonify({"error": "Organization not found"}), 404
+    members = OrgMembership.query.filter_by(org_id=org_id).all()
+    member_list = []
+    for m in members:
+        user = User.query.get(m.user_id)
+        if user:
+            member_list.append({
+                "user_id": user.id,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "profile_image_url": user.profile_image_url,
+                "role": m.role,
+                "joined_at": m.joined_at.isoformat() if m.joined_at else None,
+            })
+    return jsonify({
+        "id": org.id,
+        "name": org.name,
+        "slug": org.slug,
+        "created_by": org.created_by,
+        "created_at": org.created_at.isoformat() if org.created_at else None,
+        "members": member_list,
+        "your_role": membership.role,
+    })
+
+
+@app.route("/api/orgs/<org_id>/invite", methods=["POST"])
+@require_login
+def invite_to_org(org_id):
+    membership = OrgMembership.query.filter_by(org_id=org_id, user_id=current_user.id).first()
+    if not membership or membership.role not in ('owner', 'admin'):
+        return jsonify({"error": "Only org admins can invite members"}), 403
+    import secrets as sec
+    invite_token = sec.token_urlsafe(32)
+    session[f'org_invite_{invite_token}'] = org_id
+    domain = os.environ.get("REPLIT_DEV_DOMAIN", request.host)
+    invite_url = f"https://{domain}/api/orgs/join/{invite_token}"
+    return jsonify({
+        "invite_url": invite_url,
+        "token": invite_token,
+        "message": "Share this link with the person you want to invite.",
+    })
+
+
+@app.route("/api/orgs/join/<token>", methods=["GET", "POST"])
+@require_login
+def join_org(token):
+    org_id = session.get(f'org_invite_{token}')
+    if not org_id:
+        return jsonify({"error": "Invalid or expired invite link"}), 404
+    org = Organization.query.get(org_id)
+    if not org:
+        return jsonify({"error": "Organization not found"}), 404
+    existing = OrgMembership.query.filter_by(org_id=org_id, user_id=current_user.id).first()
+    if existing:
+        return jsonify({"message": "You are already a member of this organization", "org_id": org_id})
+    new_membership = OrgMembership(
+        org_id=org_id,
+        user_id=current_user.id,
+        role="member",
+    )
+    db.session.add(new_membership)
+    db.session.commit()
+    return jsonify({"status": "joined", "org_id": org_id, "org_name": org.name, "role": "member"})
+
+
+@app.route("/api/orgs/<org_id>/members/<user_id>/role", methods=["PATCH"])
+@require_login
+def update_org_member_role(org_id, user_id):
+    my_membership = OrgMembership.query.filter_by(org_id=org_id, user_id=current_user.id).first()
+    if not my_membership or my_membership.role not in ('owner', 'admin'):
+        return jsonify({"error": "Only org admins can change roles"}), 403
+    data = request.get_json()
+    if not data or "role" not in data:
+        return jsonify({"error": "Must provide 'role'"}), 400
+    new_role = data["role"]
+    if new_role not in ('admin', 'member'):
+        return jsonify({"error": "Role must be 'admin' or 'member'"}), 400
+    if user_id == current_user.id:
+        return jsonify({"error": "Cannot change your own role"}), 400
+    target = OrgMembership.query.filter_by(org_id=org_id, user_id=user_id).first()
+    if not target:
+        return jsonify({"error": "Member not found"}), 404
+    if target.role == 'owner':
+        return jsonify({"error": "Cannot change the owner's role"}), 400
+    target.role = new_role
+    db.session.commit()
+    return jsonify({"status": "updated", "user_id": user_id, "role": new_role})
+
+
+@app.route("/api/orgs/<org_id>/members/<user_id>", methods=["DELETE"])
+@require_login
+def remove_org_member(org_id, user_id):
+    my_membership = OrgMembership.query.filter_by(org_id=org_id, user_id=current_user.id).first()
+    if not my_membership:
+        return jsonify({"error": "Organization not found"}), 404
+    if user_id == current_user.id:
+        if my_membership.role == 'owner':
+            return jsonify({"error": "Owner cannot leave the organization. Transfer ownership first."}), 400
+        db.session.delete(my_membership)
+        db.session.commit()
+        success, _ = switch_tenant(current_user, current_user.id, 'personal')
+        return jsonify({"status": "left", "org_id": org_id})
+    if my_membership.role not in ('owner', 'admin'):
+        return jsonify({"error": "Only org admins can remove members"}), 403
+    target = OrgMembership.query.filter_by(org_id=org_id, user_id=user_id).first()
+    if not target:
+        return jsonify({"error": "Member not found"}), 404
+    if target.role == 'owner':
+        return jsonify({"error": "Cannot remove the owner"}), 400
+    db.session.delete(target)
+    db.session.commit()
+    return jsonify({"status": "removed", "user_id": user_id})
 
 
 if __name__ == "__main__":

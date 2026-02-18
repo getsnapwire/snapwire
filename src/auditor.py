@@ -59,8 +59,8 @@ def is_rate_limit_error(exception):
     retry=retry_if_exception(is_rate_limit_error),
     reraise=True,
 )
-def audit_tool_call(tool_call, dry_run=False):
-    rules_summary = get_rules_summary()
+def audit_tool_call(tool_call, dry_run=False, tenant_id=None):
+    rules_summary = get_rules_summary(tenant_id)
 
     dry_run_note = "\n\nNOTE: This is a DRY RUN / SANDBOX test. Analyze normally but this is for testing purposes only." if dry_run else ""
 
@@ -105,7 +105,7 @@ Analyze this tool call against the constitutional rules and return your assessme
             "analysis": response_text,
         }
 
-    rules = get_rules()
+    rules = get_rules(tenant_id)
     if not dry_run:
         shadow_violations = []
         enforce_violations = []

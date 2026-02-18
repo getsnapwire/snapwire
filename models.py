@@ -19,6 +19,10 @@ class User(UserMixin, db.Model):
     last_login_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    active_tenant_id = db.Column(db.String, nullable=True)
+    active_tenant_type = db.Column(db.String, default='personal')
+    display_name = db.Column(db.String, nullable=True)
+    onboarded = db.Column(db.Boolean, default=False)
 
 
 class OAuth(OAuthConsumerMixin, db.Model):
@@ -37,6 +41,7 @@ class ApiKey(db.Model):
     __tablename__ = 'api_keys'
     id = db.Column(db.String, primary_key=True)
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    tenant_id = db.Column(db.String, nullable=True, index=True)
     name = db.Column(db.String, nullable=False)
     key_hash = db.Column(db.String, nullable=False)
     key_prefix = db.Column(db.String(8), nullable=False)
@@ -50,6 +55,7 @@ class ApiKey(db.Model):
 class AuditLogEntry(db.Model):
     __tablename__ = 'audit_log'
     id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4())[:8])
+    tenant_id = db.Column(db.String, nullable=True, index=True)
     tool_name = db.Column(db.String, nullable=False)
     tool_params = db.Column(db.Text, nullable=True)
     intent = db.Column(db.Text, nullable=True)
@@ -100,6 +106,7 @@ class AuditLogEntry(db.Model):
 class PendingAction(db.Model):
     __tablename__ = 'pending_actions'
     id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4())[:8])
+    tenant_id = db.Column(db.String, nullable=True, index=True)
     tool_name = db.Column(db.String, nullable=False)
     tool_params = db.Column(db.Text, nullable=True)
     intent = db.Column(db.Text, nullable=True)
@@ -156,6 +163,7 @@ class PendingAction(db.Model):
 class AutoApproveCount(db.Model):
     __tablename__ = 'auto_approve_counts'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=True, index=True)
     rule_name = db.Column(db.String, nullable=False)
     agent_id = db.Column(db.String, nullable=False)
     consecutive_approvals = db.Column(db.Integer, default=0)
@@ -166,6 +174,7 @@ class WebhookConfig(db.Model):
     __tablename__ = 'webhook_configs'
     id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4())[:8])
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    tenant_id = db.Column(db.String, nullable=True, index=True)
     name = db.Column(db.String, nullable=False)
     url = db.Column(db.String, nullable=False)
     agent_filter = db.Column(db.String, nullable=True)
@@ -179,6 +188,7 @@ class WebhookConfig(db.Model):
 class RuleVersion(db.Model):
     __tablename__ = 'rule_versions'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=True, index=True)
     rule_name = db.Column(db.String, nullable=False)
     action = db.Column(db.String, nullable=False)
     old_value = db.Column(db.Text, nullable=True)
@@ -213,3 +223,60 @@ class RuleVersion(db.Model):
             "changed_by": self.changed_by,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
+
+class Organization(db.Model):
+    __tablename__ = 'organizations'
+    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4())[:8])
+    name = db.Column(db.String, nullable=False)
+    slug = db.Column(db.String, unique=True, nullable=False)
+    created_by = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    creator = db.relationship('User', backref='created_orgs')
+
+
+class OrgMembership(db.Model):
+    __tablename__ = 'org_memberships'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    org_id = db.Column(db.String, db.ForeignKey('organizations.id'), nullable=False)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    role = db.Column(db.String, default='member', nullable=False)
+    joined_at = db.Column(db.DateTime, default=datetime.utcnow)
+    __table_args__ = (UniqueConstraint('org_id', 'user_id', name='uq_org_user'),)
+    org = db.relationship('Organization', backref='memberships')
+    user = db.relationship('User', backref='org_memberships')
+
+
+class ConstitutionRule(db.Model):
+    __tablename__ = 'constitution_rules'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=False, index=True)
+    rule_name = db.Column(db.String, nullable=False)
+    value = db.Column(db.Text, nullable=False)
+    display_name = db.Column(db.String, nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    hint = db.Column(db.Text, nullable=True)
+    severity = db.Column(db.String, default='medium')
+    mode = db.Column(db.String, default='enforce')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    __table_args__ = (UniqueConstraint('tenant_id', 'rule_name', name='uq_tenant_rule'),)
+
+
+class NotificationSetting(db.Model):
+    __tablename__ = 'notification_settings'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, unique=True, nullable=False)
+    slack_webhook_url = db.Column(db.String, default='')
+    notify_on_block = db.Column(db.Boolean, default=True)
+    notify_on_critical = db.Column(db.Boolean, default=False)
+    notify_threshold_risk_score = db.Column(db.Integer, default=70)
+
+
+class UsageRecord(db.Model):
+    __tablename__ = 'usage_records'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=False, index=True)
+    month = db.Column(db.String, nullable=False)
+    api_calls = db.Column(db.Integer, default=0)
+    __table_args__ = (UniqueConstraint('tenant_id', 'month', name='uq_tenant_month'),)

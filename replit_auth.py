@@ -126,6 +126,7 @@ def make_replit_blueprint():
 
 def save_user(user_claims):
     from datetime import datetime
+    from src.tenant import ensure_personal_tenant
     user = User()
     user.id = user_claims['sub']
     user.email = user_claims.get('email')
@@ -135,6 +136,7 @@ def save_user(user_claims):
     user.last_login_at = datetime.now()
     merged_user = db.session.merge(user)
     db.session.commit()
+    ensure_personal_tenant(merged_user)
     return merged_user
 
 

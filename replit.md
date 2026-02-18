@@ -1,9 +1,17 @@
 # Agentic Firewall
 
 ## Overview
-An AI-powered firewall that intercepts agent tool calls, audits them against a set of constitutional rules using Claude, and blocks actions that violate the rules. Blocked actions are queued for manual human approval or denial via a web dashboard with browser notifications. Authentication required via Replit Auth. Designed for commercialization with admin panel, user management, API key management, and real-time monitoring.
+An AI-powered firewall that intercepts agent tool calls, audits them against a set of constitutional rules using Claude, and blocks actions that violate the rules. Blocked actions are queued for manual human approval or denial via a web dashboard with browser notifications. Full multi-tenant support: individual users get personal workspaces with their own rules and data, and can create/join organizations for team collaboration. Authentication via Replit Auth. Designed for commercialization with admin panel, user management, API key management, and real-time monitoring.
 
 ## Recent Changes
+- 2026-02-18: Added multi-tenant architecture: Organization and OrgMembership models, ConstitutionRule model (DB-backed per-tenant rules)
+- 2026-02-18: Added workspace switcher UI, org management panel, account settings, quick start guide
+- 2026-02-18: Migrated constitution rules from JSON file to database with per-tenant scoping
+- 2026-02-18: Added tenant_id column to all data models (AuditLogEntry, PendingAction, ApiKey, WebhookConfig, RuleVersion, AutoApproveCount)
+- 2026-02-18: Added org management: create orgs, invite members via shareable links, manage roles, leave/remove members
+- 2026-02-18: Added personal tenant auto-initialization with default rules on first login
+- 2026-02-18: Added usage tracking per tenant (UsageRecord model, API call counting)
+- 2026-02-18: Configured production deployment with Gunicorn
 - 2026-02-18: Added Slack/webhook notification system for critical blocked actions with configurable thresholds
 - 2026-02-18: Added webhook management panel (persistent webhook URLs per agent, test webhooks)
 - 2026-02-18: Added rate limiting configuration UI (per-agent limits, usage visualization)
@@ -34,42 +42,65 @@ An AI-powered firewall that intercepts agent tool calls, audits them against a s
 
 ## Architecture
 - **Backend**: Python Flask (app.py + main.py) on port 5000
-- **Database**: PostgreSQL via SQLAlchemy (users, OAuth sessions, roles, API keys, audit logs, pending actions, webhooks, rule versions)
+- **Database**: PostgreSQL via SQLAlchemy
+  - User, OAuth, Organization, OrgMembership (multi-tenant)
+  - ConstitutionRule (per-tenant rules, replaces constitution.json)
+  - ApiKey, AuditLogEntry, PendingAction (all tenant-scoped)
+  - WebhookConfig, RuleVersion, AutoApproveCount (all tenant-scoped)
+  - NotificationSetting, UsageRecord (per-tenant config & tracking)
+- **Multi-Tenancy**: Each user has a personal tenant; users can also create/join organizations
+  - Personal tenant: user_id-based, auto-created on first login with default rules
+  - Org tenant: org_id-based, shared rules and data among org members
+  - Workspace switcher in dashboard header for switching between tenants
+  - API keys are scoped to a tenant, so agent API calls use the correct tenant context
 - **Auth**: Replit Auth (OpenID Connect) via Flask-Dance + Flask-Login; API key auth for agent endpoints
-- **Roles**: Admin (full access) and Viewer (read-only dashboard access)
-- **AI Auditor**: Claude Sonnet 4.5 via Replit AI Integrations (Anthropic)
+- **Roles**: Admin (full access) and Viewer (read-only dashboard access); Org roles: owner/admin/member
+- **AI Auditor**: Claude via Replit AI Integrations (Anthropic)
 - **Frontend**: Landing page (login.html) + Dashboard (dashboard.html) with polling + SSE
-- **Config**: constitution.json for rules, notification_settings.json for notification preferences
 - **Webhooks**: POST callbacks to agents when actions are resolved + persistent webhook configs
 - **Notifications**: Slack webhook integration for critical blocked actions
 - **Auto-rules**: Auto-approve after 5 consecutive approvals; auto-deny after 30-minute timeout
 - **Security**: Input sanitization (SQL/prompt injection, path traversal), rate limiting per API key
+- **Deployment**: Gunicorn with autoscale on Replit
 
 ## Project Structure
 ```
 app.py                   # Flask app factory, SQLAlchemy setup
-main.py                  # Routes, API endpoints, admin endpoints, SSE, API keys
+main.py                  # Routes, API endpoints, admin endpoints, SSE, API keys, tenant/org endpoints
 replit_auth.py           # Replit Auth (OpenID Connect) integration
-models.py                # User, OAuth, ApiKey, AuditLogEntry, PendingAction, WebhookConfig, RuleVersion models
-constitution.json        # Constitutional rules configuration
-notification_settings.json # Notification preferences (auto-created)
+models.py                # User, OAuth, Organization, OrgMembership, ConstitutionRule, ApiKey, AuditLogEntry, PendingAction, WebhookConfig, RuleVersion, AutoApproveCount, NotificationSetting, UsageRecord
 src/
   __init__.py
-  constitution.py        # Rules loading, management, versioning, import/export
-  auditor.py             # Claude-powered tool call auditor
-  action_queue.py        # Action queue, webhooks, SSE, sessions, auto-approve/deny, digest
+  tenant.py              # Tenant helpers: get_current_tenant_id, ensure_personal_tenant, switch_tenant, install_default_rules
+  constitution.py        # DB-backed rules loading, management, versioning, import/export (per-tenant)
+  auditor.py             # Claude-powered tool call auditor (tenant-aware)
+  action_queue.py        # Action queue, webhooks, SSE, sessions, auto-approve/deny, digest (tenant-scoped)
   rule_templates.py      # Pre-built rule template packs
   nlp_rule_builder.py    # AI-powered natural language rule parsing and conflict detection
   rate_limiter.py        # Per-API-key rate limiting with sliding window
   input_sanitizer.py     # Input sanitization for SQL injection, prompt injection, path traversal
   notifications.py       # Slack and webhook notification system
 templates/
-  dashboard.html         # Main dashboard UI with all tabs
+  dashboard.html         # Main dashboard UI with workspace switcher, org panel, account settings, quick start guide
   login.html             # Modern landing page / homepage
   403.html               # Access denied page
 static/
   style.css              # Dashboard styling
 ```
+
+## Multi-Tenant API Endpoints
+- `GET /api/tenant/current` - Get current tenant info and list of available tenants
+- `POST /api/tenant/switch` - Switch active workspace (personal or org)
+- `POST /api/orgs` - Create a new organization
+- `GET /api/orgs/<id>` - Get org details including members
+- `PATCH /api/orgs/<id>` - Update org name/slug
+- `POST /api/orgs/<id>/invite` - Generate an invite link
+- `POST /api/orgs/join/<token>` - Join org via invite token
+- `DELETE /api/orgs/<id>/members/<user_id>` - Remove member or leave org
+- `PATCH /api/orgs/<id>/members/<user_id>/role` - Change member role
+- `GET /api/account` - Get current user account info
+- `PATCH /api/account` - Update display name
+- `GET /api/usage` - Get usage history for current tenant
 
 ## Key API Endpoints
 - `POST /api/intercept` - Submit a tool call for audit (API key required)
@@ -77,12 +108,12 @@ static/
 - `GET /api/actions/<id>` - Get action status (API key or auth -- for agents to poll)
 - `POST /api/actions/<id>/resolve` - Approve or deny a blocked action (admin only)
 - `POST /api/actions/bulk-resolve` - Bulk approve/deny multiple actions (admin only)
-- `GET /api/audit-log` - View audit history with filters: status, agent_id, tool_name, rule_name, search, date_from, date_to (auth required)
+- `GET /api/audit-log` - View audit history with filters (auth required)
 - `GET /api/audit-log/export` - Download audit log as CSV (auth required)
 - `GET /api/stats` - Dashboard analytics and metrics (auth required)
 - `GET /api/constitution` - View current rules (auth required)
 - `GET /api/constitution/export` - Download constitution as JSON file (auth required)
-- `POST /api/constitution/import` - Import rules from JSON (admin only, supports overwrite flag)
+- `POST /api/constitution/import` - Import rules from JSON (admin only)
 - `PUT /api/constitution/rules/<name>` - Update a rule value (admin only)
 - `POST /api/constitution/rules` - Create a new rule (admin only)
 - `DELETE /api/constitution/rules/<name>` - Delete a rule (admin only)
@@ -145,12 +176,15 @@ static/
 - **Admin** - Full access: manage rules, approve/deny actions, manage users, API keys, webhooks, rate limits, notifications
 - **Viewer** - Read-only: view dashboard, stats, audit log (cannot modify rules or manage users)
 - First user to sign in gets admin role by default
+- **Org Owner** - Full control over organization settings, members, and rules
+- **Org Admin** - Can manage org rules and members
+- **Org Member** - Read-only access to org workspace
 
 ## Webhook Integration
 When submitting a tool call to `/api/intercept`, include a `webhook_url` field. When the action is resolved (approved/denied/auto-denied), the firewall will POST the result to that URL with the action details. Persistent webhooks can also be configured via the Settings panel.
 
 ## API Key Authentication
-Include `Authorization: Bearer af_YOUR_KEY` header when calling `/api/intercept` or `/api/actions/<id>`. API keys are managed from the dashboard's API Keys tab.
+Include `Authorization: Bearer af_YOUR_KEY` header when calling `/api/intercept` or `/api/actions/<id>`. API keys are managed from the dashboard's API Keys tab. Each API key is scoped to a specific tenant (personal or org workspace).
 
 ## User Preferences
 - Dark-themed dashboard UI
