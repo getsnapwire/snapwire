@@ -25,6 +25,7 @@ class User(UserMixin, db.Model):
     display_name = db.Column(db.String, nullable=True)
     onboarded = db.Column(db.Boolean, default=False)
     tos_accepted_at = db.Column(db.DateTime, nullable=True)
+    onboarding_completed_at = db.Column(db.DateTime, nullable=True)
 
 
 class OAuth(OAuthConsumerMixin, db.Model):

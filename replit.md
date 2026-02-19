@@ -34,12 +34,15 @@ The Agentic Firewall is built with a Python Flask backend and a PostgreSQL datab
 
 **UI/UX Decisions:**
 -   User-friendly dashboard with rule cards, toggle switches, number steppers, and "why it matters" hints.
--   Onboarding walkthrough for first-time users.
+-   3-step onboarding wizard for first-time users (install rules, generate API key, test sandbox). Tracked via `onboarding_completed_at` on User model.
+-   Dashboard Overview/Home tab with key metrics at a glance (total intercepts, blocks, agents, recent activity).
+-   Quick-copy SDK snippets (Python/Node.js/cURL) shown inline after API key generation.
 -   Hover tooltips for detailed explanations.
+-   Cloud vs Self-Hosted feature comparison matrix on pricing page.
 
 **Key Features & Implementations:**
 -   **Tool Safe Catalog**: AI-powered safety grading (A-F) for tools, with auto-blocking of unsafe tools.
--   **Blast Radius Governor**: Per-agent sliding window rate limiter with auto-lockout capabilities.
+-   **Blast Radius Governor**: Per-agent dual-limit system (rate-based + budget-based) with manual hard-lock reset from dashboard.
 -   **Identity Vault**: Secure credential proxy, ensuring agents never directly access raw API keys.
 -   **Deception & Goal Drift Detector**: Analyzes `inner_monologue` via Claude to identify and block deceptive agent behavior.
 -   **Honeypot Tripwires**: Decoy tools designed to detect and alert on unauthorized access attempts, locking API keys upon trigger.
@@ -62,7 +65,11 @@ The Agentic Firewall is built with a Python Flask backend and a PostgreSQL datab
 -   **Self-Hosted (Replit Template)**: Users register (name, email, company, use case) before accessing the template. Registrations tracked in `self_hosted_installs` table. Same database schema enables future migration to Cloud.
 -   **Public Audit Tool**: Free lead-generation tool at `/audit`. Anyone can paste a system prompt to get an AI-powered security analysis with Safety Score (0-100), vulnerability cards, and a downloadable shareable PNG image (1200x630). Rate limited to 10/hour per IP. Tracked in `public_audits` table.
 
-## Admin Endpoints
+## Key Endpoints
+-   `GET /health` - Health check endpoint for self-hosted monitoring (DB status, uptime, version)
+-   `GET /api/overview` - Dashboard overview stats (total intercepts, blocks, agents, recent activity)
+-   `GET /api/onboarding/status` - Check onboarding progress (rules, keys, tested)
+-   `POST /api/onboarding/complete` - Mark onboarding as completed
 -   `GET /api/admin/self-hosted` - View self-hosted registrations (requires login)
 -   `GET /api/admin/public-audits` - View public audit stats and recent audits (requires login)
 

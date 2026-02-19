@@ -2078,6 +2078,98 @@ def admin_public_audits():
     })
 
 
+@app.route("/health", methods=["GET"])
+def health_check():
+    import platform
+    status = {"status": "healthy", "version": "1.0.0", "uptime_seconds": int(time.time() - _app_start_time)}
+    try:
+        db.session.execute(db.text("SELECT 1"))
+        status["database"] = "connected"
+    except Exception as e:
+        status["database"] = "error"
+        status["database_error"] = str(e)
+        status["status"] = "degraded"
+    status["python_version"] = platform.python_version()
+    status["timestamp"] = datetime.utcnow().isoformat()
+    return jsonify(status), 200 if status["status"] == "healthy" else 503
+
+
+@app.route("/api/onboarding/complete", methods=["POST"])
+@require_login
+def complete_onboarding():
+    current_user.onboarding_completed_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({"status": "completed"})
+
+
+@app.route("/api/onboarding/status", methods=["GET"])
+@require_login
+def onboarding_status():
+    tenant_id = get_current_tenant_id()
+    has_rules = ConstitutionRule.query.filter_by(tenant_id=tenant_id).count() > 0
+    has_keys = ApiKey.query.filter_by(user_id=current_user.id).count() > 0
+    has_tested = AuditLogEntry.query.filter_by(tenant_id=tenant_id).count() > 0
+    return jsonify({
+        "completed": current_user.onboarding_completed_at is not None,
+        "steps": {
+            "rules": has_rules,
+            "api_key": has_keys,
+            "tested": has_tested,
+        }
+    })
+
+
+@app.route("/api/overview", methods=["GET"])
+@require_login
+def overview_stats():
+    tenant_id = get_current_tenant_id()
+    from sqlalchemy import func, case
+    total = AuditLogEntry.query.filter_by(tenant_id=tenant_id).count()
+    blocked = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='blocked').count()
+    blocked_br = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='blocked-blast-radius').count()
+    allowed = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='allowed').count()
+    approved = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='approved').count()
+    denied = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='denied').count()
+    pending = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='pending').count()
+    active_keys = ApiKey.query.filter_by(user_id=current_user.id, is_active=True).count()
+    rules_count = ConstitutionRule.query.filter_by(tenant_id=tenant_id).count()
+
+    agents = db.session.query(AuditLogEntry.agent_id).filter(
+        AuditLogEntry.tenant_id == tenant_id,
+        AuditLogEntry.agent_id.isnot(None),
+        AuditLogEntry.agent_id != 'unknown'
+    ).distinct().count()
+
+    recent = AuditLogEntry.query.filter_by(tenant_id=tenant_id).order_by(
+        AuditLogEntry.timestamp.desc()
+    ).limit(10).all()
+
+    return jsonify({
+        "total_intercepts": total,
+        "blocked": blocked + blocked_br,
+        "allowed": allowed,
+        "approved": approved,
+        "denied": denied,
+        "pending": pending,
+        "active_api_keys": active_keys,
+        "rules_count": rules_count,
+        "active_agents": agents,
+        "approval_rate": round((approved / max(approved + denied, 1)) * 100, 1),
+        "block_rate": round(((blocked + blocked_br) / max(total, 1)) * 100, 1),
+        "recent_activity": [{
+            "id": e.id,
+            "tool_name": (e.tool_call or {}).get("tool_name", "unknown"),
+            "status": e.status,
+            "agent_id": e.agent_id,
+            "timestamp": e.timestamp.isoformat() if e.timestamp else None,
+            "risk_score": (e.audit_result or {}).get("risk_score", 0),
+        } for e in recent],
+    })
+
+
+_app_start_time = time.time()
+
+
 if __name__ == "__main__":
     is_dev = os.environ.get("REPL_SLUG") is not None
     app.run(host="0.0.0.0", port=5000, debug=is_dev)
