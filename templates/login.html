@@ -11,34 +11,32 @@
 
         :root {
             --white: #ffffff;
-            --gray-50: #0d1117;
-            --gray-100: #161b22;
-            --gray-200: #30363d;
-            --gray-300: #484f58;
-            --gray-400: #6e7681;
-            --gray-500: #8b949e;
-            --gray-600: #c9d1d9;
-            --gray-700: #d2dae4;
-            --gray-800: #e6edf3;
-            --gray-900: #f0f3f6;
-            --orange-50: rgba(255,102,0,0.08);
-            --orange-100: rgba(255,102,0,0.15);
-            --orange-500: #FF6600;
-            --orange-600: #E55C00;
-            --orange-700: #CC5200;
-            --green-50: rgba(63,185,80,0.1);
-            --green-500: #3fb950;
-            --green-600: #2ea043;
-            --red-50: rgba(248,81,73,0.1);
-            --red-500: #f85149;
-            --amber-50: rgba(210,153,34,0.1);
-            --amber-500: #d29922;
+            --base: #0f172a;
+            --surface: #1e293b;
+            --border: rgba(148, 163, 184, 0.1);
+            --border-hover: rgba(148, 163, 184, 0.2);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --text-muted: #475569;
+            --accent: #FF6600;
+            --accent-hover: #E55C00;
+            --accent-subtle: rgba(255, 102, 0, 0.08);
+            --accent-border: rgba(255, 102, 0, 0.15);
+            --green: #34d399;
+            --green-subtle: rgba(52, 211, 153, 0.1);
+            --red: #f87171;
+            --red-subtle: rgba(248, 113, 113, 0.1);
+            --amber: #fbbf24;
+            --amber-subtle: rgba(251, 191, 36, 0.1);
+            --blue: #60a5fa;
+            --blue-subtle: rgba(96, 165, 250, 0.1);
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0d1117;
-            color: var(--gray-900);
+            background: var(--base);
+            color: var(--text-primary);
             -webkit-font-smoothing: antialiased;
         }
 
@@ -48,10 +46,10 @@
             left: 0;
             right: 0;
             z-index: 100;
-            background: rgba(13, 17, 23, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--gray-200);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--border);
             padding: 0 32px;
             height: 64px;
             display: flex;
@@ -65,7 +63,7 @@
             gap: 10px;
             font-size: 17px;
             font-weight: 700;
-            color: var(--gray-900);
+            color: var(--text-primary);
             text-decoration: none;
         }
 
@@ -90,13 +88,13 @@
         .nav-links a {
             font-size: 14px;
             font-weight: 500;
-            color: var(--gray-500);
+            color: var(--text-tertiary);
             text-decoration: none;
             transition: color 0.2s;
         }
 
         .nav-links a:hover {
-            color: var(--gray-900);
+            color: var(--text-primary);
         }
 
         .nav-btn {
@@ -106,18 +104,18 @@
             font-weight: 600;
             text-decoration: none;
             color: #fff;
-            background: #FF6600;
+            background: var(--accent);
             transition: all 0.2s;
         }
 
         .nav-btn:hover {
-            background: #E55C00;
+            background: var(--accent-hover);
         }
 
         .hero {
-            padding: 140px 32px 100px;
+            padding: 160px 32px 120px;
             text-align: center;
-            background: linear-gradient(180deg, #0d1117 0%, #161b22 100%);
+            background: linear-gradient(180deg, var(--base) 0%, #131c31 100%);
             position: relative;
             overflow: hidden;
         }
@@ -125,19 +123,19 @@
         .hero::before {
             content: '';
             position: absolute;
-            top: 60px;
+            top: 40px;
             left: 50%;
             transform: translateX(-50%);
-            width: 800px;
-            height: 800px;
-            background: radial-gradient(circle, rgba(255, 102, 0, 0.08) 0%, rgba(255, 102, 0, 0.03) 40%, transparent 70%);
+            width: 900px;
+            height: 900px;
+            background: radial-gradient(circle, rgba(255, 102, 0, 0.06) 0%, rgba(255, 102, 0, 0.02) 40%, transparent 70%);
             pointer-events: none;
         }
 
         .hero-content {
             position: relative;
             z-index: 1;
-            max-width: 740px;
+            max-width: 720px;
             margin: 0 auto;
         }
 
@@ -147,19 +145,19 @@
             gap: 8px;
             padding: 6px 16px;
             border-radius: 100px;
-            background: var(--orange-50);
-            border: 1px solid var(--orange-100);
-            color: #FF6600;
+            background: var(--accent-subtle);
+            border: 1px solid var(--accent-border);
+            color: var(--accent);
             font-size: 13px;
             font-weight: 600;
-            margin-bottom: 28px;
+            margin-bottom: 32px;
         }
 
         .hero-badge-dot {
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: var(--green-500);
+            background: var(--green);
             animation: pulse 2s ease-in-out infinite;
         }
 
@@ -171,24 +169,24 @@
         .hero h1 {
             font-size: 56px;
             font-weight: 800;
-            line-height: 1.08;
-            margin-bottom: 24px;
+            line-height: 1.1;
+            margin-bottom: 28px;
             letter-spacing: -2px;
-            color: var(--gray-900);
+            color: var(--text-primary);
         }
 
         .hero h1 span {
-            background: linear-gradient(135deg, #FF6600, #FF8533);
+            background: linear-gradient(135deg, #FF6600, #FF8C42);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
         .hero-sub {
-            font-size: 19px;
-            line-height: 1.7;
-            color: var(--gray-500);
-            margin-bottom: 40px;
+            font-size: 18px;
+            line-height: 1.75;
+            color: var(--text-secondary);
+            margin-bottom: 48px;
             max-width: 540px;
             margin-left: auto;
             margin-right: auto;
@@ -196,7 +194,7 @@
 
         .cta-group {
             display: flex;
-            gap: 12px;
+            gap: 14px;
             justify-content: center;
             align-items: center;
             flex-wrap: wrap;
@@ -207,7 +205,7 @@
             align-items: center;
             gap: 8px;
             padding: 14px 28px;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 15px;
             font-weight: 600;
             text-decoration: none;
@@ -215,31 +213,31 @@
         }
 
         .cta-primary {
-            background: #FF6600;
+            background: var(--accent);
             color: #fff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 102, 0, 0.1);
         }
 
         .cta-primary:hover {
-            background: #E55C00;
+            background: var(--accent-hover);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(255,102,0,0.3);
+            box-shadow: 0 4px 16px rgba(255, 102, 0, 0.25);
         }
 
         .cta-secondary {
-            color: var(--gray-500);
-            border: 1px solid var(--gray-200);
-            background: var(--gray-100);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-hover);
+            background: rgba(30, 41, 59, 0.5);
         }
 
         .cta-secondary:hover {
-            color: var(--gray-900);
-            border-color: var(--gray-300);
-            background: #21262d;
+            color: var(--text-primary);
+            border-color: rgba(148, 163, 184, 0.3);
+            background: var(--surface);
         }
 
         .section {
-            padding: 96px 32px;
+            padding: 120px 32px;
             max-width: 1140px;
             margin: 0 auto;
         }
@@ -250,8 +248,8 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            color: #FF6600;
-            margin-bottom: 12px;
+            color: var(--text-tertiary);
+            margin-bottom: 14px;
         }
 
         .section-title {
@@ -259,16 +257,16 @@
             font-size: 36px;
             font-weight: 700;
             letter-spacing: -0.5px;
-            color: var(--gray-900);
-            margin-bottom: 16px;
+            color: var(--text-primary);
+            margin-bottom: 18px;
         }
 
         .section-desc {
             text-align: center;
             font-size: 17px;
-            color: var(--gray-500);
+            color: var(--text-secondary);
             max-width: 560px;
-            margin: 0 auto 56px;
+            margin: 0 auto 64px;
             line-height: 1.7;
         }
 
@@ -276,13 +274,13 @@
             max-width: 1140px;
             margin: 0 auto;
             border: none;
-            border-top: 1px solid var(--gray-200);
+            border-top: 1px solid var(--border);
         }
 
         .steps {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 40px;
+            gap: 48px;
             position: relative;
         }
 
@@ -293,8 +291,8 @@
             left: 16.67%;
             right: 16.67%;
             height: 2px;
-            background: linear-gradient(90deg, #FF6600, #E55C00, var(--green-500));
-            opacity: 0.2;
+            background: linear-gradient(90deg, var(--accent-border), var(--green-subtle));
+            opacity: 0.5;
         }
 
         .step {
@@ -309,7 +307,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 20px;
+            margin: 0 auto 24px;
             font-size: 20px;
             font-weight: 800;
             position: relative;
@@ -317,34 +315,34 @@
         }
 
         .step:nth-child(1) .step-num {
-            background: var(--orange-50);
-            color: #FF6600;
-            border: 1px solid var(--orange-100);
+            background: var(--accent-subtle);
+            color: var(--accent);
+            border: 1px solid var(--accent-border);
         }
 
         .step:nth-child(2) .step-num {
-            background: var(--orange-50);
-            color: #FF6600;
-            border: 1px solid var(--orange-100);
+            background: var(--blue-subtle);
+            color: var(--blue);
+            border: 1px solid rgba(96, 165, 250, 0.15);
         }
 
         .step:nth-child(3) .step-num {
-            background: var(--green-50);
-            color: var(--green-500);
-            border: 1px solid rgba(63, 185, 80, 0.15);
+            background: var(--green-subtle);
+            color: var(--green);
+            border: 1px solid rgba(52, 211, 153, 0.15);
         }
 
         .step h3 {
             font-size: 18px;
             font-weight: 700;
-            margin-bottom: 8px;
-            color: var(--gray-900);
+            margin-bottom: 10px;
+            color: var(--text-primary);
         }
 
         .step p {
             font-size: 15px;
-            color: var(--gray-500);
-            line-height: 1.6;
+            color: var(--text-secondary);
+            line-height: 1.65;
         }
 
         .features {
@@ -354,48 +352,48 @@
         }
 
         .feature-card {
-            background: var(--gray-100);
-            border: 1px solid var(--gray-200);
-            border-radius: 14px;
-            padding: 28px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
             transition: all 0.25s;
         }
 
         .feature-card:hover {
-            border-color: var(--gray-300);
-            box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+            border-color: var(--border-hover);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
             transform: translateY(-2px);
         }
 
         .feature-icon {
             width: 44px;
             height: 44px;
-            border-radius: 10px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
             font-size: 20px;
         }
 
-        .feature-card:nth-child(1) .feature-icon { background: var(--orange-50); color: #FF6600; }
-        .feature-card:nth-child(2) .feature-icon { background: var(--red-50); color: var(--red-500); }
-        .feature-card:nth-child(3) .feature-icon { background: var(--orange-50); color: #FF6600; }
-        .feature-card:nth-child(4) .feature-icon { background: var(--amber-50); color: var(--amber-500); }
-        .feature-card:nth-child(5) .feature-icon { background: var(--red-50); color: var(--red-500); }
-        .feature-card:nth-child(6) .feature-icon { background: var(--orange-50); color: #FF6600; }
+        .feature-card:nth-child(1) .feature-icon { background: var(--amber-subtle); color: var(--amber); }
+        .feature-card:nth-child(2) .feature-icon { background: var(--red-subtle); color: var(--red); }
+        .feature-card:nth-child(3) .feature-icon { background: var(--blue-subtle); color: var(--blue); }
+        .feature-card:nth-child(4) .feature-icon { background: var(--green-subtle); color: var(--green); }
+        .feature-card:nth-child(5) .feature-icon { background: var(--red-subtle); color: var(--red); }
+        .feature-card:nth-child(6) .feature-icon { background: var(--accent-subtle); color: var(--accent); }
 
         .feature-card h3 {
             font-size: 16px;
             font-weight: 700;
-            margin-bottom: 8px;
-            color: var(--gray-900);
+            margin-bottom: 10px;
+            color: var(--text-primary);
         }
 
         .feature-card p {
             font-size: 14px;
-            color: var(--gray-500);
-            line-height: 1.65;
+            color: var(--text-secondary);
+            line-height: 1.7;
         }
 
         .why-grid {
@@ -406,10 +404,16 @@
 
         .why-card {
             text-align: center;
-            padding: 40px 24px;
-            border-radius: 14px;
-            background: var(--gray-100);
-            border: 1px solid var(--gray-200);
+            padding: 44px 28px;
+            border-radius: 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            transition: all 0.25s;
+        }
+
+        .why-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
         }
 
         .why-icon {
@@ -419,30 +423,30 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 18px;
+            margin: 0 auto 20px;
             font-size: 22px;
         }
 
-        .why-card:nth-child(1) .why-icon { background: var(--green-50); color: var(--green-500); }
-        .why-card:nth-child(2) .why-icon { background: var(--orange-50); color: #FF6600; }
-        .why-card:nth-child(3) .why-icon { background: var(--amber-50); color: var(--amber-500); }
-        .why-card:nth-child(4) .why-icon { background: var(--orange-50); color: #FF6600; }
+        .why-card:nth-child(1) .why-icon { background: var(--green-subtle); color: var(--green); }
+        .why-card:nth-child(2) .why-icon { background: var(--blue-subtle); color: var(--blue); }
+        .why-card:nth-child(3) .why-icon { background: var(--amber-subtle); color: var(--amber); }
+        .why-card:nth-child(4) .why-icon { background: var(--accent-subtle); color: var(--accent); }
 
         .why-card h3 {
             font-size: 17px;
             font-weight: 700;
-            margin-bottom: 8px;
-            color: var(--gray-900);
+            margin-bottom: 10px;
+            color: var(--text-primary);
         }
 
         .why-card p {
             font-size: 14px;
-            color: var(--gray-500);
+            color: var(--text-secondary);
             line-height: 1.7;
         }
 
         .faq-section {
-            background: #161b22;
+            background: var(--surface);
         }
 
         .faq-list {
@@ -454,21 +458,21 @@
         }
 
         .faq-item {
-            background: #0d1117;
-            border: 1px solid var(--gray-200);
-            border-radius: 12px;
+            background: var(--base);
+            border: 1px solid var(--border);
+            border-radius: 14px;
             overflow: hidden;
         }
 
         .faq-question {
             width: 100%;
-            padding: 18px 24px;
+            padding: 20px 24px;
             background: none;
             border: none;
             font-family: inherit;
             font-size: 15px;
             font-weight: 600;
-            color: var(--gray-900);
+            color: var(--text-primary);
             text-align: left;
             cursor: pointer;
             display: flex;
@@ -478,12 +482,12 @@
         }
 
         .faq-question:hover {
-            background: rgba(255,102,0,0.05);
+            background: rgba(148, 163, 184, 0.04);
         }
 
         .faq-arrow {
             font-size: 12px;
-            color: var(--gray-400);
+            color: var(--text-tertiary);
             transition: transform 0.2s;
             flex-shrink: 0;
         }
@@ -499,10 +503,10 @@
         }
 
         .faq-answer-inner {
-            padding: 0 24px 18px;
+            padding: 0 24px 20px;
             font-size: 14px;
-            color: var(--gray-500);
-            line-height: 1.7;
+            color: var(--text-secondary);
+            line-height: 1.75;
         }
 
         .faq-item.open .faq-answer {
@@ -511,43 +515,53 @@
 
         .final-cta {
             text-align: center;
-            padding: 96px 32px;
-            background: #FF6600;
-            color: #fff;
+            padding: 120px 32px;
+            background: linear-gradient(180deg, var(--base) 0%, #131c31 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .final-cta::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 102, 0, 0.06) 0%, transparent 70%);
+            pointer-events: none;
         }
 
         .final-cta h2 {
             font-size: 38px;
             font-weight: 800;
-            margin-bottom: 16px;
+            margin-bottom: 18px;
             letter-spacing: -0.5px;
-            color: #fff;
+            color: var(--text-primary);
+            position: relative;
         }
 
         .final-cta p {
             font-size: 17px;
-            color: rgba(255,255,255,0.8);
-            margin-bottom: 32px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
             max-width: 480px;
             margin-left: auto;
             margin-right: auto;
             line-height: 1.7;
+            position: relative;
         }
 
         .final-cta .cta-primary {
-            background: #0d1117;
-            color: #FF6600;
-        }
-
-        .final-cta .cta-primary:hover {
-            background: #161b22;
+            position: relative;
         }
 
         .footer {
-            border-top: 1px solid var(--gray-200);
-            padding: 32px;
+            border-top: 1px solid var(--border);
+            padding: 40px 32px;
             text-align: center;
-            background: #0d1117;
+            background: var(--base);
         }
 
         .footer-brand {
@@ -556,7 +570,7 @@
             gap: 8px;
             font-size: 14px;
             font-weight: 600;
-            color: var(--gray-500);
+            color: var(--text-secondary);
             margin-bottom: 8px;
         }
 
@@ -574,7 +588,23 @@
 
         .footer p {
             font-size: 13px;
-            color: var(--gray-400);
+            color: var(--text-tertiary);
+        }
+
+        .footer-contact {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 12px;
+        }
+
+        .footer-contact a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-contact a:hover {
+            color: var(--text-primary);
         }
 
         @keyframes fadeUp {
@@ -590,10 +620,10 @@
         .deploy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 880px; margin: 0 auto; }
 
         @media (max-width: 768px) {
-            .hero { padding: 120px 20px 80px; }
+            .hero { padding: 140px 20px 100px; }
             .hero h1 { font-size: 36px; letter-spacing: -1px; }
             .hero-sub { font-size: 16px; }
-            .section { padding: 64px 20px; }
+            .section { padding: 80px 20px; }
             .section-title { font-size: 28px; }
             .steps { grid-template-columns: 1fr; gap: 32px; }
             .steps::before { display: none; }
@@ -612,7 +642,7 @@
 
         @media (max-width: 480px) {
             .hero h1 { font-size: 28px; }
-            .feature-card { padding: 20px; }
+            .feature-card { padding: 24px; }
             .why-grid { grid-template-columns: 1fr !important; }
         }
     </style>
@@ -653,102 +683,102 @@
         </div>
     </section>
 
-    <section id="get-started" style="padding:80px 32px 64px;background:#161b22;">
+    <section id="get-started" style="padding:100px 32px 80px;background:var(--surface);">
         <p class="section-label">Get Started</p>
         <h2 class="section-title">Choose your deployment</h2>
         <p class="section-desc">Run on our cloud or deploy to your own infrastructure. Same schema, easy migration.</p>
         <div class="deploy-grid">
-            <div style="background:#0d1117;border:2px solid #FF6600;border-radius:16px;padding:36px;position:relative;overflow:hidden;">
-                <div style="position:absolute;top:0;right:0;background:#FF6600;color:white;font-size:11px;font-weight:700;padding:6px 16px;border-radius:0 0 0 12px;text-transform:uppercase;letter-spacing:0.5px;">Recommended</div>
+            <div style="background:var(--base);border:1px solid var(--accent-border);border-radius:16px;padding:40px;position:relative;overflow:hidden;box-shadow:0 0 0 1px rgba(255,102,0,0.08),0 8px 32px rgba(0,0,0,0.2);">
+                <div style="position:absolute;top:0;right:0;background:var(--accent);color:white;font-size:11px;font-weight:700;padding:6px 16px;border-radius:0 0 0 12px;text-transform:uppercase;letter-spacing:0.5px;">Recommended</div>
                 <div style="font-size:28px;margin-bottom:12px;">&#x2601;</div>
-                <h3 style="font-size:22px;font-weight:700;margin-bottom:8px;color:#f0f3f6;">Cloud</h3>
-                <p style="font-size:14px;color:#8b949e;line-height:1.6;margin-bottom:24px;">Fully managed. Sign up and start protecting your agents in under 2 minutes. We handle infrastructure, updates, and scaling.</p>
-                <ul style="list-style:none;margin-bottom:28px;font-size:13px;color:#c9d1d9;">
-                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:#3fb950;">&#10003;</span> Instant setup, no servers needed</li>
-                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:#3fb950;">&#10003;</span> Automatic updates & scaling</li>
-                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:#3fb950;">&#10003;</span> Free tier available</li>
-                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:#3fb950;">&#10003;</span> Dashboard & analytics included</li>
+                <h3 style="font-size:22px;font-weight:700;margin-bottom:10px;color:var(--text-primary);">Cloud</h3>
+                <p style="font-size:14px;color:var(--text-secondary);line-height:1.65;margin-bottom:28px;">Fully managed. Sign up and start protecting your agents in under 2 minutes. We handle infrastructure, updates, and scaling.</p>
+                <ul style="list-style:none;margin-bottom:32px;font-size:13px;color:var(--text-secondary);">
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Instant setup, no servers needed</li>
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Automatic updates & scaling</li>
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Free tier available</li>
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Dashboard & analytics included</li>
                 </ul>
-                <a href="{{ login_url }}" style="display:block;text-align:center;background:#FF6600;color:white;padding:14px 28px;border-radius:10px;font-size:15px;font-weight:600;text-decoration:none;transition:all 0.2s;">Sign Up Free &rarr;</a>
+                <a href="{{ login_url }}" style="display:block;text-align:center;background:var(--accent);color:white;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;text-decoration:none;transition:all 0.2s;">Sign Up Free &rarr;</a>
             </div>
-            <div style="background:#0d1117;border:1px solid #30363d;border-radius:16px;padding:36px;">
+            <div style="background:var(--base);border:1px solid var(--border);border-radius:16px;padding:40px;">
                 <div style="font-size:28px;margin-bottom:12px;">&#x1F3E0;</div>
-                <h3 style="font-size:22px;font-weight:700;margin-bottom:8px;color:#f0f3f6;">Self-Hosted</h3>
-                <p style="font-size:14px;color:#8b949e;line-height:1.6;margin-bottom:24px;">Deploy on your own infrastructure with full control. Same code, same schema. Migrate to Cloud anytime with zero data loss.</p>
-                <ul style="list-style:none;margin-bottom:28px;font-size:13px;color:#c9d1d9;">
-                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:#3fb950;">&#10003;</span> Full source code access</li>
-                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:#3fb950;">&#10003;</span> Your infrastructure, your data</li>
-                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:#3fb950;">&#10003;</span> Compatible schema for migration</li>
-                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:#3fb950;">&#10003;</span> One-click template deploy</li>
+                <h3 style="font-size:22px;font-weight:700;margin-bottom:10px;color:var(--text-primary);">Self-Hosted</h3>
+                <p style="font-size:14px;color:var(--text-secondary);line-height:1.65;margin-bottom:28px;">Deploy on your own infrastructure with full control. Same code, same schema. Migrate to Cloud anytime with zero data loss.</p>
+                <ul style="list-style:none;margin-bottom:32px;font-size:13px;color:var(--text-secondary);">
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Full source code access</li>
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Your infrastructure, your data</li>
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Compatible schema for migration</li>
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> One-click template deploy</li>
                 </ul>
-                <button onclick="document.getElementById('self-hosted-modal').style.display='flex'" style="display:block;width:100%;text-align:center;background:#161b22;color:#c9d1d9;padding:14px 28px;border-radius:10px;font-size:15px;font-weight:600;border:1px solid #30363d;cursor:pointer;transition:all 0.2s;">Get Template &rarr;</button>
+                <button onclick="document.getElementById('self-hosted-modal').style.display='flex'" style="display:block;width:100%;text-align:center;background:var(--surface);color:var(--text-secondary);padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;border:1px solid var(--border);cursor:pointer;transition:all 0.2s;">Get Template &rarr;</button>
             </div>
         </div>
     </section>
 
     <div id="self-hosted-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
-        <div style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:36px;max-width:480px;width:90%;position:relative;">
-            <button onclick="document.getElementById('self-hosted-modal').style.display='none'" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:#6e7681;">&times;</button>
-            <h3 style="font-size:20px;font-weight:700;margin-bottom:6px;color:#f0f3f6;">Get Your Self-Hosted Template</h3>
-            <p style="font-size:13px;color:#8b949e;margin-bottom:24px;">Tell us a bit about yourself so we can help you get the most out of your deployment.</p>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px;max-width:480px;width:90%;position:relative;">
+            <button onclick="document.getElementById('self-hosted-modal').style.display='none'" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-tertiary);">&times;</button>
+            <h3 style="font-size:20px;font-weight:700;margin-bottom:6px;color:var(--text-primary);">Get Your Self-Hosted Template</h3>
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:24px;">Tell us a bit about yourself so we can help you get the most out of your deployment.</p>
             <form id="self-hosted-form" onsubmit="submitSelfHosted(event)">
                 <div style="margin-bottom:14px;">
-                    <label style="display:block;font-size:13px;font-weight:600;color:#c9d1d9;margin-bottom:6px;">Name *</label>
-                    <input type="text" id="sh-name" required placeholder="Your name" style="width:100%;padding:10px 14px;border:1px solid #30363d;border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;background:#0d1117;color:#c9d1d9;">
+                    <label style="display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Name *</label>
+                    <input type="text" id="sh-name" required placeholder="Your name" style="width:100%;padding:10px 14px;border:1px solid var(--border-hover);border-radius:10px;font-size:14px;font-family:inherit;box-sizing:border-box;background:var(--base);color:var(--text-primary);">
                 </div>
                 <div style="margin-bottom:14px;">
-                    <label style="display:block;font-size:13px;font-weight:600;color:#c9d1d9;margin-bottom:6px;">Email *</label>
-                    <input type="email" id="sh-email" required placeholder="you@company.com" style="width:100%;padding:10px 14px;border:1px solid #30363d;border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;background:#0d1117;color:#c9d1d9;">
+                    <label style="display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Email *</label>
+                    <input type="email" id="sh-email" required placeholder="you@company.com" style="width:100%;padding:10px 14px;border:1px solid var(--border-hover);border-radius:10px;font-size:14px;font-family:inherit;box-sizing:border-box;background:var(--base);color:var(--text-primary);">
                 </div>
                 <div style="margin-bottom:14px;">
-                    <label style="display:block;font-size:13px;font-weight:600;color:#c9d1d9;margin-bottom:6px;">Company</label>
-                    <input type="text" id="sh-company" placeholder="Company name (optional)" style="width:100%;padding:10px 14px;border:1px solid #30363d;border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;background:#0d1117;color:#c9d1d9;">
+                    <label style="display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Company</label>
+                    <input type="text" id="sh-company" placeholder="Company name (optional)" style="width:100%;padding:10px 14px;border:1px solid var(--border-hover);border-radius:10px;font-size:14px;font-family:inherit;box-sizing:border-box;background:var(--base);color:var(--text-primary);">
                 </div>
                 <div style="margin-bottom:14px;">
-                    <label style="display:block;font-size:13px;font-weight:600;color:#c9d1d9;margin-bottom:6px;">Use Case</label>
-                    <textarea id="sh-usecase" rows="2" placeholder="What will you use Snapwire for?" style="width:100%;padding:10px 14px;border:1px solid #30363d;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;background:#0d1117;color:#c9d1d9;"></textarea>
+                    <label style="display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Use Case</label>
+                    <textarea id="sh-usecase" rows="2" placeholder="What will you use Snapwire for?" style="width:100%;padding:10px 14px;border:1px solid var(--border-hover);border-radius:10px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;background:var(--base);color:var(--text-primary);"></textarea>
                 </div>
                 <div style="margin-bottom:6px;">
-                    <label style="display:block;font-size:13px;font-weight:600;color:#c9d1d9;margin-bottom:6px;">Terms of Service & Privacy Policy *</label>
-                    <div id="sh-tos-box" style="height:160px;overflow-y:auto;border:1px solid #30363d;border-radius:8px;padding:14px;font-size:12px;line-height:1.7;color:#8b949e;background:#0d1117;">
-                        <p style="font-weight:700;color:#c9d1d9;margin-bottom:8px;">Part 1: Terms of Service (TOS)</p>
+                    <label style="display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Terms of Service & Privacy Policy *</label>
+                    <div id="sh-tos-box" style="height:160px;overflow-y:auto;border:1px solid var(--border-hover);border-radius:10px;padding:14px;font-size:12px;line-height:1.7;color:var(--text-secondary);background:var(--base);">
+                        <p style="font-weight:700;color:var(--text-primary);margin-bottom:8px;">Part 1: Terms of Service (TOS)</p>
                         <p style="margin-bottom:6px;"><strong>Effective Date: February 18, 2026</strong></p>
-                        <p style="font-weight:600;color:#c9d1d9;margin:10px 0 4px;">1. Nature of the Service (Non-Agency)</p>
+                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">1. Nature of the Service (Non-Agency)</p>
                         <p style="margin-bottom:6px;">Snapwire (the "Service") is a Risk-Mitigation and Decision-Support Layer.</p>
                         <p style="margin-bottom:6px;"><strong>No Delegation of Authority:</strong> You acknowledge that the Service does not act as your legal agent, broker, or fiduciary. By using this tool, you remain the sole legal "Principal" responsible for all actions, financial transactions, and data modifications initiated by your AI agents.</p>
                         <p style="margin-bottom:6px;"><strong>Informational Only:</strong> The Service's "Deception Audits," "Safety Grades," and "Intent Reasonings" are generated by probabilistic machine learning models. These are opinions and confidence scores, not factual certainties.</p>
-                        <p style="font-weight:600;color:#c9d1d9;margin:10px 0 4px;">2. User Responsibilities & "Human-in-the-Loop"</p>
+                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">2. User Responsibilities & "Human-in-the-Loop"</p>
                         <p style="margin-bottom:6px;"><strong>Final Approval:</strong> You agree to review all actions flagged by the Service. Your choice to "Override" or "Approve" a blocked action constitutes an express assumption of all resulting liability.</p>
                         <p style="margin-bottom:6px;"><strong>Credential Safety:</strong> While the Service provides an "Identity Vault," you are responsible for the security of your master access credentials and the management of keys provided to the system.</p>
-                        <p style="font-weight:600;color:#c9d1d9;margin:10px 0 4px;">3. Policy Marketplace Disclaimer</p>
+                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">3. Policy Marketplace Disclaimer</p>
                         <p style="margin-bottom:6px;">Use of "Community Rule Packs" from the Policy Marketplace is at your sole risk. These rules are provided "AS-IS" without verification of their logic by the Service developers.</p>
-                        <p style="font-weight:600;color:#c9d1d9;margin:10px 0 4px;">4. Limitation of Liability</p>
+                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">4. Limitation of Liability</p>
                         <p style="margin-bottom:6px;">To the maximum extent permitted by law, the Developers of the Service shall not be liable for any direct, indirect, or consequential damages arising from the use or failure of the Service.</p>
-                        <p style="font-weight:700;color:#c9d1d9;margin:14px 0 8px;">Part 2: Privacy Policy (PP)</p>
-                        <p style="font-weight:600;color:#c9d1d9;margin:10px 0 4px;">1. Data Minimization & Usage</p>
+                        <p style="font-weight:700;color:var(--text-primary);margin:14px 0 8px;">Part 2: Privacy Policy (PP)</p>
+                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">1. Data Minimization & Usage</p>
                         <p style="margin-bottom:6px;"><strong>The "No-Training" Guarantee:</strong> Your audit logs, private prompts, and injected credentials are never used to train, fine-tune, or improve any AI models.</p>
-                        <p style="font-weight:600;color:#c9d1d9;margin:10px 0 4px;">2. Zero-Knowledge Identity Vault</p>
+                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">2. Zero-Knowledge Identity Vault</p>
                         <p style="margin-bottom:6px;">Credentials stored in the Identity Vault are encrypted at rest. The Service utilizes "Ephemeral Injection," meaning your keys exist only in memory during execution.</p>
-                        <p style="font-weight:600;color:#c9d1d9;margin:10px 0 4px;">3. Data Retention & Right to Purge</p>
+                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">3. Data Retention & Right to Purge</p>
                         <p style="margin-bottom:6px;">All Audit Logs are automatically purged after 30 days. You may request a total data wipe at any time through your dashboard.</p>
-                        <p style="font-weight:600;color:#c9d1d9;margin:10px 0 4px;">4. Automated Decision-Making (ADMT) Rights</p>
+                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">4. Automated Decision-Making (ADMT) Rights</p>
                         <p style="margin-bottom:6px;">The Service is configured to require Manual Human Approval for high-risk categories unless you affirmatively create a bypass rule.</p>
                     </div>
-                    <p id="sh-tos-hint" style="font-size:11px;color:#6e7681;margin-top:6px;display:flex;align-items:center;gap:4px;">&#x2193; Scroll down to read the full terms before agreeing</p>
+                    <p id="sh-tos-hint" style="font-size:11px;color:var(--text-tertiary);margin-top:6px;display:flex;align-items:center;gap:4px;">&#x2193; Scroll down to read the full terms before agreeing</p>
                 </div>
                 <div style="margin-bottom:16px;">
                     <label id="sh-agree-label" style="display:flex;align-items:flex-start;gap:8px;cursor:not-allowed;opacity:0.5;transition:all 0.3s;">
                         <input type="checkbox" id="sh-agree-check" disabled style="margin-top:2px;width:16px;height:16px;accent-color:#FF6600;">
-                        <span style="font-size:13px;color:#c9d1d9;line-height:1.4;">I have read and agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong></span>
+                        <span style="font-size:13px;color:var(--text-primary);line-height:1.4;">I have read and agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong></span>
                     </label>
                 </div>
-                <div id="sh-error" style="display:none;color:#f85149;font-size:13px;margin-bottom:12px;"></div>
-                <button type="submit" id="sh-submit-btn" disabled style="width:100%;padding:14px;background:#30363d;color:#6e7681;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:not-allowed;font-family:inherit;transition:all 0.3s;">Get Template Link &rarr;</button>
+                <div id="sh-error" style="display:none;color:#f87171;font-size:13px;margin-bottom:12px;"></div>
+                <button type="submit" id="sh-submit-btn" disabled style="width:100%;padding:14px;background:var(--border-hover);color:var(--text-tertiary);border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:not-allowed;font-family:inherit;transition:all 0.3s;">Get Template Link &rarr;</button>
             </form>
             <div id="sh-success" style="display:none;text-align:center;padding:20px 0;">
                 <div style="font-size:40px;margin-bottom:12px;">&#x1F389;</div>
-                <h4 style="font-size:18px;font-weight:700;color:#f0f3f6;margin-bottom:8px;">You're all set!</h4>
-                <p style="font-size:14px;color:#8b949e;margin-bottom:20px;">Redirecting you to the template...</p>
+                <h4 style="font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">You're all set!</h4>
+                <p style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;">Redirecting you to the template...</p>
             </div>
         </div>
     </div>
@@ -928,9 +958,10 @@
             Snapwire
         </div>
         <p>The Safety Fuse for Your AI Agents</p>
+        <p class="footer-contact">Need something custom for your team? <a href="mailto:hello@snapwire.dev">hello@snapwire.dev</a></p>
     </footer>
 
-    <div style="text-align:center;padding:16px 24px;font-size:11px;color:#7d8295;opacity:0.7;border-top:1px solid #2a2f3d;margin-top:32px;">
+    <div style="text-align:center;padding:16px 24px;font-size:11px;color:var(--text-muted);opacity:0.7;border-top:1px solid var(--border);margin-top:0;">
         Snapwire is a technical monitoring utility. Use at your own risk. User assumes all liability for agent behavior.
     </div>
 

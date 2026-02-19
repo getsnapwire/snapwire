@@ -6,33 +6,33 @@
     <title>Snapwire Setup</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .card { background: #161b22; border-radius: 20px; box-shadow: 0 8px 40px rgba(0,0,0,0.3); padding: 48px; width: 100%; max-width: 520px; border: 1px solid #30363d; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .card { background: #1e293b; border-radius: 20px; box-shadow: 0 8px 40px rgba(0,0,0,0.3); padding: 48px; width: 100%; max-width: 520px; border: 1px solid #334155; }
         .logo { text-align: center; margin-bottom: 8px; }
         .logo .shield { font-size: 48px; }
         .logo h1 { font-size: 26px; color: #FF6600; margin-top: 8px; }
-        .logo p { font-size: 15px; color: #8b949e; margin-top: 8px; line-height: 1.5; }
+        .logo p { font-size: 15px; color: #94a3b8; margin-top: 8px; line-height: 1.5; }
         .steps { display: flex; justify-content: center; gap: 8px; margin: 28px 0; }
-        .step { width: 40px; height: 4px; border-radius: 2px; background: #30363d; }
+        .step { width: 40px; height: 4px; border-radius: 2px; background: #334155; }
         .step.active { background: #FF6600; }
         .section { display: none; }
         .section.active { display: block; }
         .section h2 { font-size: 18px; color: #c9d1d9; margin-bottom: 6px; }
-        .section p { font-size: 14px; color: #8b949e; margin-bottom: 20px; }
+        .section p { font-size: 14px; color: #94a3b8; margin-bottom: 20px; }
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; font-size: 13px; font-weight: 600; color: #c9d1d9; margin-bottom: 6px; }
-        .form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1px solid #30363d; border-radius: 8px; font-size: 14px; color: #c9d1d9; background: #0d1117; outline: none; transition: border-color 0.2s; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1px solid #334155; border-radius: 8px; font-size: 14px; color: #c9d1d9; background: #0f172a; outline: none; transition: border-color 0.2s; }
         .form-group input:focus, .form-group select:focus { border-color: #FF6600; box-shadow: 0 0 0 3px rgba(255,102,0,0.15); }
         .btn { width: 100%; padding: 12px; background: #FF6600; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 8px; }
         .btn:hover { background: #E55C00; }
-        .btn-secondary { background: #21262d; color: #8b949e; }
-        .btn-secondary:hover { background: #30363d; }
+        .btn-secondary { background: #1e293b; color: #94a3b8; }
+        .btn-secondary:hover { background: #334155; }
         .btn-row { display: flex; gap: 12px; margin-top: 16px; }
         .btn-row .btn { flex: 1; }
         .error { background: #3d1a1a; color: #f85149; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; border: 1px solid #5a2d2d; }
         .hint { font-size: 11px; color: #6e7681; margin-top: 4px; }
         .feature-list { margin: 16px 0; }
-        .feature-list li { padding: 6px 0; font-size: 14px; color: #8b949e; display: flex; align-items: center; gap: 8px; list-style: none; }
+        .feature-list li { padding: 6px 0; font-size: 14px; color: #94a3b8; display: flex; align-items: center; gap: 8px; list-style: none; }
         .feature-list li span { color: #3fb950; }
         .welcome-badge { display: inline-block; background: rgba(255,102,0,0.15); color: #FF6600; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 16px; }
     </style>

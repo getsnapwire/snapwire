@@ -103,4 +103,5 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   Run tests: `python -m pytest tests/ -v`
 
 ## Recent Changes
-- **2026-02-19**: Full rebrand from "Agentic Firewall" to "Snapwire". New industrial dark mode with Safety Orange (#FF6600) theme. Added Live Burn Meter, Broken Circuit animation, Snap-Token acknowledgment gate, The Snap kill-switch, privacy policy page. Updated all templates, backend, SDK, tests, and documentation.
+- **2026-02-19**: Design refresh — shifted from heavy industrial black to softer dark slate/navy (#0f172a, #1e293b) with refined orange accents. Updated all 14 templates to new palette. Added welcome banner onboarding, better empty states, mobile responsiveness, platform-agnostic vault messaging. Simplified pricing to Free + Pro (removed Enterprise tier). Updated TOS liability cap from $100 to "fees paid in prior 30 days". 
+- **2026-02-19**: Full rebrand from "Agentic Firewall" to "Snapwire". Added Live Burn Meter, Broken Circuit animation, Snap-Token acknowledgment gate, The Snap kill-switch, privacy policy page. Updated all templates, backend, SDK, tests, and documentation.

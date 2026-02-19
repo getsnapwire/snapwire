@@ -347,6 +347,30 @@
         </div>
     </div>
 
+    <div id="welcome-banner" style="display:none;margin:20px 32px 0;padding:24px 28px;background:linear-gradient(135deg, rgba(255,102,0,0.08), rgba(255,102,0,0.02));border:1px solid rgba(255,102,0,0.2);border-radius:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+                <h2 style="font-size:18px;font-weight:700;margin-bottom:8px;color:var(--text-primary);">Welcome to Snapwire</h2>
+                <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;margin-bottom:16px;">Get started in 3 quick steps:</p>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text-primary);">
+                        <span style="width:28px;height:28px;border-radius:50%;background:var(--snap-orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">1</span>
+                        <span>Add your automation rules — tell Snapwire what your agents should and shouldn't do</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text-primary);">
+                        <span style="width:28px;height:28px;border-radius:50%;background:var(--snap-orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">2</span>
+                        <span>Store your API keys in the Identity Vault — works with any platform or service</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text-primary);">
+                        <span style="width:28px;height:28px;border-radius:50%;background:var(--snap-orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">3</span>
+                        <span>Point your agents to Snapwire's intercept endpoint — see the API Docs for integration guides</span>
+                    </div>
+                </div>
+            </div>
+            <button onclick="dismissWelcome()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:18px;padding:4px 8px;line-height:1;">&times;</button>
+        </div>
+    </div>
+
     <div class="workspace-bar" id="workspace-bar" style="background:rgba(77,139,255,0.08);border-bottom:1px solid var(--border);padding:8px 32px;display:flex;align-items:center;gap:12px;font-size:13px;">
         <span style="color:var(--text-secondary);">Workspace:</span>
         <select id="workspace-select" onchange="switchWorkspace(this.value)" style="background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:13px;cursor:pointer;">
@@ -1560,19 +1584,19 @@ def handle_tool_call(tool_call):
             </div>
         </div>
         <div id="catalog-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-        <div id="catalog-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No tools in catalog yet. When an agent makes a tool call through the firewall, it automatically appears here with an AI-generated safety grade. You can then approve, block, or re-grade it.</div>
+        <div id="catalog-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No tools discovered yet. When an agent makes its first tool call through Snapwire, it will appear here with an automatic safety grade.</div>
     </div>
 
     <div id="panel-vault" class="panel">
         <h3 style="margin-bottom:16px;">&#9889; Snap-Tokens</h3>
-        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Map tools to secret keys stored in environment variables. When a tool call is approved, Snapwire injects the real credential — the agent never sees the raw key.</p>
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Store API keys from any platform — OpenAI, Anthropic, Stripe, GitHub, Twilio, or any custom API. Snapwire issues Snap-Tokens as proxies so your agents never see the real credentials.</p>
         <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;">
             <button onclick="showAddVaultModal()" style="background:var(--snap-orange);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">+ Add Vault Entry</button>
             <button onclick="generateSnapTokenGated()" id="gen-snap-token-btn" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">&#9889; Generate Snap-Token</button>
             <button onclick="revokeAllTokens()" id="revoke-all-btn" style="background:var(--accent-red);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;">&#x26A0; The Snap — Revoke All</button>
         </div>
         <div id="vault-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-        <div id="vault-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No vault entries configured yet. Click "+ Add Vault Entry" above to map a tool to a secret key. The secret key name must match an entry in your environment variables. When an agent's tool call is approved, the firewall will automatically inject the credential.</div>
+        <div id="vault-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No credentials stored yet. Click '+ Add Vault Entry' to add an API key from any platform. Snapwire works with all services — just enter the service name and the environment variable holding your key.</div>
     </div>
 
     <div id="panel-honeypots" class="panel">
@@ -1584,7 +1608,7 @@ def handle_tool_call(tool_call):
         <div id="honeypot-list" style="display:flex;flex-direction:column;gap:8px;"></div>
         <h4 style="margin-top:24px;margin-bottom:12px;color:var(--text-secondary);font-size:14px;">Recent Alerts</h4>
         <div id="honeypot-alerts" style="display:flex;flex-direction:column;gap:8px;"></div>
-        <div id="honeypot-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No honeypots configured yet. Click "+ Add Honeypot" to create a fake tool name. If any agent ever tries to call it, the firewall instantly locks their API key and alerts you. Great for detecting compromised agents or unauthorized access.</div>
+        <div id="honeypot-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No honeypots set up yet. Create a decoy tool name — if any agent tries to use it, Snapwire instantly locks their credentials and alerts you.</div>
     </div>
 
     <div id="panel-blast" class="panel">
@@ -1911,7 +1935,7 @@ def handle_tool_call(tool_call):
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="icon">&#9989;</div>
-                        <p>No pending approvals. All clear!</p>
+                        <p>All clear — no actions waiting for review. When Snapwire blocks an agent action, it will appear here for you to approve or deny.</p>
                     </div>`;
                 return;
             }
@@ -2045,7 +2069,7 @@ def handle_tool_call(tool_call):
                     container.innerHTML = `
                         <div class="empty-state">
                             <div class="icon">&#128220;</div>
-                            <p>No audit entries found matching your filters.</p>
+                            <p>No events recorded yet. Once your agents start making tool calls through Snapwire, every action will be logged here.</p>
                         </div>`;
                     return;
                 }
@@ -2338,6 +2362,11 @@ def handle_tool_call(tool_call):
                 stats.rules = entries.length;
 
                 const container = document.getElementById('rules-list');
+                if (entries.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><div class="icon">&#128220;</div><p>No automation rules yet. Click \'+ Add Rule\' to create your first rule — tell Snapwire what your agents should and shouldn\'t do, in plain language.</p></div>';
+                    updateStats();
+                    return;
+                }
                 container.innerHTML = entries.map(([name, config]) => {
                     const displayName = config.display_name || name.replace(/_/g, ' ');
                     const hint = config.hint || '';
@@ -3587,6 +3616,10 @@ def handle_tool_call(tool_call):
             setTimeout(() => { statusEl.textContent = ''; }, 5000);
         }
 
+        if (!localStorage.getItem('snapwire_welcome_dismissed')) {
+            document.getElementById('welcome-banner').style.display = 'block';
+        }
+
         fetchPending();
         fetchAuditLog();
         fetchRules();
@@ -3880,6 +3913,11 @@ def handle_tool_call(tool_call):
                 btn.disabled = false;
                 alert('Failed to revoke tokens');
             }
+        }
+
+        function dismissWelcome() {
+            document.getElementById('welcome-banner').style.display = 'none';
+            localStorage.setItem('snapwire_welcome_dismissed', '1');
         }
 
         function generateSnapTokenGated() {

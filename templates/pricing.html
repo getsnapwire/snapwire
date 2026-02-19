@@ -9,89 +9,155 @@
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --white: #ffffff; --gray-50: #0d1117; --gray-100: #161b22; --gray-200: #30363d;
-            --gray-300: #484f58; --gray-400: #6e7681; --gray-500: #8b949e; --gray-600: #c9d1d9;
-            --gray-700: #d2dae4; --gray-800: #e6edf3; --gray-900: #f0f3f6;
-            --orange-500: #FF6600; --orange-600: #E55C00;
-            --green-500: #3fb950; --green-600: #2ea043;
+            --base: #0f172a;
+            --surface: #1e293b;
+            --border: rgba(148, 163, 184, 0.1);
+            --border-hover: rgba(148, 163, 184, 0.2);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --text-muted: #475569;
+            --accent: #FF6600;
+            --accent-hover: #E55C00;
+            --accent-subtle: rgba(255, 102, 0, 0.08);
+            --accent-border: rgba(255, 102, 0, 0.15);
+            --green: #34d399;
         }
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #0d1117; color: var(--gray-900); -webkit-font-smoothing: antialiased; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--base); color: var(--text-primary); -webkit-font-smoothing: antialiased; }
 
         .nav {
             position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-            background: rgba(13,17,23,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--gray-200); padding: 0 32px; height: 64px;
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--border); padding: 0 32px; height: 64px;
             display: flex; align-items: center; justify-content: space-between;
         }
-        .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; color: var(--gray-900); text-decoration: none; }
+        .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; color: var(--text-primary); text-decoration: none; }
         .nav-logo .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #FF6600, #CC5200); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; }
         .nav-links { display: flex; align-items: center; gap: 32px; }
-        .nav-links a { font-size: 14px; font-weight: 500; color: var(--gray-500); text-decoration: none; transition: color 0.2s; }
-        .nav-links a:hover { color: var(--gray-900); }
-        .nav-btn { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; color: #fff; background: #FF6600; transition: all 0.2s; }
-        .nav-btn:hover { background: #E55C00; }
+        .nav-links a { font-size: 14px; font-weight: 500; color: var(--text-tertiary); text-decoration: none; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--text-primary); }
+        .nav-btn { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; color: #fff; background: var(--accent); transition: all 0.2s; }
+        .nav-btn:hover { background: var(--accent-hover); }
 
         .page-hero {
-            padding: 140px 32px 60px; text-align: center;
-            background: linear-gradient(180deg, #0d1117 0%, #161b22 100%);
+            padding: 160px 32px 72px; text-align: center;
+            background: linear-gradient(180deg, var(--base) 0%, #131c31 100%);
+            position: relative; overflow: hidden;
         }
-        .page-hero h1 { font-size: 44px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 16px; color: var(--gray-900); }
-        .page-hero p { font-size: 18px; color: var(--gray-500); max-width: 520px; margin: 0 auto; line-height: 1.7; }
+        .page-hero::before {
+            content: '';
+            position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(255, 102, 0, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .page-hero h1 { font-size: 44px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 18px; color: var(--text-primary); position: relative; }
+        .page-hero p { font-size: 18px; color: var(--text-secondary); max-width: 520px; margin: 0 auto; line-height: 1.7; position: relative; }
 
         .pricing-grid {
-            max-width: 1100px; margin: 0 auto; padding: 40px 32px 96px;
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+            max-width: 800px; margin: 0 auto; padding: 48px 32px 96px;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;
         }
 
         .plan-card {
-            background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 16px;
-            padding: 36px 28px; display: flex; flex-direction: column; position: relative; transition: all 0.25s;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+            padding: 40px 32px; display: flex; flex-direction: column; position: relative; transition: all 0.25s;
         }
-        .plan-card:hover { border-color: var(--gray-300); box-shadow: 0 8px 32px rgba(0,0,0,0.3); transform: translateY(-2px); }
-        .plan-card.featured { border-color: #FF6600; box-shadow: 0 0 0 1px #FF6600; }
+        .plan-card:hover { border-color: var(--border-hover); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); transform: translateY(-2px); }
+        .plan-card.featured { border-color: rgba(255, 102, 0, 0.3); box-shadow: 0 0 0 1px rgba(255, 102, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.2); }
         .plan-card.featured::before {
             content: 'Most Popular'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
             background: linear-gradient(135deg, #FF6600, #CC5200); color: white;
             font-size: 12px; font-weight: 700; padding: 4px 16px; border-radius: 100px;
         }
 
-        .plan-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; color: var(--gray-900); }
-        .plan-desc { font-size: 14px; color: var(--gray-500); margin-bottom: 24px; line-height: 1.5; }
-        .plan-price { font-size: 42px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; color: var(--gray-900); }
-        .plan-price span { font-size: 16px; font-weight: 500; color: var(--gray-400); }
-        .plan-billing { font-size: 13px; color: var(--gray-400); margin-bottom: 28px; }
+        .plan-name { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: var(--text-primary); }
+        .plan-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 28px; line-height: 1.6; }
+        .plan-price { font-size: 42px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; color: var(--text-primary); }
+        .plan-price span { font-size: 16px; font-weight: 500; color: var(--text-tertiary); }
+        .plan-billing { font-size: 13px; color: var(--text-tertiary); margin-bottom: 32px; }
 
-        .plan-features { list-style: none; flex: 1; margin-bottom: 28px; }
+        .plan-features { list-style: none; flex: 1; margin-bottom: 32px; }
         .plan-features li {
-            font-size: 14px; color: var(--gray-600); padding: 8px 0; display: flex; align-items: flex-start; gap: 10px;
-            border-bottom: 1px solid rgba(48,54,61,0.5);
+            font-size: 14px; color: var(--text-secondary); padding: 9px 0; display: flex; align-items: flex-start; gap: 10px;
+            border-bottom: 1px solid var(--border);
         }
         .plan-features li:last-child { border-bottom: none; }
-        .plan-features .check { color: var(--green-500); font-weight: 700; flex-shrink: 0; font-size: 16px; }
+        .plan-features .check { color: var(--green); font-weight: 700; flex-shrink: 0; font-size: 16px; }
 
         .plan-btn {
-            display: block; text-align: center; padding: 13px 24px; border-radius: 10px;
+            display: block; text-align: center; padding: 14px 24px; border-radius: 12px;
             font-size: 15px; font-weight: 600; text-decoration: none; transition: all 0.2s;
         }
-        .plan-btn-primary { background: #FF6600; color: #fff; }
-        .plan-btn-primary:hover { background: #E55C00; }
-        .plan-btn-outline { border: 1px solid var(--gray-300); color: var(--gray-600); background: var(--gray-100); }
-        .plan-btn-outline:hover { border-color: var(--gray-400); background: #21262d; }
+        .plan-btn-primary { background: var(--accent); color: #fff; }
+        .plan-btn-primary:hover { background: var(--accent-hover); box-shadow: 0 4px 16px rgba(255, 102, 0, 0.25); }
+        .plan-btn-outline { border: 1px solid var(--border-hover); color: var(--text-secondary); background: rgba(15, 23, 42, 0.5); }
+        .plan-btn-outline:hover { border-color: rgba(148, 163, 184, 0.3); background: var(--base); color: var(--text-primary); }
 
         .plan-note {
             max-width: 680px; margin: 0 auto; text-align: center; padding: 0 32px 96px;
-            font-size: 14px; color: var(--gray-400); line-height: 1.7;
+            font-size: 14px; color: var(--text-tertiary); line-height: 1.7;
         }
 
-        .footer { border-top: 1px solid var(--gray-200); padding: 32px; text-align: center; background: #0d1117; }
-        .footer-brand { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--gray-500); margin-bottom: 8px; }
+        .comparison-section {
+            max-width: 900px; margin: 0 auto; padding: 0 32px 80px;
+        }
+        .comparison-section h2 {
+            text-align: center; font-size: 32px; font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; color: var(--text-primary);
+        }
+        .comparison-section .subtitle {
+            text-align: center; font-size: 16px; color: var(--text-secondary); margin-bottom: 36px;
+        }
+        .comparison-table {
+            width: 100%; border-collapse: collapse; font-size: 14px;
+        }
+        .comparison-table thead tr {
+            border-bottom: 2px solid var(--border-hover);
+        }
+        .comparison-table th {
+            padding: 14px 16px; font-weight: 600;
+        }
+        .comparison-table th:first-child {
+            text-align: left; color: var(--text-tertiary);
+        }
+        .comparison-table th:not(:first-child) {
+            text-align: center; color: var(--text-primary); font-weight: 700;
+        }
+        .comparison-table tbody tr {
+            border-bottom: 1px solid var(--border);
+        }
+        .comparison-table tbody tr:nth-child(even) {
+            background: rgba(30, 41, 59, 0.4);
+        }
+        .comparison-table td {
+            padding: 14px 16px; color: var(--text-secondary);
+        }
+        .comparison-table td:not(:first-child) {
+            text-align: center;
+        }
+        .comparison-table .check-mark {
+            color: var(--green); font-weight: 700;
+        }
+        .comparison-table .dash {
+            color: var(--text-muted);
+        }
+
+        .footer { border-top: 1px solid var(--border); padding: 40px 32px; text-align: center; background: var(--base); }
+        .footer-brand { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
         .footer-brand .logo-sm { width: 20px; height: 20px; background: linear-gradient(135deg, #FF6600, #CC5200); border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: white; }
-        .footer p { font-size: 13px; color: var(--gray-400); }
+        .footer p { font-size: 13px; color: var(--text-tertiary); }
+        .footer-contact { font-size: 13px; color: var(--text-muted); margin-top: 12px; }
+        .footer-contact a { color: var(--text-secondary); text-decoration: none; transition: color 0.2s; }
+        .footer-contact a:hover { color: var(--text-primary); }
 
         @media (max-width: 768px) {
             .pricing-grid { grid-template-columns: 1fr; max-width: 440px; }
             .page-hero h1 { font-size: 32px; }
+            .page-hero { padding: 140px 20px 60px; }
             .nav-links a:not(.nav-btn) { display: none; }
+            .comparison-section { padding: 0 16px 60px; }
+            .comparison-table { font-size: 13px; }
+            .comparison-table th, .comparison-table td { padding: 10px 8px; }
         }
     </style>
 </head>
@@ -146,111 +212,93 @@
             </ul>
             <a href="{{ login_url }}" class="plan-btn plan-btn-primary">Start Pro Trial</a>
         </div>
-
-        <div class="plan-card">
-            <div class="plan-name">Enterprise</div>
-            <div class="plan-desc">For organizations with compliance requirements and large-scale deployments.</div>
-            <div class="plan-price">Custom</div>
-            <div class="plan-billing">tailored to your needs</div>
-            <ul class="plan-features">
-                <li><span class="check">&#x2713;</span> Unlimited API calls</li>
-                <li><span class="check">&#x2713;</span> Unlimited everything</li>
-                <li><span class="check">&#x2713;</span> SSO / SAML integration</li>
-                <li><span class="check">&#x2713;</span> Custom audit log retention</li>
-                <li><span class="check">&#x2713;</span> Webhook integrations</li>
-                <li><span class="check">&#x2713;</span> Dedicated account manager</li>
-                <li><span class="check">&#x2713;</span> SLA guarantee</li>
-                <li><span class="check">&#x2713;</span> On-premises option</li>
-            </ul>
-            <a href="mailto:sales@snapwire.dev" class="plan-btn plan-btn-outline">Contact Sales</a>
-        </div>
     </div>
 
     <div class="plan-note">
         All plans include the full Snapwire safety stack: constitutional auditing, real-time monitoring, and the human-in-the-loop approval queue. Higher tiers unlock advanced features and higher usage limits.
     </div>
 
-    <div style="max-width:900px;margin:0 auto;padding:0 32px 60px;">
-        <h2 style="text-align:center;font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:8px;color:#f0f3f6;">Cloud vs Self-Hosted</h2>
-        <p style="text-align:center;font-size:16px;color:#8b949e;margin-bottom:32px;">Choose the deployment that fits your team</p>
-        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+    <div class="comparison-section">
+        <h2>Cloud vs Self-Hosted</h2>
+        <p class="subtitle">Choose the deployment that fits your team</p>
+        <table class="comparison-table">
             <thead>
-                <tr style="border-bottom:2px solid #30363d;">
-                    <th style="text-align:left;padding:12px 16px;color:#8b949e;font-weight:600;">Feature</th>
-                    <th style="text-align:center;padding:12px 16px;color:#FF6600;font-weight:700;">Cloud (SaaS)</th>
-                    <th style="text-align:center;padding:12px 16px;color:#FF6600;font-weight:700;">Self-Hosted</th>
+                <tr>
+                    <th>Feature</th>
+                    <th>Cloud (SaaS)</th>
+                    <th>Self-Hosted</th>
                 </tr>
             </thead>
             <tbody>
-                <tr style="border-bottom:1px solid #21262d;">
-                    <td style="padding:12px 16px;color:#c9d1d9;">Setup</td>
-                    <td style="text-align:center;padding:12px;color:#c9d1d9;">Sign up and go</td>
-                    <td style="text-align:center;padding:12px;color:#c9d1d9;">Deploy template</td>
-                </tr>
-                <tr style="border-bottom:1px solid #21262d;background:#161b22;">
-                    <td style="padding:12px 16px;color:#c9d1d9;">Constitutional AI Auditing</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                </tr>
-                <tr style="border-bottom:1px solid #21262d;">
-                    <td style="padding:12px 16px;color:#c9d1d9;">Blast Radius Governor</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                </tr>
-                <tr style="border-bottom:1px solid #21262d;background:#161b22;">
-                    <td style="padding:12px 16px;color:#c9d1d9;">Identity Vault</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                </tr>
-                <tr style="border-bottom:1px solid #21262d;">
-                    <td style="padding:12px 16px;color:#c9d1d9;">Honeypot Tripwires</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                </tr>
-                <tr style="border-bottom:1px solid #21262d;background:#161b22;">
-                    <td style="padding:12px 16px;color:#c9d1d9;">Deception Detection</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                </tr>
-                <tr style="border-bottom:1px solid #21262d;">
-                    <td style="padding:12px 16px;color:#c9d1d9;">Tool Safety Catalog</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                </tr>
-                <tr style="border-bottom:1px solid #21262d;background:#161b22;">
-                    <td style="padding:12px 16px;color:#c9d1d9;">Multi-Tenant / Orgs</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                </tr>
-                <tr style="border-bottom:1px solid #21262d;">
-                    <td style="padding:12px 16px;color:#c9d1d9;">Managed Hosting</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:#6e7681;">&mdash;</td>
-                </tr>
-                <tr style="border-bottom:1px solid #21262d;background:#161b22;">
-                    <td style="padding:12px 16px;color:#c9d1d9;">Auto Updates</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:#6e7681;">Manual</td>
-                </tr>
-                <tr style="border-bottom:1px solid #21262d;">
-                    <td style="padding:12px 16px;color:#c9d1d9;">Full Source Access</td>
-                    <td style="text-align:center;color:#6e7681;">&mdash;</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
-                </tr>
-                <tr style="border-bottom:1px solid #21262d;background:#161b22;">
-                    <td style="padding:12px 16px;color:#c9d1d9;">Custom Modifications</td>
-                    <td style="text-align:center;color:#6e7681;">Via API</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">Full control</td>
-                </tr>
-                <tr style="border-bottom:1px solid #21262d;">
-                    <td style="padding:12px 16px;color:#c9d1d9;">Data Residency</td>
-                    <td style="text-align:center;padding:12px;color:#c9d1d9;">Cloud</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">Your infra</td>
+                <tr>
+                    <td>Setup</td>
+                    <td>Sign up and go</td>
+                    <td>Deploy template</td>
                 </tr>
                 <tr>
-                    <td style="padding:12px 16px;color:#c9d1d9;">Health Monitoring</td>
-                    <td style="text-align:center;color:#3fb950;font-weight:700;">Built-in</td>
-                    <td style="text-align:center;padding:12px;color:#c9d1d9;">/health endpoint</td>
+                    <td>Constitutional AI Auditing</td>
+                    <td class="check-mark">&#x2713;</td>
+                    <td class="check-mark">&#x2713;</td>
+                </tr>
+                <tr>
+                    <td>Blast Radius Governor</td>
+                    <td class="check-mark">&#x2713;</td>
+                    <td class="check-mark">&#x2713;</td>
+                </tr>
+                <tr>
+                    <td>Identity Vault</td>
+                    <td class="check-mark">&#x2713;</td>
+                    <td class="check-mark">&#x2713;</td>
+                </tr>
+                <tr>
+                    <td>Honeypot Tripwires</td>
+                    <td class="check-mark">&#x2713;</td>
+                    <td class="check-mark">&#x2713;</td>
+                </tr>
+                <tr>
+                    <td>Deception Detection</td>
+                    <td class="check-mark">&#x2713;</td>
+                    <td class="check-mark">&#x2713;</td>
+                </tr>
+                <tr>
+                    <td>Tool Safety Catalog</td>
+                    <td class="check-mark">&#x2713;</td>
+                    <td class="check-mark">&#x2713;</td>
+                </tr>
+                <tr>
+                    <td>Multi-Tenant / Orgs</td>
+                    <td class="check-mark">&#x2713;</td>
+                    <td class="check-mark">&#x2713;</td>
+                </tr>
+                <tr>
+                    <td>Managed Hosting</td>
+                    <td class="check-mark">&#x2713;</td>
+                    <td class="dash">&mdash;</td>
+                </tr>
+                <tr>
+                    <td>Auto Updates</td>
+                    <td class="check-mark">&#x2713;</td>
+                    <td class="dash">Manual</td>
+                </tr>
+                <tr>
+                    <td>Full Source Access</td>
+                    <td class="dash">&mdash;</td>
+                    <td class="check-mark">&#x2713;</td>
+                </tr>
+                <tr>
+                    <td>Custom Modifications</td>
+                    <td class="dash">Via API</td>
+                    <td class="check-mark">Full control</td>
+                </tr>
+                <tr>
+                    <td>Data Residency</td>
+                    <td>Cloud</td>
+                    <td class="check-mark">Your infra</td>
+                </tr>
+                <tr>
+                    <td>Health Monitoring</td>
+                    <td class="check-mark">Built-in</td>
+                    <td>/health endpoint</td>
                 </tr>
             </tbody>
         </table>
@@ -259,8 +307,9 @@
     <footer class="footer">
         <div class="footer-brand"><span class="logo-sm">⚡</span> Snapwire</div>
         <p>The Safety Fuse for Your AI Agents</p>
+        <p class="footer-contact">Need something custom for your team? Reach out at <a href="mailto:hello@snapwire.dev">hello@snapwire.dev</a></p>
     </footer>
-    <div style="text-align:center;padding:16px 24px;font-size:11px;color:#7d8295;opacity:0.7;border-top:1px solid #2a2f3d;margin-top:32px;">
+    <div style="text-align:center;padding:16px 24px;font-size:11px;color:var(--text-muted);opacity:0.7;border-top:1px solid var(--border);margin-top:0;">
         Snapwire is a technical monitoring utility. Use at your own risk. User assumes all liability for agent behavior.
     </div>
 </body>
