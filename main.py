@@ -1923,10 +1923,14 @@ def register_self_hosted():
     company = (data.get("company") or "").strip()
     use_case = (data.get("use_case") or "").strip()
 
+    tos_agreed = data.get("tos_agreed", False)
+
     if not name or not email:
         return jsonify({"error": "Name and email are required"}), 400
     if "@" not in email:
         return jsonify({"error": "Please enter a valid email address"}), 400
+    if not tos_agreed:
+        return jsonify({"error": "You must agree to the Terms of Service"}), 400
 
     install = SelfHostedInstall(
         name=name,
