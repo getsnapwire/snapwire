@@ -33,7 +33,10 @@ The Agentic Firewall is built with a Python Flask backend and supports PostgreSQ
 -   **Frontend**: Landing page (`login.html`), pricing page (`pricing.html`), API docs page (`docs.html`), TOS page (`tos.html`), public audit page (`audit.html`), setup wizard (`setup_wizard.html`), and dashboard (`dashboard.html`) with SSE for real-time updates.
 -   **First-Run Setup Wizard**: When no users exist in the database, presents a friendly setup wizard to create the first admin account. No manual database seeding required.
 -   **Config Export/Import**: Branded JSON format with metadata header (generator, version, source URL, install_id, share_id). Import validates format and creates rules for the current tenant.
--   **Telemetry**: Opt-in anonymous telemetry with transparency endpoint showing exactly what would be reported. Unique install_id generated on first boot.
+-   **Telemetry**: Opt-in anonymous telemetry with daily ping to cloud, transparency endpoint, and admin telemetry dashboard. Unique install_id generated on first boot.
+-   **Email Verification**: Local auth accounts require email verification before dashboard access. First admin account is auto-verified.
+-   **Password Reset**: Forgot password flow with time-limited reset tokens sent via email.
+-   **Python SDK**: Installable SDK package (`sdk/` directory) for `pip install agentic-firewall`.
 
 **Key Features & Implementations:**
 -   **Tool Safe Catalog**: AI-powered safety grading (A-F) for tools, with auto-blocking of unsafe tools.

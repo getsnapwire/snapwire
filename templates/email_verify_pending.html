@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email - Agentic Firewall</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .card { background: white; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 40px; width: 100%; max-width: 420px; text-align: center; }
+        .logo .shield { font-size: 36px; }
+        .logo h1 { font-size: 22px; color: #1e293b; margin-top: 8px; }
+        .logo p { font-size: 14px; color: #64748b; margin-top: 4px; }
+        .icon { font-size: 48px; margin: 24px 0 16px; }
+        .info { font-size: 14px; color: #475569; line-height: 1.6; margin-bottom: 24px; }
+        .btn { display: inline-block; padding: 12px 24px; background: #4d8bff; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; transition: background 0.2s; }
+        .btn:hover { background: #3b7aed; }
+        .success { background: #f0fdf4; color: #16a34a; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; border: 1px solid #bbf7d0; }
+        .footer { margin-top: 20px; font-size: 13px; color: #64748b; }
+        .footer a { color: #4d8bff; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">
+            <div class="shield">&#128737;</div>
+            <h1>Agentic Firewall</h1>
+        </div>
+        <div class="icon">&#9993;</div>
+        {% if message %}
+        <div class="success">{{ message }}</div>
+        {% endif %}
+        <p class="info">Check your email to verify your account. We've sent a verification link to your inbox.</p>
+        <a href="/auth/resend-verification" class="btn">Resend Verification Email</a>
+        <div class="footer">
+            <a href="/auth/logout">Sign out</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -189,13 +189,83 @@ def start_daily_risk_summary_timer():
     t.start()
 
 
+def start_telemetry_ping_timer():
+    def run():
+        first_ping = True
+        while True:
+            if first_ping:
+                time.sleep(60)
+                first_ping = False
+            else:
+                time.sleep(86400)
+            try:
+                with app.app_context():
+                    config = get_install_id()
+                    if not config.telemetry_enabled:
+                        continue
+                    
+                    import requests
+                    
+                    if os.environ.get("REPL_ID"):
+                        plat = "replit"
+                    elif os.path.exists("/.dockerenv"):
+                        plat = "docker"
+                    else:
+                        plat = _platform_mod.system().lower()
+                    
+                    total_rules = ConstitutionRule.query.count()
+                    from datetime import timedelta
+                    cutoff_24h = datetime.utcnow() - timedelta(hours=24)
+                    total_intercepts_24h = AuditLogEntry.query.filter(
+                        AuditLogEntry.created_at >= cutoff_24h
+                    ).count()
+                    total_agents = db.session.query(db.func.count(db.func.distinct(AuditLogEntry.agent_id))).scalar() or 0
+                    uptime_hours = round((time.time() - _app_start_time) / 3600, 1)
+                    
+                    payload = {
+                        "install_id": config.install_id,
+                        "version": config.version,
+                        "platform": plat,
+                        "total_rules": total_rules,
+                        "total_intercepts_24h": total_intercepts_24h,
+                        "total_agents": total_agents,
+                        "uptime_hours": uptime_hours,
+                    }
+                    
+                    endpoint = os.environ.get("TELEMETRY_ENDPOINT", "https://telemetry.agenticfirewall.ai/api/v1/ping")
+                    requests.post(endpoint, json=payload, timeout=10)
+            except Exception:
+                pass
+    
+    t = threading.Thread(target=run, daemon=True)
+    t.start()
+
+
 start_auto_deny_timer()
 start_daily_risk_summary_timer()
+start_telemetry_ping_timer()
 
+
+VERIFY_EXEMPT_PATHS = {
+    '/auth/verify', '/auth/resend-verification', '/auth/logout',
+    '/auth/login', '/auth/register', '/auth/setup',
+    '/auth/forgot-password', '/auth/reset-password',
+    '/static', '/health', '/api/telemetry/transparency',
+}
 
 @app.before_request
 def make_session_permanent():
     session.permanent = True
+
+@app.before_request
+def check_email_verification():
+    if not IS_REPLIT and current_user.is_authenticated:
+        if (getattr(current_user, 'auth_provider', '') == 'local'
+                and not getattr(current_user, 'email_verified', True)):
+            path = request.path
+            if any(path.startswith(p) for p in VERIFY_EXEMPT_PATHS):
+                return
+            return redirect(url_for('local_auth.verify_pending'))
 
 
 @app.route("/")

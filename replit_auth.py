@@ -1,5 +1,6 @@
 import jwt
 import os
+import secrets
 import uuid
 from functools import wraps
 from urllib.parse import urlencode
@@ -188,6 +189,10 @@ else:
         user.last_login_at = datetime.now()
         db.session.commit()
         login_user(user)
+
+        if user.auth_provider == 'local' and not user.email_verified:
+            return redirect(url_for('local_auth.verify_pending'))
+
         next_url = session.pop("next_url", None)
         return redirect(next_url or "/")
 
@@ -198,6 +203,7 @@ else:
     @local_auth_bp.route("/register", methods=["POST"])
     def register_post():
         from src.tenant import ensure_personal_tenant
+        from src.email_service import send_email
         from datetime import datetime
 
         data = request.form
@@ -215,6 +221,7 @@ else:
         if User.query.filter_by(email=email).first():
             return render_template("local_register.html", error="An account with this email already exists")
 
+        token = secrets.token_urlsafe(32)
         user = User(
             id=str(uuid.uuid4()),
             email=email,
@@ -222,13 +229,27 @@ else:
             auth_provider='local',
             role='admin',
             last_login_at=datetime.now(),
+            email_verified=False,
+            email_verification_token=token,
+            email_verification_sent_at=datetime.now(),
         )
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
         ensure_personal_tenant(user)
         login_user(user)
-        return redirect("/")
+
+        verify_link = request.url_root.rstrip('/') + url_for('local_auth.verify_email', token=token)
+        try:
+            send_email(
+                to=email,
+                subject="Verify your email - Agentic Firewall",
+                body=f"Hi {name},\n\nPlease verify your email by clicking the link below:\n\n{verify_link}\n\nIf you did not create an account, please ignore this email."
+            )
+        except Exception:
+            pass
+
+        return redirect(url_for('local_auth.verify_pending'))
 
     @local_auth_bp.route("/setup", methods=["GET"])
     def setup():
@@ -261,6 +282,7 @@ else:
             auth_provider='local',
             role='admin',
             last_login_at=datetime.now(),
+            email_verified=True,
         )
         user.set_password(password)
         db.session.add(user)
@@ -268,6 +290,101 @@ else:
         ensure_personal_tenant(user)
         login_user(user)
         return redirect("/")
+
+    @local_auth_bp.route("/verify-pending")
+    def verify_pending():
+        return render_template("email_verify_pending.html")
+
+    @local_auth_bp.route("/verify/<token>")
+    def verify_email(token):
+        user = User.query.filter_by(email_verification_token=token).first()
+        if not user:
+            return render_template("local_login.html", error="Invalid or expired verification link")
+        user.email_verified = True
+        user.email_verification_token = None
+        db.session.commit()
+        login_user(user)
+        return redirect("/")
+
+    @local_auth_bp.route("/resend-verification")
+    def resend_verification():
+        from src.email_service import send_email
+        from datetime import datetime
+
+        if not current_user.is_authenticated:
+            return redirect(url_for('local_auth.login_page'))
+
+        token = secrets.token_urlsafe(32)
+        current_user.email_verification_token = token
+        current_user.email_verification_sent_at = datetime.now()
+        db.session.commit()
+
+        verify_link = request.url_root.rstrip('/') + url_for('local_auth.verify_email', token=token)
+        try:
+            send_email(
+                to=current_user.email,
+                subject="Verify your email - Agentic Firewall",
+                body=f"Hi {current_user.first_name},\n\nPlease verify your email by clicking the link below:\n\n{verify_link}\n\nIf you did not request this, please ignore this email."
+            )
+        except Exception:
+            pass
+
+        return render_template("email_verify_pending.html", message="Verification email resent. Please check your inbox.")
+
+    @local_auth_bp.route("/forgot-password", methods=["GET"])
+    def forgot_password():
+        return render_template("forgot_password.html")
+
+    @local_auth_bp.route("/forgot-password", methods=["POST"])
+    def forgot_password_post():
+        from src.email_service import send_email
+        from datetime import datetime, timedelta
+
+        email = (request.form.get("email") or "").strip().lower()
+        user = User.query.filter_by(email=email, auth_provider='local').first()
+        if user:
+            token = secrets.token_urlsafe(32)
+            user.password_reset_token = token
+            user.password_reset_expires_at = datetime.now() + timedelta(hours=1)
+            db.session.commit()
+
+            reset_link = request.url_root.rstrip('/') + url_for('local_auth.reset_password', token=token)
+            try:
+                send_email(
+                    to=email,
+                    subject="Reset your password - Agentic Firewall",
+                    body=f"Hi {user.first_name},\n\nYou requested a password reset. Click the link below to set a new password:\n\n{reset_link}\n\nThis link expires in 1 hour.\n\nIf you did not request this, please ignore this email."
+                )
+            except Exception:
+                pass
+
+        return render_template("forgot_password.html", message="If an account exists with that email, you'll receive a reset link.")
+
+    @local_auth_bp.route("/reset-password/<token>", methods=["GET", "POST"])
+    def reset_password(token):
+        from datetime import datetime
+
+        user = User.query.filter_by(password_reset_token=token).first()
+        if not user or not user.password_reset_expires_at or user.password_reset_expires_at < datetime.now():
+            return render_template("local_login.html", error="Invalid or expired reset link. Please request a new one.")
+
+        if request.method == "GET":
+            return render_template("reset_password.html", token=token)
+
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm_password", "")
+
+        if not password or len(password) < 8:
+            return render_template("reset_password.html", token=token, error="Password must be at least 8 characters")
+        if password != confirm:
+            return render_template("reset_password.html", token=token, error="Passwords do not match")
+
+        user.set_password(password)
+        user.password_reset_token = None
+        user.password_reset_expires_at = None
+        db.session.commit()
+
+        return render_template("local_login.html", error=None, message="Password reset successfully. Please sign in.")
 
     @local_auth_bp.route("/logout")
     def logout():

@@ -28,6 +28,11 @@ class User(UserMixin, db.Model):
     onboarded = db.Column(db.Boolean, default=False)
     tos_accepted_at = db.Column(db.DateTime, nullable=True)
     onboarding_completed_at = db.Column(db.DateTime, nullable=True)
+    email_verified = db.Column(db.Boolean, default=False)
+    email_verification_token = db.Column(db.String(128), nullable=True)
+    email_verification_sent_at = db.Column(db.DateTime, nullable=True)
+    password_reset_token = db.Column(db.String(128), nullable=True)
+    password_reset_expires_at = db.Column(db.DateTime, nullable=True)
 
     def set_password(self, password):
         from werkzeug.security import generate_password_hash
