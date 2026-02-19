@@ -1,0 +1,115 @@
+Update the tool with the following but give feedback first as the name will change to Snapwire "Before a user creates their first Snap-Token, they must click: 'I acknowledge that Snapwire is a monitoring utility and that I remain 100% responsible for the costs and actions of my autonomous agents.'" & To move forward effectively, you need to hand off a clean, high-authority instruction set to your developer AI. This summary captures the branding pivot to Snapwire, the "Human-in-the-Loop" utility messaging, and the "Legal Fortress" architecture.
+
+The Snapwire Strategy Summary
+
+The Brand: Moving from "Sentry" (passive) to Snapwire (active/mechanical). It positions the tool as a "Circuit Breaker" for AI, making it a "must-have" infrastructure component rather than just a safety app.
+
+The Utility: Focusing on the "Spend Burn Meter" and "The Snap" (kill-switch) to provide immediate, tangible value to non-tech users (saving money and protecting keys).
+
+The Security: Utilizing Snap-Tokens (Identity Proxy) to ensure the agent never touches the user's master API keys, drastically reducing the risk of a total account breach.
+
+The Legal: Hardening the TOS to define the tool as a Neutral Intermediary, shunting liability for AI hallucinations and 3rd-party costs back to the user and the model providers.
+
+Master Update Prompt (Copy & Paste)
+
+Copy the block below and send it to your AI builder:
+
+XML
+
+
+
+<instruction_set>
+
+  <objective>
+
+    Rebrand the application to "Snapwire" and implement a "Neutral Intermediary" security architecture.
+
+  </objective>
+
+
+
+  <branding_and_ux>
+
+    <name>Snapwire</name>
+
+    <tagline>The Safety Fuse for Your AI Agents.</tagline>
+
+    <style_guide>Industrial, high-contrast Dark Mode with Safety Orange accents.</style_guide>
+
+    <terminology>
+
+      - "The Fuse": The overall security layer.
+
+      - "Snap-Tokens": The proxy identity tokens.
+
+      - "The Snap": The automated kill-switch action.
+
+    </terminology>
+
+    <ui_dashboard>
+
+      - Feature a "Live Burn Meter" showing real-time API spend.
+
+      - Display a "Total Savings" counter (estimated costs prevented by Snapwire).
+
+      - Implement a "Broken Circuit" animation when a loop is blocked.
+
+    </ui_dashboard>
+
+  </branding_and_ux>
+
+
+
+  <security_architecture>
+
+    <identity_proxy>
+
+      - Create an encrypted vault for raw API keys.
+
+      - Generate scoped "Snap-Tokens" for agents to use. 
+
+      - Ensure the gateway injects the real key server-side so it is never exposed to the agent.
+
+    </identity_proxy>
+
+    <loop_protection>
+
+      - Implement "3x/30s" logic: Block traffic if an agent repeats a tool-call pattern 3 times within 30 seconds.
+
+      - Require a manual "Reset Fuse" action from the user to resume traffic.
+
+    </loop_protection>
+
+  </security_architecture>
+
+
+
+  <legal_fortress_hardening>
+
+    <tos_update>
+
+      Update /tos and /privacy with 2026 Liability Hardening:
+
+      - "As-Is" Clause: Define Snapwire as a best-effort monitoring utility.
+
+      - "Neutral Gateway": State that Snapwire is not liable for 3rd-party model hallucinations or actions.
+
+      - "Liability Cap": Limit total liability to $100 or 6-months of service fees.
+
+      - "User Responsibility": Explicitly state the user is the "Master Pilot" and responsible for all agent outcomes.
+
+    </tos_update>
+
+    <footer_disclaimer>
+
+      Add to all pages: "Snapwire is a technical monitoring utility. Use at your own risk. User assumes all liability for agent behavior."
+
+    </footer_disclaimer>
+
+  </legal_fortress_hardening></instruction_set>
+
+Final Strategic Note on Forking
+
+When users fork this repo, they are responsible for their own server and database costs. This creates a "community-led" security standard where you provide the Blueprints (The Code) while they provide the Materials (The Hosting).
+
+Would you like me to draft the "ReadMe" for the forked version? It will explain to developers exactly how to set up their own private Snapwire instance in under 5 minutes.
