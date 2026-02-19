@@ -445,6 +445,7 @@
             <button class="tab" data-tab="vault" data-tooltip="Manage credential proxy tokens for secure tool access" data-tooltip-pos="bottom">Credential Proxy</button>
             <button class="tab" data-tab="honeypots" data-tooltip="Set up honeypot decoy tools to detect breaches" data-tooltip-pos="bottom">Honeypots</button>
             <button class="tab" data-tab="blast" data-tooltip="Control how fast agents can make calls — prevents runaway loops" data-tooltip-pos="bottom">Blast Radius</button>
+            <button class="tab" data-tab="risk" data-tooltip="Risk Confidence Index — intelligence signals for tool trust scoring" data-tooltip-pos="bottom">Risk Intelligence</button>
             {% endif %}
             <button class="tab" data-tab="org" data-tooltip="Manage your organization" data-tooltip-pos="bottom">Organization</button>
             <button class="tab" data-tab="analytics" data-tooltip="Usage analytics with charts and trends" data-tooltip-pos="bottom">Analytics</button>
@@ -516,6 +517,7 @@
                     <div style="font-size:11px;color:var(--accent-green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Total Savings</div>
                     <div id="ov-savings" style="font-size:36px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-green);">$0.00</div>
                     <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">from blocked loops &amp; violations</div>
+                    <button onclick="shareSavings()" style="margin-top:8px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:var(--accent-green);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;">Share My Savings</button>
                 </div>
                 <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
                     <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Loop Detector</div>
@@ -1559,10 +1561,11 @@ def handle_tool_call(tool_call):
     </div>
 
     <div id="panel-vault" class="panel">
-        <h3 style="margin-bottom:16px;">Identity Vault</h3>
+        <h3 style="margin-bottom:16px;">Credential Proxy</h3>
         <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Map tools to secret keys stored in environment variables. When a tool call is approved, the firewall injects the real credential — the agent never sees the raw key.</p>
-        <div style="margin-bottom:16px;">
+        <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;">
             <button onclick="showAddVaultModal()" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">+ Add Vault Entry</button>
+            <button onclick="revokeAllTokens()" id="revoke-all-btn" style="background:var(--accent-red);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;">&#x26A0; Global Revoke All Tokens</button>
         </div>
         <div id="vault-list" style="display:flex;flex-direction:column;gap:8px;"></div>
         <div id="vault-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No vault entries configured yet. Click "+ Add Vault Entry" above to map a tool to a secret key. The secret key name must match an entry in your environment variables. When an agent's tool call is approved, the firewall will automatically inject the credential.</div>
@@ -1642,6 +1645,54 @@ def handle_tool_call(tool_call):
             <p style="color:var(--text-secondary);font-size:12px;margin-bottom:10px;">Each event below means an agent was locked out because it exceeded the call limit.</p>
             <div id="br-events-list" style="display:flex;flex-direction:column;gap:8px;"></div>
             <div id="br-events-empty" style="color:var(--text-secondary);font-size:13px;">No throttle events recorded yet.</div>
+        </div>
+    </div>
+
+    <div id="panel-risk" class="panel">
+        <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px;">
+            <span style="font-size:16px;">&#x26A0;</span>
+            <div>
+                <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">Intelligence Signals Disclaimer</div>
+                <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">Risk scores and intelligence signals are probabilistic and for <strong>informational use only</strong>. They are not certifications, guarantees, or security audits. Final action on any flagged item remains your responsibility.</div>
+            </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;">Risk Confidence Index</h3>
+            <button onclick="checkRiskManual()" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">Check Tool Risk</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                <h4 style="font-size:14px;margin-bottom:12px;">Tool Trust Scores</h4>
+                <div id="risk-summary-list" style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;"></div>
+                <div id="risk-summary-empty" style="text-align:center;padding:24px;color:var(--text-secondary);font-size:13px;">No tools assessed yet. Use "Check Tool Risk" or risk scores are automatically calculated during intercepts.</div>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                <h4 style="font-size:14px;margin-bottom:12px;">Recent Intelligence Signals</h4>
+                <div id="risk-signals-list" style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;"></div>
+                <div id="risk-signals-empty" style="text-align:center;padding:24px;color:var(--text-secondary);font-size:13px;">No signals recorded yet. Signals are generated when tools are assessed for risk.</div>
+            </div>
+        </div>
+
+        <div id="risk-check-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:500px;width:90%;">
+                <h3 style="margin-bottom:16px;">Check Tool Risk Score</h3>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Tool Name</label>
+                    <input type="text" id="risk-tool-name" placeholder="e.g. execute_command" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Source URL (optional — GitHub repo for reputation check)</label>
+                    <input type="text" id="risk-source-url" placeholder="e.g. https://github.com/org/repo" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+                </div>
+                <div id="risk-check-result" style="display:none;margin-bottom:16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:16px;">
+                </div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;">
+                    <button onclick="closeRiskModal()" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:8px 16px;border-radius:8px;cursor:pointer;">Cancel</button>
+                    <button onclick="runRiskCheck()" id="risk-check-btn" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;">Assess Risk</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1794,6 +1845,7 @@ def handle_tool_call(tool_call):
                 if (tabName === 'vault') loadVault();
                 if (tabName === 'honeypots') loadHoneypots();
                 if (tabName === 'blast') loadBlastRadius();
+                if (tabName === 'risk') loadRiskIntelligence();
                 if (tabName === 'analytics') loadAnalytics(7);
                 if (tabName === 'telemetry') loadAdminTab();
             });
@@ -3799,6 +3851,192 @@ def handle_tool_call(tool_call):
             if (!confirm('Remove this vault entry?')) return;
             await fetch(`/api/vault/${id}`, {method:'DELETE'});
             loadVault();
+        }
+
+        async function revokeAllTokens() {
+            if (!confirm('EMERGENCY REVOKE: This will immediately disable ALL active proxy tokens. Agents using these tokens will lose access. Are you sure?')) return;
+            const btn = document.getElementById('revoke-all-btn');
+            btn.disabled = true;
+            btn.innerHTML = '&#x23F3; Revoking...';
+            try {
+                const resp = await fetch('/api/vault/proxy-tokens/revoke-all', {method:'POST'});
+                const data = await resp.json();
+                btn.innerHTML = `&#x2714; ${data.count} tokens revoked`;
+                btn.style.background = '#10b981';
+                setTimeout(() => {
+                    btn.innerHTML = '&#x26A0; Global Revoke All Tokens';
+                    btn.style.background = 'var(--accent-red)';
+                    btn.disabled = false;
+                }, 3000);
+                loadVault();
+            } catch(e) {
+                btn.innerHTML = '&#x26A0; Global Revoke All Tokens';
+                btn.disabled = false;
+                alert('Failed to revoke tokens');
+            }
+        }
+
+        function shareSavings() {
+            const savings = document.getElementById('ov-savings').textContent;
+            const loops = document.getElementById('ov-loops').textContent;
+            const total = document.getElementById('ov-total').textContent;
+            const canvas = document.createElement('canvas');
+            canvas.width = 600;
+            canvas.height = 340;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 600, 340);
+            grad.addColorStop(0, '#0f172a');
+            grad.addColorStop(1, '#1e293b');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.roundRect(0, 0, 600, 340, 20);
+            ctx.fill();
+            ctx.fillStyle = '#10b981';
+            ctx.font = 'bold 14px Inter, sans-serif';
+            ctx.fillText('AGENTIC FIREWALL', 30, 40);
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px Inter, sans-serif';
+            ctx.fillText('AI Spend Monitoring & Agent Protection', 30, 58);
+            ctx.fillStyle = '#10b981';
+            ctx.font = 'bold 52px "Fira Code", monospace';
+            ctx.fillText(savings, 30, 130);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '14px Inter, sans-serif';
+            ctx.fillText('Total Savings from blocked loops & violations', 30, 155);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = 'bold 28px "Fira Code", monospace';
+            ctx.fillText(loops, 30, 210);
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px Inter, sans-serif';
+            ctx.fillText('Loops Caught', 30, 230);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = 'bold 28px "Fira Code", monospace';
+            ctx.fillText(total, 200, 210);
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px Inter, sans-serif';
+            ctx.fillText('Tool Calls Monitored', 200, 230);
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(30, 260);
+            ctx.lineTo(570, 260);
+            ctx.stroke();
+            ctx.fillStyle = '#475569';
+            ctx.font = '11px Inter, sans-serif';
+            ctx.fillText('Protected by Agentic Firewall — agenticfirewall.com', 30, 290);
+            const today = new Date().toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+            ctx.fillText(today, 30, 310);
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'agentic-firewall-savings.png';
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        }
+
+        // === RISK INTELLIGENCE ===
+        function checkRiskManual() { document.getElementById('risk-check-modal').style.display = 'flex'; document.getElementById('risk-check-result').style.display = 'none'; }
+        function closeRiskModal() { document.getElementById('risk-check-modal').style.display = 'none'; }
+
+        async function runRiskCheck() {
+            const toolName = document.getElementById('risk-tool-name').value.trim();
+            if (!toolName) return alert('Tool name is required');
+            const sourceUrl = document.getElementById('risk-source-url').value.trim();
+            const btn = document.getElementById('risk-check-btn');
+            btn.disabled = true;
+            btn.textContent = 'Assessing...';
+            try {
+                const resp = await fetch('/api/risk-score/check', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({tool_name: toolName, source_url: sourceUrl || undefined})
+                });
+                const data = await resp.json();
+                const resultDiv = document.getElementById('risk-check-result');
+                resultDiv.style.display = 'block';
+                const gradeColor = data.grade === 'A' ? '#10b981' : data.grade === 'B' ? '#3b82f6' : data.grade === 'C' ? '#f59e0b' : '#ef4444';
+                resultDiv.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+                        <div style="width:60px;height:60px;border-radius:50%;border:4px solid ${gradeColor};display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:${gradeColor};font-family:'Fira Code',monospace;">${data.score}</div>
+                        <div>
+                            <div style="font-size:18px;font-weight:700;color:var(--text-primary);">Grade: ${data.grade}</div>
+                            <div style="font-size:12px;color:var(--text-secondary);">${toolName}</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                        ${(data.signals || []).map(s => `
+                            <div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 8px;border-radius:4px;background:${s.type==='positive'?'rgba(16,185,129,0.1)':s.type==='warning'?'rgba(239,68,68,0.1)':'rgba(148,163,184,0.1)'};">
+                                <span>${s.type==='positive'?'&#x2705;':s.type==='warning'?'&#x26A0;':'&#x2139;'}</span>
+                                <span style="font-weight:600;color:var(--text-primary);">${s.label}</span>
+                                <span style="color:var(--text-secondary);">${s.detail}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="margin-top:8px;font-size:11px;color:var(--text-secondary);font-style:italic;">${data.disclaimer || ''}</div>
+                `;
+                loadRiskIntelligence();
+            } catch(e) { alert('Failed to check risk'); }
+            btn.disabled = false;
+            btn.textContent = 'Assess Risk';
+        }
+
+        async function loadRiskIntelligence() {
+            try {
+                const [summaryRes, signalsRes] = await Promise.all([
+                    fetch('/api/risk-signals/summary'),
+                    fetch('/api/risk-signals')
+                ]);
+                const summaryData = await summaryRes.json();
+                const signalsData = await signalsRes.json();
+
+                const summaryList = document.getElementById('risk-summary-list');
+                const summaryEmpty = document.getElementById('risk-summary-empty');
+                if (summaryData.tools && summaryData.tools.length > 0) {
+                    summaryEmpty.style.display = 'none';
+                    summaryList.innerHTML = summaryData.tools.map(t => {
+                        const gradeColor = t.grade === 'A' ? '#10b981' : t.grade === 'B' ? '#3b82f6' : t.grade === 'C' ? '#f59e0b' : '#ef4444';
+                        const barWidth = t.score + '%';
+                        return `<div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:10px 14px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                                <span style="font-weight:600;font-size:13px;font-family:'Fira Code',monospace;">${t.tool_name}</span>
+                                <span style="font-weight:700;color:${gradeColor};font-size:14px;">${t.grade} (${t.score})</span>
+                            </div>
+                            <div style="background:var(--bg-card);border-radius:4px;height:6px;overflow:hidden;">
+                                <div style="width:${barWidth};height:100%;background:${gradeColor};border-radius:4px;transition:width 0.3s;"></div>
+                            </div>
+                            <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">${new Date(t.assessed_at).toLocaleString()}</div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    summaryEmpty.style.display = 'block';
+                    summaryList.innerHTML = '';
+                }
+
+                const signalsList = document.getElementById('risk-signals-list');
+                const signalsEmpty = document.getElementById('risk-signals-empty');
+                if (signalsData.signals && signalsData.signals.length > 0) {
+                    signalsEmpty.style.display = 'none';
+                    signalsList.innerHTML = signalsData.signals.slice(0, 20).map(s => {
+                        const gradeColor = s.grade === 'A' ? '#10b981' : s.grade === 'B' ? '#3b82f6' : s.grade === 'C' ? '#f59e0b' : '#ef4444';
+                        const signalIcons = (s.signals || []).slice(0, 3).map(sig =>
+                            `<span title="${sig.detail}" style="font-size:11px;padding:1px 6px;border-radius:3px;background:${sig.type==='positive'?'rgba(16,185,129,0.1)':sig.type==='warning'?'rgba(239,68,68,0.1)':'rgba(148,163,184,0.1)'};">${sig.type==='positive'?'&#x2705;':'&#x26A0;'} ${sig.label}</span>`
+                        ).join(' ');
+                        return `<div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:8px 12px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                                <span style="font-weight:600;font-size:12px;">${s.tool_name}</span>
+                                <span style="font-weight:700;color:${gradeColor};font-size:12px;">${s.grade} (${s.score})</span>
+                            </div>
+                            <div style="display:flex;flex-wrap:wrap;gap:4px;">${signalIcons}</div>
+                            <div style="font-size:10px;color:var(--text-secondary);margin-top:4px;">${new Date(s.assessed_at).toLocaleString()}</div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    signalsEmpty.style.display = 'block';
+                    signalsList.innerHTML = '';
+                }
+            } catch(e) { console.error('Failed to load risk intelligence', e); }
         }
 
         // === HONEYPOTS ===

@@ -600,6 +600,30 @@ class ProxyToken(db.Model):
         }
 
 
+class RiskSignal(db.Model):
+    __tablename__ = 'risk_signals'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=False, index=True)
+    tool_name = db.Column(db.String, nullable=False)
+    score = db.Column(db.Integer, default=50)
+    grade = db.Column(db.String(1), default='C')
+    signals_json = db.Column(db.Text, nullable=True)
+    source_url = db.Column(db.String, nullable=True)
+    assessed_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "tool_name": self.tool_name,
+            "score": self.score,
+            "grade": self.grade,
+            "signals": json.loads(self.signals_json) if self.signals_json else [],
+            "source_url": self.source_url,
+            "assessed_at": self.assessed_at.isoformat() if self.assessed_at else None,
+            "disclaimer": "Intelligence Signals are probabilistic and for informational use only. Final action remains User responsibility.",
+        }
+
+
 class PublicAudit(db.Model):
     __tablename__ = 'public_audits'
     id = db.Column(db.Integer, primary_key=True)

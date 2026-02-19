@@ -48,11 +48,12 @@ from src.email_service import send_blocked_action_email, send_critical_risk_emai
 from src.tool_catalog import check_tool_catalog, get_catalog, update_tool_status, regrade_tool
 from src.blast_radius import check_blast_radius, get_blast_radius_config, update_blast_radius_config, get_blast_radius_events, clear_lockout, get_active_lockouts
 from src.honeypot import check_honeypot, get_honeypots, create_honeypot, delete_honeypot, toggle_honeypot, get_honeypot_alerts
-from src.vault import get_vault_entries, create_vault_entry, delete_vault_entry, update_vault_entry, get_vault_credentials, generate_proxy_token, resolve_proxy_token, get_proxy_tokens, revoke_proxy_token
+from src.vault import get_vault_entries, create_vault_entry, delete_vault_entry, update_vault_entry, get_vault_credentials, generate_proxy_token, resolve_proxy_token, get_proxy_tokens, revoke_proxy_token, revoke_all_proxy_tokens
 from src.deception import analyze_deception
 from src.loop_detector import check_for_loop, get_loop_events, get_loop_stats
 from src.schema_guard import validate_tool_params, get_schema_stats
-from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings, LoopDetectorEvent, SchemaViolationEvent, ProxyToken
+from src.risk_index import calculate_risk_score, record_risk_signal, get_risk_signals, get_tool_risk_summary
+from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings, LoopDetectorEvent, SchemaViolationEvent, ProxyToken, RiskSignal
 
 
 import uuid as _uuid_mod
@@ -465,6 +466,15 @@ def intercept_tool_call():
             params = schema_result["stripped_params"]
             tool_call["parameters"] = params
 
+    risk_result = None
+    try:
+        source_url = data.get("source_url")
+        risk_result = calculate_risk_score(data["tool_name"], tool_params=params, source_url=source_url, tenant_id=tenant_id)
+        if risk_result and tenant_id:
+            record_risk_signal(tenant_id, data["tool_name"], risk_result['score'], risk_result['grade'], risk_result['signals'], source_url=source_url)
+    except Exception:
+        pass
+
     shadow_active = is_shadow_mode(tenant_id)
 
     try:
@@ -496,6 +506,11 @@ def intercept_tool_call():
 
     if catalog_result and catalog_result.get("entry"):
         response_extra["catalog_grade"] = catalog_result["entry"].get("safety_grade", "U")
+
+    if risk_result:
+        response_extra["risk_score"] = risk_result["score"]
+        response_extra["risk_grade"] = risk_result["grade"]
+        response_extra["risk_signals"] = risk_result["signals"]
 
     if shadow_active:
         response_extra["shadow_mode"] = True
@@ -2219,6 +2234,60 @@ def revoke_proxy_token_endpoint(token_id):
     if revoke_proxy_token(token_id, tenant_id):
         return jsonify({"status": "revoked"})
     return jsonify({"error": "Token not found"}), 404
+
+
+@app.route("/api/vault/proxy-tokens/revoke-all", methods=["POST"])
+@require_login
+def revoke_all_proxy_tokens_endpoint():
+    tenant_id = get_current_tenant_id()
+    count = revoke_all_proxy_tokens(tenant_id)
+    return jsonify({"status": "all_revoked", "count": count})
+
+
+@app.route("/api/tools/<int:tool_id>/risk-score", methods=["GET"])
+@require_login
+def get_tool_risk_score(tool_id):
+    tenant_id = get_current_tenant_id()
+    tool = ToolCatalog.query.filter_by(id=tool_id, tenant_id=tenant_id).first()
+    if not tool:
+        return jsonify({"error": "Tool not found"}), 404
+    source_url = request.args.get("source_url", None)
+    result = calculate_risk_score(tool.tool_name, source_url=source_url, tenant_id=tenant_id)
+    record_risk_signal(tenant_id, tool.tool_name, result['score'], result['grade'], result['signals'], source_url=source_url)
+    return jsonify(result)
+
+
+@app.route("/api/risk-signals", methods=["GET"])
+@require_login
+def list_risk_signals():
+    tenant_id = get_current_tenant_id()
+    signals = get_risk_signals(tenant_id)
+    return jsonify({"signals": signals})
+
+
+@app.route("/api/risk-signals/summary", methods=["GET"])
+@require_login
+def risk_signals_summary():
+    tenant_id = get_current_tenant_id()
+    summary = get_tool_risk_summary(tenant_id)
+    return jsonify({"tools": summary, "disclaimer": "Intelligence Signals are probabilistic and for informational use only. Final action remains User responsibility."})
+
+
+@app.route("/api/risk-score/check", methods=["POST"])
+@require_login
+def check_risk_score():
+    tenant_id = get_current_tenant_id()
+    data = request.get_json()
+    if not data or not data.get("tool_name"):
+        return jsonify({"error": "tool_name required"}), 400
+    result = calculate_risk_score(
+        data["tool_name"],
+        tool_params=data.get("params"),
+        source_url=data.get("source_url"),
+        tenant_id=tenant_id,
+    )
+    record_risk_signal(tenant_id, data["tool_name"], result['score'], result['grade'], result['signals'], source_url=data.get("source_url"))
+    return jsonify(result)
 
 
 @app.route("/api/analytics/timeline", methods=["GET"])

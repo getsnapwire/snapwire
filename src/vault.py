@@ -159,3 +159,16 @@ def revoke_proxy_token(token_id, tenant_id):
     proxy.revoked_at = datetime.utcnow()
     db.session.commit()
     return True
+
+
+def revoke_all_proxy_tokens(tenant_id):
+    from app import db
+    from models import ProxyToken
+    now = datetime.utcnow()
+    active_tokens = ProxyToken.query.filter_by(tenant_id=tenant_id, is_active=True).all()
+    count = len(active_tokens)
+    for t in active_tokens:
+        t.is_active = False
+        t.revoked_at = now
+    db.session.commit()
+    return count

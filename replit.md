@@ -46,8 +46,9 @@ The Agentic Firewall is built with a Python Flask backend and supports PostgreSQ
 **Key Features & Implementations:**
 -   **Agentic Loop Detector** (`src/loop_detector.py`): Detects hallucination loops (same tool + same args 3+ times in 30s), auto-blocks with 429, records events with estimated savings.
 -   **Schema Validation Guard** (`src/schema_guard.py`): Per-tool JSON schema enforcement. Strict mode strips unauthorized params, flexible mode logs only. SchemaViolationEvent model tracks all violations.
--   **Credential Proxy** (`src/vault.py`): ProxyToken model with `agfw_` tokens. Agents use proxy tokens; real keys injected at gateway. Full token shown only on creation (one-time view); listings always mask tokens. One-click revocation.
--   **Spend Monitor**: Real-time cost tracking in overview API (today_spend, daily_rate, projected_30d, total_savings). Dashboard shows Total Savings counter and burn rate.
+-   **Credential Proxy** (`src/vault.py`): ProxyToken model with `agfw_` tokens. Agents use proxy tokens; real keys injected at gateway. Full token shown only on creation (one-time view); listings always mask tokens. One-click revocation. **Global Revoke** button for emergency breach response.
+-   **Spend Monitor**: Real-time cost tracking in overview API (today_spend, daily_rate, projected_30d, total_savings). Dashboard shows Total Savings counter and burn rate. **Share My Savings** button generates downloadable branded image card.
+-   **Risk Confidence Index** (`src/risk_index.py`): 0-100 trust scores per tool with GitHub reputation lookup (stars, age, activity), URL safety scanning (pattern-based), and automatic risk grading (A-F). All outputs labeled as "Intelligence Signals" with legal disclaimer. RiskSignal model tracks assessment history.
 -   **Tool Safe Catalog** (`src/tool_catalog.py`): AI-powered safety grading (A-F) with schema enforcement toggle per tool.
 -   **Blast Radius Governor** (`src/blast_radius.py`): Per-agent dual-limit system (rate-based + budget-based) with manual hard-lock reset.
 -   **Identity Vault** (`src/vault.py`): Secure credential storage with proxy token layer on top.
@@ -58,6 +59,7 @@ The Agentic Firewall is built with a Python Flask backend and supports PostgreSQ
 -   **API Key Management**: Generation, revocation, and toggling of API keys, scoped to specific tenants.
 -   **Webhook System**: Supports persistent webhook configs and ad-hoc webhooks for agents.
 -   **3-Step Onboarding**: Utility-first wizard (Generate API Key → Set Spend Limit → Shadow Mode).
+-   **TOS Acceptance Gate**: Users must scroll through and accept updated Terms of Service (AS-IS, no-liability, proxy token responsibility, human-in-the-loop) before accessing dashboard. Timestamp tracked per user.
 
 ## External Dependencies
 -   **Database**: PostgreSQL (production) / SQLite (development/testing)
@@ -97,6 +99,11 @@ The Agentic Firewall is built with a Python Flask backend and supports PostgreSQ
 -   `GET /api/vault/proxy-tokens` - List proxy tokens (masked)
 -   `POST /api/vault/proxy-tokens` - Generate new proxy token (one-time view of full token)
 -   `POST /api/vault/proxy-tokens/<id>/revoke` - Revoke a proxy token
+-   `POST /api/vault/proxy-tokens/revoke-all` - Emergency revoke all active proxy tokens
+-   `GET /api/tools/<id>/risk-score` - Calculate risk confidence index for a tool
+-   `GET /api/risk-signals` - List recent risk intelligence signals
+-   `GET /api/risk-signals/summary` - Per-tool latest risk scores
+-   `POST /api/risk-score/check` - Manually check risk score for a tool name
 -   `POST /api/rules/export` - Export rules as branded JSON
 -   `POST /api/rules/import` - Import rule packs
 -   `GET /api/telemetry/transparency` - View telemetry transparency info
