@@ -1268,7 +1268,12 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                 <div>
                     <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">Lockout duration (seconds)</label>
                     <input type="number" id="br-lockout" min="10" max="86400" value="300" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
-                    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">How long agents are blocked after exceeding the limit</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">How long agents are blocked after exceeding the limit (if auto-reset is on)</div>
+                </div>
+                <div>
+                    <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">Session spend limit ($)</label>
+                    <input type="number" id="br-max-spend" min="0" max="100000" step="0.01" value="20.00" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Max $ an agent can spend in a session. Hard-locks when exceeded.</div>
                 </div>
                 <div style="display:flex;align-items:center;gap:10px;padding-top:18px;">
                     <label class="toggle-switch" style="margin:0;">
@@ -1277,10 +1282,20 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                     </label>
                     <span style="font-size:13px;">Enabled</span>
                 </div>
+                <div style="display:flex;align-items:center;gap:10px;padding-top:18px;">
+                    <label class="toggle-switch" style="margin:0;">
+                        <input type="checkbox" id="br-manual-reset" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <div>
+                        <span style="font-size:13px;">Require manual reset</span>
+                        <div style="font-size:11px;color:var(--text-secondary);">When on, violations need you to click "Unlock" &mdash; no auto-expiry</div>
+                    </div>
+                </div>
             </div>
             <div style="display:flex;align-items:center;gap:12px;margin-top:14px;">
                 <button onclick="saveBlastConfig()" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13px;">Save Settings</button>
-                <span style="font-size:12px;color:var(--text-secondary);">Recommended: 5 calls / 60s window for most setups. Increase for high-frequency agents.</span>
+                <span style="font-size:12px;color:var(--text-secondary);">Recommended: 5 calls / 60s, $20 spend limit, manual reset ON.</span>
             </div>
         </div>
 
@@ -1444,6 +1459,13 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                     return (order[v.severity] || 0) > (order[max] || 0) ? v.severity : max;
                 }, 'medium');
 
+                const params = action.tool_call.parameters || {};
+                const paramEntries = Object.entries(params);
+                const paramPreview = paramEntries.slice(0, 4).map(([k,v]) => {
+                    const val = typeof v === 'string' ? v : JSON.stringify(v);
+                    return `<span style="display:inline-block;background:var(--bg-tertiary);padding:2px 8px;border-radius:4px;font-size:11px;margin:2px;"><strong>${k}:</strong> ${val.length > 60 ? val.substring(0,60) + '...' : val}</span>`;
+                }).join('');
+
                 return `
                     <div class="action-card">
                         <div class="action-header">
@@ -1451,24 +1473,32 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                                 <input type="checkbox" class="pending-checkbox" data-action-id="${action.id}">
                                 <div>
                                     <div class="tool-name">${action.tool_call.tool_name}</div>
-                                    <div class="action-id">ID: ${action.id} &middot; ${new Date(action.created_at).toLocaleString()}</div>
+                                    <div class="action-id">ID: ${action.id} &middot; Agent: ${action.agent_id || 'unknown'} &middot; ${new Date(action.created_at).toLocaleString()}</div>
                                 </div>
                             </div>
                             <span class="severity-badge severity-${maxSeverity}">${maxSeverity}</span>
                         </div>
 
-                        ${action.tool_call.intent ? `<p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Intent: ${action.tool_call.intent}</p>` : ''}
-
-                        <div class="violations-list">
-                            ${violations.map(v => `
-                                <div class="violation-item">
-                                    <div class="rule-name">${v.rule} <span class="severity-badge severity-${v.severity}" style="font-size:10px;">${v.severity}</span></div>
-                                    <div class="reason">${v.reason}</div>
-                                </div>
-                            `).join('')}
+                        <div style="background:var(--bg-secondary);border-radius:8px;padding:12px 14px;margin-bottom:10px;border-left:3px solid var(--accent-blue);">
+                            <div style="font-size:11px;font-weight:700;color:var(--accent-blue);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">&#x1F4CB; Audit Trail &mdash; Why This Agent Wants This Action</div>
+                            ${action.tool_call.intent ? `<div style="margin-bottom:6px;"><span style="font-size:11px;font-weight:600;color:var(--text-secondary);">Stated Intent:</span><div style="font-size:13px;color:var(--text-primary);margin-top:2px;">${action.tool_call.intent}</div></div>` : '<div style="font-size:12px;color:var(--text-secondary);font-style:italic;margin-bottom:6px;">No intent provided by agent</div>'}
+                            ${action.tool_call.context ? `<div style="margin-bottom:6px;"><span style="font-size:11px;font-weight:600;color:var(--text-secondary);">Context:</span><div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${action.tool_call.context}</div></div>` : ''}
+                            ${paramEntries.length > 0 ? `<div><span style="font-size:11px;font-weight:600;color:var(--text-secondary);">Parameters:</span><div style="margin-top:4px;line-height:1.8;">${paramPreview}${paramEntries.length > 4 ? `<span style="font-size:11px;color:var(--text-secondary);margin-left:4px;">+${paramEntries.length - 4} more</span>` : ''}</div></div>` : ''}
                         </div>
 
-                        <div style="display:flex;align-items:center;gap:12px;">
+                        <div style="background:var(--bg-secondary);border-radius:8px;padding:12px 14px;margin-bottom:10px;border-left:3px solid var(--accent-red);">
+                            <div style="font-size:11px;font-weight:700;color:var(--accent-red);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">&#x1F6AB; Why It Was Blocked</div>
+                            <div class="violations-list" style="margin-bottom:0;">
+                                ${violations.map(v => `
+                                    <div class="violation-item">
+                                        <div class="rule-name">${v.rule} <span class="severity-badge severity-${v.severity}" style="font-size:10px;">${v.severity}</span></div>
+                                        <div class="reason">${v.reason}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
                             <span style="font-size:12px;color:var(--text-secondary);">Risk Score</span>
                             <div class="risk-bar" style="flex:1;">
                                 <div class="fill ${riskClass}" style="width:${riskScore}%"></div>
@@ -1481,11 +1511,11 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                             <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">This agent's stated intent may not match its actual action. Review carefully before approving.</div>
                         </div>` : ''}
 
-                        ${action.audit_result?.analysis ? `<p class="analysis-text">${action.audit_result.analysis}</p>` : ''}
+                        ${action.audit_result?.analysis ? `<div style="background:var(--bg-secondary);border-radius:8px;padding:10px 14px;margin-bottom:10px;border-left:3px solid var(--text-secondary);"><div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">&#x1F916; AI Auditor Reasoning</div><p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin:0;">${action.audit_result.analysis}</p></div>` : ''}
 
                         <div class="action-buttons">
-                            <button class="btn btn-approve" onclick="resolveAction('${action.id}', 'approved')">Approve</button>
-                            <button class="btn btn-deny" onclick="resolveAction('${action.id}', 'denied')">Deny</button>
+                            <button class="btn btn-approve" onclick="resolveAction('${action.id}', 'approved')">&#x2714; Approve</button>
+                            <button class="btn btn-deny" onclick="resolveAction('${action.id}', 'denied')">&#x2716; Deny</button>
                         </div>
                     </div>`;
             }).join('');
@@ -3410,21 +3440,28 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                 document.getElementById('br-window').value = config.window_seconds || 60;
                 document.getElementById('br-lockout').value = config.lockout_seconds || 300;
                 document.getElementById('br-enabled').checked = config.enabled !== false;
+                document.getElementById('br-max-spend').value = config.max_spend_per_session || 20.0;
+                document.getElementById('br-manual-reset').checked = config.require_manual_reset !== false;
 
                 const lockoutList = document.getElementById('br-lockout-list');
                 const lockoutEmpty = document.getElementById('br-lockout-empty');
                 if (lockoutsData.lockouts && lockoutsData.lockouts.length > 0) {
                     lockoutEmpty.style.display = 'none';
-                    lockoutList.innerHTML = lockoutsData.lockouts.map(l => `
+                    lockoutList.innerHTML = lockoutsData.lockouts.map(l => {
+                        const isManual = l.type === 'manual' || l.requires_manual_reset;
+                        const lockInfo = isManual
+                            ? `<div style="font-size:12px;color:var(--accent-red);font-weight:600;">HARD-LOCKED &mdash; requires manual reset</div>${l.session_spend ? `<div style="font-size:11px;color:var(--text-secondary);">Session spend: $${l.session_spend.toFixed(2)}</div>` : ''}`
+                            : `<div style="font-size:12px;color:var(--text-secondary);">Timed lockout: ${l.remaining_seconds}s remaining</div>`;
+                        return `
                         <div style="background:rgba(255,77,77,0.08);border:1px solid rgba(255,77,77,0.3);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;">
-                            <span style="font-size:18px;">&#128274;</span>
+                            <span style="font-size:18px;">${isManual ? '&#128721;' : '&#128274;'}</span>
                             <div style="flex:1;">
                                 <div style="font-weight:600;font-size:13px;">Agent: ${l.agent_id}</div>
-                                <div style="font-size:12px;color:var(--text-secondary);">Locked for ${l.remaining_seconds}s more (until ${new Date(l.lockout_until).toLocaleTimeString()})</div>
+                                ${lockInfo}
                             </div>
-                            <button onclick="unlockAgent('${l.agent_id}')" style="background:var(--accent-green);border:none;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Unlock</button>
-                        </div>
-                    `).join('');
+                            <button onclick="unlockAgent('${l.agent_id}')" style="background:${isManual ? 'var(--accent-red)' : 'var(--accent-green)'};border:none;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">${isManual ? 'Manual Reset' : 'Unlock'}</button>
+                        </div>`;
+                    }).join('');
                 } else {
                     lockoutEmpty.style.display = 'block';
                     lockoutList.innerHTML = '';
@@ -3434,17 +3471,22 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                 const eventsEmpty = document.getElementById('br-events-empty');
                 if (eventsData.events && eventsData.events.length > 0) {
                     eventsEmpty.style.display = 'none';
-                    eventsList.innerHTML = eventsData.events.map(e => `
+                    eventsList.innerHTML = eventsData.events.map(e => {
+                        const triggerType = e.trigger_type || 'rate';
+                        const triggerLabel = triggerType === 'spend'
+                            ? `<span style="background:rgba(255,165,0,0.15);color:#f90;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">SPEND: $${(e.spend_amount || 0).toFixed(2)}</span>`
+                            : `<span style="background:rgba(255,77,77,0.1);color:var(--accent-red);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">RATE: ${e.call_count} calls/${e.window_seconds}s</span>`;
+                        return `
                         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;">
                             <div style="display:flex;justify-content:space-between;align-items:center;">
-                                <div>
+                                <div style="display:flex;align-items:center;gap:10px;">
                                     <span style="font-weight:600;font-size:13px;">Agent: ${e.agent_id}</span>
-                                    <span style="color:var(--text-secondary);font-size:12px;margin-left:8px;">${e.call_count} calls in ${e.window_seconds}s</span>
+                                    ${triggerLabel}
                                 </div>
                                 <span style="font-size:12px;color:var(--text-secondary);">${new Date(e.triggered_at).toLocaleString()}</span>
                             </div>
-                        </div>
-                    `).join('');
+                        </div>`;
+                    }).join('');
                 } else {
                     eventsEmpty.style.display = 'block';
                     eventsList.innerHTML = '';
@@ -3457,6 +3499,8 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                 window_seconds: parseInt(document.getElementById('br-window').value),
                 lockout_seconds: parseInt(document.getElementById('br-lockout').value),
                 enabled: document.getElementById('br-enabled').checked,
+                max_spend_per_session: parseFloat(document.getElementById('br-max-spend').value),
+                require_manual_reset: document.getElementById('br-manual-reset').checked,
             };
             await fetch('/api/blast-radius/config', {method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
             loadBlastRadius();

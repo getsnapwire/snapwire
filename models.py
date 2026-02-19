@@ -329,6 +329,8 @@ class BlastRadiusConfig(db.Model):
     window_seconds = db.Column(db.Integer, default=60)
     enabled = db.Column(db.Boolean, default=True)
     lockout_seconds = db.Column(db.Integer, default=300)
+    max_spend_per_session = db.Column(db.Float, default=20.0)
+    require_manual_reset = db.Column(db.Boolean, default=True)
 
 
 class BlastRadiusEvent(db.Model):
@@ -340,6 +342,8 @@ class BlastRadiusEvent(db.Model):
     triggered_at = db.Column(db.DateTime, default=datetime.utcnow)
     call_count = db.Column(db.Integer, default=0)
     window_seconds = db.Column(db.Integer, default=60)
+    trigger_type = db.Column(db.String, default='rate')
+    spend_amount = db.Column(db.Float, nullable=True)
 
 
 class VaultEntry(db.Model):

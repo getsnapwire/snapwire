@@ -216,7 +216,13 @@ def intercept_tool_call():
             "alert": honeypot_result["alert_message"],
         }), 403
 
-    blast_check = check_blast_radius(agent_id, tenant_id, api_key_id=api_key_id)
+    try:
+        estimated_cost = max(0.0, float(data.get("estimated_cost", 0.0)))
+    except (ValueError, TypeError):
+        estimated_cost = 0.0
+    if estimated_cost == 0.0:
+        estimated_cost = 0.01
+    blast_check = check_blast_radius(agent_id, tenant_id, api_key_id=api_key_id, estimated_cost=estimated_cost)
     if not blast_check.get("allowed", True):
         log_action(
             {"tool_name": data["tool_name"], "parameters": params, "intent": data.get("intent", ""), "context": data.get("context", "")},
@@ -1653,6 +1659,8 @@ def update_br_config():
         window_seconds=data.get("window_seconds"),
         enabled=data.get("enabled"),
         lockout_seconds=data.get("lockout_seconds"),
+        max_spend_per_session=data.get("max_spend_per_session"),
+        require_manual_reset=data.get("require_manual_reset"),
     )
     return jsonify(result)
 

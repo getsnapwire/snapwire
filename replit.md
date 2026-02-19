@@ -6,7 +6,7 @@ The Agentic Firewall is an AI-powered system designed to secure AI agent operati
 Key capabilities include:
 - **Constitutional AI Auditing**: Real-time evaluation of agent tool calls against a set of constitutional rules.
 - **Multi-Tenancy**: Supports individual user workspaces and team collaboration through organizations, each with customizable rules and data.
-- **Enhanced Security Features**: Includes a Tool Safe Catalog for grading tool safety, a Blast Radius Governor for rate limiting, an Identity Vault for secure credential handling, Deception & Goal Drift Detection, and Honeypot Tripwires.
+- **Enhanced Security Features**: Includes a Tool Safe Catalog for grading tool safety, a Blast Radius Governor with dual limits (rate-based + budget-based) and manual reset, an Identity Vault for secure credential handling, Deception & Goal Drift Detection, and Honeypot Tripwires.
 - **Comprehensive Management**: Provides an admin panel, user management, API key management, real-time monitoring, and a web dashboard for rule creation (AI-powered NLP or visual builder), action resolution, and analytics.
 - **Commercialization Focus**: Built for market potential with features supporting enterprise deployment and user engagement.
 
