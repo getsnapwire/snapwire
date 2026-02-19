@@ -67,6 +67,7 @@ class AuditLogEntry(db.Model):
     risk_score = db.Column(db.Integer, default=0)
     violations_json = db.Column(db.Text, nullable=True)
     analysis = db.Column(db.Text, nullable=True)
+    chain_of_thought = db.Column(db.Text, nullable=True)
     agent_id = db.Column(db.String, default='unknown')
     api_key_id = db.Column(db.String, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -85,6 +86,12 @@ class AuditLogEntry(db.Model):
                 params = json.loads(self.tool_params)
             except Exception:
                 pass
+        cot = None
+        if self.chain_of_thought:
+            try:
+                cot = json.loads(self.chain_of_thought)
+            except Exception:
+                cot = self.chain_of_thought
         return {
             "id": self.id,
             "tool_call": {
@@ -98,6 +105,7 @@ class AuditLogEntry(db.Model):
                 "risk_score": self.risk_score,
                 "analysis": self.analysis or "",
                 "allowed": self.status in ("allowed", "approved", "auto-approved"),
+                "chain_of_thought": cot,
             },
             "status": self.status,
             "agent_id": self.agent_id,
@@ -420,6 +428,17 @@ class HoneypotAlert(db.Model):
             "api_key_locked": self.api_key_locked,
             "triggered_at": self.triggered_at.isoformat() if self.triggered_at else None,
         }
+
+
+class TenantSettings(db.Model):
+    __tablename__ = 'tenant_settings'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, unique=True, nullable=False, index=True)
+    shadow_mode = db.Column(db.Boolean, default=True, nullable=False)
+    shadow_mode_changed_at = db.Column(db.DateTime, nullable=True)
+    shadow_mode_changed_by = db.Column(db.String, nullable=True)
+    auto_install_starter_rules = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class SelfHostedInstall(db.Model):

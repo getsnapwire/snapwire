@@ -138,6 +138,62 @@ RULE_TEMPLATES = {
 }
 
 
+UNIVERSAL_STARTER_PACK = {
+    "display_name": "Universal Starter Pack",
+    "description": "Essential safety rules every AI agent needs. Prevents secret leaking, file deletion, unauthorized network calls, and data exfiltration.",
+    "rules": {
+        "no_secret_leaking": {
+            "value": False,
+            "display_name": "Block Secret / Key Exposure",
+            "description": "Can the agent output API keys, passwords, or tokens in responses?",
+            "hint": "Prevents the agent from accidentally leaking credentials, secrets, or authentication tokens in its output or tool calls.",
+            "severity": "critical"
+        },
+        "no_file_deletion": {
+            "value": False,
+            "display_name": "Block File Deletion",
+            "description": "Can the agent delete files or directories?",
+            "hint": "Prevents accidental or malicious file removal. The agent can still create and modify files.",
+            "severity": "critical"
+        },
+        "no_unauthorized_http": {
+            "value": False,
+            "display_name": "Block Unauthorized HTTP Calls",
+            "description": "Can the agent make arbitrary HTTP requests to unknown domains?",
+            "hint": "Stops the agent from calling unfamiliar APIs or sending data to unknown servers. Protects against data exfiltration.",
+            "severity": "high"
+        },
+        "no_data_exfiltration": {
+            "value": False,
+            "display_name": "Block Data Exfiltration",
+            "description": "Can the agent send sensitive data to external services?",
+            "hint": "Prevents bulk transfer of user data, database contents, or internal information to third-party endpoints.",
+            "severity": "critical"
+        },
+        "no_privilege_escalation": {
+            "value": False,
+            "display_name": "Block Privilege Escalation",
+            "description": "Can the agent modify its own permissions or access controls?",
+            "hint": "Prevents the agent from granting itself more access than intended, like modifying auth tokens or role assignments.",
+            "severity": "critical"
+        },
+        "max_actions_per_minute": {
+            "value": 30,
+            "display_name": "Action Rate Limit",
+            "description": "Maximum tool calls the agent can make per minute",
+            "hint": "Prevents runaway agents from executing too many actions too quickly. A safety net for loops or errors.",
+            "severity": "medium"
+        }
+    }
+}
+
+RULE_TEMPLATES["universal_starter"] = UNIVERSAL_STARTER_PACK
+
+
+def get_starter_pack():
+    return UNIVERSAL_STARTER_PACK
+
+
 def get_templates():
     return {k: {"display_name": v["display_name"], "description": v["description"], "rule_count": len(v["rules"])} for k, v in RULE_TEMPLATES.items()}
 

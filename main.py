@@ -50,7 +50,7 @@ from src.blast_radius import check_blast_radius, get_blast_radius_config, update
 from src.honeypot import check_honeypot, get_honeypots, create_honeypot, delete_honeypot, toggle_honeypot, get_honeypot_alerts
 from src.vault import get_vault_entries, create_vault_entry, delete_vault_entry, update_vault_entry, get_vault_credentials
 from src.deception import analyze_deception
-from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent
+from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings
 
 
 def require_admin(f):
@@ -105,7 +105,73 @@ def start_auto_deny_timer():
     t = threading.Thread(target=run, daemon=True)
     t.start()
 
+
+def start_daily_risk_summary_timer():
+    def run():
+        last_sent = {}
+        while True:
+            time.sleep(3600)
+            try:
+                with app.app_context():
+                    from datetime import timedelta
+                    now = datetime.utcnow()
+                    hour = now.hour
+                    if hour == 8:
+                        cutoff = now - timedelta(hours=24)
+                        tenants = db.session.query(NotificationSetting).filter(
+                            NotificationSetting.email_digest == True
+                        ).all()
+                        for notif in tenants:
+                            tid = notif.tenant_id
+                            if last_sent.get(tid) and (now - last_sent[tid]).total_seconds() < 72000:
+                                continue
+                            total = AuditLogEntry.query.filter(
+                                AuditLogEntry.tenant_id == tid,
+                                AuditLogEntry.created_at >= cutoff
+                            ).count()
+                            blocked = AuditLogEntry.query.filter(
+                                AuditLogEntry.tenant_id == tid,
+                                AuditLogEntry.created_at >= cutoff,
+                                AuditLogEntry.status.in_(['blocked', 'blocked-blast-radius', 'blocked-sanitizer', 'blocked-catalog'])
+                            ).count()
+                            high_risk_entries = AuditLogEntry.query.filter(
+                                AuditLogEntry.tenant_id == tid,
+                                AuditLogEntry.created_at >= cutoff,
+                                AuditLogEntry.risk_score >= 70
+                            ).order_by(AuditLogEntry.risk_score.desc()).limit(10).all()
+                            shadow_entries = AuditLogEntry.query.filter(
+                                AuditLogEntry.tenant_id == tid,
+                                AuditLogEntry.created_at >= cutoff,
+                                AuditLogEntry.status == 'shadow-blocked'
+                            ).limit(10).all()
+                            deception_entries = AuditLogEntry.query.filter(
+                                AuditLogEntry.tenant_id == tid,
+                                AuditLogEntry.created_at >= cutoff,
+                                AuditLogEntry.status == 'blocked-deception'
+                            ).limit(10).all()
+                            honeypot_entries = HoneypotAlert.query.filter(
+                                HoneypotAlert.tenant_id == tid,
+                                HoneypotAlert.triggered_at >= cutoff
+                            ).limit(10).all()
+
+                            stats = {"total": total, "blocked": blocked}
+                            high_risk = [{"tool_name": e.tool_name, "agent_id": e.agent_id, "risk_score": e.risk_score, "status": e.status} for e in high_risk_entries]
+                            shadows = [{"tool_name": e.tool_name, "agent_id": e.agent_id, "risk_score": e.risk_score} for e in shadow_entries]
+                            deceptions = [{"tool_name": e.tool_name, "agent_id": e.agent_id} for e in deception_entries]
+                            honeypots_list = [{"tool_name": h.honeypot_tool_name, "agent_id": h.agent_id} for h in honeypot_entries]
+
+                            if total > 0:
+                                from src.email_service import send_daily_risk_summary
+                                send_daily_risk_summary(tid, stats, high_risk, shadows, deceptions, honeypots_list)
+                                last_sent[tid] = now
+            except Exception:
+                pass
+    t = threading.Thread(target=run, daemon=True)
+    t.start()
+
+
 start_auto_deny_timer()
+start_daily_risk_summary_timer()
 
 
 @app.before_request
@@ -286,10 +352,17 @@ def intercept_tool_call():
         except Exception:
             pass
 
+    shadow_active = is_shadow_mode(tenant_id)
+
     try:
         audit_result = audit_tool_call(tool_call, tenant_id=tenant_id)
     except Exception as e:
-        return jsonify({"error": f"Audit failed: {str(e)}"}), 500
+        audit_result = {
+            "allowed": False,
+            "violations": [{"rule": "fail_block", "severity": "critical", "reason": "AI auditor unavailable - blocking for safety (fail-block default)"}],
+            "risk_score": 90,
+            "analysis": f"The AI auditor could not be reached. For safety, this action is blocked until the auditor is available. Error: {str(e)}",
+        }
 
     shadow_violations = audit_result.pop("shadow_violations", [])
 
@@ -306,6 +379,24 @@ def intercept_tool_call():
 
     if catalog_result and catalog_result.get("entry"):
         response_extra["catalog_grade"] = catalog_result["entry"].get("safety_grade", "U")
+
+    if shadow_active:
+        response_extra["shadow_mode"] = True
+
+    if shadow_active and not audit_result.get("allowed", False):
+        log_action(tool_call, audit_result, "shadow-blocked", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id)
+        _track_usage(tenant_id)
+        vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
+        if vault_creds:
+            response_extra["vault_credentials"] = vault_creds
+        return jsonify({
+            "status": "allowed",
+            "audit": audit_result,
+            "message": "Tool call allowed (Shadow Mode active - would have been blocked in enforcement mode).",
+            "shadow_mode": True,
+            "would_block": True,
+            **response_extra,
+        })
 
     if audit_result.get("allowed", False):
         log_action(tool_call, audit_result, "allowed", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id)
@@ -2127,12 +2218,14 @@ def overview_stats():
     total = AuditLogEntry.query.filter_by(tenant_id=tenant_id).count()
     blocked = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='blocked').count()
     blocked_br = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='blocked-blast-radius').count()
+    shadow_blocked = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='shadow-blocked').count()
     allowed = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='allowed').count()
     approved = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='approved').count()
     denied = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='denied').count()
     pending = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='pending').count()
     active_keys = ApiKey.query.filter_by(user_id=current_user.id, is_active=True).count()
     rules_count = ConstitutionRule.query.filter_by(tenant_id=tenant_id).count()
+    settings = get_tenant_settings(tenant_id)
 
     agents = db.session.query(AuditLogEntry.agent_id).filter(
         AuditLogEntry.tenant_id == tenant_id,
@@ -2141,12 +2234,13 @@ def overview_stats():
     ).distinct().count()
 
     recent = AuditLogEntry.query.filter_by(tenant_id=tenant_id).order_by(
-        AuditLogEntry.timestamp.desc()
+        AuditLogEntry.created_at.desc()
     ).limit(10).all()
 
     return jsonify({
         "total_intercepts": total,
         "blocked": blocked + blocked_br,
+        "shadow_blocked": shadow_blocked,
         "allowed": allowed,
         "approved": approved,
         "denied": denied,
@@ -2154,16 +2248,74 @@ def overview_stats():
         "active_api_keys": active_keys,
         "rules_count": rules_count,
         "active_agents": agents,
+        "shadow_mode": settings.shadow_mode,
         "approval_rate": round((approved / max(approved + denied, 1)) * 100, 1),
         "block_rate": round(((blocked + blocked_br) / max(total, 1)) * 100, 1),
         "recent_activity": [{
             "id": e.id,
-            "tool_name": (e.tool_call or {}).get("tool_name", "unknown"),
+            "tool_name": e.tool_name,
             "status": e.status,
             "agent_id": e.agent_id,
-            "timestamp": e.timestamp.isoformat() if e.timestamp else None,
-            "risk_score": (e.audit_result or {}).get("risk_score", 0),
+            "risk_score": e.risk_score or 0,
+            "created_at": e.created_at.isoformat() if e.created_at else None,
         } for e in recent],
+    })
+
+
+def get_tenant_settings(tenant_id):
+    settings = TenantSettings.query.filter_by(tenant_id=tenant_id).first()
+    if not settings:
+        settings = TenantSettings(tenant_id=tenant_id, shadow_mode=True)
+        db.session.add(settings)
+        db.session.commit()
+    return settings
+
+
+def is_shadow_mode(tenant_id):
+    settings = get_tenant_settings(tenant_id)
+    return settings.shadow_mode
+
+
+@app.route("/api/settings/shadow-mode", methods=["GET"])
+@require_login
+def get_shadow_mode():
+    tenant_id = get_current_tenant_id()
+    settings = get_tenant_settings(tenant_id)
+    return jsonify({
+        "shadow_mode": settings.shadow_mode,
+        "changed_at": settings.shadow_mode_changed_at.isoformat() if settings.shadow_mode_changed_at else None,
+        "changed_by": settings.shadow_mode_changed_by,
+    })
+
+
+@app.route("/api/settings/shadow-mode", methods=["PATCH"])
+@require_login
+def toggle_shadow_mode():
+    tenant_id = get_current_tenant_id()
+    data = request.get_json() or {}
+    settings = get_tenant_settings(tenant_id)
+    if "enabled" in data:
+        settings.shadow_mode = bool(data["enabled"])
+    else:
+        settings.shadow_mode = not settings.shadow_mode
+    settings.shadow_mode_changed_at = datetime.utcnow()
+    settings.shadow_mode_changed_by = current_user.id
+    db.session.commit()
+    return jsonify({
+        "shadow_mode": settings.shadow_mode,
+        "message": "Shadow Mode enabled - observing only, no blocking" if settings.shadow_mode else "Blocking Mode enabled - violations will be blocked",
+    })
+
+
+@app.route("/api/settings", methods=["GET"])
+@require_login
+def get_settings():
+    tenant_id = get_current_tenant_id()
+    settings = get_tenant_settings(tenant_id)
+    return jsonify({
+        "shadow_mode": settings.shadow_mode,
+        "shadow_mode_changed_at": settings.shadow_mode_changed_at.isoformat() if settings.shadow_mode_changed_at else None,
+        "auto_install_starter_rules": settings.auto_install_starter_rules,
     })
 
 

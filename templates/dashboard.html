@@ -402,6 +402,15 @@
         <button class="btn btn-sm" onclick="showCreateOrgModal()" style="margin-left:auto;font-size:12px;padding:4px 12px;background:var(--accent-purple);border:none;color:#fff;border-radius:6px;cursor:pointer;">+ New Organization</button>
     </div>
 
+    <div id="shadow-mode-banner" style="display:none;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(245,158,11,0.08));border-bottom:1px solid rgba(251,191,36,0.3);padding:10px 32px;align-items:center;gap:12px;font-size:13px;cursor:pointer;" onclick="toggleShadowModeFromBanner()">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;">
+            <span style="font-size:18px;">&#128065;</span>
+            <span style="color:#b45309;font-weight:600;">Shadow Mode Active</span>
+            <span style="color:#92400e;opacity:0.8;"> &mdash; Observing only. Tool calls are audited and logged but never blocked.</span>
+        </div>
+        <button id="shadow-mode-toggle-btn" style="background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:6px 16px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Switch to Blocking Mode</button>
+    </div>
+
     <div class="container">
         <div id="activity-summary-banner" class="activity-summary-banner" style="display:none;">
             <span class="icon">&#128200;</span>
@@ -3851,7 +3860,8 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                 if (d.recent_activity && d.recent_activity.length > 0) {
                     recentEmpty.style.display = 'none';
                     recentList.innerHTML = d.recent_activity.map(a => {
-                        const statusColor = a.status === 'allowed' ? 'var(--accent-green)' : a.status === 'blocked' ? 'var(--accent-red)' : a.status === 'approved' ? 'var(--accent-blue)' : a.status === 'pending' ? '#f59e0b' : 'var(--text-secondary)';
+                        const statusColor = a.status === 'allowed' ? 'var(--accent-green)' : a.status === 'blocked' ? 'var(--accent-red)' : a.status === 'shadow-blocked' ? '#f59e0b' : a.status === 'approved' ? 'var(--accent-blue)' : a.status === 'pending' ? '#f59e0b' : 'var(--text-secondary)';
+                        const statusLabel = a.status === 'shadow-blocked' ? 'shadow' : a.status;
                         return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border);">
                             <div style="display:flex;align-items:center;gap:10px;">
                                 <div style="width:8px;height:8px;border-radius:50%;background:${statusColor};"></div>
@@ -3859,8 +3869,8 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                                 <span style="font-size:11px;color:var(--text-secondary);">${a.agent_id || 'unknown'}</span>
                             </div>
                             <div style="display:flex;align-items:center;gap:8px;">
-                                <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:${statusColor}20;color:${statusColor};font-weight:600;">${a.status}</span>
-                                <span style="font-size:11px;color:var(--text-secondary);">${new Date(a.timestamp).toLocaleString()}</span>
+                                <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:${statusColor}20;color:${statusColor};font-weight:600;">${statusLabel}</span>
+                                <span style="font-size:11px;color:var(--text-secondary);">${new Date(a.created_at || a.timestamp).toLocaleString()}</span>
                             </div>
                         </div>`;
                     }).join('');
@@ -4028,6 +4038,54 @@ if (result.status === "allowed") {
             await fetch('/api/onboarding/complete', { method: 'POST' });
             document.getElementById('onboarding-wizard').style.display = 'none';
         }
+
+        let _shadowMode = false;
+        async function loadShadowMode() {
+            try {
+                const res = await fetch('/api/settings/shadow-mode');
+                const d = await res.json();
+                _shadowMode = d.shadow_mode;
+                updateShadowBanner();
+            } catch(e) { console.error('Failed to load shadow mode', e); }
+        }
+        function updateShadowBanner() {
+            const banner = document.getElementById('shadow-mode-banner');
+            const statusBadge = document.querySelector('.status-badge');
+            if (_shadowMode) {
+                banner.style.display = 'flex';
+                if (statusBadge) {
+                    statusBadge.innerHTML = '<div class="pulse" style="background:#f59e0b;"></div> Shadow Mode';
+                    statusBadge.style.background = 'rgba(245,158,11,0.15)';
+                    statusBadge.style.color = '#f59e0b';
+                }
+            } else {
+                banner.style.display = 'none';
+                if (statusBadge) {
+                    statusBadge.innerHTML = '<div class="pulse"></div> Active &amp; Blocking';
+                    statusBadge.style.background = '';
+                    statusBadge.style.color = '';
+                }
+            }
+        }
+        async function toggleShadowModeFromBanner() {
+            try {
+                const res = await fetch('/api/settings/shadow-mode', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled: !_shadowMode })
+                });
+                const d = await res.json();
+                _shadowMode = d.shadow_mode;
+                updateShadowBanner();
+                const banner = document.getElementById('notification-banner');
+                const text = document.getElementById('notification-text');
+                text.textContent = d.message;
+                banner.style.display = 'flex';
+                banner.style.borderColor = _shadowMode ? 'rgba(245,158,11,0.5)' : 'rgba(16,185,129,0.5)';
+                setTimeout(() => banner.style.display = 'none', 4000);
+            } catch(e) { console.error('Failed to toggle shadow mode', e); }
+        }
+        loadShadowMode();
 
         setTimeout(checkOnboarding, 500);
     </script>

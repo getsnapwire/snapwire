@@ -185,6 +185,17 @@ def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None, 
     from models import AuditLogEntry
 
     entry_id = str(uuid.uuid4())[:8]
+    chain_of_thought = audit_result.get("analysis", "")
+    violations = audit_result.get("violations", [])
+    shadow_violations = audit_result.get("shadow_violations", [])
+    cot_detail = json.dumps({
+        "analysis": chain_of_thought,
+        "violations": violations,
+        "shadow_violations": shadow_violations,
+        "risk_score": audit_result.get("risk_score", 0),
+        "allowed": audit_result.get("allowed", False),
+    })
+
     entry = AuditLogEntry(
         id=entry_id,
         tenant_id=tenant_id,
@@ -194,8 +205,9 @@ def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None, 
         context=tool_call.get("context", ""),
         status=status,
         risk_score=audit_result.get("risk_score", 0),
-        violations_json=json.dumps(audit_result.get("violations", [])),
+        violations_json=json.dumps(violations),
         analysis=audit_result.get("analysis", ""),
+        chain_of_thought=cot_detail,
         agent_id=agent_id or "unknown",
         api_key_id=api_key_id,
     )

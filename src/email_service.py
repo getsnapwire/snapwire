@@ -127,6 +127,102 @@ def send_critical_risk_email(action_data):
     send_email_async(subject, text_body)
 
 
+def send_daily_risk_summary(tenant_id, stats, high_risk_events, shadow_blocks, deception_flags, honeypot_triggers):
+    total_events = stats.get("total", 0)
+    blocked = stats.get("blocked", 0)
+    shadow = len(shadow_blocks)
+    deceptions = len(deception_flags)
+    honeypots = len(honeypot_triggers)
+    high_risk_count = len(high_risk_events)
+
+    subject = f"Agentic Firewall - Daily Risk Summary ({high_risk_count} high-risk events)"
+
+    risk_rows = ""
+    for evt in high_risk_events[:10]:
+        risk_rows += f"""
+        <tr>
+            <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">{evt.get('tool_name', 'unknown')}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">{evt.get('agent_id', 'unknown')}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;color:{'#dc2626' if evt.get('risk_score',0)>=70 else '#f59e0b'};font-weight:600;">{evt.get('risk_score', 0)}/100</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">{evt.get('status', '')}</td>
+        </tr>"""
+
+    shadow_rows = ""
+    for evt in shadow_blocks[:5]:
+        shadow_rows += f"<li style='margin:4px 0;color:#475569;'><strong>{evt.get('tool_name','unknown')}</strong> by {evt.get('agent_id','unknown')} (score: {evt.get('risk_score',0)})</li>"
+
+    deception_section = ""
+    if deceptions > 0:
+        deception_items = ""
+        for evt in deception_flags[:5]:
+            deception_items += f"<li style='margin:4px 0;color:#475569;'><strong>{evt.get('tool_name','unknown')}</strong> by {evt.get('agent_id','unknown')}</li>"
+        deception_section = f"""
+        <div style="margin-top:16px;padding:12px;background:#fef2f2;border-radius:6px;border:1px solid #fecaca;">
+            <p style="margin:0 0 8px 0;font-weight:600;color:#991b1b;">Deception Flags ({deceptions})</p>
+            <ul style="margin:0;padding-left:20px;">{deception_items}</ul>
+        </div>"""
+
+    honeypot_section = ""
+    if honeypots > 0:
+        honeypot_items = ""
+        for evt in honeypot_triggers[:5]:
+            honeypot_items += f"<li style='margin:4px 0;color:#475569;'><strong>{evt.get('tool_name','unknown')}</strong> triggered by {evt.get('agent_id','unknown')}</li>"
+        honeypot_section = f"""
+        <div style="margin-top:16px;padding:12px;background:#fef2f2;border-radius:6px;border:1px solid #fecaca;">
+            <p style="margin:0 0 8px 0;font-weight:600;color:#991b1b;">Honeypot Tripwires ({honeypots})</p>
+            <ul style="margin:0;padding-left:20px;">{honeypot_items}</ul>
+        </div>"""
+
+    html_body = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 640px; margin: 0 auto;">
+        <div style="background: #1e293b; color: white; padding: 24px; border-radius: 8px 8px 0 0;">
+            <h2 style="margin: 0 0 4px 0;">Daily Risk Summary</h2>
+            <p style="margin:0;opacity:0.8;font-size:14px;">Last 24 hours overview for your workspace</p>
+        </div>
+        <div style="background: #f8fafc; padding: 24px; border: 1px solid #e2e8f0;">
+            <div style="display:flex;gap:12px;text-align:center;margin-bottom:24px;">
+                <div style="flex:1;padding:16px;background:white;border-radius:8px;border:1px solid #e2e8f0;">
+                    <div style="font-size:28px;font-weight:700;color:#1e293b;">{total_events}</div>
+                    <div style="color:#64748b;font-size:12px;">Total Events</div>
+                </div>
+                <div style="flex:1;padding:16px;background:white;border-radius:8px;border:1px solid #e2e8f0;">
+                    <div style="font-size:28px;font-weight:700;color:#ef4444;">{blocked}</div>
+                    <div style="color:#64748b;font-size:12px;">Blocked</div>
+                </div>
+                <div style="flex:1;padding:16px;background:white;border-radius:8px;border:1px solid #e2e8f0;">
+                    <div style="font-size:28px;font-weight:700;color:#f59e0b;">{shadow}</div>
+                    <div style="color:#64748b;font-size:12px;">Shadow Blocks</div>
+                </div>
+                <div style="flex:1;padding:16px;background:white;border-radius:8px;border:1px solid #e2e8f0;">
+                    <div style="font-size:28px;font-weight:700;color:#dc2626;">{high_risk_count}</div>
+                    <div style="color:#64748b;font-size:12px;">High Risk</div>
+                </div>
+            </div>
+            {'<div style="margin-bottom:24px;"><p style="font-weight:600;color:#1e293b;margin:0 0 12px;">High Risk Events</p><table style="width:100%;border-collapse:collapse;font-size:13px;background:white;border-radius:6px;border:1px solid #e2e8f0;"><thead><tr style="background:#f1f5f9;"><th style="padding:8px 12px;text-align:left;">Tool</th><th style="padding:8px 12px;text-align:left;">Agent</th><th style="padding:8px 12px;text-align:left;">Risk</th><th style="padding:8px 12px;text-align:left;">Status</th></tr></thead><tbody>' + risk_rows + '</tbody></table></div>' if risk_rows else ''}
+            {'<div style="margin-bottom:16px;padding:12px;background:#fefce8;border-radius:6px;border:1px solid #fde68a;"><p style="margin:0 0 8px 0;font-weight:600;color:#92400e;">Shadow Mode Blocks (' + str(shadow) + ')</p><p style="margin:0 0 8px 0;color:#78716c;font-size:13px;">These would have been blocked in enforcement mode:</p><ul style="margin:0;padding-left:20px;">' + shadow_rows + '</ul></div>' if shadow_rows else ''}
+            {deception_section}
+            {honeypot_section}
+        </div>
+        <div style="background:#f1f5f9;padding:16px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;border-top:0;text-align:center;">
+            <p style="margin:0;color:#64748b;font-size:14px;">Review details in your Agentic Firewall dashboard</p>
+        </div>
+    </div>
+    """
+
+    text_body = (
+        f"Daily Risk Summary - Last 24 Hours\n"
+        f"===================================\n"
+        f"Total Events: {total_events}\n"
+        f"Blocked: {blocked}\n"
+        f"Shadow Blocks: {shadow}\n"
+        f"High Risk Events: {high_risk_count}\n"
+        f"Deception Flags: {deceptions}\n"
+        f"Honeypot Triggers: {honeypots}\n"
+    )
+
+    send_email_async(subject, text_body, html_body)
+
+
 def send_digest_email(stats):
     total = stats.get("total", 0)
     allowed = stats.get("allowed", 0)

@@ -57,7 +57,23 @@ def ensure_personal_tenant(user):
 def _install_default_rules(tenant_id):
     from app import db
     from models import ConstitutionRule
-    default_rules = [
+    from src.rule_templates import get_starter_pack
+
+    starter = get_starter_pack()
+    for rule_name, rule_data in starter["rules"].items():
+        rule = ConstitutionRule(
+            tenant_id=tenant_id,
+            rule_name=rule_name,
+            value=json.dumps(rule_data["value"]),
+            display_name=rule_data["display_name"],
+            description=rule_data["description"],
+            hint=rule_data.get("hint", ""),
+            severity=rule_data.get("severity", "medium"),
+            mode="enforce",
+        )
+        db.session.add(rule)
+
+    extra_rules = [
         {
             "rule_name": "max_spend",
             "value": json.dumps(50),
@@ -65,24 +81,6 @@ def _install_default_rules(tenant_id):
             "description": "The most an agent can spend in a single action (in dollars)",
             "hint": "Prevents agents from making expensive purchases or transfers without your approval.",
             "severity": "critical",
-            "mode": "enforce",
-        },
-        {
-            "rule_name": "allow_deletion",
-            "value": json.dumps(False),
-            "display_name": "Allow Deleting Files or Data",
-            "description": "Can the agent permanently delete files, databases, or other data?",
-            "hint": "When set to No, the agent cannot remove any files or data.",
-            "severity": "critical",
-            "mode": "enforce",
-        },
-        {
-            "rule_name": "allow_external_api_calls",
-            "value": json.dumps(True),
-            "display_name": "Allow External Service Calls",
-            "description": "Can the agent connect to outside services and APIs?",
-            "hint": "Controls whether the agent can reach out to third-party services.",
-            "severity": "high",
             "mode": "enforce",
         },
         {
@@ -94,35 +92,8 @@ def _install_default_rules(tenant_id):
             "severity": "medium",
             "mode": "enforce",
         },
-        {
-            "rule_name": "allow_sensitive_data_access",
-            "value": json.dumps(False),
-            "display_name": "Access to Sensitive Information",
-            "description": "Can the agent view passwords, tokens, or personal info?",
-            "hint": "When set to No, the agent is blocked from reading private data.",
-            "severity": "critical",
-            "mode": "enforce",
-        },
-        {
-            "rule_name": "allow_network_requests",
-            "value": json.dumps(True),
-            "display_name": "Allow Internet Access",
-            "description": "Can the agent send data out over the internet?",
-            "hint": "Controls whether the agent can make outbound network connections.",
-            "severity": "high",
-            "mode": "enforce",
-        },
-        {
-            "rule_name": "max_batch_operations",
-            "value": json.dumps(100),
-            "display_name": "Batch Operation Limit",
-            "description": "How many items can the agent process in a single batch?",
-            "hint": "Prevents massive bulk operations that could cause widespread changes.",
-            "severity": "medium",
-            "mode": "enforce",
-        },
     ]
-    for rule_data in default_rules:
+    for rule_data in extra_rules:
         rule = ConstitutionRule(tenant_id=tenant_id, **rule_data)
         db.session.add(rule)
     db.session.commit()
