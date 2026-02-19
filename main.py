@@ -50,7 +50,8 @@ from src.blast_radius import check_blast_radius, get_blast_radius_config, update
 from src.honeypot import check_honeypot, get_honeypots, create_honeypot, delete_honeypot, toggle_honeypot, get_honeypot_alerts
 from src.vault import get_vault_entries, create_vault_entry, delete_vault_entry, update_vault_entry, get_vault_credentials
 from src.deception import analyze_deception
-from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings
+from src.loop_detector import check_for_loop, get_loop_events, get_loop_stats
+from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings, LoopDetectorEvent
 
 
 import uuid as _uuid_mod
@@ -442,6 +443,20 @@ def intercept_tool_call():
                 }), 403
         except Exception:
             pass
+
+    loop_result = check_for_loop(agent_id, tenant_id, data["tool_name"], params, api_key_id=api_key_id)
+    if loop_result.get("loop_detected"):
+        log_action(
+            {"tool_name": data["tool_name"], "parameters": params, "intent": data.get("intent", ""), "context": data.get("context", "")},
+            {"allowed": False, "violations": [{"rule": "loop_detector", "severity": "critical", "reason": loop_result["message"]}], "risk_score": 85, "analysis": loop_result["message"]},
+            "blocked-loop",
+            agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id,
+        )
+        return jsonify({
+            "status": "blocked",
+            "message": loop_result["message"],
+            "loop_info": loop_result,
+        }), 429
 
     shadow_active = is_shadow_mode(tenant_id)
 
@@ -2012,6 +2027,21 @@ def clear_br_lockout(agent_id):
     tenant_id = get_current_tenant_id()
     clear_lockout(tenant_id, agent_id)
     return jsonify({"status": "cleared", "agent_id": agent_id})
+
+
+@app.route("/api/loop-detector/events", methods=["GET"])
+@require_login
+def list_loop_events():
+    tenant_id = get_current_tenant_id()
+    limit = request.args.get("limit", 20, type=int)
+    return jsonify({"events": get_loop_events(tenant_id, limit=limit)})
+
+
+@app.route("/api/loop-detector/stats", methods=["GET"])
+@require_login
+def loop_detector_stats():
+    tenant_id = get_current_tenant_id()
+    return jsonify(get_loop_stats(tenant_id))
 
 
 @app.route("/api/honeypots", methods=["GET"])

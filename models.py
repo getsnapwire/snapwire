@@ -447,6 +447,32 @@ class HoneypotAlert(db.Model):
         }
 
 
+class LoopDetectorEvent(db.Model):
+    __tablename__ = 'loop_detector_events'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=False, index=True)
+    agent_id = db.Column(db.String, nullable=False)
+    api_key_id = db.Column(db.String, nullable=True)
+    tool_name = db.Column(db.String, nullable=False)
+    params_hash = db.Column(db.String(32), nullable=True)
+    repeat_count = db.Column(db.Integer, default=3)
+    estimated_savings = db.Column(db.Float, default=0.0)
+    detected_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "tenant_id": self.tenant_id,
+            "agent_id": self.agent_id,
+            "api_key_id": self.api_key_id,
+            "tool_name": self.tool_name,
+            "params_hash": self.params_hash,
+            "repeat_count": self.repeat_count,
+            "estimated_savings": self.estimated_savings,
+            "detected_at": self.detected_at.isoformat() if self.detected_at else None,
+        }
+
+
 class TenantSettings(db.Model):
     __tablename__ = 'tenant_settings'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
