@@ -4,13 +4,33 @@ import subprocess
 import threading
 import logging
 import time
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 logger = logging.getLogger(__name__)
 
 CONNECTORS_HOSTNAME = os.environ.get("REPLIT_CONNECTORS_HOSTNAME", "connectors.replit.com")
 
+SMTP_HOST = os.environ.get("SMTP_HOST")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER")
+SMTP_PASS = os.environ.get("SMTP_PASS")
+SMTP_FROM = os.environ.get("SMTP_FROM") or SMTP_USER
+SMTP_TLS = os.environ.get("SMTP_TLS", "true").lower() in ("true", "1", "yes")
+
+IS_REPLIT = bool(os.environ.get("REPL_ID"))
+
 _token_cache = {"token": None, "expires_at": 0}
 _token_lock = threading.Lock()
+
+
+def _get_email_transport():
+    if IS_REPLIT:
+        return "replit"
+    if SMTP_HOST and SMTP_USER:
+        return "smtp"
+    return "console"
 
 
 def _get_auth_token():
@@ -30,38 +50,80 @@ def _get_auth_token():
             _token_cache["expires_at"] = time.time() + 240
         return token
     except Exception as e:
-        logger.error(f"Failed to get Replit identity token: {e}")
+        logger.error(f"Failed to get identity token: {e}")
         raise
 
 
-def send_email(subject, text_body=None, html_body=None):
-    try:
-        import requests
-        token = _get_auth_token()
-        payload = {"subject": subject}
-        if text_body:
-            payload["text"] = text_body
-        if html_body:
-            payload["html"] = html_body
+def _send_via_replit(subject, text_body=None, html_body=None):
+    import requests
+    token = _get_auth_token()
+    payload = {"subject": subject}
+    if text_body:
+        payload["text"] = text_body
+    if html_body:
+        payload["html"] = html_body
 
-        resp = requests.post(
-            f"https://{CONNECTORS_HOSTNAME}/api/v2/mailer/send",
-            headers={
-                "Content-Type": "application/json",
-                "Replit-Authentication": f"Bearer {token}",
-            },
-            json=payload,
-            timeout=15,
-        )
-        if resp.ok:
-            logger.info(f"Email sent: {subject}")
-            return resp.json()
-        else:
-            logger.error(f"Email send failed ({resp.status_code}): {resp.text}")
-            return None
-    except Exception as e:
-        logger.error(f"Email send error: {e}")
+    resp = requests.post(
+        f"https://{CONNECTORS_HOSTNAME}/api/v2/mailer/send",
+        headers={
+            "Content-Type": "application/json",
+            "Replit-Authentication": f"Bearer {token}",
+        },
+        json=payload,
+        timeout=15,
+    )
+    if resp.ok:
+        logger.info(f"Email sent via Replit: {subject}")
+        return resp.json()
+    else:
+        logger.error(f"Replit email failed ({resp.status_code}): {resp.text}")
         return None
+
+
+def _send_via_smtp(subject, text_body=None, html_body=None, to_email=None):
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = SMTP_FROM
+        msg["To"] = to_email or SMTP_FROM
+
+        if text_body:
+            msg.attach(MIMEText(text_body, "plain"))
+        if html_body:
+            msg.attach(MIMEText(html_body, "html"))
+
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            if SMTP_TLS:
+                server.starttls()
+            if SMTP_USER and SMTP_PASS:
+                server.login(SMTP_USER, SMTP_PASS)
+            server.send_message(msg)
+        logger.info(f"Email sent via SMTP: {subject}")
+        return {"status": "sent"}
+    except Exception as e:
+        logger.error(f"SMTP email failed: {e}")
+        return None
+
+
+def _send_via_console(subject, text_body=None, html_body=None):
+    logger.info(f"[EMAIL LOG] Subject: {subject}")
+    if text_body:
+        logger.info(f"[EMAIL LOG] Body: {text_body[:500]}")
+    return {"status": "logged"}
+
+
+def send_email(subject, text_body=None, html_body=None, to_email=None):
+    transport = _get_email_transport()
+    try:
+        if transport == "replit":
+            return _send_via_replit(subject, text_body, html_body)
+        elif transport == "smtp":
+            return _send_via_smtp(subject, text_body, html_body, to_email)
+        else:
+            return _send_via_console(subject, text_body, html_body)
+    except Exception as e:
+        logger.error(f"Email send error ({transport}): {e}")
+        return _send_via_console(subject, text_body, html_body)
 
 
 def send_email_async(subject, text_body=None, html_body=None):

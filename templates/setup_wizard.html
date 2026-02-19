@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Agentic Firewall</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #f8fafc 0%, #e8f0fe 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .card { background: white; border-radius: 20px; box-shadow: 0 8px 40px rgba(0,0,0,0.1); padding: 48px; width: 100%; max-width: 520px; }
+        .logo { text-align: center; margin-bottom: 8px; }
+        .logo .shield { font-size: 48px; }
+        .logo h1 { font-size: 26px; color: #1e293b; margin-top: 8px; }
+        .logo p { font-size: 15px; color: #64748b; margin-top: 8px; line-height: 1.5; }
+        .steps { display: flex; justify-content: center; gap: 8px; margin: 28px 0; }
+        .step { width: 40px; height: 4px; border-radius: 2px; background: #e2e8f0; }
+        .step.active { background: #4d8bff; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .section h2 { font-size: 18px; color: #1e293b; margin-bottom: 6px; }
+        .section p { font-size: 14px; color: #64748b; margin-bottom: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; color: #1e293b; outline: none; transition: border-color 0.2s; }
+        .form-group input:focus, .form-group select:focus { border-color: #4d8bff; box-shadow: 0 0 0 3px rgba(77,139,255,0.1); }
+        .btn { width: 100%; padding: 12px; background: #4d8bff; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 8px; }
+        .btn:hover { background: #3b7aed; }
+        .btn-secondary { background: #f1f5f9; color: #475569; }
+        .btn-secondary:hover { background: #e2e8f0; }
+        .btn-row { display: flex; gap: 12px; margin-top: 16px; }
+        .btn-row .btn { flex: 1; }
+        .error { background: #fef2f2; color: #dc2626; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; border: 1px solid #fecaca; }
+        .hint { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+        .feature-list { margin: 16px 0; }
+        .feature-list li { padding: 6px 0; font-size: 14px; color: #475569; display: flex; align-items: center; gap: 8px; list-style: none; }
+        .feature-list li span { color: #10b981; }
+        .welcome-badge { display: inline-block; background: rgba(77,139,255,0.1); color: #4d8bff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">
+            <div class="shield">&#128737;</div>
+            <h1>Agentic Firewall</h1>
+        </div>
+
+        <div class="steps">
+            <div class="step active" id="step-dot-1"></div>
+            <div class="step" id="step-dot-2"></div>
+        </div>
+
+        <div class="section active" id="step-1">
+            <div style="text-align:center;"><span class="welcome-badge">Welcome</span></div>
+            <h2 style="text-align:center;">Set Up Your Firewall</h2>
+            <p style="text-align:center;">Create your admin account to get started. This takes about 30 seconds.</p>
+
+            <ul class="feature-list">
+                <li><span>&#10003;</span> AI-powered security auditing for your agents</li>
+                <li><span>&#10003;</span> Real-time monitoring and blocking</li>
+                <li><span>&#10003;</span> Shadow Mode to observe without blocking</li>
+                <li><span>&#10003;</span> Pre-built security rule templates</li>
+            </ul>
+
+            {% if error %}
+            <div class="error">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="/auth/setup" id="setup-form">
+                <div class="form-group">
+                    <label for="name">Your Name</label>
+                    <input type="text" id="name" name="name" placeholder="Jane Smith" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="you@company.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Create Password</label>
+                    <input type="password" id="password" name="password" placeholder="At least 8 characters" required minlength="8">
+                    <div class="hint">Must be at least 8 characters</div>
+                </div>
+                <button type="submit" class="btn">Create Admin Account & Start</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

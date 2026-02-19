@@ -142,6 +142,11 @@
             <h3>SDKs</h3>
             <a href="#sdk-python">Python</a>
             <a href="#sdk-node">Node.js</a>
+            <h3>Frameworks</h3>
+            <a href="#framework-integrations">Overview</a>
+            <a href="#fw-langchain">LangChain</a>
+            <a href="#fw-crewai">CrewAI</a>
+            <a href="#fw-openai-assistants">OpenAI Assistants</a>
         </aside>
 
         <main class="docs-content">
@@ -411,6 +416,69 @@ class AgenticFirewall {
 const fw = new AgenticFirewall("af_your_key_here");
 const result = await fw.check("delete_file", { path: "/data/old.csv" });
 console.log(result.status); // "allowed", "pending", or "blocked"</pre>
+
+            <h2 id="framework-integrations">Framework Integrations</h2>
+            <p>Pre-built integration examples for popular AI frameworks. Each example shows how to wrap the Agentic Firewall into your existing agent pipeline.</p>
+
+            <h3 id="fw-langchain">LangChain</h3>
+            <p>Wrap any LangChain tool with firewall protection. Blocked actions return a safe message instead of executing.</p>
+            <pre><span class="lang-tag">Python</span>
+from langchain.tools import Tool
+from agentic_firewall import AgenticFirewall
+
+fw = AgenticFirewall(api_key="YOUR_API_KEY", url="https://your-server.com")
+
+class FirewallWrappedTool(Tool):
+    def _run(self, query: str) -> str:
+        result = fw.intercept(
+            tool_name=self.name,
+            parameters={"query": query},
+            agent_id="langchain-agent"
+        )
+        if result["decision"] == "blocked":
+            return f"Action blocked: {result['reason']}"
+        return self.original_func(query)</pre>
+
+            <h3 id="fw-crewai">CrewAI</h3>
+            <p>Use a before-tool callback to intercept every tool call made by CrewAI agents. Blocked actions raise an exception to halt execution.</p>
+            <pre><span class="lang-tag">Python</span>
+from crewai import Agent, Task, Crew
+from agentic_firewall import AgenticFirewall
+
+fw = AgenticFirewall(api_key="YOUR_API_KEY", url="https://your-server.com")
+
+def firewall_callback(tool_name, params):
+    result = fw.intercept(
+        tool_name=tool_name,
+        parameters=params,
+        agent_id="crewai-agent"
+    )
+    if result["decision"] == "blocked":
+        raise Exception(f"Blocked by firewall: {result['reason']}")
+
+agent = Agent(
+    role="Research Analyst",
+    goal="Analyze data safely",
+    before_tool_callback=firewall_callback
+)</pre>
+
+            <h3 id="fw-openai-assistants">OpenAI Assistants</h3>
+            <p>Intercept function calls from OpenAI Assistants API before executing them. Returns an error payload for blocked actions.</p>
+            <pre><span class="lang-tag">Python</span>
+import openai
+from agentic_firewall import AgenticFirewall
+
+fw = AgenticFirewall(api_key="YOUR_API_KEY", url="https://your-server.com")
+
+def handle_tool_call(tool_call):
+    result = fw.intercept(
+        tool_name=tool_call.function.name,
+        parameters=json.loads(tool_call.function.arguments),
+        agent_id="openai-assistant"
+    )
+    if result["decision"] == "blocked":
+        return {"error": f"Blocked: {result['reason']}"}
+    return execute_tool(tool_call)</pre>
 
         </main>
     </div>

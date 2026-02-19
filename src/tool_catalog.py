@@ -1,22 +1,6 @@
-import os
 import json
 from datetime import datetime
-from anthropic import Anthropic
-
-AI_INTEGRATIONS_ANTHROPIC_API_KEY = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
-AI_INTEGRATIONS_ANTHROPIC_BASE_URL = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_BASE_URL")
-
-_grading_client = None
-
-def _get_client():
-    global _grading_client
-    if _grading_client is None:
-        _grading_client = Anthropic(
-            api_key=AI_INTEGRATIONS_ANTHROPIC_API_KEY,
-            base_url=AI_INTEGRATIONS_ANTHROPIC_BASE_URL,
-        )
-    return _grading_client
-
+from src.llm_provider import chat, parse_json_response
 
 GRADING_PROMPT = """You are a security analyst grading the safety of an AI agent tool.
 
@@ -82,25 +66,18 @@ def check_tool_catalog(tool_name, params, tenant_id):
 
 
 def grade_tool(tool_name, params=None):
-    client = _get_client()
     params_str = json.dumps(params, indent=2) if params else "No parameters provided"
 
-    message = client.messages.create(
-        model="claude-sonnet-4-5",
+    response_text = chat(
+        GRADING_PROMPT,
+        f"Tool Name: {tool_name}\nParameters: {params_str}\n\nGrade this tool's safety.",
         max_tokens=1024,
-        system=GRADING_PROMPT,
-        messages=[{"role": "user", "content": f"Tool Name: {tool_name}\nParameters: {params_str}\n\nGrade this tool's safety."}],
     )
 
-    response_text = getattr(message.content[0], "text", "")
-    try:
-        start = response_text.find("{")
-        end = response_text.rfind("}") + 1
-        if start != -1 and end > start:
-            return json.loads(response_text[start:end])
-        return json.loads(response_text)
-    except json.JSONDecodeError:
+    result = parse_json_response(response_text)
+    if result is None:
         return {"grade": "C", "analysis": response_text, "risks": [], "recommended_action": "require_review"}
+    return result
 
 
 def get_catalog(tenant_id):

@@ -15,6 +15,8 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String, nullable=True)
     last_name = db.Column(db.String, nullable=True)
     profile_image_url = db.Column(db.String, nullable=True)
+    password_hash = db.Column(db.String, nullable=True)
+    auth_provider = db.Column(db.String, default='replit')
     role = db.Column(db.String, default='admin', nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     last_login_at = db.Column(db.DateTime, nullable=True)
@@ -26,6 +28,16 @@ class User(UserMixin, db.Model):
     onboarded = db.Column(db.Boolean, default=False)
     tos_accepted_at = db.Column(db.DateTime, nullable=True)
     onboarding_completed_at = db.Column(db.DateTime, nullable=True)
+
+    def set_password(self, password):
+        from werkzeug.security import generate_password_hash
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        from werkzeug.security import check_password_hash
+        if not self.password_hash:
+            return False
+        return check_password_hash(self.password_hash, password)
 
 
 class OAuth(OAuthConsumerMixin, db.Model):
@@ -439,6 +451,15 @@ class TenantSettings(db.Model):
     shadow_mode_changed_by = db.Column(db.String, nullable=True)
     auto_install_starter_rules = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class InstallConfig(db.Model):
+    __tablename__ = 'install_config'
+    id = db.Column(db.Integer, primary_key=True)
+    install_id = db.Column(db.String(64), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    telemetry_enabled = db.Column(db.Boolean, default=False)
+    version = db.Column(db.String(20), default='1.0.0')
 
 
 class SelfHostedInstall(db.Model):

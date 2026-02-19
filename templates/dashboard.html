@@ -734,6 +734,23 @@
                     </div>
                 </div>
             </div>
+            <div class="test-panel" style="margin-bottom:20px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                    <div>
+                        <h3>&#128230; Import / Export Rules</h3>
+                        <p style="color:var(--text-secondary);font-size:13px;">Share rule configurations between Agentic Firewall instances.</p>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <a href="/api/rules/export/download" class="btn btn-export" style="text-decoration:none;">&#128229; Export Rules</a>
+                    <label class="btn btn-export" style="cursor:pointer;margin:0;">
+                        &#128228; Import Rules
+                        <input type="file" id="import-rules-file" accept=".json" style="display:none;" onchange="importRulesFile(this)">
+                    </label>
+                </div>
+                <div id="import-export-message" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;"></div>
+            </div>
+
             <div id="rules-list" class="rules-grid"></div>
         </div>
 
@@ -869,7 +886,7 @@
 
                 <div style="padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);margin-bottom:16px;">
                     <h4 style="margin-bottom:12px;font-size:14px;">&#x2709; Email Notifications</h4>
-                    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Receive email alerts for blocked actions and critical violations. Emails are sent automatically to your verified Replit email.</p>
+                    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Receive email alerts for blocked actions and critical violations. Emails are sent automatically to your verified email address.</p>
 
                     <div class="form-group" style="margin-bottom:14px;">
                         <label style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;display:block;">Email Address</label>
@@ -900,6 +917,26 @@
                         <button class="btn" onclick="testEmailNotification(this)" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;">Send Test Email</button>
                         <span id="test-email-status" style="font-size:12px;color:var(--text-secondary);"></span>
                     </div>
+                </div>
+            </div>
+
+            <div class="test-panel">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                    <div>
+                        <h3>&#128202; Anonymous Usage Telemetry</h3>
+                        <p style="color:var(--text-secondary);font-size:13px;">Help improve Agentic Firewall by sharing anonymous usage statistics. No private data is ever sent.</p>
+                    </div>
+                </div>
+                <div style="padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+                        <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-primary);cursor:pointer;">
+                            <input type="checkbox" id="telemetry-toggle" onchange="toggleTelemetry(this)" style="accent-color:var(--accent-blue);width:18px;height:18px;cursor:pointer;">
+                            Enable anonymous usage telemetry
+                        </label>
+                    </div>
+                    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">We only collect aggregate counts (total rules, intercepts, agents) and platform info. We never collect your rule content, agent names, tool parameters, or user identities.</p>
+                    <a href="/api/telemetry/transparency" target="_blank" style="font-size:13px;color:var(--accent-blue);text-decoration:none;">&#128270; View exactly what data would be reported &rarr;</a>
+                    <div id="telemetry-save-status" style="display:none;margin-top:10px;font-size:13px;padding:8px 14px;border-radius:8px;"></div>
                 </div>
             </div>
         </div>
@@ -1249,7 +1286,7 @@ Authorization: Bearer af_YOUR_API_KEY
                 <pre style="background:var(--bg-secondary);padding:16px;border-radius:8px;font-family:'Fira Code',monospace;font-size:13px;overflow-x:auto;color:var(--text-primary);"><code>import requests
 
 API_KEY = "af_your_key_here"
-FIREWALL_URL = "https://your-app.replit.app"
+FIREWALL_URL = "https://your-server.com"
 
 def check_with_firewall(tool_name, params, intent=""):
     resp = requests.post(
@@ -1272,6 +1309,72 @@ def check_with_firewall(tool_name, params, intent=""):
 # Usage
 if check_with_firewall("send_email", {"to": "user@example.com"}):
     send_email(to="user@example.com")</code></pre>
+            </div>
+
+            <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
+                <h4 style="color:var(--accent-purple);margin-bottom:16px;font-size:16px;">&#x1F517; Framework Integrations</h4>
+                <div style="display:flex;gap:8px;margin-bottom:16px;">
+                    <button class="fw-tab-btn active" onclick="showFwTab('langchain',this)" style="background:var(--accent-purple);color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">LangChain</button>
+                    <button class="fw-tab-btn" onclick="showFwTab('crewai',this)" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">CrewAI</button>
+                    <button class="fw-tab-btn" onclick="showFwTab('openai-assistants',this)" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">OpenAI Assistants</button>
+                </div>
+                <div id="fw-langchain" class="fw-panel" style="position:relative;">
+                    <pre style="background:var(--bg-secondary);padding:14px;border-radius:8px;font-family:'Fira Code',monospace;font-size:12px;overflow-x:auto;color:var(--text-primary);margin:0;"><code id="fw-langchain-code">from langchain.tools import Tool
+from agentic_firewall import AgenticFirewall
+
+fw = AgenticFirewall(api_key="YOUR_API_KEY", url="https://your-server.com")
+
+class FirewallWrappedTool(Tool):
+    def _run(self, query: str) -> str:
+        result = fw.intercept(
+            tool_name=self.name,
+            parameters={"query": query},
+            agent_id="langchain-agent"
+        )
+        if result["decision"] == "blocked":
+            return f"Action blocked: {result['reason']}"
+        return self.original_func(query)</code></pre>
+                    <button onclick="copySdkSnippet('fw-langchain-code')" style="position:absolute;top:8px;right:8px;background:var(--accent-purple);color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Copy</button>
+                </div>
+                <div id="fw-crewai" class="fw-panel" style="display:none;position:relative;">
+                    <pre style="background:var(--bg-secondary);padding:14px;border-radius:8px;font-family:'Fira Code',monospace;font-size:12px;overflow-x:auto;color:var(--text-primary);margin:0;"><code id="fw-crewai-code">from crewai import Agent, Task, Crew
+from agentic_firewall import AgenticFirewall
+
+fw = AgenticFirewall(api_key="YOUR_API_KEY", url="https://your-server.com")
+
+def firewall_callback(tool_name, params):
+    result = fw.intercept(
+        tool_name=tool_name,
+        parameters=params,
+        agent_id="crewai-agent"
+    )
+    if result["decision"] == "blocked":
+        raise Exception(f"Blocked by firewall: {result['reason']}")
+
+agent = Agent(
+    role="Research Analyst",
+    goal="Analyze data safely",
+    before_tool_callback=firewall_callback
+)</code></pre>
+                    <button onclick="copySdkSnippet('fw-crewai-code')" style="position:absolute;top:8px;right:8px;background:var(--accent-purple);color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Copy</button>
+                </div>
+                <div id="fw-openai-assistants" class="fw-panel" style="display:none;position:relative;">
+                    <pre style="background:var(--bg-secondary);padding:14px;border-radius:8px;font-family:'Fira Code',monospace;font-size:12px;overflow-x:auto;color:var(--text-primary);margin:0;"><code id="fw-openai-assistants-code">import openai
+from agentic_firewall import AgenticFirewall
+
+fw = AgenticFirewall(api_key="YOUR_API_KEY", url="https://your-server.com")
+
+def handle_tool_call(tool_call):
+    result = fw.intercept(
+        tool_name=tool_call.function.name,
+        parameters=json.loads(tool_call.function.arguments),
+        agent_id="openai-assistant"
+    )
+    if result["decision"] == "blocked":
+        return {"error": f"Blocked: {result['reason']}"}
+    return execute_tool(tool_call)</code></pre>
+                    <button onclick="copySdkSnippet('fw-openai-assistants-code')" style="position:absolute;top:8px;right:8px;background:var(--accent-purple);color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Copy</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1314,12 +1417,12 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
 
     <div id="panel-vault" class="panel">
         <h3 style="margin-bottom:16px;">Identity Vault</h3>
-        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Map tools to secret keys stored in Replit Secrets. When a tool call is approved, the firewall injects the real credential — the agent never sees the raw key.</p>
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Map tools to secret keys stored in environment variables. When a tool call is approved, the firewall injects the real credential — the agent never sees the raw key.</p>
         <div style="margin-bottom:16px;">
             <button onclick="showAddVaultModal()" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">+ Add Vault Entry</button>
         </div>
         <div id="vault-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-        <div id="vault-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No vault entries configured yet. Click "+ Add Vault Entry" above to map a tool to a secret key. The secret key name must match an entry in your Replit Secrets tab (click the lock icon in the sidebar). When an agent's tool call is approved, the firewall will automatically inject the credential.</div>
+        <div id="vault-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No vault entries configured yet. Click "+ Add Vault Entry" above to map a tool to a secret key. The secret key name must match an entry in your environment variables. When an agent's tool call is approved, the firewall will automatically inject the credential.</div>
     </div>
 
     <div id="panel-honeypots" class="panel">
@@ -1407,7 +1510,7 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                 <input type="text" id="vault-tool-name" placeholder="e.g. send_email" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
             </div>
             <div style="margin-bottom:12px;">
-                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Secret Key Name (from Replit Secrets)</label>
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Secret Key Name (from environment variables)</label>
                 <input type="text" id="vault-secret-key" placeholder="e.g. GMAIL_API_KEY" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
             </div>
             <div style="margin-bottom:12px;">
@@ -1849,6 +1952,44 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
             } catch (e) {
                 alert('Error adding rule: ' + e.message);
             }
+        }
+
+        async function importRulesFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const msgEl = document.getElementById('import-export-message');
+            msgEl.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/rules/import', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await res.json();
+                msgEl.style.display = 'block';
+                if (res.ok) {
+                    msgEl.style.background = 'rgba(45, 212, 168, 0.12)';
+                    msgEl.style.color = 'var(--accent-green)';
+                    msgEl.style.border = '1px solid rgba(45, 212, 168, 0.3)';
+                    msgEl.textContent = data.message || `Imported ${data.imported_count} rule(s).`;
+                    fetchRules();
+                } else {
+                    msgEl.style.background = 'rgba(255, 77, 106, 0.12)';
+                    msgEl.style.color = 'var(--accent-red)';
+                    msgEl.style.border = '1px solid rgba(255, 77, 106, 0.3)';
+                    msgEl.textContent = data.error || 'Import failed.';
+                }
+            } catch (e) {
+                msgEl.style.display = 'block';
+                msgEl.style.background = 'rgba(255, 77, 106, 0.12)';
+                msgEl.style.color = 'var(--accent-red)';
+                msgEl.style.border = '1px solid rgba(255, 77, 106, 0.3)';
+                msgEl.textContent = 'Error importing rules: ' + e.message;
+            }
+            input.value = '';
         }
 
         async function deleteRule(ruleName, displayName) {
@@ -3940,6 +4081,20 @@ if (result.status === "allowed") {
     "agent_id": "my-agent"
   }'`;
         }
+        function showFwTab(name, btn) {
+            document.querySelectorAll('.fw-panel').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.fw-tab-btn').forEach(b => {
+                b.style.background = 'var(--bg-secondary)';
+                b.style.color = 'var(--text-secondary)';
+                b.style.border = '1px solid var(--border)';
+                b.classList.remove('active');
+            });
+            document.getElementById('fw-' + name).style.display = 'block';
+            btn.style.background = 'var(--accent-purple)';
+            btn.style.color = '#fff';
+            btn.style.border = 'none';
+            btn.classList.add('active');
+        }
         function copySdkSnippet(elemId) {
             const text = document.getElementById(elemId).textContent;
             navigator.clipboard.writeText(text).then(() => {
@@ -4088,6 +4243,44 @@ if (result.status === "allowed") {
         loadShadowMode();
 
         setTimeout(checkOnboarding, 500);
+
+        async function loadTelemetrySettings() {
+            try {
+                const res = await fetch('/api/settings/telemetry');
+                if (res.ok) {
+                    const data = await res.json();
+                    const toggle = document.getElementById('telemetry-toggle');
+                    if (toggle) toggle.checked = data.telemetry_enabled;
+                }
+            } catch(e) { console.error('Telemetry settings error:', e); }
+        }
+        async function toggleTelemetry(checkbox) {
+            try {
+                const res = await fetch('/api/settings/telemetry', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled: checkbox.checked })
+                });
+                const data = await res.json();
+                const statusEl = document.getElementById('telemetry-save-status');
+                if (statusEl) {
+                    statusEl.style.display = 'block';
+                    statusEl.textContent = data.message || (data.telemetry_enabled ? 'Telemetry enabled' : 'Telemetry disabled');
+                    statusEl.style.background = 'rgba(45,212,168,0.1)';
+                    statusEl.style.color = 'var(--accent-green)';
+                    setTimeout(() => statusEl.style.display = 'none', 3000);
+                }
+            } catch(e) { console.error('Telemetry toggle error:', e); }
+        }
+        loadTelemetrySettings();
     </script>
+
+    <div style="text-align:center;padding:16px;color:#94a3b8;font-size:12px;border-top:1px solid rgba(148,163,184,0.1);">
+        Powered by <a href="https://github.com/agenticfirewall/agentic-firewall" target="_blank" style="color:#4d8bff;text-decoration:none;">Agentic Firewall</a>
+        {% if is_self_hosted %}
+        &nbsp;&middot;&nbsp;
+        <a href="/pricing" style="color:#a78bfa;text-decoration:none;font-weight:500;">&#9889; Upgrade to Cloud</a>
+        {% endif %}
+    </div>
 </body>
 </html>

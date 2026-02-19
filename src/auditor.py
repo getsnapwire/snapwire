@@ -1,16 +1,8 @@
 import os
 import json
-from anthropic import Anthropic
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
 from src.constitution import get_rules_summary, get_rules
-
-AI_INTEGRATIONS_ANTHROPIC_API_KEY = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
-AI_INTEGRATIONS_ANTHROPIC_BASE_URL = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_BASE_URL")
-
-client = Anthropic(
-    api_key=AI_INTEGRATIONS_ANTHROPIC_API_KEY,
-    base_url=AI_INTEGRATIONS_ANTHROPIC_BASE_URL,
-)
+from src.llm_provider import chat, parse_json_response
 
 SYSTEM_PROMPT = """You are the Agentic Firewall Auditor. Your job is to analyze an agent's intended tool call and determine whether it violates any of the constitutional rules.
 
@@ -75,23 +67,10 @@ Agent Tool Call to Audit:
 
 Analyze this tool call against the constitutional rules and return your assessment as JSON."""
 
-    message = client.messages.create(
-        model="claude-sonnet-4-5",
-        max_tokens=8192,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_message}],
-    )
+    response_text = chat(SYSTEM_PROMPT, user_message, max_tokens=8192)
 
-    response_text = getattr(message.content[0], "text", "")
-
-    try:
-        start = response_text.find("{")
-        end = response_text.rfind("}") + 1
-        if start != -1 and end > start:
-            result = json.loads(response_text[start:end])
-        else:
-            result = json.loads(response_text)
-    except json.JSONDecodeError:
+    result = parse_json_response(response_text)
+    if result is None:
         result = {
             "allowed": False,
             "violations": [

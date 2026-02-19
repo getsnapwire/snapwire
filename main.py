@@ -12,10 +12,10 @@ from flask import request, jsonify, render_template, session, url_for, Response,
 from flask_login import current_user
 
 from app import app, db
-from replit_auth import require_login, make_replit_blueprint
+from replit_auth import require_login, make_replit_blueprint, IS_REPLIT
 from models import User, ApiKey, RuleVersion, AuditLogEntry, WebhookConfig
 from models import Organization, OrgMembership, ConstitutionRule, NotificationSetting, UsageRecord
-from models import SelfHostedInstall, PublicAudit
+from models import SelfHostedInstall, PublicAudit, InstallConfig
 from src.tenant import get_current_tenant_id, get_tenant_id_for_api_key, is_tenant_admin, get_user_tenants, switch_tenant
 from src.constitution import (
     load_constitution, update_rule, add_rule, delete_rule, update_rule_full,
@@ -51,6 +51,19 @@ from src.honeypot import check_honeypot, get_honeypots, create_honeypot, delete_
 from src.vault import get_vault_entries, create_vault_entry, delete_vault_entry, update_vault_entry, get_vault_credentials
 from src.deception import analyze_deception
 from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings
+
+
+import uuid as _uuid_mod
+import platform as _platform_mod
+
+
+def get_install_id():
+    config = InstallConfig.query.first()
+    if not config:
+        config = InstallConfig(install_id=str(_uuid_mod.uuid4()))
+        db.session.add(config)
+        db.session.commit()
+    return config
 
 
 def require_admin(f):
@@ -91,6 +104,12 @@ def _track_usage(tenant_id):
 
 
 app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
+
+
+def _get_login_url():
+    if IS_REPLIT:
+        return url_for("replit_auth.login")
+    return url_for("local_auth.login_page")
 
 
 def start_auto_deny_timer():
@@ -182,10 +201,11 @@ def make_session_permanent():
 @app.route("/")
 def dashboard():
     if not current_user.is_authenticated:
-        return render_template("login.html", login_url=url_for("replit_auth.login"))
+        return render_template("login.html", login_url=_get_login_url())
     if not current_user.tos_accepted_at:
         return redirect(url_for("tos_page"))
-    return render_template("dashboard.html", user=current_user)
+    is_self_hosted = not os.environ.get("REPL_ID")
+    return render_template("dashboard.html", user=current_user, is_self_hosted=is_self_hosted)
 
 
 @app.route("/tos")
@@ -208,13 +228,13 @@ def accept_tos():
 
 @app.route("/pricing")
 def pricing_page():
-    return render_template("pricing.html", login_url=url_for("replit_auth.login"))
+    return render_template("pricing.html", login_url=_get_login_url())
 
 
 @app.route("/docs")
 def docs_page():
     base_url = request.url_root.rstrip("/")
-    return render_template("docs.html", login_url=url_for("replit_auth.login"), base_url=base_url)
+    return render_template("docs.html", login_url=_get_login_url(), base_url=base_url)
 
 
 @app.route("/api/intercept", methods=["POST"])
@@ -788,6 +808,151 @@ def check_conflicts():
         return jsonify({"conflicts": conflicts, "has_conflicts": len(conflicts) > 0})
     except Exception as e:
         return jsonify({"error": f"Conflict check failed: {str(e)}"}), 500
+
+
+@app.route("/api/rules/export", methods=["POST"])
+@require_login
+def export_rules():
+    import uuid as _uuid
+    tenant_id = get_current_tenant_id()
+    constitution = load_constitution(tenant_id)
+    rules_dict = constitution.get("rules", {})
+
+    rules_list = []
+    for rule_name, rule_config in rules_dict.items():
+        rules_list.append({
+            "name": rule_name,
+            "description": rule_config.get("description", ""),
+            "rule_text": json.dumps(rule_config.get("value", "")) if not isinstance(rule_config.get("value", ""), str) else rule_config.get("value", ""),
+            "severity": rule_config.get("severity", "medium"),
+            "category": rule_config.get("display_name", rule_name.replace("_", " ").title()),
+            "enabled": rule_config.get("mode", "enforce") != "disabled",
+        })
+
+    export_data = {
+        "_meta": {
+            "generator": "Agentic Firewall",
+            "version": "1.0.0",
+            "exported_at": datetime.utcnow().isoformat() + "Z",
+            "source_url": request.url_root.rstrip("/"),
+            "install_id": str(_uuid.uuid5(_uuid.NAMESPACE_URL, request.url_root)),
+            "share_id": str(_uuid.uuid4()),
+            "rule_count": len(rules_list),
+        },
+        "rules": rules_list,
+    }
+    return jsonify(export_data)
+
+
+@app.route("/api/rules/export/download", methods=["GET"])
+@require_login
+def export_rules_download():
+    import uuid as _uuid
+    tenant_id = get_current_tenant_id()
+    constitution = load_constitution(tenant_id)
+    rules_dict = constitution.get("rules", {})
+
+    rules_list = []
+    for rule_name, rule_config in rules_dict.items():
+        rules_list.append({
+            "name": rule_name,
+            "description": rule_config.get("description", ""),
+            "rule_text": json.dumps(rule_config.get("value", "")) if not isinstance(rule_config.get("value", ""), str) else rule_config.get("value", ""),
+            "severity": rule_config.get("severity", "medium"),
+            "category": rule_config.get("display_name", rule_name.replace("_", " ").title()),
+            "enabled": rule_config.get("mode", "enforce") != "disabled",
+        })
+
+    export_data = {
+        "_meta": {
+            "generator": "Agentic Firewall",
+            "version": "1.0.0",
+            "exported_at": datetime.utcnow().isoformat() + "Z",
+            "source_url": request.url_root.rstrip("/"),
+            "install_id": str(_uuid.uuid5(_uuid.NAMESPACE_URL, request.url_root)),
+            "share_id": str(_uuid.uuid4()),
+            "rule_count": len(rules_list),
+        },
+        "rules": rules_list,
+    }
+
+    date_str = datetime.utcnow().strftime("%Y-%m-%d")
+    filename = f"agentic-firewall-rules-{date_str}.json"
+    return Response(
+        json.dumps(export_data, indent=2),
+        mimetype="application/json",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@app.route("/api/rules/import", methods=["POST"])
+@require_admin
+def import_rules():
+    tenant_id = get_current_tenant_id()
+
+    if request.content_type and "multipart/form-data" in request.content_type:
+        file = request.files.get("file")
+        if not file:
+            return jsonify({"error": "No file provided"}), 400
+        try:
+            data = json.loads(file.read().decode("utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return jsonify({"error": "Invalid JSON file"}), 400
+    else:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No JSON payload provided"}), 400
+
+    meta = data.get("_meta", {})
+    if meta.get("generator") != "Agentic Firewall":
+        return jsonify({"error": "Invalid import file. Must be an Agentic Firewall export (missing or incorrect _meta.generator)."}), 400
+
+    rules = data.get("rules", [])
+    if not isinstance(rules, list) or len(rules) == 0:
+        return jsonify({"error": "No rules found in import file"}), 400
+
+    imported_count = 0
+    skipped = []
+    for rule in rules:
+        rule_name = rule.get("name")
+        if not rule_name:
+            continue
+
+        existing = ConstitutionRule.query.filter_by(tenant_id=tenant_id, rule_name=rule_name).first()
+        if existing:
+            skipped.append(rule_name)
+            continue
+
+        rule_text = rule.get("rule_text", "")
+        try:
+            value = json.loads(rule_text) if rule_text else ""
+        except (json.JSONDecodeError, TypeError):
+            value = rule_text
+
+        mode = "enforce" if rule.get("enabled", True) else "disabled"
+
+        new_rule = ConstitutionRule(
+            tenant_id=tenant_id,
+            rule_name=rule_name,
+            value=json.dumps(value) if not isinstance(value, str) else value,
+            display_name=rule.get("category", rule_name.replace("_", " ").title()),
+            description=rule.get("description", ""),
+            severity=rule.get("severity", "medium"),
+            mode=mode,
+        )
+        db.session.add(new_rule)
+        imported_count += 1
+
+    if imported_count > 0:
+        db.session.commit()
+
+    return jsonify({
+        "status": "imported",
+        "imported_count": imported_count,
+        "skipped_count": len(skipped),
+        "skipped_rules": skipped,
+        "message": f"Successfully imported {imported_count} rule(s)." + (f" Skipped {len(skipped)} existing rule(s)." if skipped else ""),
+    })
 
 
 @app.route("/api/sandbox/test", methods=["POST"])
@@ -1608,7 +1773,7 @@ def invite_to_org(org_id):
     import secrets as sec
     invite_token = sec.token_urlsafe(32)
     session[f'org_invite_{invite_token}'] = org_id
-    domain = os.environ.get("REPLIT_DEV_DOMAIN", request.host)
+    domain = os.environ.get("APP_DOMAIN", request.host)
     invite_url = f"https://{domain}/api/orgs/join/{invite_token}"
     return jsonify({
         "invite_url": invite_url,
@@ -2006,7 +2171,7 @@ def test_email_notification():
     return jsonify({"error": "Failed to send test email. This feature requires a deployed environment."}), 500
 
 
-REPLIT_TEMPLATE_URL = "https://replit.com/@fastfitness4u/workspace?v=1"
+REPLIT_TEMPLATE_URL = os.environ.get("TEMPLATE_URL", "https://github.com/agenticfirewall/agentic-firewall")
 
 
 @app.route("/audit")
@@ -2051,7 +2216,7 @@ def register_self_hosted():
 
 @app.route("/api/public/audit", methods=["POST"])
 def public_audit_api():
-    from anthropic import Anthropic
+    from src.llm_provider import chat, parse_json_response
     from datetime import timedelta as _td
 
     ip = request.remote_addr or "unknown"
@@ -2070,10 +2235,6 @@ def public_audit_api():
         return jsonify({"error": "Please provide a system prompt to audit"}), 400
     if len(prompt) > 10000:
         return jsonify({"error": "System prompt is too long (max 10,000 characters)"}), 400
-
-    api_key = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
-    base_url = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_BASE_URL")
-    client = Anthropic(api_key=api_key, base_url=base_url)
 
     system_msg = """You are a security auditor specializing in AI agent system prompts. Analyze the given system prompt for security vulnerabilities.
 
@@ -2105,22 +2266,10 @@ Be specific about the vulnerabilities found in THIS particular prompt. Do not be
 Return ONLY valid JSON, no markdown formatting."""
 
     try:
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1500,
-            messages=[{"role": "user", "content": f"Analyze this AI agent system prompt for security vulnerabilities:\n\n---\n{prompt}\n---"}],
-            system=system_msg,
-        )
-        result_text = response.content[0].text.strip()
-        if result_text.startswith("```"):
-            result_text = result_text.split("\n", 1)[1] if "\n" in result_text else result_text[3:]
-            if result_text.endswith("```"):
-                result_text = result_text[:-3]
-            result_text = result_text.strip()
-
-        result = json.loads(result_text)
-    except json.JSONDecodeError:
-        return jsonify({"error": "Failed to parse audit results. Please try again."}), 500
+        result_text = chat(system_msg, f"Analyze this AI agent system prompt for security vulnerabilities:\n\n---\n{prompt}\n---", max_tokens=1500)
+        result = parse_json_response(result_text)
+        if result is None:
+            return jsonify({"error": "Failed to parse audit results. Please try again."}), 500
     except Exception as e:
         return jsonify({"error": "Audit service temporarily unavailable. Please try again."}), 503
 
@@ -2322,6 +2471,88 @@ def get_settings():
 _app_start_time = time.time()
 
 
+with app.app_context():
+    get_install_id()
+
+
+@app.route("/api/settings/telemetry", methods=["GET"])
+@require_login
+def get_telemetry_settings():
+    config = get_install_id()
+    return jsonify({
+        "telemetry_enabled": config.telemetry_enabled,
+        "install_id": config.install_id,
+        "version": config.version,
+    })
+
+
+@app.route("/api/settings/telemetry", methods=["POST"])
+@require_login
+def toggle_telemetry():
+    data = request.get_json() or {}
+    if "enabled" not in data:
+        return jsonify({"error": "Must provide 'enabled': true or false"}), 400
+    config = get_install_id()
+    config.telemetry_enabled = bool(data["enabled"])
+    db.session.commit()
+    return jsonify({
+        "telemetry_enabled": config.telemetry_enabled,
+        "message": "Telemetry enabled" if config.telemetry_enabled else "Telemetry disabled",
+    })
+
+
+@app.route("/api/telemetry/transparency", methods=["GET"])
+def telemetry_transparency():
+    config = get_install_id()
+    if os.environ.get("REPL_ID"):
+        plat = "replit"
+    elif os.path.exists("/.dockerenv"):
+        plat = "docker"
+    else:
+        plat = _platform_mod.system().lower()
+    tenant_id = None
+    if current_user.is_authenticated:
+        tenant_id = get_current_tenant_id()
+    total_rules = ConstitutionRule.query.filter_by(tenant_id=tenant_id).count() if tenant_id else ConstitutionRule.query.count()
+    from datetime import timedelta
+    cutoff_24h = datetime.utcnow() - timedelta(hours=24)
+    total_intercepts_24h = AuditLogEntry.query.filter(AuditLogEntry.created_at >= cutoff_24h).count()
+    total_agents = db.session.query(db.func.count(db.func.distinct(AuditLogEntry.agent_id))).scalar() or 0
+    uptime_hours = round((time.time() - _app_start_time) / 3600, 1)
+    return jsonify({
+        "what_we_report": {
+            "install_id": "anonymous-uuid",
+            "version": config.version,
+            "platform": plat,
+            "total_rules": total_rules,
+            "total_intercepts_24h": total_intercepts_24h,
+            "total_agents": total_agents,
+            "config_shares": 0,
+            "uptime_hours": uptime_hours,
+        },
+        "what_we_never_report": [
+            "Your rules content",
+            "Agent names or IDs",
+            "Tool call parameters",
+            "User identities",
+            "IP addresses",
+        ],
+    })
+
+
+@app.route("/api/admin/telemetry-dashboard", methods=["GET"])
+@require_login
+def telemetry_dashboard():
+    config = get_install_id()
+    return jsonify({
+        "install_id": config.install_id,
+        "telemetry_enabled": config.telemetry_enabled,
+        "version": config.version,
+        "first_installed": config.created_at.isoformat() + "Z" if config.created_at else None,
+    })
+
+
 if __name__ == "__main__":
-    is_dev = os.environ.get("REPL_SLUG") is not None
-    app.run(host="0.0.0.0", port=5000, debug=is_dev)
+    is_dev = os.environ.get("REPL_SLUG") is not None or os.environ.get("FLASK_DEBUG") == "1"
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=is_dev)
