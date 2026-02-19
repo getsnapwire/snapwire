@@ -50,7 +50,11 @@ The Agentic Firewall is built with a Python Flask backend and a PostgreSQL datab
 -   **Database**: PostgreSQL
 -   **AI Service**: Claude (via Replit AI Integrations / Anthropic)
 -   **Authentication**: Replit Auth (OpenID Connect)
--   **Notifications**: Slack (via webhooks)
+-   **Email**: Replit Mail (via OpenInt mailer API, no external service needed)
+-   **Notifications**: Slack (via webhooks), Email (via Replit Mail)
 -   **ORM**: SQLAlchemy
 -   **Web Framework**: Flask
 -   **WSGI Server**: Gunicorn
+
+## Pending Integrations
+-   **Stripe**: Payment processing for pricing tiers (Free/Pro/Enterprise) is not yet connected. User dismissed the Stripe connector setup. To enable billing, the user needs to connect Stripe via the integrations panel or provide a Stripe API key as a secret.

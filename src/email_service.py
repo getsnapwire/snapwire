@@ -3,13 +3,20 @@ import json
 import subprocess
 import threading
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
 CONNECTORS_HOSTNAME = os.environ.get("REPLIT_CONNECTORS_HOSTNAME", "connectors.replit.com")
 
+_token_cache = {"token": None, "expires_at": 0}
+_token_lock = threading.Lock()
+
 
 def _get_auth_token():
+    with _token_lock:
+        if _token_cache["token"] and time.time() < _token_cache["expires_at"]:
+            return _token_cache["token"]
     try:
         result = subprocess.run(
             ["replit", "identity", "create", "--audience", f"https://{CONNECTORS_HOSTNAME}"],
@@ -18,6 +25,9 @@ def _get_auth_token():
         token = result.stdout.strip()
         if not token:
             raise RuntimeError("Empty identity token returned")
+        with _token_lock:
+            _token_cache["token"] = token
+            _token_cache["expires_at"] = time.time() + 240
         return token
     except Exception as e:
         logger.error(f"Failed to get Replit identity token: {e}")
