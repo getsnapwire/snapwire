@@ -21,7 +21,7 @@ def send_slack_notification(webhook_url, action_data):
         "blocks": [
             {
                 "type": "header",
-                "text": {"type": "plain_text", "text": "\U0001f6e1\ufe0f Agentic Firewall Alert", "emoji": True}
+                "text": {"type": "plain_text", "text": "\u26a1 Snapwire Alert", "emoji": True}
             },
             {
                 "type": "section",

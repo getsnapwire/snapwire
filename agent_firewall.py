@@ -1,11 +1,11 @@
 """
-Agentic Firewall - Python SDK
+Snapwire - Python SDK
 Drop this single file into any project to protect your AI agent.
 
 Usage:
     from agent_firewall import AgentFirewall, agent_guard
 
-    fw = AgentFirewall(api_key="af_...", base_url="https://your-firewall.replit.app")
+    fw = AgentFirewall(api_key="snap_...", base_url="https://your-snapwire.replit.app")
 
     # Option 1: Direct check
     result = fw.check("send_email", {"to": "user@example.com", "body": "Hello"}, intent="Send welcome email")

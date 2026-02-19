@@ -4,50 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache">
-    <title>Free AI Agent Security Audit — Agentic Firewall</title>
+    <title>Snapwire — AI Safety Audit</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --white: #ffffff; --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
-            --gray-300: #d1d5db; --gray-400: #9ca3af; --gray-500: #6b7280; --gray-600: #4b5563;
-            --gray-700: #374151; --gray-800: #1f2937; --gray-900: #111827;
-            --blue-50: #eff6ff; --blue-100: #dbeafe; --blue-500: #3b82f6; --blue-600: #2563eb; --blue-700: #1d4ed8;
-            --purple-500: #8b5cf6; --purple-600: #7c3aed;
-            --green-50: #ecfdf5; --green-500: #10b981; --green-600: #059669;
-            --red-50: #fef2f2; --red-500: #ef4444;
-            --amber-50: #fffbeb; --amber-500: #f59e0b;
+            --white: #ffffff; --gray-50: #0d1117; --gray-100: #161b22; --gray-200: #30363d;
+            --gray-300: #484f58; --gray-400: #6e7681; --gray-500: #8b949e; --gray-600: #c9d1d9;
+            --gray-700: #d2dae4; --gray-800: #e6edf3; --gray-900: #f0f3f6;
+            --orange-50: rgba(255,102,0,0.08); --orange-100: rgba(255,102,0,0.15);
+            --orange-500: #FF6600; --orange-600: #E55C00; --orange-700: #CC5200;
+            --green-50: rgba(63,185,80,0.1); --green-500: #3fb950; --green-600: #2ea043;
+            --red-50: rgba(248,81,73,0.1); --red-500: #f85149;
+            --amber-50: rgba(210,153,34,0.1); --amber-500: #d29922;
         }
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--white); color: var(--gray-900); -webkit-font-smoothing: antialiased; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #0d1117; color: var(--gray-900); -webkit-font-smoothing: antialiased; }
 
         .nav {
             position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-            background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            background: rgba(13,17,23,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--gray-200); padding: 0 32px; height: 64px;
             display: flex; align-items: center; justify-content: space-between;
         }
         .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; color: var(--gray-900); text-decoration: none; }
-        .nav-logo .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--blue-600), var(--purple-600)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; }
+        .nav-logo .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #FF6600, #CC5200); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; }
         .nav-links { display: flex; align-items: center; gap: 32px; }
-        .nav-links a { font-size: 14px; font-weight: 500; color: var(--gray-600); text-decoration: none; transition: color 0.2s; }
+        .nav-links a { font-size: 14px; font-weight: 500; color: var(--gray-500); text-decoration: none; transition: color 0.2s; }
         .nav-links a:hover { color: var(--gray-900); }
-        .nav-btn { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; color: var(--white); background: var(--gray-900); transition: all 0.2s; }
-        .nav-btn:hover { background: var(--gray-700); }
+        .nav-btn { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; color: #fff; background: #FF6600; transition: all 0.2s; }
+        .nav-btn:hover { background: #E55C00; }
 
         .page-hero {
             padding: 140px 32px 60px; text-align: center;
-            background: linear-gradient(180deg, var(--white) 0%, var(--gray-50) 100%);
+            background: linear-gradient(180deg, #0d1117 0%, #161b22 100%);
             position: relative; overflow: hidden;
         }
         .page-hero::before {
             content: ''; position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
             width: 800px; height: 800px;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.03) 40%, transparent 70%);
+            background: radial-gradient(circle, rgba(255, 102, 0, 0.08) 0%, rgba(255, 102, 0, 0.03) 40%, transparent 70%);
             pointer-events: none;
         }
-        .page-hero h1 { font-size: 44px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 16px; position: relative; z-index: 1; }
-        .page-hero h1 span { background: linear-gradient(135deg, var(--blue-600), var(--purple-500)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .page-hero h1 { font-size: 44px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 16px; position: relative; z-index: 1; color: var(--gray-900); }
+        .page-hero h1 span { background: linear-gradient(135deg, #FF6600, #FF8533); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .page-hero p { font-size: 18px; color: var(--gray-500); max-width: 580px; margin: 0 auto; line-height: 1.7; position: relative; z-index: 1; }
 
         .audit-container { max-width: 780px; margin: 0 auto; padding: 0 32px 96px; }
@@ -56,9 +56,9 @@
         .prompt-textarea {
             width: 100%; min-height: 200px; padding: 20px; border: 1px solid var(--gray-200);
             border-radius: 14px; font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.7;
-            color: var(--gray-900); background: var(--white); resize: vertical; transition: border-color 0.2s;
+            color: var(--gray-900); background: var(--gray-100); resize: vertical; transition: border-color 0.2s;
         }
-        .prompt-textarea:focus { outline: none; border-color: var(--blue-500); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .prompt-textarea:focus { outline: none; border-color: #FF6600; box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.15); }
         .prompt-textarea::placeholder { color: var(--gray-400); }
 
         .textarea-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
@@ -69,15 +69,15 @@
             display: inline-flex; align-items: center; gap: 8px;
             padding: 14px 32px; border-radius: 10px; border: none; cursor: pointer;
             font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600;
-            color: var(--white); background: var(--blue-600);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12); transition: all 0.2s;
+            color: #fff; background: #FF6600;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: all 0.2s;
         }
-        .audit-btn:hover { background: var(--blue-700); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+        .audit-btn:hover { background: #E55C00; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255, 102, 0, 0.3); }
         .audit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
 
         .error-message {
             margin-top: 16px; padding: 14px 20px; border-radius: 10px;
-            background: var(--red-50); border: 1px solid rgba(239, 68, 68, 0.2);
+            background: var(--red-50); border: 1px solid rgba(248, 81, 73, 0.2);
             color: var(--red-500); font-size: 14px; font-weight: 500; display: none;
         }
 
@@ -86,7 +86,7 @@
         }
         .spinner {
             width: 48px; height: 48px; border: 3px solid var(--gray-200);
-            border-top-color: var(--blue-600); border-radius: 50%;
+            border-top-color: #FF6600; border-radius: 50%;
             animation: spin 0.8s linear infinite; margin: 0 auto 20px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -117,31 +117,31 @@
         }
 
         .summary-card {
-            background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 14px;
+            background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 14px;
             padding: 24px; margin-bottom: 32px;
         }
         .summary-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: var(--gray-900); }
-        .summary-card p { font-size: 15px; color: var(--gray-600); line-height: 1.7; }
+        .summary-card p { font-size: 15px; color: var(--gray-500); line-height: 1.7; }
 
         .vuln-cards { display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px; }
         .vuln-card {
-            background: var(--white); border: 1px solid var(--gray-200); border-radius: 14px;
+            background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 14px;
             padding: 24px; transition: all 0.25s;
         }
-        .vuln-card:hover { border-color: var(--gray-300); box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+        .vuln-card:hover { border-color: var(--gray-300); box-shadow: 0 4px 24px rgba(0,0,0,0.2); }
         .vuln-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
         .severity-badge {
             padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;
             text-transform: uppercase; letter-spacing: 0.5px;
         }
-        .severity-critical { background: var(--red-50); color: var(--red-500); border: 1px solid rgba(239,68,68,0.2); }
-        .severity-high { background: rgba(245,158,11,0.08); color: var(--amber-500); border: 1px solid rgba(245,158,11,0.2); }
-        .severity-medium { background: var(--blue-50); color: var(--blue-600); border: 1px solid rgba(59,130,246,0.2); }
+        .severity-critical { background: var(--red-50); color: var(--red-500); border: 1px solid rgba(248,81,73,0.2); }
+        .severity-high { background: var(--amber-50); color: var(--amber-500); border: 1px solid rgba(210,153,34,0.2); }
+        .severity-medium { background: var(--orange-50); color: #FF6600; border: 1px solid rgba(255,102,0,0.2); }
         .vuln-title { font-size: 16px; font-weight: 700; color: var(--gray-900); }
         .vuln-desc { font-size: 14px; color: var(--gray-500); line-height: 1.65; margin-bottom: 12px; }
         .vuln-rec {
-            font-size: 13px; color: var(--green-600); background: var(--green-50);
-            border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 8px; padding: 12px 16px; line-height: 1.6;
+            font-size: 13px; color: var(--green-500); background: var(--green-50);
+            border: 1px solid rgba(63, 185, 80, 0.15); border-radius: 8px; padding: 12px 16px; line-height: 1.6;
         }
         .vuln-rec strong { font-weight: 700; }
 
@@ -150,22 +150,22 @@
             display: inline-flex; align-items: center; gap: 8px;
             padding: 14px 28px; border-radius: 10px; border: 1px solid var(--gray-300);
             font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600;
-            color: var(--gray-700); background: var(--white); cursor: pointer; transition: all 0.2s;
+            color: var(--gray-600); background: var(--gray-100); cursor: pointer; transition: all 0.2s;
         }
-        .download-btn:hover { border-color: var(--gray-400); background: var(--gray-50); transform: translateY(-1px); }
+        .download-btn:hover { border-color: var(--gray-400); background: #21262d; transform: translateY(-1px); }
         .cta-btn {
             display: inline-flex; align-items: center; gap: 8px;
             padding: 14px 28px; border-radius: 10px; border: none;
             font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600;
-            color: var(--white); background: var(--gray-900); cursor: pointer;
+            color: #fff; background: #FF6600; cursor: pointer;
             text-decoration: none; transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
-        .cta-btn:hover { background: var(--gray-700); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .cta-btn:hover { background: #E55C00; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,102,0,0.3); }
 
-        .footer { border-top: 1px solid var(--gray-200); padding: 32px; text-align: center; background: var(--white); }
+        .footer { border-top: 1px solid var(--gray-200); padding: 32px; text-align: center; background: #0d1117; }
         .footer-brand { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--gray-500); margin-bottom: 8px; }
-        .footer-brand .logo-sm { width: 20px; height: 20px; background: linear-gradient(135deg, var(--blue-600), var(--purple-600)); border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: white; }
+        .footer-brand .logo-sm { width: 20px; height: 20px; background: linear-gradient(135deg, #FF6600, #CC5200); border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: white; }
         .footer p { font-size: 13px; color: var(--gray-400); }
 
         @media (max-width: 768px) {
@@ -183,7 +183,7 @@
 </head>
 <body>
     <nav class="nav">
-        <a href="/" class="nav-logo"><span class="logo-icon">&#x1F6E1;</span> Agentic Firewall</a>
+        <a href="/" class="nav-logo"><span class="logo-icon">⚡</span> Snapwire</a>
         <div class="nav-links">
             <a href="/">Home</a>
             <a href="/pricing">Pricing</a>
@@ -193,7 +193,7 @@
     </nav>
 
     <section class="page-hero">
-        <h1>Free AI Agent <span>Security Audit</span></h1>
+        <h1>Free AI Agent <span>Safety Audit</span></h1>
         <p>Paste your system prompt below. We'll use AI to find security vulnerabilities and give you a Safety Score.</p>
     </section>
 
@@ -204,7 +204,7 @@
             <div class="textarea-footer">
                 <span id="charCounter" class="char-counter">0 / 10,000</span>
                 <button class="audit-btn" onclick="runAudit()" id="auditBtn">
-                    &#x1F6E1; Run Security Audit
+                    ⚡ Run Safety Audit
                 </button>
             </div>
             <div id="errorMessage" class="error-message"></div>
@@ -244,9 +244,12 @@
     </div>
 
     <footer class="footer">
-        <div class="footer-brand"><span class="logo-sm">&#x1F6E1;</span> Agentic Firewall</div>
-        <p>AI safety and governance platform</p>
+        <div class="footer-brand"><span class="logo-sm">⚡</span> Snapwire</div>
+        <p>The Safety Fuse for Your AI Agents</p>
     </footer>
+    <div style="text-align:center;padding:16px 24px;font-size:11px;color:#7d8295;opacity:0.7;border-top:1px solid #2a2f3d;margin-top:32px;">
+        Snapwire is a technical monitoring utility. Use at your own risk. User assumes all liability for agent behavior.
+    </div>
 
     <script>
         const promptInput = document.getElementById('promptInput');
@@ -269,10 +272,10 @@
         });
 
         function getScoreColor(score) {
-            if (score <= 39) return '#ef4444';
-            if (score <= 59) return '#f59e0b';
-            if (score <= 79) return '#eab308';
-            return '#10b981';
+            if (score <= 39) return '#f85149';
+            if (score <= 59) return '#d29922';
+            if (score <= 79) return '#d29922';
+            return '#3fb950';
         }
 
         function getRiskLevel(score) {
@@ -283,10 +286,10 @@
         }
 
         function getRiskBadgeStyle(score) {
-            if (score <= 39) return 'background: var(--red-50); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);';
-            if (score <= 59) return 'background: rgba(245,158,11,0.08); color: #f59e0b; border: 1px solid rgba(245,158,11,0.2);';
-            if (score <= 79) return 'background: rgba(234,179,8,0.08); color: #eab308; border: 1px solid rgba(234,179,8,0.2);';
-            return 'background: var(--green-50); color: #10b981; border: 1px solid rgba(16,185,129,0.2);';
+            if (score <= 39) return 'background: rgba(248,81,73,0.1); color: #f85149; border: 1px solid rgba(248,81,73,0.2);';
+            if (score <= 59) return 'background: rgba(210,153,34,0.1); color: #d29922; border: 1px solid rgba(210,153,34,0.2);';
+            if (score <= 79) return 'background: rgba(210,153,34,0.1); color: #d29922; border: 1px solid rgba(210,153,34,0.2);';
+            return 'background: rgba(63,185,80,0.1); color: #3fb950; border: 1px solid rgba(63,185,80,0.2);';
         }
 
         function getSeverityClass(severity) {
@@ -399,30 +402,30 @@
             const ctx = canvas.getContext('2d');
 
             const gradient = ctx.createLinearGradient(0, 0, 0, 630);
-            gradient.addColorStop(0, '#1e293b');
-            gradient.addColorStop(1, '#0f172a');
+            gradient.addColorStop(0, '#0d1117');
+            gradient.addColorStop(1, '#161b22');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, 1200, 630);
 
-            ctx.fillStyle = 'rgba(59, 130, 246, 0.08)';
+            ctx.fillStyle = 'rgba(255, 102, 0, 0.08)';
             ctx.beginPath();
             ctx.arc(600, 340, 300, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = '#8b949e';
             ctx.font = '600 18px Inter, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('🛡️  AGENTIC FIREWALL', 600, 80);
+            ctx.fillText('⚡  SNAPWIRE', 600, 80);
 
-            ctx.fillStyle = '#e2e8f0';
+            ctx.fillStyle = '#c9d1d9';
             ctx.font = '500 16px Inter, sans-serif';
-            ctx.fillText('AI Agent Security Audit Report', 600, 110);
+            ctx.fillText('AI Agent Safety Audit Report', 600, 110);
 
             const score = auditData.safety_score;
             const color = getScoreColor(score);
             const riskLevel = getRiskLevel(score);
 
-            ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+            ctx.strokeStyle = 'rgba(48, 54, 61, 0.5)';
             ctx.lineWidth = 8;
             ctx.beginPath();
             ctx.arc(600, 300, 120, 0, Math.PI * 2);
@@ -437,13 +440,13 @@
             ctx.arc(600, 300, 120, startAngle, endAngle);
             ctx.stroke();
 
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = '#f0f3f6';
             ctx.font = '800 72px Inter, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(score.toString(), 600, 290);
 
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = '#8b949e';
             ctx.font = '500 18px Inter, sans-serif';
             ctx.fillText('/100', 600, 340);
 
@@ -451,12 +454,12 @@
             ctx.font = '700 20px Inter, sans-serif';
             ctx.fillText(riskLevel.toUpperCase(), 600, 460);
 
-            ctx.fillStyle = '#475569';
+            ctx.fillStyle = '#6e7681';
             ctx.font = '400 14px Inter, sans-serif';
             ctx.fillText('Audit your AI agent at ' + window.location.hostname, 600, 590);
 
             const link = document.createElement('a');
-            link.download = 'agentic-firewall-safety-score.png';
+            link.download = 'snapwire-safety-score.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
         }

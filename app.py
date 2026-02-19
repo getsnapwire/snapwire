@@ -24,7 +24,7 @@ if DATABASE_URL:
         "pool_recycle": 300,
     }
 else:
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "agentic_firewall.db")
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "snapwire.db")
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {}
 

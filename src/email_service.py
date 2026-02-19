@@ -142,9 +142,9 @@ def send_blocked_action_email(action_data):
     violations = action_data.get("violations", [])
     violation_list = "\n".join([f"  - {v.get('rule', 'unknown')}: {v.get('reason', '')}" for v in violations[:5]])
 
-    subject = f"Agentic Firewall: Action Blocked - {tool_name}"
+    subject = f"Snapwire: Action Blocked - {tool_name}"
     text_body = (
-        f"An AI agent action was blocked by the Agentic Firewall.\n\n"
+        f"An AI agent action was blocked by Snapwire.\n\n"
         f"Tool: {tool_name}\n"
         f"Agent: {agent_id}\n"
         f"Risk Score: {risk_score}/100\n\n"
@@ -154,7 +154,7 @@ def send_blocked_action_email(action_data):
     html_body = f"""
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: #1e293b; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-            <h2 style="margin: 0;">Agentic Firewall Alert</h2>
+            <h2 style="margin: 0;">Snapwire Alert</h2>
         </div>
         <div style="background: #f8fafc; padding: 20px; border: 1px solid #e2e8f0;">
             <p style="color: #dc2626; font-weight: 600; font-size: 16px;">Action Blocked</p>
@@ -169,7 +169,7 @@ def send_blocked_action_email(action_data):
             </div>
         </div>
         <div style="background: #f1f5f9; padding: 16px; border-radius: 0 0 8px 8px; border: 1px solid #e2e8f0; border-top: 0; text-align: center;">
-            <p style="margin: 0; color: #64748b; font-size: 14px;">Review this action in your Agentic Firewall dashboard.</p>
+            <p style="margin: 0; color: #64748b; font-size: 14px;">Review this action in your Snapwire dashboard.</p>
         </div>
     </div>
     """
@@ -197,7 +197,7 @@ def send_daily_risk_summary(tenant_id, stats, high_risk_events, shadow_blocks, d
     honeypots = len(honeypot_triggers)
     high_risk_count = len(high_risk_events)
 
-    subject = f"Agentic Firewall - Daily Risk Summary ({high_risk_count} high-risk events)"
+    subject = f"Snapwire - Daily Risk Summary ({high_risk_count} high-risk events)"
 
     risk_rows = ""
     for evt in high_risk_events[:10]:
@@ -266,7 +266,7 @@ def send_daily_risk_summary(tenant_id, stats, high_risk_events, shadow_blocks, d
             {honeypot_section}
         </div>
         <div style="background:#f1f5f9;padding:16px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;border-top:0;text-align:center;">
-            <p style="margin:0;color:#64748b;font-size:14px;">Review details in your Agentic Firewall dashboard</p>
+            <p style="margin:0;color:#64748b;font-size:14px;">Review details in your Snapwire dashboard</p>
         </div>
     </div>
     """
@@ -291,7 +291,7 @@ def send_digest_email(stats):
     blocked = stats.get("blocked", 0)
     pending = stats.get("pending", 0)
 
-    subject = f"Agentic Firewall Daily Digest - {total} actions processed"
+    subject = f"Snapwire Daily Digest - {total} actions processed"
     text_body = (
         f"Daily Summary\n"
         f"=============\n"
@@ -326,7 +326,7 @@ def send_digest_email(stats):
             </div>
         </div>
         <div style="background: #f1f5f9; padding: 16px; border-radius: 0 0 8px 8px; border: 1px solid #e2e8f0; border-top: 0; text-align: center;">
-            <p style="margin: 0; color: #64748b; font-size: 14px;">Agentic Firewall - AI Agent Security</p>
+            <p style="margin: 0; color: #64748b; font-size: 14px;">Snapwire — The Safety Fuse for Your AI Agents</p>
         </div>
     </div>
     """

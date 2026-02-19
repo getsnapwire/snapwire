@@ -4,37 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <title>Terms of Service — Agentic Firewall</title>
+    <title>Snapwire — Terms of Service</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --white: #ffffff;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-400: #9ca3af;
-            --gray-500: #6b7280;
-            --gray-600: #4b5563;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
-            --gray-900: #111827;
-            --blue-500: #3b82f6;
-            --blue-600: #2563eb;
-            --blue-700: #1d4ed8;
-            --purple-500: #8b5cf6;
-            --purple-600: #7c3aed;
-            --green-500: #10b981;
-            --red-500: #ef4444;
+            --bg: #0d1117;
+            --card-bg: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-muted: #8b949e;
+            --text-bright: #f0f6fc;
+            --orange: #FF6600;
+            --orange-dim: rgba(255, 102, 0, 0.15);
+            --green: #3fb950;
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--gray-50);
-            color: var(--gray-900);
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -46,15 +37,16 @@
         .tos-container {
             max-width: 720px;
             width: 100%;
-            background: var(--white);
+            background: var(--card-bg);
             border-radius: 20px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
             overflow: hidden;
         }
 
         .tos-header {
             padding: 32px 36px 24px;
-            border-bottom: 1px solid var(--gray-100);
+            border-bottom: 1px solid var(--border);
         }
 
         .tos-header .logo {
@@ -64,13 +56,13 @@
             margin-bottom: 20px;
             font-size: 16px;
             font-weight: 700;
-            color: var(--gray-900);
+            color: var(--text-bright);
         }
 
         .tos-header .logo-icon {
             width: 32px;
             height: 32px;
-            background: linear-gradient(135deg, var(--blue-600), var(--purple-600));
+            background: var(--orange);
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -84,11 +76,12 @@
             font-weight: 800;
             letter-spacing: -0.5px;
             margin-bottom: 6px;
+            color: var(--text-bright);
         }
 
         .tos-header p {
             font-size: 14px;
-            color: var(--gray-500);
+            color: var(--text-muted);
             line-height: 1.5;
         }
 
@@ -102,7 +95,7 @@
             padding: 28px 36px;
             font-size: 14px;
             line-height: 1.75;
-            color: var(--gray-700);
+            color: var(--text);
             scroll-behavior: smooth;
         }
 
@@ -111,22 +104,22 @@
         }
 
         .tos-content::-webkit-scrollbar-track {
-            background: var(--gray-50);
+            background: var(--bg);
         }
 
         .tos-content::-webkit-scrollbar-thumb {
-            background: var(--gray-300);
+            background: var(--border);
             border-radius: 3px;
         }
 
         .tos-content::-webkit-scrollbar-thumb:hover {
-            background: var(--gray-400);
+            background: var(--text-muted);
         }
 
         .tos-content h2 {
             font-size: 18px;
             font-weight: 700;
-            color: var(--gray-900);
+            color: var(--orange);
             margin: 28px 0 12px;
             letter-spacing: -0.3px;
         }
@@ -138,7 +131,7 @@
         .tos-content h3 {
             font-size: 15px;
             font-weight: 600;
-            color: var(--gray-800);
+            color: var(--text-bright);
             margin: 20px 0 8px;
         }
 
@@ -147,7 +140,7 @@
         }
 
         .tos-content strong {
-            color: var(--gray-900);
+            color: var(--text-bright);
             font-weight: 600;
         }
 
@@ -157,7 +150,7 @@
             left: 0;
             right: 0;
             height: 60px;
-            background: linear-gradient(transparent, var(--white));
+            background: linear-gradient(transparent, var(--card-bg));
             pointer-events: none;
             transition: opacity 0.3s;
         }
@@ -173,7 +166,7 @@
             gap: 8px;
             padding: 12px;
             font-size: 13px;
-            color: var(--gray-400);
+            color: var(--text-muted);
             transition: opacity 0.3s;
         }
 
@@ -192,7 +185,7 @@
 
         .tos-footer {
             padding: 20px 36px 28px;
-            border-top: 1px solid var(--gray-100);
+            border-top: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -202,7 +195,7 @@
         .progress-bar {
             flex: 1;
             height: 4px;
-            background: var(--gray-100);
+            background: var(--border);
             border-radius: 2px;
             overflow: hidden;
         }
@@ -210,14 +203,14 @@
         .progress-fill {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, var(--blue-500), var(--purple-500));
+            background: var(--orange);
             border-radius: 2px;
             transition: width 0.15s ease-out;
         }
 
         .progress-label {
             font-size: 12px;
-            color: var(--gray-400);
+            color: var(--text-muted);
             white-space: nowrap;
             min-width: 32px;
             text-align: right;
@@ -229,8 +222,8 @@
             justify-content: center;
             gap: 8px;
             padding: 14px 32px;
-            background: var(--gray-200);
-            color: var(--gray-400);
+            background: var(--border);
+            color: var(--text-muted);
             border: none;
             border-radius: 12px;
             font-size: 15px;
@@ -242,15 +235,15 @@
         }
 
         .agree-btn.enabled {
-            background: linear-gradient(135deg, var(--blue-600), var(--purple-600));
+            background: var(--orange);
             color: white;
             cursor: pointer;
-            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 4px 14px rgba(255, 102, 0, 0.3);
         }
 
         .agree-btn.enabled:hover {
             transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+            box-shadow: 0 6px 20px rgba(255, 102, 0, 0.4);
         }
 
         .agree-btn.enabled:active {
@@ -283,10 +276,10 @@
             align-items: center;
             gap: 10px;
             font-size: 13px;
-            color: var(--gray-500);
+            color: var(--text-muted);
             padding: 16px 36px;
-            background: var(--gray-50);
-            border-bottom: 1px solid var(--gray-100);
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
         }
 
         .user-info img {
@@ -296,7 +289,16 @@
         }
 
         .user-info strong {
-            color: var(--gray-700);
+            color: var(--text-bright);
+        }
+
+        .footer-disclaimer {
+            padding: 16px 36px;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            border-top: 1px solid var(--border);
+            background: var(--bg);
         }
 
         @media (max-width: 640px) {
@@ -314,10 +316,10 @@
     <div class="tos-container">
         <div class="tos-header">
             <div class="logo">
-                <span class="logo-icon">&#x1F6E1;</span>
-                Agentic Firewall
+                <span class="logo-icon">&#x26A1;</span>
+                Snapwire
             </div>
-            <h1>Terms of Service & Privacy Policy</h1>
+            <h1>Terms of Service</h1>
             <p>Please read the following terms carefully. You must scroll to the bottom and agree before accessing the dashboard.</p>
         </div>
 
@@ -334,50 +336,38 @@
                 <p><strong>Last Updated: February 19, 2026</strong></p>
 
                 <h3>1. The "Neutral Gateway" Role</h3>
-                <p>Agentic Firewall is a technical monitoring utility and API gateway. We provide a dashboard to help you view and manage the traffic sent by your autonomous AI agents. We do not create, control, or own the AI agents you connect to our service. <strong>You are the "Pilot" and "Deployer";</strong> Agentic Firewall is simply the "Flight Recorder."</p>
+                <p>Snapwire is a technical monitoring utility and API gateway. We provide a dashboard to help you view and manage the traffic sent by your autonomous AI agents. We do not create, control, or own the AI agents you connect to our service. <strong>You are the "Master Pilot" and "Deployer";</strong> Snapwire is simply the "Flight Recorder."</p>
 
                 <h3>2. "AS-IS" Service & Use at Your Own Risk</h3>
-                <p><strong>AGENTIC FIREWALL IS PROVIDED ON AN "AS-IS" AND "AS-AVAILABLE" BASIS. WE MAKE NO GUARANTEES THAT OUR SERVICE WILL DETECT EVERY ERROR, BUDGET OVERRUN, OR SECURITY THREAT.</strong></p>
+                <p><strong>SNAPWIRE IS PROVIDED ON AN "AS-IS" AND "AS-AVAILABLE" BASIS. SNAPWIRE IS A BEST-EFFORT MONITORING UTILITY. WE MAKE NO GUARANTEES THAT OUR SERVICE WILL DETECT EVERY ERROR, BUDGET OVERRUN, OR SECURITY THREAT.</strong></p>
                 <p><strong>No Financial Guarantee:</strong> Our "Spend Forecasts" are estimates. We are not responsible if your AI provider (e.g., OpenAI, Anthropic) charges you more than our dashboard predicted.</p>
                 <p><strong>No Security Guarantee:</strong> While we provide "Risk Signals" and "Trust Scores," these are statistical guesses made by software. They are not a "Seal of Approval." <strong>You assume all risk for the actions your agents take.</strong></p>
 
                 <h3>3. Third-Party Actions & Disclaimers</h3>
-                <p>Agentic Firewall is not liable for the behavior of 3rd-party services.</p>
+                <p>Snapwire is not liable for the behavior of 3rd-party services, including model hallucinations or actions taken by AI agents.</p>
                 <p><strong>The AI Models:</strong> We are not responsible if your AI (Claude, GPT, etc.) "hallucinates," gives bad advice, or performs illegal acts.</p>
                 <p><strong>The Frameworks:</strong> We are not responsible for bugs in the software you use to run your agents (e.g., LangChain, CrewAI, OpenAI Assistants).</p>
-                <p><strong>The Result:</strong> If your agent deletes a file, sends an incorrect email, or causes a data breach, you agree that Agentic Firewall is not responsible for those outcomes.</p>
+                <p><strong>The Result:</strong> If your agent deletes a file, sends an incorrect email, or causes a data breach, you agree that Snapwire is not responsible for those outcomes.</p>
 
-                <h3>4. The Proxy Token Responsibility</h3>
-                <p>We provide "Proxy Tokens" to help protect your real API keys.</p>
+                <h3>4. User Responsibility — "Master Pilot"</h3>
+                <p>As the user of Snapwire, you are the <strong>"Master Pilot"</strong> responsible for all outcomes produced by your AI agents. Snapwire provides monitoring and signals, but ultimate responsibility for agent behavior rests with you.</p>
+
+                <h3>5. Snap-Token Responsibility</h3>
+                <p>We provide "Snap-Tokens" (proxy tokens) to help protect your real API keys.</p>
                 <p><strong>Our Job:</strong> We promise to keep your real keys encrypted in our vault.</p>
-                <p><strong>Your Job:</strong> You are responsible for keeping your Agentic Firewall Proxy Tokens secret. If you share your token or leave it in a public place, anyone can use your AI budget. <strong>You are responsible for any charges that result.</strong></p>
+                <p><strong>Your Job:</strong> You are responsible for keeping your Snap-Tokens secret. If you share your token or leave it in a public place, anyone can use your AI budget. <strong>You are responsible for any charges that result.</strong></p>
 
-                <h3>5. The "Human-in-the-Loop" Requirement</h3>
-                <p>By using Agentic Firewall, you agree to remain the "Human-in-the-Loop." Our "Auto-Kill" and "Safety Brake" features are secondary tools for your convenience. <strong>You are legally responsible for monitoring your own agents.</strong> Turning on "Shadow Mode" or "Enforcement Mode" does not shift your legal liability to us.</p>
+                <h3>6. The "Human-in-the-Loop" Requirement</h3>
+                <p>By using Snapwire, you agree to remain the "Human-in-the-Loop." Our "Auto-Kill" and "Safety Brake" features are secondary tools for your convenience. <strong>You are legally responsible for monitoring your own agents.</strong> Turning on "Shadow Mode" or "Enforcement Mode" does not shift your legal liability to us.</p>
 
-                <h3>6. Intelligence Signals Disclaimer</h3>
+                <h3>7. Intelligence Signals Disclaimer</h3>
                 <p>Our "Risk Confidence Index," "Trust Scores," and "Intelligence Signals" are generated by probabilistic algorithms and third-party data sources. These are <strong>informational estimates only</strong> — not certifications, guarantees, or security audits. Final action on any flagged item remains your responsibility.</p>
 
-                <h3>7. Limitation of Liability</h3>
-                <p><strong>TO THE MAXIMUM EXTENT PERMITTED BY LAW, AGENTIC FIREWALL'S TOTAL LIABILITY FOR ANY CLAIM SHALL NOT EXCEED THE TOTAL AMOUNT YOU PAID US IN THE LAST SIX (6) MONTHS, OR $100 USD, WHICHEVER IS LESS. WE ARE NEVER LIABLE FOR "LOST PROFITS" OR "CONSEQUENTIAL DAMAGES" CAUSED BY AN AGENT GONE ROGUE.</strong></p>
+                <h3>8. Limitation of Liability</h3>
+                <p><strong>TO THE MAXIMUM EXTENT PERMITTED BY LAW, SNAPWIRE'S TOTAL LIABILITY FOR ANY CLAIM SHALL NOT EXCEED THE TOTAL AMOUNT YOU PAID US IN THE LAST SIX (6) MONTHS, OR $100 USD, WHICHEVER IS LESS. WE ARE NEVER LIABLE FOR "LOST PROFITS" OR "CONSEQUENTIAL DAMAGES" CAUSED BY AN AGENT GONE ROGUE.</strong></p>
 
-                <h3>8. Indemnification</h3>
-                <p>You agree to defend and hold Agentic Firewall harmless from any legal claims, damages, or costs (including lawyer fees) that arise from your use of AI agents or your violation of these terms.</p>
-
-                <h2>Privacy Policy</h2>
-
-                <h3>1. Data Minimization & Usage</h3>
-                <p><strong>Audit Logs:</strong> We process "Inner Monologue" and "Tool Call" data solely to generate your monitoring audits and enforcement logs.</p>
-                <p><strong>The "No-Training" Guarantee:</strong> Your audit logs, private prompts, and injected credentials are never used to train, fine-tune, or improve any AI models, nor shared with third-party model providers for such purposes.</p>
-
-                <h3>2. Credential Proxy & Zero-Knowledge Vault</h3>
-                <p>Credentials stored in the Credential Proxy are encrypted at rest. The service utilizes "Ephemeral Injection" — your real keys are never visible to your agent, never stored in plaintext logs, and exist only in memory during the execution of a verified and approved task.</p>
-
-                <h3>3. Data Retention & Right to Purge</h3>
-                <p>All Audit Logs are automatically purged after 30 days unless you explicitly select a long-term storage plan. You may request a total data wipe at any time through your dashboard.</p>
-
-                <h3>4. Automated Decision-Making Rights</h3>
-                <p>By default, the Service requires Manual Human Approval for high-risk categories unless you affirmatively create a bypass rule. You retain the right to opt-out of automated enforcement at any time.</p>
+                <h3>9. Indemnification</h3>
+                <p>You agree to defend and hold Snapwire harmless from any legal claims, damages, or costs (including lawyer fees) that arise from your use of AI agents or your violation of these terms.</p>
 
                 <div style="height: 1px;"></div>
             </div>
@@ -403,6 +393,10 @@
                 <span class="check-icon">&#x2714;</span>
                 I Agree
             </button>
+        </div>
+
+        <div class="footer-disclaimer">
+            Snapwire is a technical monitoring utility. Use at your own risk. User assumes all liability for agent behavior.
         </div>
     </div>
 
@@ -458,7 +452,7 @@
                 const data = await res.json();
                 if (res.ok) {
                     agreeBtn.innerHTML = '<span>&#x2714;</span> Accepted!';
-                    agreeBtn.style.background = '#10b981';
+                    agreeBtn.style.background = '#3fb950';
                     setTimeout(() => {
                         window.location.href = data.redirect || '/';
                     }, 800);

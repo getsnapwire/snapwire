@@ -3,14 +3,14 @@ requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.backends._legacy:_Backend"
 
 [project]
-name = "agentic-firewall"
+name = "snapwire"
 version = "1.0.0"
-description = "Python SDK for the Agentic Firewall - AI agent security platform"
+description = "Python SDK for Snapwire - The Safety Fuse for Your AI Agents"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.8"
 dependencies = ["requests>=2.28.0"]
 
 [project.urls]
-Homepage = "https://github.com/agenticfirewall/agentic-firewall"
-Documentation = "https://docs.agenticfirewall.ai"
+Homepage = "https://github.com/snapwire-ai/snapwire"
+Documentation = "https://docs.snapwire.ai"

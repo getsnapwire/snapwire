@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agentic Firewall</title>
+    <title>Snapwire</title>
     <link rel="stylesheet" href="/static/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -328,7 +328,7 @@
 </head>
 <body>
     <div class="header">
-        <h1 data-tooltip="Your AI safety dashboard -- monitors and controls what AI agents can do" data-tooltip-pos="bottom"><span class="shield">&#128737;</span> Agentic Firewall</h1>
+        <h1 data-tooltip="Your AI safety dashboard -- monitors and controls what AI agents can do" data-tooltip-pos="bottom"><span class="shield">&#9889;</span> Snapwire</h1>
         <div style="display:flex;align-items:center;gap:16px;">
             <div class="status-badge status-active" data-tooltip="The firewall is running and checking every action your AI agent tries to take" data-tooltip-pos="bottom">
                 <div class="pulse"></div>
@@ -375,11 +375,11 @@
         </div>
 
         <div class="stats-grid">
-            <div class="stat-card" data-tooltip="Actions the firewall stopped because they broke a rule" data-tooltip-pos="bottom">
+            <div class="stat-card" data-tooltip="Actions Snapwire stopped because they broke a rule" data-tooltip-pos="bottom">
                 <div class="label">Blocked Actions</div>
                 <div class="value red" id="stat-blocked">0</div>
             </div>
-            <div class="stat-card" data-tooltip="Actions the firewall checked and approved automatically" data-tooltip-pos="bottom">
+            <div class="stat-card" data-tooltip="Actions Snapwire checked and approved automatically" data-tooltip-pos="bottom">
                 <div class="label">Allowed Actions</div>
                 <div class="value green" id="stat-allowed">0</div>
             </div>
@@ -395,7 +395,7 @@
                 <div class="label">Approval Rate</div>
                 <div class="value purple" id="stat-approval-rate">0%</div>
             </div>
-            <div class="stat-card" data-tooltip="Total number of actions audited by the firewall" data-tooltip-pos="bottom">
+            <div class="stat-card" data-tooltip="Total number of actions audited by Snapwire" data-tooltip-pos="bottom">
                 <div class="label">Total Audited</div>
                 <div class="value" style="color:var(--text-primary);" id="stat-total">0</div>
             </div>
@@ -429,9 +429,9 @@
         <div class="tabs">
             <button class="tab active" data-tab="home" data-tooltip="Overview of savings, spend monitoring, and system health" data-tooltip-pos="bottom">Home</button>
             <button class="tab" data-tab="pending" data-tooltip="Actions that were blocked and need your decision to allow or deny" data-tooltip-pos="bottom">Pending Approvals</button>
-            <button class="tab" data-tab="log" data-tooltip="A history of everything the firewall has checked, and what happened" data-tooltip-pos="bottom">Audit Log</button>
+            <button class="tab" data-tab="log" data-tooltip="A history of everything Snapwire has checked, and what happened" data-tooltip-pos="bottom">Audit Log</button>
             <button class="tab" data-tab="rules" data-tooltip="Custom automation rules that define what your AI agent can and cannot do" data-tooltip-pos="bottom">Automation Rules</button>
-            <button class="tab" data-tab="test" data-tooltip="Try out a fake action to see how the firewall would respond" data-tooltip-pos="bottom">Sandbox</button>
+            <button class="tab" data-tab="test" data-tooltip="Try out a fake action to see how Snapwire would respond" data-tooltip-pos="bottom">Sandbox</button>
             <button class="tab" data-tab="history" data-tooltip="View all changes made to rules with rollback capability" data-tooltip-pos="bottom">Rule History</button>
             <button class="tab" data-tab="keys" data-tooltip="Generate and manage API keys for your AI agents" data-tooltip-pos="bottom">API Keys</button>
             <button class="tab" data-tab="stream" data-tooltip="Watch agent actions happen in real-time" data-tooltip-pos="bottom">Live Stream</button>
@@ -442,7 +442,7 @@
             <button class="tab" data-tab="telemetry" data-tooltip="Instance telemetry and growth metrics" data-tooltip-pos="bottom">Telemetry</button>
             <button class="tab" data-tab="admin" data-tooltip="Manage users, roles, and access controls" data-tooltip-pos="bottom">Admin</button>
             <button class="tab" data-tab="catalog" data-tooltip="View and manage the tool safety catalog with schema enforcement" data-tooltip-pos="bottom">Tool Catalog</button>
-            <button class="tab" data-tab="vault" data-tooltip="Manage credential proxy tokens for secure tool access" data-tooltip-pos="bottom">Credential Proxy</button>
+            <button class="tab" data-tab="vault" data-tooltip="Manage Snap-Tokens for secure tool access" data-tooltip-pos="bottom">Snap-Tokens</button>
             <button class="tab" data-tab="honeypots" data-tooltip="Set up honeypot decoy tools to detect breaches" data-tooltip-pos="bottom">Honeypots</button>
             <button class="tab" data-tab="blast" data-tooltip="Control how fast agents can make calls — prevents runaway loops" data-tooltip-pos="bottom">Blast Radius</button>
             <button class="tab" data-tab="risk" data-tooltip="Risk Confidence Index — intelligence signals for tool trust scoring" data-tooltip-pos="bottom">Risk Intelligence</button>
@@ -450,7 +450,7 @@
             <button class="tab" data-tab="org" data-tooltip="Manage your organization" data-tooltip-pos="bottom">Organization</button>
             <button class="tab" data-tab="analytics" data-tooltip="Usage analytics with charts and trends" data-tooltip-pos="bottom">Analytics</button>
             <button class="tab" data-tab="account" data-tooltip="Your account settings" data-tooltip-pos="bottom">Account</button>
-            <button class="tab" data-tab="quickstart" data-tooltip="Get started with the Agentic Firewall" data-tooltip-pos="bottom">Quick Start</button>
+            <button class="tab" data-tab="quickstart" data-tooltip="Get started with Snapwire" data-tooltip-pos="bottom">Quick Start</button>
         </div>
 
         <div id="onboarding-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:none;align-items:center;justify-content:center;">
@@ -520,12 +520,12 @@
                     <button onclick="shareSavings()" style="margin-top:8px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:var(--accent-green);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;">Share My Savings</button>
                 </div>
                 <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
-                    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Loop Detector</div>
+                    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Fuse Breaker</div>
                     <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
                         <div id="loop-heartbeat" style="width:10px;height:10px;border-radius:50%;background:#10b981;animation:pulse-dot 2s infinite;"></div>
                         <div id="ov-loops" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--text-primary);">0</div>
                     </div>
-                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">loops caught</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">circuits snapped</div>
                 </div>
                 <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
                     <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Active Agents</div>
@@ -542,8 +542,11 @@
             <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:20px;">
                 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                        <h4 style="font-size:14px;margin:0;">Spend Monitor</h4>
-                        <span id="spend-label" style="font-size:11px;color:var(--text-secondary);background:var(--bg-secondary);padding:3px 8px;border-radius:4px;">Current Burn Rate</span>
+                        <h4 style="font-size:14px;margin:0;color:var(--snap-orange);">&#9889; Live Burn Meter</h4>
+                        <span id="spend-label" style="font-size:11px;color:var(--snap-orange);background:rgba(255,102,0,0.1);padding:3px 8px;border-radius:4px;border:1px solid rgba(255,102,0,0.25);">Current Burn Rate</span>
+                    </div>
+                    <div class="burn-meter" style="margin-bottom:14px;">
+                        <div id="burn-meter-needle" class="burn-meter-needle" style="left:0%;"></div>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                         <div>
@@ -581,7 +584,7 @@
                 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
                     <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Quick Actions</div>
                     <div style="display:flex;flex-direction:column;gap:8px;">
-                        <button onclick="document.querySelector('[data-tab=keys]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F511; Generate Proxy Token</button>
+                        <button onclick="document.querySelector('[data-tab=keys]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F511; Generate Snap-Token</button>
                         <button onclick="document.querySelector('[data-tab=blast]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F4B0; Set Spend Limits</button>
                         <button onclick="document.querySelector('[data-tab=rules]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x2699; Automation Rules <span style="color:var(--text-secondary);font-size:11px;margin-left:4px;" id="ov-rules-count"></span></button>
                         <button onclick="document.querySelector('[data-tab=test]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F9EA; Test in Sandbox</button>
@@ -797,7 +800,7 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                     <div>
                         <h3>&#128230; Import / Export Rules</h3>
-                        <p style="color:var(--text-secondary);font-size:13px;">Share rule configurations between Agentic Firewall instances.</p>
+                        <p style="color:var(--text-secondary);font-size:13px;">Share rule configurations between Snapwire instances.</p>
                     </div>
                 </div>
                 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
@@ -983,7 +986,7 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
                     <div>
                         <h3>&#128202; Anonymous Usage Telemetry</h3>
-                        <p style="color:var(--text-secondary);font-size:13px;">Help improve Agentic Firewall by sharing anonymous usage statistics. No private data is ever sent.</p>
+                        <p style="color:var(--text-secondary);font-size:13px;">Help improve Snapwire by sharing anonymous usage statistics. No private data is ever sent.</p>
                     </div>
                 </div>
                 <div style="padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">
@@ -1400,7 +1403,7 @@
                 <p style="color:var(--text-secondary);font-size:14px;margin-bottom:12px;">Go to the <a href="#" onclick="document.querySelector('[data-tab=keys]').click();return false;" style="color:var(--accent-purple);">API Keys</a> tab and create a key for your agent.</p>
             </div>
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;">
-                <h4 style="color:var(--accent-blue);margin-bottom:12px;">Step 2: Send Tool Calls to the Firewall</h4>
+                <h4 style="color:var(--accent-blue);margin-bottom:12px;">Step 2: Send Tool Calls to Snapwire</h4>
                 <p style="color:var(--text-secondary);font-size:14px;margin-bottom:12px;">Point your AI agent to use this endpoint before executing any tool:</p>
                 <pre style="background:var(--bg-secondary);padding:16px;border-radius:8px;font-family:'Fira Code',monospace;font-size:13px;overflow-x:auto;color:var(--text-primary);"><code>POST /api/intercept
 Authorization: Bearer af_YOUR_API_KEY
@@ -1561,11 +1564,12 @@ def handle_tool_call(tool_call):
     </div>
 
     <div id="panel-vault" class="panel">
-        <h3 style="margin-bottom:16px;">Credential Proxy</h3>
-        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Map tools to secret keys stored in environment variables. When a tool call is approved, the firewall injects the real credential — the agent never sees the raw key.</p>
+        <h3 style="margin-bottom:16px;">&#9889; Snap-Tokens</h3>
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Map tools to secret keys stored in environment variables. When a tool call is approved, Snapwire injects the real credential — the agent never sees the raw key.</p>
         <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;">
-            <button onclick="showAddVaultModal()" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">+ Add Vault Entry</button>
-            <button onclick="revokeAllTokens()" id="revoke-all-btn" style="background:var(--accent-red);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;">&#x26A0; Global Revoke All Tokens</button>
+            <button onclick="showAddVaultModal()" style="background:var(--snap-orange);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">+ Add Vault Entry</button>
+            <button onclick="generateSnapTokenGated()" id="gen-snap-token-btn" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">&#9889; Generate Snap-Token</button>
+            <button onclick="revokeAllTokens()" id="revoke-all-btn" style="background:var(--accent-red);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;">&#x26A0; The Snap — Revoke All</button>
         </div>
         <div id="vault-list" style="display:flex;flex-direction:column;gap:8px;"></div>
         <div id="vault-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No vault entries configured yet. Click "+ Add Vault Entry" above to map a tool to a secret key. The secret key name must match an entry in your environment variables. When an agent's tool call is approved, the firewall will automatically inject the credential.</div>
@@ -1748,7 +1752,7 @@ def handle_tool_call(tool_call):
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:36px;max-width:560px;width:90%;max-height:85vh;overflow-y:auto;">
             <div style="text-align:center;margin-bottom:24px;">
                 <div style="font-size:48px;margin-bottom:12px;">&#x1F6E1;</div>
-                <h2 style="font-size:22px;font-weight:700;margin-bottom:8px;">Welcome to Agentic Firewall</h2>
+                <h2 style="font-size:22px;font-weight:700;margin-bottom:8px;">Welcome to Snapwire</h2>
                 <p style="color:var(--text-secondary);font-size:14px;">Let's get your AI agent security set up in 3 quick steps.</p>
             </div>
             <div id="onboard-progress" style="display:flex;gap:8px;margin-bottom:24px;">
@@ -1815,7 +1819,7 @@ def handle_tool_call(tool_call):
                     <button onclick="onboardRunTest()" id="onboard-test-btn" style="background:var(--accent-green);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">Run Test</button>
                     <div id="onboard-test-result" style="display:none;margin-top:12px;background:rgba(255,77,77,0.08);border:1px solid rgba(255,77,77,0.3);border-radius:8px;padding:12px;font-size:13px;color:var(--text-primary);"></div>
                 </div>
-                <button onclick="onboardFinish()" style="width:100%;background:linear-gradient(135deg,var(--accent-purple),var(--accent-blue));border:none;color:#fff;padding:14px;border-radius:10px;cursor:pointer;font-size:15px;font-weight:700;margin-top:12px;">Start Using Agentic Firewall</button>
+                <button onclick="onboardFinish()" style="width:100%;background:linear-gradient(135deg,var(--accent-purple),var(--accent-blue));border:none;color:#fff;padding:14px;border-radius:10px;cursor:pointer;font-size:15px;font-weight:700;margin-top:12px;">Start Using Snapwire</button>
             </div>
         </div>
     </div>
@@ -1879,7 +1883,7 @@ def handle_tool_call(tool_call):
                     const ruleNames = violations.map(v => v.rule).join(', ');
 
                     sendBrowserNotification(
-                        'Agentic Firewall: Action Blocked',
+                        'Snapwire: Action Blocked',
                         `Tool "${newest.tool_call.tool_name}" violated: ${ruleNames}. Click to review.`
                     );
 
@@ -3854,26 +3858,45 @@ def handle_tool_call(tool_call):
         }
 
         async function revokeAllTokens() {
-            if (!confirm('EMERGENCY REVOKE: This will immediately disable ALL active proxy tokens. Agents using these tokens will lose access. Are you sure?')) return;
+            if (!confirm('THE SNAP: This will immediately disable ALL active Snap-Tokens. Agents using these tokens will lose access. Are you sure?')) return;
             const btn = document.getElementById('revoke-all-btn');
             btn.disabled = true;
-            btn.innerHTML = '&#x23F3; Revoking...';
+            btn.innerHTML = '&#x23F3; Snapping...';
             try {
                 const resp = await fetch('/api/vault/proxy-tokens/revoke-all', {method:'POST'});
                 const data = await resp.json();
                 btn.innerHTML = `&#x2714; ${data.count} tokens revoked`;
                 btn.style.background = '#10b981';
+                document.getElementById('panel-vault').classList.add('circuit-break-flash');
                 setTimeout(() => {
-                    btn.innerHTML = '&#x26A0; Global Revoke All Tokens';
+                    btn.innerHTML = '&#x26A0; The Snap — Revoke All';
                     btn.style.background = 'var(--accent-red)';
                     btn.disabled = false;
+                    document.getElementById('panel-vault').classList.remove('circuit-break-flash');
                 }, 3000);
                 loadVault();
             } catch(e) {
-                btn.innerHTML = '&#x26A0; Global Revoke All Tokens';
+                btn.innerHTML = '&#x26A0; The Snap — Revoke All';
                 btn.disabled = false;
                 alert('Failed to revoke tokens');
             }
+        }
+
+        function generateSnapTokenGated() {
+            const acked = localStorage.getItem('snapwire_token_ack');
+            if (!acked) {
+                const agreed = confirm(
+                    'SNAP-TOKEN ACKNOWLEDGMENT\n\n' +
+                    'I acknowledge that Snapwire is a monitoring utility and that I remain ' +
+                    '100% responsible for the costs and actions of my autonomous agents.\n\n' +
+                    'Snap-Tokens are proxy credentials — they do not absolve you of liability ' +
+                    'for what your agents do with the underlying API keys.\n\n' +
+                    'Click OK to acknowledge and continue.'
+                );
+                if (!agreed) return;
+                localStorage.setItem('snapwire_token_ack', '1');
+            }
+            showAddVaultModal();
         }
 
         function shareSavings() {
@@ -3893,7 +3916,7 @@ def handle_tool_call(tool_call):
             ctx.fill();
             ctx.fillStyle = '#10b981';
             ctx.font = 'bold 14px Inter, sans-serif';
-            ctx.fillText('AGENTIC FIREWALL', 30, 40);
+            ctx.fillText('SNAPWIRE', 30, 40);
             ctx.fillStyle = '#64748b';
             ctx.font = '12px Inter, sans-serif';
             ctx.fillText('AI Spend Monitoring & Agent Protection', 30, 58);
@@ -3923,7 +3946,7 @@ def handle_tool_call(tool_call):
             ctx.stroke();
             ctx.fillStyle = '#475569';
             ctx.font = '11px Inter, sans-serif';
-            ctx.fillText('Protected by Agentic Firewall — agenticfirewall.com', 30, 290);
+            ctx.fillText('Protected by Snapwire — snapwire.dev', 30, 290);
             const today = new Date().toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
             ctx.fillText(today, 30, 310);
             canvas.toBlob(function(blob) {
@@ -4385,6 +4408,13 @@ def handle_tool_call(tool_call):
                 const projEl = document.getElementById('ov-projected');
                 if (projEl) projEl.textContent = '$' + (d.projected_30d || 0).toFixed(2);
 
+                const burnNeedle = document.getElementById('burn-meter-needle');
+                if (burnNeedle) {
+                    const dailyRate = d.daily_rate || 0;
+                    const pct = Math.min(100, Math.max(0, (dailyRate / Math.max(d.budget_limit || 50, 1)) * 100));
+                    burnNeedle.style.left = pct + '%';
+                }
+
                 const spendLabel = document.getElementById('spend-label');
                 if (spendLabel && d.hours_active > 24) {
                     spendLabel.textContent = 'Projected 30-Day Spend';
@@ -4397,8 +4427,8 @@ def handle_tool_call(tool_call):
                     if (alertsList && loopData.events && loopData.events.length > 0) {
                         alertsList.innerHTML = loopData.events.slice(0, 5).map(e => {
                             const t = new Date(e.detected_at).toLocaleString();
-                            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:6px;font-size:12px;">
-                                <div><span style="color:var(--accent-red);font-weight:600;">&#x1F6A8; Loop</span> <span style="color:var(--text-primary);">${e.tool_name}</span> <span style="color:var(--text-secondary);">x${e.repeat_count}</span></div>
+                            return `<div class="circuit-break-flash" style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(255,102,0,0.08);border:1px solid rgba(255,102,0,0.2);border-radius:6px;font-size:12px;">
+                                <div><span style="color:var(--snap-orange);font-weight:600;">&#9889; Snapped</span> <span style="color:var(--text-primary);">${e.tool_name}</span> <span style="color:var(--text-secondary);">x${e.repeat_count}</span></div>
                                 <span style="color:var(--text-secondary);font-size:11px;">${t}</span>
                             </div>`;
                         }).join('');
@@ -4785,11 +4815,14 @@ if (result.status === "allowed") {
     </script>
 
     <div style="text-align:center;padding:16px;color:#94a3b8;font-size:12px;border-top:1px solid rgba(148,163,184,0.1);">
-        Powered by <a href="https://github.com/agenticfirewall/agentic-firewall" target="_blank" style="color:#4d8bff;text-decoration:none;">Agentic Firewall</a>
+        Powered by <a href="https://github.com/snapwire/snapwire" target="_blank" style="color:#FF6600;text-decoration:none;">Snapwire</a>
         {% if is_self_hosted %}
         &nbsp;&middot;&nbsp;
-        <a href="/pricing" style="color:#a78bfa;text-decoration:none;font-weight:500;">&#9889; Upgrade to Cloud</a>
+        <a href="/pricing" style="color:#FF6600;text-decoration:none;font-weight:500;">&#9889; Upgrade to Cloud</a>
         {% endif %}
+    </div>
+    <div class="snapwire-footer-disclaimer">
+        Snapwire is a technical monitoring utility. Use at your own risk. User assumes all liability for agent behavior.
     </div>
 </body>
 </html>

@@ -92,7 +92,7 @@ class AgenticFirewall:
                 agent_id=agent_id,
             )
             if result.blocked:
-                raise PermissionError(f"Agentic Firewall blocked {tool_name}: {result.reason}")
+                raise PermissionError(f"Snapwire blocked {tool_name}: {result.reason}")
             return func(*args, **kwargs)
         wrapped.__name__ = func.__name__
         wrapped.__doc__ = func.__doc__

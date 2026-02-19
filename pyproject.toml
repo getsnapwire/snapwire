@@ -1,7 +1,7 @@
 [project]
-name = "agentic-firewall"
+name = "snapwire"
 version = "0.1.0"
-description = "Add your description here"
+description = "Snapwire — The Safety Fuse for Your AI Agents"
 requires-python = ">=3.11"
 dependencies = [
     "anthropic>=0.79.0",

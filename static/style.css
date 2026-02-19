@@ -1,15 +1,19 @@
 :root {
-    --bg-primary: #0f1117;
-    --bg-secondary: #1a1d27;
-    --bg-card: #222533;
-    --border: #2d3148;
-    --text-primary: #e4e6f0;
-    --text-secondary: #8b8fa3;
+    --bg-primary: #0a0c10;
+    --bg-secondary: #12151c;
+    --bg-card: #1a1e28;
+    --border: #2a2f3d;
+    --text-primary: #e8eaef;
+    --text-secondary: #7d8295;
     --accent-red: #ff4d6a;
     --accent-green: #2dd4a8;
     --accent-yellow: #ffb84d;
     --accent-blue: #4d8bff;
     --accent-purple: #9b6dff;
+    --accent-orange: #FF6600;
+    --snap-orange: #FF6600;
+    --snap-orange-dim: rgba(255, 102, 0, 0.15);
+    --snap-orange-border: rgba(255, 102, 0, 0.35);
 }
 
 * {
@@ -43,7 +47,7 @@ body {
 }
 
 .header h1 .shield {
-    color: var(--accent-red);
+    color: var(--snap-orange);
     font-size: 24px;
 }
 
@@ -142,7 +146,7 @@ body {
 }
 
 .tab.active {
-    background: var(--accent-blue);
+    background: var(--snap-orange);
     color: white;
 }
 
@@ -813,8 +817,8 @@ body {
 }
 
 .onboarding-dots .dot.active {
-    background: var(--accent-blue);
-    box-shadow: 0 0 6px rgba(77, 139, 255, 0.5);
+    background: var(--snap-orange);
+    box-shadow: 0 0 6px rgba(255, 102, 0, 0.5);
 }
 
 [data-tooltip] {
@@ -928,7 +932,7 @@ body {
 }
 
 [data-theme="light"] .tab.active {
-    background: #3b82f6;
+    background: var(--snap-orange);
     color: #ffffff;
 }
 
@@ -997,4 +1001,61 @@ body {
     background: #f3f4f6;
     border-color: #d1d5db;
     color: #374151;
+}
+
+.snapwire-footer-disclaimer {
+    text-align: center;
+    padding: 16px 24px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    border-top: 1px solid var(--border);
+    margin-top: 32px;
+}
+
+@keyframes circuitBreak {
+    0% { transform: scale(1); opacity: 1; }
+    20% { transform: scale(1.05); }
+    40% { transform: scale(0.98); filter: brightness(2); }
+    60% { transform: scale(1.02); filter: brightness(0.8); }
+    80% { transform: scale(1); filter: brightness(1.5); }
+    100% { transform: scale(1); opacity: 1; filter: brightness(1); }
+}
+
+.circuit-break-flash {
+    animation: circuitBreak 0.6s ease-out;
+    border-color: var(--snap-orange) !important;
+    box-shadow: 0 0 20px rgba(255, 102, 0, 0.3) !important;
+}
+
+.snap-token-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: var(--snap-orange-dim);
+    border: 1px solid var(--snap-orange-border);
+    border-radius: 4px;
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--snap-orange);
+}
+
+.burn-meter {
+    background: linear-gradient(90deg, var(--accent-green), var(--accent-yellow), var(--snap-orange), var(--accent-red));
+    height: 8px;
+    border-radius: 4px;
+    position: relative;
+    overflow: visible;
+}
+
+.burn-meter-needle {
+    position: absolute;
+    top: -4px;
+    width: 3px;
+    height: 16px;
+    background: white;
+    border-radius: 2px;
+    box-shadow: 0 0 6px rgba(255,255,255,0.5);
+    transition: left 0.5s ease;
 }

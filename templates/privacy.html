@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Snapwire — Privacy Policy</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0d1117;
+            --card-bg: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-muted: #8b949e;
+            --text-bright: #f0f6fc;
+            --orange: #FF6600;
+            --orange-dim: rgba(255, 102, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .privacy-container {
+            max-width: 720px;
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .privacy-header {
+            padding: 32px 36px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .privacy-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-bright);
+        }
+
+        .privacy-header .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--orange);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: white;
+        }
+
+        .privacy-header h1 {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+            color: var(--text-bright);
+        }
+
+        .privacy-header p {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .privacy-content {
+            padding: 28px 36px;
+            font-size: 14px;
+            line-height: 1.75;
+            color: var(--text);
+        }
+
+        .privacy-content h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--orange);
+            margin: 28px 0 12px;
+            letter-spacing: -0.3px;
+        }
+
+        .privacy-content h2:first-child {
+            margin-top: 0;
+        }
+
+        .privacy-content h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-bright);
+            margin: 20px 0 8px;
+        }
+
+        .privacy-content p {
+            margin-bottom: 12px;
+        }
+
+        .privacy-content strong {
+            color: var(--text-bright);
+            font-weight: 600;
+        }
+
+        .privacy-content ul {
+            margin: 8px 0 16px 20px;
+            color: var(--text);
+        }
+
+        .privacy-content ul li {
+            margin-bottom: 6px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 16px 36px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--orange);
+            text-decoration: none;
+            border-top: 1px solid var(--border);
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        .back-link:hover {
+            background: var(--orange-dim);
+        }
+
+        .footer-disclaimer {
+            padding: 16px 36px;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            border-top: 1px solid var(--border);
+            background: var(--bg);
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 16px; }
+            .privacy-container { border-radius: 14px; }
+            .privacy-header { padding: 24px 20px 18px; }
+            .privacy-content { padding: 20px; }
+            .back-link { padding: 12px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="privacy-container">
+        <div class="privacy-header">
+            <div class="logo">
+                <span class="logo-icon">&#x26A1;</span>
+                Snapwire
+            </div>
+            <h1>Privacy Policy</h1>
+            <p>Last Updated: February 19, 2026</p>
+        </div>
+
+        <div class="privacy-content">
+            <h2>Privacy Policy</h2>
+
+            <h3>1. Data Collection</h3>
+            <p>Snapwire collects the minimum data necessary to provide its monitoring and auditing services. This includes:</p>
+            <ul>
+                <li><strong>Tool call metadata:</strong> Tool names, parameters (sanitized), timestamps, and response status.</li>
+                <li><strong>Agent identifiers:</strong> Agent IDs and session identifiers used to group activity.</li>
+                <li><strong>Cost data:</strong> Estimated and actual costs associated with tool calls for budget tracking.</li>
+                <li><strong>User account information:</strong> Display name, email (if provided), and authentication identifiers.</li>
+            </ul>
+
+            <h3>2. What We Don't Collect</h3>
+            <p><strong>Raw API keys are never stored in logs.</strong> When you store credentials in the Snapwire Vault, your real API keys are encrypted at rest and injected ephemerally — they never appear in audit logs or monitoring data.</p>
+            <p><strong>Snap-Tokens mask real credentials.</strong> Proxy tokens (Snap-Tokens) are used in place of your actual API keys so that your real credentials are never exposed in agent traffic or log entries.</p>
+
+            <h3>3. Telemetry</h3>
+            <p>Snapwire supports <strong>opt-in anonymous telemetry</strong> to help improve the service. Telemetry is disabled by default and can be toggled at any time from your dashboard settings.</p>
+            <p>When enabled, telemetry includes:</p>
+            <ul>
+                <li>A unique <strong>install_id</strong> (randomly generated, not tied to your identity)</li>
+                <li>Aggregate statistics: total rules, total intercepts in the last 24 hours, number of connected agents, uptime</li>
+                <li>Platform type (Replit, Docker, self-hosted)</li>
+            </ul>
+            <p><strong>No personally identifiable information (PII) is ever included in telemetry data.</strong></p>
+
+            <h3>4. Data Storage</h3>
+            <p>All audit logs, rules, and configuration data are stored in <strong>your own database</strong>. Snapwire does not maintain a centralized data store for user monitoring data.</p>
+            <p><strong>Self-hosted users control their data entirely.</strong> If you deploy Snapwire on your own infrastructure, all data remains on your servers and is never transmitted to us.</p>
+
+            <h3>5. Third-Party Services</h3>
+            <p>Snapwire integrates with LLM providers (such as Anthropic and OpenAI) solely for the purpose of AI-powered auditing of tool calls. When the AI auditor is enabled:</p>
+            <ul>
+                <li>Tool call metadata (tool name, parameters, intent) is sent to the configured LLM provider for analysis.</li>
+                <li>This data is used for real-time auditing only and is subject to the LLM provider's own data policies.</li>
+                <li>No raw API keys or vault credentials are ever sent to LLM providers.</li>
+            </ul>
+
+            <h3>6. Data Retention</h3>
+            <p>You can delete your data at any time by deleting your account. Upon account deletion, all associated audit logs, rules, API keys, vault entries, and configuration data are permanently removed from the database.</p>
+
+            <h3>7. Cookies & Local Storage</h3>
+            <p><strong>Session cookies</strong> are used for authentication only. These cookies are essential for maintaining your login session and do not track you across other websites.</p>
+            <p><strong>localStorage</strong> is used for UI preferences such as theme settings, sidebar state, and dashboard layout. This data stays in your browser and is never transmitted to our servers.</p>
+
+            <h3>8. Contact</h3>
+            <p>If you have questions about this Privacy Policy or your data, you can reach out through the project repository or your deployment's configured contact channels.</p>
+        </div>
+
+        <a href="/" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Back to Login
+        </a>
+
+        <div class="footer-disclaimer">
+            Snapwire is a technical monitoring utility. Use at your own risk. User assumes all liability for agent behavior.
+        </div>
+    </div>
+</body>
+</html>

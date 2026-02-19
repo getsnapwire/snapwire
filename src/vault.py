@@ -93,7 +93,7 @@ def generate_proxy_token(tenant_id, vault_entry_id, label=None):
     if not entry:
         return None
 
-    token = "agfw_" + secrets_module.token_hex(24)
+    token = "snap_" + secrets_module.token_hex(24)
 
     proxy = ProxyToken(
         tenant_id=tenant_id,

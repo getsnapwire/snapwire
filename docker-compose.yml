@@ -6,7 +6,7 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - DATABASE_URL=postgresql://firewall:firewall@db:5432/agentic_firewall
+      - DATABASE_URL=postgresql://firewall:firewall@db:5432/snapwire
       - SESSION_SECRET=change-me-to-a-random-string
       - PORT=5000
     depends_on:
@@ -19,7 +19,7 @@ services:
     environment:
       - POSTGRES_USER=firewall
       - POSTGRES_PASSWORD=firewall
-      - POSTGRES_DB=agentic_firewall
+      - POSTGRES_DB=snapwire
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

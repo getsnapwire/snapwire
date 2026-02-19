@@ -1,6 +1,6 @@
-# 🛡 Agentic Firewall
+# ⚡ Snapwire
 
-Security firewall for AI agents — intercept, audit, and control tool calls in real-time.
+The Safety Fuse for Your AI Agents — intercept, audit, and control tool calls in real-time.
 
 ## Features
 
@@ -22,8 +22,8 @@ Choose your preferred deployment method:
 ### Docker (Recommended)
 
 ```bash
-git clone https://github.com/agenticfirewall/agentic-firewall.git
-cd agentic-firewall
+git clone https://github.com/snapwire-ai/snapwire.git
+cd snapwire
 cp .env.example .env
 # Edit .env with your settings
 docker-compose up -d
@@ -33,8 +33,8 @@ docker-compose up -d
 ### Local Python
 
 ```bash
-git clone https://github.com/agenticfirewall/agentic-firewall.git
-cd agentic-firewall
+git clone https://github.com/snapwire-ai/snapwire.git
+cd snapwire
 pip install -e .
 cp .env.example .env
 # Edit .env with your settings  
@@ -46,7 +46,7 @@ python main.py
 
 Click the button below to deploy on Replit:
 
-[![Deploy on Replit](https://replit.com/badge/github/agenticfirewall/agentic-firewall)](https://replit.com/new/github/agenticfirewall/agentic-firewall)
+[![Deploy on Replit](https://replit.com/badge/github/snapwire-ai/snapwire)](https://replit.com/new/github/snapwire-ai/snapwire)
 
 ## Configuration
 
@@ -54,9 +54,9 @@ Create a `.env` file based on `.env.example` with the following key variables:
 
 ```env
 # Database
-DATABASE_URL=postgresql://user:password@localhost/agentic_firewall
+DATABASE_URL=postgresql://user:password@localhost/snapwire
 # or use SQLite for local development
-# DATABASE_URL=sqlite:///./agentic_firewall.db
+# DATABASE_URL=sqlite:///./snapwire.db
 
 # LLM Provider
 LLM_PROVIDER=anthropic  # or openai
@@ -124,7 +124,7 @@ else:
 
 ## Architecture
 
-Agentic Firewall is built with:
+Snapwire is built with:
 
 - **Backend**: Flask web framework with RESTful APIs
 - **Database**: PostgreSQL (production) / SQLite (development)
@@ -155,6 +155,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Support
 
-- Documentation: https://docs.agenticfirewall.ai
-- Issues: https://github.com/agenticfirewall/agentic-firewall/issues
-- Discussions: https://github.com/agenticfirewall/agentic-firewall/discussions
+- Documentation: https://docs.snapwire.ai
+- Issues: https://github.com/snapwire-ai/snapwire/issues
+- Discussions: https://github.com/snapwire-ai/snapwire/discussions

@@ -1,11 +1,11 @@
-# Agentic Firewall Python SDK
+# Snapwire Python SDK
 
-Official Python SDK for the [Agentic Firewall](https://github.com/agenticfirewall/agentic-firewall) - security firewall for AI agents.
+Official Python SDK for [Snapwire](https://github.com/snapwire-ai/snapwire) — The Safety Fuse for Your AI Agents.
 
 ## Installation
 
 ```bash
-pip install agentic-firewall
+pip install snapwire
 ```
 
 ## Quick Start
@@ -38,7 +38,7 @@ else:
 def query_database(sql):
     return db.execute(sql)
 
-# Automatically checked by firewall before execution
+# Automatically checked by Snapwire before execution
 result = query_database("SELECT * FROM users")
 ```
 

@@ -300,6 +300,11 @@ def accept_tos():
     return jsonify({"status": "accepted", "redirect": "/"})
 
 
+@app.route("/privacy")
+def privacy_page():
+    return render_template("privacy.html")
+
+
 @app.route("/pricing")
 def pricing_page():
     return render_template("pricing.html", login_url=_get_login_url())
@@ -958,7 +963,7 @@ def export_rules():
 
     export_data = {
         "_meta": {
-            "generator": "Agentic Firewall",
+            "generator": "Snapwire",
             "version": "1.0.0",
             "exported_at": datetime.utcnow().isoformat() + "Z",
             "source_url": request.url_root.rstrip("/"),
@@ -992,7 +997,7 @@ def export_rules_download():
 
     export_data = {
         "_meta": {
-            "generator": "Agentic Firewall",
+            "generator": "Snapwire",
             "version": "1.0.0",
             "exported_at": datetime.utcnow().isoformat() + "Z",
             "source_url": request.url_root.rstrip("/"),
@@ -1004,7 +1009,7 @@ def export_rules_download():
     }
 
     date_str = datetime.utcnow().strftime("%Y-%m-%d")
-    filename = f"agentic-firewall-rules-{date_str}.json"
+    filename = f"snapwire-rules-{date_str}.json"
     return Response(
         json.dumps(export_data, indent=2),
         mimetype="application/json",
@@ -1031,8 +1036,8 @@ def import_rules():
             return jsonify({"error": "No JSON payload provided"}), 400
 
     meta = data.get("_meta", {})
-    if meta.get("generator") != "Agentic Firewall":
-        return jsonify({"error": "Invalid import file. Must be an Agentic Firewall export (missing or incorrect _meta.generator)."}), 400
+    if meta.get("generator") not in ("Snapwire", "Agentic Firewall"):
+        return jsonify({"error": "Invalid import file. Must be a Snapwire export (missing or incorrect _meta.generator)."}), 400
 
     rules = data.get("rules", [])
     if not isinstance(rules, list) or len(rules) == 0:
@@ -1615,7 +1620,7 @@ def test_webhook(webhook_id):
         return jsonify({"error": "Webhook not found"}), 404
     test_payload = {
         "event": "test",
-        "message": "This is a test webhook from Agentic Firewall",
+        "message": "This is a test webhook from Snapwire",
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "webhook_id": webhook.id,
         "webhook_name": webhook.name,
@@ -1719,7 +1724,7 @@ def test_slack_notification():
         "tool_name": "test_action",
         "agent_id": "test-agent",
         "risk_score": 85,
-        "analysis": "This is a test notification from the Agentic Firewall.",
+        "analysis": "This is a test notification from Snapwire.",
         "violations": [
             {"rule": "test_rule", "severity": "high", "reason": "Test violation for notification verification"}
         ],
@@ -2408,8 +2413,8 @@ def export_analytics():
 def test_email_notification():
     from src.email_service import send_email
     result = send_email(
-        subject="Agentic Firewall - Test Email",
-        text_body="This is a test email from your Agentic Firewall dashboard. If you received this, email notifications are working correctly!",
+        subject="Snapwire - Test Email",
+        text_body="This is a test email from your Snapwire dashboard. If you received this, email notifications are working correctly!",
         html_body="""
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: #1e293b; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
@@ -2417,7 +2422,7 @@ def test_email_notification():
             </div>
             <div style="background: #f8fafc; padding: 20px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px;">
                 <p style="color: #10b981; font-weight: 600; font-size: 18px;">Email notifications are working!</p>
-                <p style="color: #475569;">This is a test email from your Agentic Firewall dashboard. You will receive notifications when actions are blocked or critical risks are detected.</p>
+                <p style="color: #475569;">This is a test email from your Snapwire dashboard. You will receive notifications when actions are blocked or critical risks are detected.</p>
             </div>
         </div>
         """
@@ -2427,7 +2432,7 @@ def test_email_notification():
     return jsonify({"error": "Failed to send test email. This feature requires a deployed environment."}), 500
 
 
-REPLIT_TEMPLATE_URL = os.environ.get("TEMPLATE_URL", "https://github.com/agenticfirewall/agentic-firewall")
+REPLIT_TEMPLATE_URL = os.environ.get("TEMPLATE_URL", "https://github.com/snapwire/snapwire")
 
 
 @app.route("/audit")

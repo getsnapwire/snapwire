@@ -3,40 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pricing — Agentic Firewall</title>
+    <title>Snapwire — Pricing</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --white: #ffffff; --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
-            --gray-300: #d1d5db; --gray-400: #9ca3af; --gray-500: #6b7280; --gray-600: #4b5563;
-            --gray-700: #374151; --gray-800: #1f2937; --gray-900: #111827;
-            --blue-50: #eff6ff; --blue-100: #dbeafe; --blue-500: #3b82f6; --blue-600: #2563eb;
-            --purple-500: #8b5cf6; --purple-600: #7c3aed;
-            --green-500: #10b981; --green-600: #059669;
+            --white: #ffffff; --gray-50: #0d1117; --gray-100: #161b22; --gray-200: #30363d;
+            --gray-300: #484f58; --gray-400: #6e7681; --gray-500: #8b949e; --gray-600: #c9d1d9;
+            --gray-700: #d2dae4; --gray-800: #e6edf3; --gray-900: #f0f3f6;
+            --orange-500: #FF6600; --orange-600: #E55C00;
+            --green-500: #3fb950; --green-600: #2ea043;
         }
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--white); color: var(--gray-900); -webkit-font-smoothing: antialiased; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #0d1117; color: var(--gray-900); -webkit-font-smoothing: antialiased; }
 
         .nav {
             position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-            background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            background: rgba(13,17,23,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--gray-200); padding: 0 32px; height: 64px;
             display: flex; align-items: center; justify-content: space-between;
         }
         .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; color: var(--gray-900); text-decoration: none; }
-        .nav-logo .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--blue-600), var(--purple-600)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; }
+        .nav-logo .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #FF6600, #CC5200); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; }
         .nav-links { display: flex; align-items: center; gap: 32px; }
-        .nav-links a { font-size: 14px; font-weight: 500; color: var(--gray-600); text-decoration: none; transition: color 0.2s; }
+        .nav-links a { font-size: 14px; font-weight: 500; color: var(--gray-500); text-decoration: none; transition: color 0.2s; }
         .nav-links a:hover { color: var(--gray-900); }
-        .nav-btn { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; color: var(--white); background: var(--gray-900); transition: all 0.2s; }
-        .nav-btn:hover { background: var(--gray-700); }
+        .nav-btn { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; color: #fff; background: #FF6600; transition: all 0.2s; }
+        .nav-btn:hover { background: #E55C00; }
 
         .page-hero {
             padding: 140px 32px 60px; text-align: center;
-            background: linear-gradient(180deg, var(--white) 0%, var(--gray-50) 100%);
+            background: linear-gradient(180deg, #0d1117 0%, #161b22 100%);
         }
-        .page-hero h1 { font-size: 44px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 16px; }
+        .page-hero h1 { font-size: 44px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 16px; color: var(--gray-900); }
         .page-hero p { font-size: 18px; color: var(--gray-500); max-width: 520px; margin: 0 auto; line-height: 1.7; }
 
         .pricing-grid {
@@ -45,27 +44,27 @@
         }
 
         .plan-card {
-            background: var(--white); border: 1px solid var(--gray-200); border-radius: 16px;
+            background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 16px;
             padding: 36px 28px; display: flex; flex-direction: column; position: relative; transition: all 0.25s;
         }
-        .plan-card:hover { border-color: var(--gray-300); box-shadow: 0 8px 32px rgba(0,0,0,0.06); transform: translateY(-2px); }
-        .plan-card.featured { border-color: var(--blue-500); box-shadow: 0 0 0 1px var(--blue-500); }
+        .plan-card:hover { border-color: var(--gray-300); box-shadow: 0 8px 32px rgba(0,0,0,0.3); transform: translateY(-2px); }
+        .plan-card.featured { border-color: #FF6600; box-shadow: 0 0 0 1px #FF6600; }
         .plan-card.featured::before {
             content: 'Most Popular'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
-            background: linear-gradient(135deg, var(--blue-600), var(--purple-600)); color: white;
+            background: linear-gradient(135deg, #FF6600, #CC5200); color: white;
             font-size: 12px; font-weight: 700; padding: 4px 16px; border-radius: 100px;
         }
 
-        .plan-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+        .plan-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; color: var(--gray-900); }
         .plan-desc { font-size: 14px; color: var(--gray-500); margin-bottom: 24px; line-height: 1.5; }
-        .plan-price { font-size: 42px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; }
+        .plan-price { font-size: 42px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; color: var(--gray-900); }
         .plan-price span { font-size: 16px; font-weight: 500; color: var(--gray-400); }
         .plan-billing { font-size: 13px; color: var(--gray-400); margin-bottom: 28px; }
 
         .plan-features { list-style: none; flex: 1; margin-bottom: 28px; }
         .plan-features li {
             font-size: 14px; color: var(--gray-600); padding: 8px 0; display: flex; align-items: flex-start; gap: 10px;
-            border-bottom: 1px solid var(--gray-100);
+            border-bottom: 1px solid rgba(48,54,61,0.5);
         }
         .plan-features li:last-child { border-bottom: none; }
         .plan-features .check { color: var(--green-500); font-weight: 700; flex-shrink: 0; font-size: 16px; }
@@ -74,19 +73,19 @@
             display: block; text-align: center; padding: 13px 24px; border-radius: 10px;
             font-size: 15px; font-weight: 600; text-decoration: none; transition: all 0.2s;
         }
-        .plan-btn-primary { background: var(--gray-900); color: var(--white); }
-        .plan-btn-primary:hover { background: var(--gray-700); }
-        .plan-btn-outline { border: 1px solid var(--gray-300); color: var(--gray-700); background: var(--white); }
-        .plan-btn-outline:hover { border-color: var(--gray-400); background: var(--gray-50); }
+        .plan-btn-primary { background: #FF6600; color: #fff; }
+        .plan-btn-primary:hover { background: #E55C00; }
+        .plan-btn-outline { border: 1px solid var(--gray-300); color: var(--gray-600); background: var(--gray-100); }
+        .plan-btn-outline:hover { border-color: var(--gray-400); background: #21262d; }
 
         .plan-note {
             max-width: 680px; margin: 0 auto; text-align: center; padding: 0 32px 96px;
             font-size: 14px; color: var(--gray-400); line-height: 1.7;
         }
 
-        .footer { border-top: 1px solid var(--gray-200); padding: 32px; text-align: center; background: var(--white); }
+        .footer { border-top: 1px solid var(--gray-200); padding: 32px; text-align: center; background: #0d1117; }
         .footer-brand { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--gray-500); margin-bottom: 8px; }
-        .footer-brand .logo-sm { width: 20px; height: 20px; background: linear-gradient(135deg, var(--blue-600), var(--purple-600)); border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: white; }
+        .footer-brand .logo-sm { width: 20px; height: 20px; background: linear-gradient(135deg, #FF6600, #CC5200); border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: white; }
         .footer p { font-size: 13px; color: var(--gray-400); }
 
         @media (max-width: 768px) {
@@ -98,7 +97,7 @@
 </head>
 <body>
     <nav class="nav">
-        <a href="/" class="nav-logo"><span class="logo-icon">&#x1F6E1;</span> Agentic Firewall</a>
+        <a href="/" class="nav-logo"><span class="logo-icon">⚡</span> Snapwire</a>
         <div class="nav-links">
             <a href="/">Home</a>
             <a href="/docs">API Docs</a>
@@ -108,7 +107,7 @@
 
     <section class="page-hero">
         <h1>Simple, transparent pricing</h1>
-        <p>Start free, scale as your AI agent fleet grows. Every plan includes all security features.</p>
+        <p>Start free, scale as your AI agent fleet grows. Every plan includes all safety features.</p>
     </section>
 
     <div class="pricing-grid">
@@ -163,103 +162,106 @@
                 <li><span class="check">&#x2713;</span> SLA guarantee</li>
                 <li><span class="check">&#x2713;</span> On-premises option</li>
             </ul>
-            <a href="mailto:sales@agenticfirewall.com" class="plan-btn plan-btn-outline">Contact Sales</a>
+            <a href="mailto:sales@snapwire.dev" class="plan-btn plan-btn-outline">Contact Sales</a>
         </div>
     </div>
 
     <div class="plan-note">
-        All plans include the full Agentic Firewall security stack: constitutional auditing, real-time monitoring, and the human-in-the-loop approval queue. Higher tiers unlock advanced features and higher usage limits.
+        All plans include the full Snapwire safety stack: constitutional auditing, real-time monitoring, and the human-in-the-loop approval queue. Higher tiers unlock advanced features and higher usage limits.
     </div>
 
     <div style="max-width:900px;margin:0 auto;padding:0 32px 60px;">
-        <h2 style="text-align:center;font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:8px;">Cloud vs Self-Hosted</h2>
-        <p style="text-align:center;font-size:16px;color:var(--gray-500);margin-bottom:32px;">Choose the deployment that fits your team</p>
+        <h2 style="text-align:center;font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:8px;color:#f0f3f6;">Cloud vs Self-Hosted</h2>
+        <p style="text-align:center;font-size:16px;color:#8b949e;margin-bottom:32px;">Choose the deployment that fits your team</p>
         <table style="width:100%;border-collapse:collapse;font-size:14px;">
             <thead>
-                <tr style="border-bottom:2px solid var(--gray-200);">
-                    <th style="text-align:left;padding:12px 16px;color:var(--gray-500);font-weight:600;">Feature</th>
-                    <th style="text-align:center;padding:12px 16px;color:var(--blue-600);font-weight:700;">Cloud (SaaS)</th>
-                    <th style="text-align:center;padding:12px 16px;color:var(--purple-600);font-weight:700;">Self-Hosted</th>
+                <tr style="border-bottom:2px solid #30363d;">
+                    <th style="text-align:left;padding:12px 16px;color:#8b949e;font-weight:600;">Feature</th>
+                    <th style="text-align:center;padding:12px 16px;color:#FF6600;font-weight:700;">Cloud (SaaS)</th>
+                    <th style="text-align:center;padding:12px 16px;color:#FF6600;font-weight:700;">Self-Hosted</th>
                 </tr>
             </thead>
             <tbody>
-                <tr style="border-bottom:1px solid var(--gray-100);">
-                    <td style="padding:12px 16px;">Setup</td>
-                    <td style="text-align:center;padding:12px;">Sign up and go</td>
-                    <td style="text-align:center;padding:12px;">Deploy template</td>
+                <tr style="border-bottom:1px solid #21262d;">
+                    <td style="padding:12px 16px;color:#c9d1d9;">Setup</td>
+                    <td style="text-align:center;padding:12px;color:#c9d1d9;">Sign up and go</td>
+                    <td style="text-align:center;padding:12px;color:#c9d1d9;">Deploy template</td>
                 </tr>
-                <tr style="border-bottom:1px solid var(--gray-100);background:var(--gray-50);">
-                    <td style="padding:12px 16px;">Constitutional AI Auditing</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
+                <tr style="border-bottom:1px solid #21262d;background:#161b22;">
+                    <td style="padding:12px 16px;color:#c9d1d9;">Constitutional AI Auditing</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
                 </tr>
-                <tr style="border-bottom:1px solid var(--gray-100);">
-                    <td style="padding:12px 16px;">Blast Radius Governor</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
+                <tr style="border-bottom:1px solid #21262d;">
+                    <td style="padding:12px 16px;color:#c9d1d9;">Blast Radius Governor</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
                 </tr>
-                <tr style="border-bottom:1px solid var(--gray-100);background:var(--gray-50);">
-                    <td style="padding:12px 16px;">Identity Vault</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
+                <tr style="border-bottom:1px solid #21262d;background:#161b22;">
+                    <td style="padding:12px 16px;color:#c9d1d9;">Identity Vault</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
                 </tr>
-                <tr style="border-bottom:1px solid var(--gray-100);">
-                    <td style="padding:12px 16px;">Honeypot Tripwires</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
+                <tr style="border-bottom:1px solid #21262d;">
+                    <td style="padding:12px 16px;color:#c9d1d9;">Honeypot Tripwires</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
                 </tr>
-                <tr style="border-bottom:1px solid var(--gray-100);background:var(--gray-50);">
-                    <td style="padding:12px 16px;">Deception Detection</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
+                <tr style="border-bottom:1px solid #21262d;background:#161b22;">
+                    <td style="padding:12px 16px;color:#c9d1d9;">Deception Detection</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
                 </tr>
-                <tr style="border-bottom:1px solid var(--gray-100);">
-                    <td style="padding:12px 16px;">Tool Safety Catalog</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
+                <tr style="border-bottom:1px solid #21262d;">
+                    <td style="padding:12px 16px;color:#c9d1d9;">Tool Safety Catalog</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
                 </tr>
-                <tr style="border-bottom:1px solid var(--gray-100);background:var(--gray-50);">
-                    <td style="padding:12px 16px;">Multi-Tenant / Orgs</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
+                <tr style="border-bottom:1px solid #21262d;background:#161b22;">
+                    <td style="padding:12px 16px;color:#c9d1d9;">Multi-Tenant / Orgs</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
                 </tr>
-                <tr style="border-bottom:1px solid var(--gray-100);">
-                    <td style="padding:12px 16px;">Managed Hosting</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:var(--gray-400);">&mdash;</td>
+                <tr style="border-bottom:1px solid #21262d;">
+                    <td style="padding:12px 16px;color:#c9d1d9;">Managed Hosting</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
+                    <td style="text-align:center;color:#6e7681;">&mdash;</td>
                 </tr>
-                <tr style="border-bottom:1px solid var(--gray-100);background:var(--gray-50);">
-                    <td style="padding:12px 16px;">Auto Updates</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
-                    <td style="text-align:center;color:var(--gray-400);">Manual</td>
+                <tr style="border-bottom:1px solid #21262d;background:#161b22;">
+                    <td style="padding:12px 16px;color:#c9d1d9;">Auto Updates</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
+                    <td style="text-align:center;color:#6e7681;">Manual</td>
                 </tr>
-                <tr style="border-bottom:1px solid var(--gray-100);">
-                    <td style="padding:12px 16px;">Full Source Access</td>
-                    <td style="text-align:center;color:var(--gray-400);">&mdash;</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">&#x2713;</td>
+                <tr style="border-bottom:1px solid #21262d;">
+                    <td style="padding:12px 16px;color:#c9d1d9;">Full Source Access</td>
+                    <td style="text-align:center;color:#6e7681;">&mdash;</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">&#x2713;</td>
                 </tr>
-                <tr style="border-bottom:1px solid var(--gray-100);background:var(--gray-50);">
-                    <td style="padding:12px 16px;">Custom Modifications</td>
-                    <td style="text-align:center;color:var(--gray-400);">Via API</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">Full control</td>
+                <tr style="border-bottom:1px solid #21262d;background:#161b22;">
+                    <td style="padding:12px 16px;color:#c9d1d9;">Custom Modifications</td>
+                    <td style="text-align:center;color:#6e7681;">Via API</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">Full control</td>
                 </tr>
-                <tr style="border-bottom:1px solid var(--gray-100);">
-                    <td style="padding:12px 16px;">Data Residency</td>
-                    <td style="text-align:center;padding:12px;">Cloud</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">Your infra</td>
+                <tr style="border-bottom:1px solid #21262d;">
+                    <td style="padding:12px 16px;color:#c9d1d9;">Data Residency</td>
+                    <td style="text-align:center;padding:12px;color:#c9d1d9;">Cloud</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">Your infra</td>
                 </tr>
                 <tr>
-                    <td style="padding:12px 16px;">Health Monitoring</td>
-                    <td style="text-align:center;color:var(--green-500);font-weight:700;">Built-in</td>
-                    <td style="text-align:center;padding:12px;">/health endpoint</td>
+                    <td style="padding:12px 16px;color:#c9d1d9;">Health Monitoring</td>
+                    <td style="text-align:center;color:#3fb950;font-weight:700;">Built-in</td>
+                    <td style="text-align:center;padding:12px;color:#c9d1d9;">/health endpoint</td>
                 </tr>
             </tbody>
         </table>
     </div>
 
     <footer class="footer">
-        <div class="footer-brand"><span class="logo-sm">&#x1F6E1;</span> Agentic Firewall</div>
-        <p>AI safety and governance platform</p>
+        <div class="footer-brand"><span class="logo-sm">⚡</span> Snapwire</div>
+        <p>The Safety Fuse for Your AI Agents</p>
     </footer>
+    <div style="text-align:center;padding:16px 24px;font-size:11px;color:#7d8295;opacity:0.7;border-top:1px solid #2a2f3d;margin-top:32px;">
+        Snapwire is a technical monitoring utility. Use at your own risk. User assumes all liability for agent behavior.
+    </div>
 </body>
 </html>

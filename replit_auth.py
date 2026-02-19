@@ -245,7 +245,7 @@ else:
         try:
             send_email(
                 to=email,
-                subject="Verify your email - Agentic Firewall",
+                subject="Verify your email - Snapwire",
                 body=f"Hi {name},\n\nPlease verify your email by clicking the link below:\n\n{verify_link}\n\nIf you did not create an account, please ignore this email."
             )
         except Exception:
@@ -325,7 +325,7 @@ else:
         try:
             send_email(
                 to=current_user.email,
-                subject="Verify your email - Agentic Firewall",
+                subject="Verify your email - Snapwire",
                 body=f"Hi {current_user.first_name},\n\nPlease verify your email by clicking the link below:\n\n{verify_link}\n\nIf you did not request this, please ignore this email."
             )
         except Exception:
@@ -355,7 +355,7 @@ else:
             try:
                 send_email(
                     to=email,
-                    subject="Reset your password - Agentic Firewall",
+                    subject="Reset your password - Snapwire",
                     body=f"Hi {user.first_name},\n\nYou requested a password reset. Click the link below to set a new password:\n\n{reset_link}\n\nThis link expires in 1 hour.\n\nIf you did not request this, please ignore this email."
                 )
             except Exception:

@@ -3,45 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Setup - Agentic Firewall</title>
+    <title>Snapwire Setup</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #f8fafc 0%, #e8f0fe 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .card { background: white; border-radius: 20px; box-shadow: 0 8px 40px rgba(0,0,0,0.1); padding: 48px; width: 100%; max-width: 520px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .card { background: #161b22; border-radius: 20px; box-shadow: 0 8px 40px rgba(0,0,0,0.3); padding: 48px; width: 100%; max-width: 520px; border: 1px solid #30363d; }
         .logo { text-align: center; margin-bottom: 8px; }
         .logo .shield { font-size: 48px; }
-        .logo h1 { font-size: 26px; color: #1e293b; margin-top: 8px; }
-        .logo p { font-size: 15px; color: #64748b; margin-top: 8px; line-height: 1.5; }
+        .logo h1 { font-size: 26px; color: #FF6600; margin-top: 8px; }
+        .logo p { font-size: 15px; color: #8b949e; margin-top: 8px; line-height: 1.5; }
         .steps { display: flex; justify-content: center; gap: 8px; margin: 28px 0; }
-        .step { width: 40px; height: 4px; border-radius: 2px; background: #e2e8f0; }
-        .step.active { background: #4d8bff; }
+        .step { width: 40px; height: 4px; border-radius: 2px; background: #30363d; }
+        .step.active { background: #FF6600; }
         .section { display: none; }
         .section.active { display: block; }
-        .section h2 { font-size: 18px; color: #1e293b; margin-bottom: 6px; }
-        .section p { font-size: 14px; color: #64748b; margin-bottom: 20px; }
+        .section h2 { font-size: 18px; color: #c9d1d9; margin-bottom: 6px; }
+        .section p { font-size: 14px; color: #8b949e; margin-bottom: 20px; }
         .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
-        .form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; color: #1e293b; outline: none; transition: border-color 0.2s; }
-        .form-group input:focus, .form-group select:focus { border-color: #4d8bff; box-shadow: 0 0 0 3px rgba(77,139,255,0.1); }
-        .btn { width: 100%; padding: 12px; background: #4d8bff; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 8px; }
-        .btn:hover { background: #3b7aed; }
-        .btn-secondary { background: #f1f5f9; color: #475569; }
-        .btn-secondary:hover { background: #e2e8f0; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #c9d1d9; margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1px solid #30363d; border-radius: 8px; font-size: 14px; color: #c9d1d9; background: #0d1117; outline: none; transition: border-color 0.2s; }
+        .form-group input:focus, .form-group select:focus { border-color: #FF6600; box-shadow: 0 0 0 3px rgba(255,102,0,0.15); }
+        .btn { width: 100%; padding: 12px; background: #FF6600; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 8px; }
+        .btn:hover { background: #E55C00; }
+        .btn-secondary { background: #21262d; color: #8b949e; }
+        .btn-secondary:hover { background: #30363d; }
         .btn-row { display: flex; gap: 12px; margin-top: 16px; }
         .btn-row .btn { flex: 1; }
-        .error { background: #fef2f2; color: #dc2626; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; border: 1px solid #fecaca; }
-        .hint { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+        .error { background: #3d1a1a; color: #f85149; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; border: 1px solid #5a2d2d; }
+        .hint { font-size: 11px; color: #6e7681; margin-top: 4px; }
         .feature-list { margin: 16px 0; }
-        .feature-list li { padding: 6px 0; font-size: 14px; color: #475569; display: flex; align-items: center; gap: 8px; list-style: none; }
-        .feature-list li span { color: #10b981; }
-        .welcome-badge { display: inline-block; background: rgba(77,139,255,0.1); color: #4d8bff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 16px; }
+        .feature-list li { padding: 6px 0; font-size: 14px; color: #8b949e; display: flex; align-items: center; gap: 8px; list-style: none; }
+        .feature-list li span { color: #3fb950; }
+        .welcome-badge { display: inline-block; background: rgba(255,102,0,0.15); color: #FF6600; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 16px; }
     </style>
 </head>
 <body>
     <div class="card">
         <div class="logo">
-            <div class="shield">&#128737;</div>
-            <h1>Agentic Firewall</h1>
+            <div class="shield">⚡</div>
+            <h1>Snapwire</h1>
         </div>
 
         <div class="steps">
@@ -51,16 +51,16 @@
 
         <div class="section active" id="step-1">
             <div style="text-align:center;"><span class="welcome-badge">Welcome</span></div>
-            <h2 style="text-align:center;">Set Up Your Firewall</h2>
+            <h2 style="text-align:center;">Set Up Snapwire</h2>
             <p style="text-align:center;">Create your admin account to get started. This takes about 30 seconds.</p>
 
             <ul class="feature-list">
                 <li><span>&#10003;</span> Stop hallucination loops from burning your API budget</li>
                 <li><span>&#10003;</span> Monitor real-time agent spend with projected forecasts</li>
                 <li><span>&#128308;</span> <strong>Shadow Mode on by default</strong> &mdash; observe everything, block nothing</li>
-                <li><span>&#10003;</span> Credential proxy so agents never see your real API keys</li>
+                <li><span>&#10003;</span> Snap-Tokens so agents never see your real API keys</li>
             </ul>
-            <p style="text-align:center;font-size:13px;color:#6b7280;margin-top:-4px;">After setup, you'll generate a proxy token and set spend limits in under 60 seconds.</p>
+            <p style="text-align:center;font-size:13px;color:#6e7681;margin-top:-4px;">After setup, you'll generate a Snap-Token and set spend limits in under 60 seconds.</p>
 
             {% if error %}
             <div class="error">{{ error }}</div>
@@ -83,6 +83,9 @@
                 <button type="submit" class="btn">Create Admin Account & Start</button>
             </form>
         </div>
+    </div>
+    <div style="text-align:center;padding:16px 24px;font-size:11px;color:#7d8295;opacity:0.7;border-top:1px solid #2a2f3d;margin-top:32px;">
+        Snapwire is a technical monitoring utility. Use at your own risk. User assumes all liability for agent behavior.
     </div>
 </body>
 </html>

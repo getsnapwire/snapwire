@@ -4,7 +4,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 from src.constitution import get_rules_summary, get_rules
 from src.llm_provider import chat, parse_json_response
 
-SYSTEM_PROMPT = """You are the Agentic Firewall Auditor. Your job is to analyze an agent's intended tool call and determine whether it violates any of the constitutional rules.
+SYSTEM_PROMPT = """You are the Snapwire Auditor. Your job is to analyze an agent's intended tool call and determine whether it violates any of the automation rules.
 
 You will be given:
 1. The constitutional rules with their values and severity levels

@@ -3,34 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Documentation — Agentic Firewall</title>
+    <title>Snapwire — API Documentation</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --white: #ffffff; --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
-            --gray-300: #d1d5db; --gray-400: #9ca3af; --gray-500: #6b7280; --gray-600: #4b5563;
-            --gray-700: #374151; --gray-800: #1f2937; --gray-900: #111827;
-            --blue-50: #eff6ff; --blue-100: #dbeafe; --blue-500: #3b82f6; --blue-600: #2563eb;
-            --purple-500: #8b5cf6; --purple-600: #7c3aed;
-            --green-500: #10b981;
+            --white: #ffffff; --gray-50: #0d1117; --gray-100: #161b22; --gray-200: #30363d;
+            --gray-300: #484f58; --gray-400: #6e7681; --gray-500: #8b949e; --gray-600: #c9d1d9;
+            --gray-700: #d2dae4; --gray-800: #e6edf3; --gray-900: #f0f3f6;
+            --orange-50: rgba(255,102,0,0.08); --orange-500: #FF6600; --orange-600: #E55C00;
+            --green-500: #3fb950;
         }
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--white); color: var(--gray-900); -webkit-font-smoothing: antialiased; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #0d1117; color: var(--gray-900); -webkit-font-smoothing: antialiased; }
 
         .nav {
             position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-            background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            background: rgba(13,17,23,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--gray-200); padding: 0 32px; height: 64px;
             display: flex; align-items: center; justify-content: space-between;
         }
         .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; color: var(--gray-900); text-decoration: none; }
-        .nav-logo .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--blue-600), var(--purple-600)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; }
+        .nav-logo .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #FF6600, #CC5200); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; }
         .nav-links { display: flex; align-items: center; gap: 32px; }
-        .nav-links a { font-size: 14px; font-weight: 500; color: var(--gray-600); text-decoration: none; }
+        .nav-links a { font-size: 14px; font-weight: 500; color: var(--gray-500); text-decoration: none; }
         .nav-links a:hover { color: var(--gray-900); }
-        .nav-btn { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; color: var(--white); background: var(--gray-900); }
-        .nav-btn:hover { background: var(--gray-700); }
+        .nav-btn { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; color: #fff; background: #FF6600; }
+        .nav-btn:hover { background: #E55C00; }
 
         .docs-layout {
             padding-top: 64px; display: flex; min-height: 100vh;
@@ -39,6 +38,7 @@
         .docs-sidebar {
             width: 260px; border-right: 1px solid var(--gray-200); padding: 32px 24px;
             position: sticky; top: 64px; height: calc(100vh - 64px); overflow-y: auto; flex-shrink: 0;
+            background: #0d1117;
         }
         .docs-sidebar h3 {
             font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
@@ -46,44 +46,45 @@
         }
         .docs-sidebar h3:first-child { margin-top: 0; }
         .docs-sidebar a {
-            display: block; font-size: 14px; color: var(--gray-600); text-decoration: none;
+            display: block; font-size: 14px; color: var(--gray-500); text-decoration: none;
             padding: 6px 12px; border-radius: 6px; margin-bottom: 2px; transition: all 0.15s;
         }
         .docs-sidebar a:hover { background: var(--gray-100); color: var(--gray-900); }
-        .docs-sidebar a.active { background: var(--blue-50); color: var(--blue-600); font-weight: 600; }
+        .docs-sidebar a.active { background: var(--orange-50); color: #FF6600; font-weight: 600; }
 
         .docs-content {
             flex: 1; padding: 40px 48px; max-width: 820px;
         }
-        .docs-content h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; }
+        .docs-content h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; color: var(--gray-900); }
         .docs-content .lead { font-size: 17px; color: var(--gray-500); line-height: 1.7; margin-bottom: 40px; }
-        .docs-content h2 { font-size: 22px; font-weight: 700; margin-top: 48px; margin-bottom: 16px; padding-top: 24px; border-top: 1px solid var(--gray-200); }
+        .docs-content h2 { font-size: 22px; font-weight: 700; margin-top: 48px; margin-bottom: 16px; padding-top: 24px; border-top: 1px solid var(--gray-200); color: var(--gray-900); }
         .docs-content h2:first-of-type { margin-top: 0; border-top: none; padding-top: 0; }
-        .docs-content h3 { font-size: 17px; font-weight: 700; margin-top: 32px; margin-bottom: 12px; }
-        .docs-content p { font-size: 15px; color: var(--gray-600); line-height: 1.75; margin-bottom: 16px; }
+        .docs-content h3 { font-size: 17px; font-weight: 700; margin-top: 32px; margin-bottom: 12px; color: var(--gray-900); }
+        .docs-content p { font-size: 15px; color: var(--gray-500); line-height: 1.75; margin-bottom: 16px; }
 
         .endpoint-card {
-            background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 12px;
+            background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 12px;
             padding: 20px 24px; margin-bottom: 24px;
         }
         .endpoint-method {
             display: inline-block; padding: 3px 10px; border-radius: 5px; font-size: 12px;
             font-weight: 700; font-family: 'Fira Code', monospace; margin-right: 10px;
         }
-        .method-post { background: rgba(59,130,246,0.1); color: var(--blue-600); }
-        .method-get { background: rgba(16,185,129,0.1); color: var(--green-500); }
-        .method-patch { background: rgba(245,158,11,0.1); color: #d97706; }
-        .method-delete { background: rgba(239,68,68,0.1); color: #ef4444; }
-        .endpoint-path { font-family: 'Fira Code', monospace; font-size: 14px; font-weight: 600; }
+        .method-post { background: rgba(255,102,0,0.1); color: #FF6600; }
+        .method-get { background: rgba(63,185,80,0.1); color: var(--green-500); }
+        .method-patch { background: rgba(210,153,34,0.1); color: #d29922; }
+        .method-delete { background: rgba(248,81,73,0.1); color: #f85149; }
+        .endpoint-path { font-family: 'Fira Code', monospace; font-size: 14px; font-weight: 600; color: var(--gray-900); }
 
         pre {
-            background: var(--gray-900); color: #e2e8f0; border-radius: 10px;
+            background: #161b22; color: #e2e8f0; border-radius: 10px;
             padding: 20px 24px; margin-bottom: 24px; overflow-x: auto; font-size: 13px;
             line-height: 1.6; font-family: 'Fira Code', monospace; position: relative;
+            border: 1px solid var(--gray-200);
         }
         pre .lang-tag {
             position: absolute; top: 10px; right: 12px; font-size: 11px;
-            color: var(--gray-500); font-family: 'Inter', sans-serif; font-weight: 600;
+            color: var(--gray-400); font-family: 'Inter', sans-serif; font-weight: 600;
         }
         code { font-family: 'Fira Code', monospace; }
         .inline-code {
@@ -92,14 +93,14 @@
         }
 
         .param-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 14px; }
-        .param-table th { text-align: left; padding: 10px 12px; background: var(--gray-50); border: 1px solid var(--gray-200); font-weight: 600; color: var(--gray-700); }
-        .param-table td { padding: 10px 12px; border: 1px solid var(--gray-200); color: var(--gray-600); }
-        .param-table .type { font-family: 'Fira Code', monospace; font-size: 12px; color: var(--blue-600); }
-        .param-table .required { font-size: 11px; font-weight: 700; color: #ef4444; }
+        .param-table th { text-align: left; padding: 10px 12px; background: var(--gray-100); border: 1px solid var(--gray-200); font-weight: 600; color: var(--gray-600); }
+        .param-table td { padding: 10px 12px; border: 1px solid var(--gray-200); color: var(--gray-500); }
+        .param-table .type { font-family: 'Fira Code', monospace; font-size: 12px; color: #FF6600; }
+        .param-table .required { font-size: 11px; font-weight: 700; color: #f85149; }
 
         .response-label { font-size: 13px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
 
-        .footer { border-top: 1px solid var(--gray-200); padding: 32px; text-align: center; }
+        .footer { border-top: 1px solid var(--gray-200); padding: 32px; text-align: center; background: #0d1117; }
         .footer p { font-size: 13px; color: var(--gray-400); }
 
         @media (max-width: 768px) {
@@ -111,7 +112,7 @@
 </head>
 <body>
     <nav class="nav">
-        <a href="/" class="nav-logo"><span class="logo-icon">&#x1F6E1;</span> Agentic Firewall</a>
+        <a href="/" class="nav-logo"><span class="logo-icon">⚡</span> Snapwire</a>
         <div class="nav-links">
             <a href="/">Home</a>
             <a href="/pricing">Pricing</a>
@@ -151,7 +152,7 @@
 
         <main class="docs-content">
             <h1 id="overview">API Documentation</h1>
-            <p class="lead">Everything you need to integrate the Agentic Firewall with your AI agents. Intercept tool calls, enforce rules, and keep humans in the loop.</p>
+            <p class="lead">Everything you need to integrate Snapwire with your AI agents. Intercept tool calls, enforce rules, and keep humans in the loop.</p>
 
             <h2 id="authentication">Authentication</h2>
             <p>All API requests require an API key passed via the <code class="inline-code">Authorization</code> header using Bearer token format.</p>
@@ -160,7 +161,7 @@ Authorization: Bearer af_your_api_key_here</pre>
             <p>Generate API keys from the dashboard under the <strong>API Keys</strong> tab. Each key is scoped to a specific workspace (personal or organization).</p>
 
             <h2 id="quickstart">Quick Start</h2>
-            <p>Here's the simplest integration — send a tool call to the firewall before executing it:</p>
+            <p>Here's the simplest integration — send a tool call to Snapwire before executing it:</p>
             <pre><span class="lang-tag">Python</span>
 import requests
 
@@ -202,7 +203,7 @@ if allowed:
                 <span class="endpoint-method method-post">POST</span>
                 <span class="endpoint-path">/api/intercept</span>
             </div>
-            <p>The primary endpoint. Send every tool call here before execution. The firewall evaluates it against your constitutional rules and returns a decision.</p>
+            <p>The primary endpoint. Send every tool call here before execution. Snapwire evaluates it against your constitutional rules and returns a decision.</p>
 
             <h3>Request Body</h3>
             <table class="param-table">
@@ -330,7 +331,7 @@ if allowed:
                 <span class="endpoint-method method-get">GET</span>
                 <span class="endpoint-path">/api/vault</span>
             </div>
-            <p>Manage credential entries. The vault injects credentials into approved tool calls so agents never see raw secrets.</p>
+            <p>Manage credential entries. The vault injects credentials into approved tool calls so agents never see raw secrets. Agents receive Snap-Tokens instead of real credentials.</p>
 
             <h2 id="sdk-python">Python SDK</h2>
             <p>A minimal Python wrapper for quick integration:</p>
@@ -418,10 +419,10 @@ const result = await fw.check("delete_file", { path: "/data/old.csv" });
 console.log(result.status); // "allowed", "pending", or "blocked"</pre>
 
             <h2 id="framework-integrations">Framework Integrations</h2>
-            <p>Pre-built integration examples for popular AI frameworks. Each example shows how to wrap the Agentic Firewall into your existing agent pipeline.</p>
+            <p>Pre-built integration examples for popular AI frameworks. Each example shows how to wrap Snapwire into your existing agent pipeline.</p>
 
             <h3 id="fw-langchain">LangChain</h3>
-            <p>Wrap any LangChain tool with firewall protection. Blocked actions return a safe message instead of executing.</p>
+            <p>Wrap any LangChain tool with Snapwire protection. Blocked actions return a safe message instead of executing.</p>
             <pre><span class="lang-tag">Python</span>
 from langchain.tools import Tool
 from agentic_firewall import AgenticFirewall
@@ -484,8 +485,11 @@ def handle_tool_call(tool_call):
     </div>
 
     <footer class="footer">
-        <p>Agentic Firewall API Documentation</p>
+        <p>Snapwire API Documentation</p>
     </footer>
+    <div style="text-align:center;padding:16px 24px;font-size:11px;color:#7d8295;opacity:0.7;border-top:1px solid #2a2f3d;margin-top:32px;">
+        Snapwire is a technical monitoring utility. Use at your own risk. User assumes all liability for agent behavior.
+    </div>
 
     <script>
         document.querySelectorAll('.docs-sidebar a').forEach(link => {
