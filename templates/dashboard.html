@@ -320,61 +320,13 @@
             opacity: 0.4;
             cursor: not-allowed;
         }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
     </style>
 </head>
 <body>
-    <div id="onboarding-overlay" class="onboarding-overlay">
-        <div class="onboarding-modal">
-            <div class="onboarding-step" data-step="1">
-                <div class="onboarding-icon">&#128737;</div>
-                <h2>Welcome to the Agentic Firewall</h2>
-                <p>This dashboard helps you stay in control of what your AI agents do. Think of it as a security guard that checks every action before it happens.</p>
-                <div class="onboarding-nav">
-                    <span class="onboarding-dots">
-                        <span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
-                    </span>
-                    <button class="btn btn-approve" onclick="nextOnboardingStep(2)">Next</button>
-                </div>
-            </div>
-            <div class="onboarding-step" data-step="2" style="display:none;">
-                <div class="onboarding-icon">&#9878;&#65039;</div>
-                <h2>Your Constitution</h2>
-                <p>You set the rules. The <strong>Constitution</strong> tab is where you define what your AI is allowed to do -- like spending limits, file access, and more. You can add, edit, or remove rules anytime.</p>
-                <div class="onboarding-nav">
-                    <span class="onboarding-dots">
-                        <span class="dot"></span><span class="dot active"></span><span class="dot"></span><span class="dot"></span>
-                    </span>
-                    <button class="btn" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);" onclick="nextOnboardingStep(1)">Back</button>
-                    <button class="btn btn-approve" onclick="nextOnboardingStep(3)">Next</button>
-                </div>
-            </div>
-            <div class="onboarding-step" data-step="3" style="display:none;">
-                <div class="onboarding-icon">&#128275;</div>
-                <h2>Approve or Deny</h2>
-                <p>When an agent tries something that breaks a rule, it gets blocked and sent to you. In the <strong>Pending Approvals</strong> tab, you decide: let it through or shut it down.</p>
-                <div class="onboarding-nav">
-                    <span class="onboarding-dots">
-                        <span class="dot"></span><span class="dot"></span><span class="dot active"></span><span class="dot"></span>
-                    </span>
-                    <button class="btn" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);" onclick="nextOnboardingStep(2)">Back</button>
-                    <button class="btn btn-approve" onclick="nextOnboardingStep(4)">Next</button>
-                </div>
-            </div>
-            <div class="onboarding-step" data-step="4" style="display:none;">
-                <div class="onboarding-icon">&#128640;</div>
-                <h2>You're All Set!</h2>
-                <p>Use the <strong>Test Firewall</strong> tab to try sample actions and see how the firewall responds. Hover over anything for a quick explanation. You're in control.</p>
-                <div class="onboarding-nav">
-                    <span class="onboarding-dots">
-                        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot active"></span>
-                    </span>
-                    <button class="btn" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);" onclick="nextOnboardingStep(3)">Back</button>
-                    <button class="btn btn-approve" onclick="dismissOnboarding()">Get Started</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="header">
         <h1 data-tooltip="Your AI safety dashboard -- monitors and controls what AI agents can do" data-tooltip-pos="bottom"><span class="shield">&#128737;</span> Agentic Firewall</h1>
         <div style="display:flex;align-items:center;gap:16px;">
@@ -475,11 +427,11 @@
         </div>
 
         <div class="tabs">
-            <button class="tab active" data-tab="pending" data-tooltip="Actions that were blocked and need your decision to allow or deny" data-tooltip-pos="bottom">Pending Approvals</button>
-            <button class="tab" data-tab="home" data-tooltip="Overview of your firewall's activity and health at a glance" data-tooltip-pos="bottom">Home</button>
+            <button class="tab active" data-tab="home" data-tooltip="Overview of savings, spend monitoring, and system health" data-tooltip-pos="bottom">Home</button>
+            <button class="tab" data-tab="pending" data-tooltip="Actions that were blocked and need your decision to allow or deny" data-tooltip-pos="bottom">Pending Approvals</button>
             <button class="tab" data-tab="log" data-tooltip="A history of everything the firewall has checked, and what happened" data-tooltip-pos="bottom">Audit Log</button>
-            <button class="tab" data-tab="rules" data-tooltip="The rules that define what your AI agent can and cannot do" data-tooltip-pos="bottom">Constitution</button>
-            <button class="tab" data-tab="test" data-tooltip="Try out a fake action to see how the firewall would respond (sandbox - nothing actually runs)" data-tooltip-pos="bottom">Sandbox</button>
+            <button class="tab" data-tab="rules" data-tooltip="Custom automation rules that define what your AI agent can and cannot do" data-tooltip-pos="bottom">Automation Rules</button>
+            <button class="tab" data-tab="test" data-tooltip="Try out a fake action to see how the firewall would respond" data-tooltip-pos="bottom">Sandbox</button>
             <button class="tab" data-tab="history" data-tooltip="View all changes made to rules with rollback capability" data-tooltip-pos="bottom">Rule History</button>
             <button class="tab" data-tab="keys" data-tooltip="Generate and manage API keys for your AI agents" data-tooltip-pos="bottom">API Keys</button>
             <button class="tab" data-tab="stream" data-tooltip="Watch agent actions happen in real-time" data-tooltip-pos="bottom">Live Stream</button>
@@ -487,20 +439,69 @@
             <button class="tab" data-tab="digest" data-tooltip="Weekly safety summary report" data-tooltip-pos="bottom">Digest</button>
             {% if user and user.role == 'admin' %}
             <button class="tab" data-tab="settings" data-tooltip="Rate limits and webhook configuration" data-tooltip-pos="bottom">Settings</button>
-            <button class="tab" data-tab="telemetry" data-tooltip="Instance telemetry, usage stats, and growth metrics" data-tooltip-pos="bottom">Telemetry</button>
+            <button class="tab" data-tab="telemetry" data-tooltip="Instance telemetry and growth metrics" data-tooltip-pos="bottom">Telemetry</button>
             <button class="tab" data-tab="admin" data-tooltip="Manage users, roles, and access controls" data-tooltip-pos="bottom">Admin</button>
-            <button class="tab" data-tab="catalog" data-tooltip="View and manage the tool safety catalog" data-tooltip-pos="bottom">Tool Catalog</button>
-            <button class="tab" data-tab="vault" data-tooltip="Manage credential vault for secure tool access" data-tooltip-pos="bottom">Identity Vault</button>
+            <button class="tab" data-tab="catalog" data-tooltip="View and manage the tool safety catalog with schema enforcement" data-tooltip-pos="bottom">Tool Catalog</button>
+            <button class="tab" data-tab="vault" data-tooltip="Manage credential proxy tokens for secure tool access" data-tooltip-pos="bottom">Credential Proxy</button>
             <button class="tab" data-tab="honeypots" data-tooltip="Set up honeypot decoy tools to detect breaches" data-tooltip-pos="bottom">Honeypots</button>
-            <button class="tab" data-tab="blast" data-tooltip="Control how fast agents can make calls — prevents runaway loops and rate-limits suspicious activity" data-tooltip-pos="bottom">Blast Radius</button>
+            <button class="tab" data-tab="blast" data-tooltip="Control how fast agents can make calls — prevents runaway loops" data-tooltip-pos="bottom">Blast Radius</button>
             {% endif %}
-            <button class="tab" data-tab="org" data-tooltip="Manage your organization members and settings" data-tooltip-pos="bottom">Organization</button>
-            <button class="tab" data-tab="analytics" data-tooltip="Usage analytics with charts and trends over time" data-tooltip-pos="bottom">Analytics</button>
-            <button class="tab" data-tab="account" data-tooltip="Your account settings and usage stats" data-tooltip-pos="bottom">Account</button>
+            <button class="tab" data-tab="org" data-tooltip="Manage your organization" data-tooltip-pos="bottom">Organization</button>
+            <button class="tab" data-tab="analytics" data-tooltip="Usage analytics with charts and trends" data-tooltip-pos="bottom">Analytics</button>
+            <button class="tab" data-tab="account" data-tooltip="Your account settings" data-tooltip-pos="bottom">Account</button>
             <button class="tab" data-tab="quickstart" data-tooltip="Get started with the Agentic Firewall" data-tooltip-pos="bottom">Quick Start</button>
         </div>
 
-        <div id="panel-pending" class="panel active">
+        <div id="onboarding-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:none;align-items:center;justify-content:center;">
+            <div style="background:var(--bg-card);border-radius:16px;padding:40px;max-width:520px;width:90%;border:1px solid var(--border);">
+                <div id="onboard-step-1" class="onboard-step">
+                    <div style="text-align:center;margin-bottom:20px;">
+                        <span style="font-size:36px;">&#x1F511;</span>
+                        <h3 style="margin-top:12px;">Step 1: Generate Your First API Key</h3>
+                        <p style="color:var(--text-secondary);font-size:14px;">Your agents will use this key to connect to the firewall.</p>
+                    </div>
+                    <button onclick="quickGenerateKey()" style="width:100%;background:var(--accent-blue);color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">Generate API Key</button>
+                    <div id="onboard-key-result" style="display:none;margin-top:16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:14px;">
+                        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Your API Key (save this!):</div>
+                        <code id="onboard-key-value" style="word-break:break-all;font-size:13px;color:var(--accent-green);"></code>
+                    </div>
+                    <button id="onboard-next-1" onclick="showOnboardStep(2)" style="display:none;width:100%;margin-top:12px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:12px;border-radius:8px;font-size:14px;cursor:pointer;">Next: Set Spend Limits &#x2192;</button>
+                </div>
+                <div id="onboard-step-2" class="onboard-step" style="display:none;">
+                    <div style="text-align:center;margin-bottom:20px;">
+                        <span style="font-size:36px;">&#x1F4B0;</span>
+                        <h3 style="margin-top:12px;">Step 2: Set a Daily Spend Limit</h3>
+                        <p style="color:var(--text-secondary);font-size:14px;">Prevent runaway agent costs with automatic budget caps.</p>
+                    </div>
+                    <div style="margin-bottom:16px;">
+                        <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:6px;">Max spend per agent session ($)</label>
+                        <input type="number" id="onboard-spend-limit" value="20" min="1" max="1000" step="1" style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);font-size:15px;box-sizing:border-box;">
+                    </div>
+                    <button onclick="setOnboardSpendLimit()" style="width:100%;background:var(--accent-blue);color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">Set Spend Limit</button>
+                    <button onclick="showOnboardStep(3)" style="width:100%;margin-top:12px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:12px;border-radius:8px;font-size:14px;cursor:pointer;">Next: Shadow Mode &#x2192;</button>
+                </div>
+                <div id="onboard-step-3" class="onboard-step" style="display:none;">
+                    <div style="text-align:center;margin-bottom:20px;">
+                        <span style="font-size:36px;">&#128065;</span>
+                        <h3 style="margin-top:12px;">Step 3: Shadow Mode is Active</h3>
+                        <p style="color:var(--text-secondary);font-size:14px;">Your firewall is observing all agent activity without blocking anything. You'll see what <em>would</em> be blocked so you can tune your rules before switching to enforcement.</p>
+                    </div>
+                    <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:16px;margin-bottom:16px;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                            <span style="font-size:16px;">&#128065;</span>
+                            <strong style="color:#b45309;font-size:14px;">Shadow Mode = Observe Only</strong>
+                        </div>
+                        <div style="font-size:13px;color:var(--text-secondary);">Everything is logged and audited. Nothing is blocked. Switch to enforcement mode when you're ready from the dashboard banner.</div>
+                    </div>
+                    <button onclick="closeOnboarding()" style="width:100%;background:var(--accent-green);color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">Go to Dashboard &#x2192;</button>
+                </div>
+                <div style="text-align:center;margin-top:16px;">
+                    <button onclick="closeOnboarding()" style="background:none;border:none;color:var(--text-secondary);font-size:12px;cursor:pointer;text-decoration:underline;">Skip onboarding</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-pending" class="panel">
             <div class="bulk-toolbar" id="bulk-toolbar">
                 <label><input type="checkbox" id="select-all-pending" onchange="selectAllPending()"> Select All</label>
                 <button class="btn btn-approve" onclick="bulkResolve('approved')">Approve Selected</button>
@@ -509,27 +510,83 @@
             <div id="pending-list"></div>
         </div>
 
-        <div id="panel-home" class="panel">
-            <h3 style="margin-bottom:16px;">Dashboard Overview</h3>
-            <div id="overview-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;">
-                <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
-                    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Total Intercepts</div>
-                    <div id="ov-total" style="font-size:32px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-blue);">0</div>
+        <div id="panel-home" class="panel active">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:20px;">
+                <div class="stat-card" style="background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(16,185,129,0.04));border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:20px;text-align:center;">
+                    <div style="font-size:11px;color:var(--accent-green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Total Savings</div>
+                    <div id="ov-savings" style="font-size:36px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-green);">$0.00</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">from blocked loops &amp; violations</div>
                 </div>
                 <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
-                    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Blocked</div>
-                    <div id="ov-blocked" style="font-size:32px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-red);">0</div>
-                    <div id="ov-block-rate" style="font-size:11px;color:var(--text-secondary);margin-top:2px;">0% block rate</div>
+                    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Loop Detector</div>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+                        <div id="loop-heartbeat" style="width:10px;height:10px;border-radius:50%;background:#10b981;animation:pulse-dot 2s infinite;"></div>
+                        <div id="ov-loops" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--text-primary);">0</div>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">loops caught</div>
                 </div>
                 <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
-                    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Active Agents</div>
-                    <div id="ov-agents" style="font-size:32px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-purple);">0</div>
+                    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Active Agents</div>
+                    <div id="ov-agents" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-purple);">0</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">connected agents</div>
                 </div>
                 <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
-                    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Pending</div>
-                    <div id="ov-pending" style="font-size:32px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-yellow,#f59e0b);">0</div>
+                    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Pending</div>
+                    <div id="ov-pending" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-yellow,#f59e0b);">0</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">awaiting approval</div>
                 </div>
             </div>
+
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:20px;">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <h4 style="font-size:14px;margin:0;">Spend Monitor</h4>
+                        <span id="spend-label" style="font-size:11px;color:var(--text-secondary);background:var(--bg-secondary);padding:3px 8px;border-radius:4px;">Current Burn Rate</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                        <div>
+                            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Today</div>
+                            <div id="ov-today-spend" style="font-size:22px;font-weight:600;font-family:'Fira Code',monospace;color:var(--text-primary);">$0.00</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Daily Rate</div>
+                            <div id="ov-daily-rate" style="font-size:22px;font-weight:600;font-family:'Fira Code',monospace;color:var(--accent-blue);">$0.00</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">30-Day Projected</div>
+                            <div id="ov-projected" style="font-size:22px;font-weight:600;font-family:'Fira Code',monospace;color:var(--accent-yellow,#f59e0b);">$0.00</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+                        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                            <span style="color:var(--text-secondary);">Total Intercepts</span>
+                            <span id="ov-total" style="color:var(--text-primary);font-weight:600;font-family:'Fira Code',monospace;">0</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                            <span style="color:var(--text-secondary);">Blocked (saved)</span>
+                            <span id="ov-blocked" style="color:var(--accent-red);font-weight:600;font-family:'Fira Code',monospace;">0</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                            <span style="color:var(--text-secondary);">Schema Violations</span>
+                            <span id="ov-schema" style="color:var(--accent-yellow,#f59e0b);font-weight:600;font-family:'Fira Code',monospace;">0</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;font-size:12px;">
+                            <span style="color:var(--text-secondary);">Block Rate</span>
+                            <span id="ov-block-rate" style="color:var(--text-secondary);font-weight:600;">0%</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                    <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Quick Actions</div>
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        <button onclick="document.querySelector('[data-tab=keys]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F511; Generate Proxy Token</button>
+                        <button onclick="document.querySelector('[data-tab=blast]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F4B0; Set Spend Limits</button>
+                        <button onclick="document.querySelector('[data-tab=rules]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x2699; Automation Rules <span style="color:var(--text-secondary);font-size:11px;margin-left:4px;" id="ov-rules-count"></span></button>
+                        <button onclick="document.querySelector('[data-tab=test]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F9EA; Test in Sandbox</button>
+                    </div>
+                </div>
+            </div>
+
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
                 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -549,15 +606,14 @@
                         <span id="ov-keys-n" style="font-size:14px;font-weight:600;color:var(--text-primary);">0</span>
                     </div>
                 </div>
-                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
-                    <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Quick Actions</div>
-                    <div style="display:flex;flex-direction:column;gap:8px;">
-                        <button onclick="document.querySelector('[data-tab=rules]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F4DC; Manage Constitution Rules <span style="color:var(--text-secondary);font-size:11px;margin-left:4px;" id="ov-rules-count"></span></button>
-                        <button onclick="document.querySelector('[data-tab=keys]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F511; Manage API Keys</button>
-                        <button onclick="document.querySelector('[data-tab=test]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F9EA; Test in Sandbox</button>
+                <div id="live-alerts-feed" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                    <h4 style="font-size:14px;margin-bottom:12px;">Live Alerts</h4>
+                    <div id="loop-alerts-list" style="display:flex;flex-direction:column;gap:6px;max-height:120px;overflow-y:auto;">
+                        <div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:12px;">No alerts yet. The loop detector is watching.</div>
                     </div>
                 </div>
             </div>
+
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
                 <h4 style="font-size:14px;margin-bottom:12px;">Recent Activity</h4>
                 <div id="ov-recent-list" style="display:flex;flex-direction:column;gap:6px;"></div>
@@ -2407,19 +2463,6 @@ def handle_tool_call(tool_call):
             }
         }
 
-        function nextOnboardingStep(step) {
-            document.querySelectorAll('.onboarding-step').forEach(s => s.style.display = 'none');
-            document.querySelector(`.onboarding-step[data-step="${step}"]`).style.display = 'block';
-        }
-
-        function dismissOnboarding() {
-            document.getElementById('onboarding-overlay').style.display = 'none';
-            localStorage.setItem('onboarding_seen', 'true');
-        }
-
-        if (localStorage.getItem('onboarding_seen')) {
-            document.getElementById('onboarding-overlay').style.display = 'none';
-        }
 
         async function fetchStats() {
             try {
@@ -4076,7 +4119,8 @@ def handle_tool_call(tool_call):
                 const d = await res.json();
                 document.getElementById('ov-total').textContent = d.total_intercepts;
                 document.getElementById('ov-blocked').textContent = d.blocked;
-                document.getElementById('ov-block-rate').textContent = d.block_rate + '% block rate';
+                const blockRateEl = document.getElementById('ov-block-rate');
+                if (blockRateEl) blockRateEl.textContent = d.block_rate + '%';
                 document.getElementById('ov-agents').textContent = d.active_agents;
                 document.getElementById('ov-pending').textContent = d.pending;
                 document.getElementById('ov-allowed-n').textContent = d.allowed;
@@ -4084,6 +4128,45 @@ def handle_tool_call(tool_call):
                 document.getElementById('ov-denied-n').textContent = d.denied;
                 document.getElementById('ov-keys-n').textContent = d.active_api_keys;
                 document.getElementById('ov-rules-count').textContent = '(' + d.rules_count + ' rules)';
+
+                const savingsEl = document.getElementById('ov-savings');
+                if (savingsEl) savingsEl.textContent = '$' + (d.total_savings || 0).toFixed(2);
+
+                const loopsEl = document.getElementById('ov-loops');
+                if (loopsEl) loopsEl.textContent = d.loops_detected || 0;
+
+                const schemaEl = document.getElementById('ov-schema');
+                if (schemaEl) schemaEl.textContent = d.schema_violations || 0;
+
+                const todayEl = document.getElementById('ov-today-spend');
+                if (todayEl) todayEl.textContent = '$' + (d.today_spend || 0).toFixed(2);
+
+                const dailyEl = document.getElementById('ov-daily-rate');
+                if (dailyEl) dailyEl.textContent = '$' + (d.daily_rate || 0).toFixed(2);
+
+                const projEl = document.getElementById('ov-projected');
+                if (projEl) projEl.textContent = '$' + (d.projected_30d || 0).toFixed(2);
+
+                const spendLabel = document.getElementById('spend-label');
+                if (spendLabel && d.hours_active > 24) {
+                    spendLabel.textContent = 'Projected 30-Day Spend';
+                }
+
+                try {
+                    const loopRes = await fetch('/api/loop-detector/events');
+                    const loopData = await loopRes.json();
+                    const alertsList = document.getElementById('loop-alerts-list');
+                    if (alertsList && loopData.events && loopData.events.length > 0) {
+                        alertsList.innerHTML = loopData.events.slice(0, 5).map(e => {
+                            const t = new Date(e.detected_at).toLocaleString();
+                            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:6px;font-size:12px;">
+                                <div><span style="color:var(--accent-red);font-weight:600;">&#x1F6A8; Loop</span> <span style="color:var(--text-primary);">${e.tool_name}</span> <span style="color:var(--text-secondary);">x${e.repeat_count}</span></div>
+                                <span style="color:var(--text-secondary);font-size:11px;">${t}</span>
+                            </div>`;
+                        }).join('');
+                    }
+                } catch(e) {}
+
                 const recentList = document.getElementById('ov-recent-list');
                 const recentEmpty = document.getElementById('ov-recent-empty');
                 if (d.recent_activity && d.recent_activity.length > 0) {
@@ -4427,6 +4510,40 @@ if (result.status === "allowed") {
             } catch(e) { console.error('Telemetry toggle error:', e); }
         }
         loadTelemetrySettings();
+        function checkFirstVisit() {
+            if (!localStorage.getItem('agfw_onboarded')) {
+                const overlay = document.getElementById('onboarding-overlay');
+                if (overlay) { overlay.style.display = 'flex'; }
+            }
+        }
+        function showOnboardStep(n) {
+            document.querySelectorAll('.onboard-step').forEach(s => s.style.display = 'none');
+            const step = document.getElementById('onboard-step-' + n);
+            if (step) step.style.display = 'block';
+        }
+        async function quickGenerateKey() {
+            try {
+                const res = await fetch('/api/keys', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({name:'My First Agent'}) });
+                const d = await res.json();
+                if (d.key) {
+                    document.getElementById('onboard-key-value').textContent = d.key;
+                    document.getElementById('onboard-key-result').style.display = 'block';
+                    document.getElementById('onboard-next-1').style.display = 'block';
+                }
+            } catch(e) { console.error('Key generation failed', e); }
+        }
+        async function setOnboardSpendLimit() {
+            const limit = parseFloat(document.getElementById('onboard-spend-limit').value) || 20;
+            try {
+                await fetch('/api/blast-radius/config', { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({enabled:true, max_spend_per_session:limit, require_manual_reset:true}) });
+                showOnboardStep(3);
+            } catch(e) { console.error('Failed to set spend limit', e); showOnboardStep(3); }
+        }
+        function closeOnboarding() {
+            localStorage.setItem('agfw_onboarded', '1');
+            document.getElementById('onboarding-overlay').style.display = 'none';
+        }
+        checkFirstVisit();
     </script>
 
     <div style="text-align:center;padding:16px;color:#94a3b8;font-size:12px;border-top:1px solid rgba(148,163,184,0.1);">

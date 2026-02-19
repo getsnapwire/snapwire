@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agentic Firewall — AI Safety & Control Platform</title>
+    <title>Agentic Firewall — AI Spend Monitoring & Agent Protection</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -599,7 +599,7 @@
             .steps { grid-template-columns: 1fr; gap: 32px; }
             .steps::before { display: none; }
             .features { grid-template-columns: 1fr; }
-            .why-grid { grid-template-columns: 1fr; }
+            .why-grid { grid-template-columns: repeat(2, 1fr) !important; }
             .final-cta h2 { font-size: 28px; }
             .nav { padding: 0 16px; }
             .nav-links a:not(.nav-btn) { display: none; }
@@ -614,6 +614,7 @@
         @media (max-width: 480px) {
             .hero h1 { font-size: 28px; }
             .feature-card { padding: 20px; }
+            .why-grid { grid-template-columns: 1fr !important; }
         }
     </style>
 </head>
@@ -638,11 +639,11 @@
         <div class="hero-content">
             <div class="hero-badge animate">
                 <span class="hero-badge-dot"></span>
-                AI Safety Platform
+                AI Spend Protection
             </div>
-            <h1 class="animate animate-d1">Your AI agents.<br><span>Your rules.</span></h1>
+            <h1 class="animate animate-d1">Stop Your AI Agents<br><span>From Burning Your Budget</span></h1>
             <p class="hero-sub animate animate-d2">
-                Monitor, audit, and control every action your AI agents take. Define constitutional rules, enforce compliance, and keep humans in the loop.
+                Real-time spend monitoring, hallucination loop detection, and credential proxy for AI agents. Know exactly what your agents are doing — and what they're costing you.
             </p>
             <div class="cta-group animate animate-d3">
                 <a href="#get-started" class="cta cta-primary">
@@ -757,23 +758,23 @@
 
     <section id="how-it-works" class="section">
         <p class="section-label">How It Works</p>
-        <h2 class="section-title">Three layers of protection</h2>
-        <p class="section-desc">Every action your AI agents attempt passes through a structured review process before execution.</p>
+        <h2 class="section-title">Three steps to stop the bleeding</h2>
+        <p class="section-desc">Get visibility into your AI agent spend in minutes, not days.</p>
         <div class="steps">
             <div class="step">
                 <div class="step-num">1</div>
-                <h3>Intercept</h3>
-                <p>Every AI-initiated action is captured in real time before it reaches external systems or makes any changes.</p>
+                <h3>Connect</h3>
+                <p>Point your agent's tool calls through the firewall proxy. One API endpoint, five minutes to integrate.</p>
             </div>
             <div class="step">
                 <div class="step-num">2</div>
-                <h3>Audit</h3>
-                <p>Each action is evaluated against your constitutional rules, checking for policy violations and risk levels.</p>
+                <h3>Monitor</h3>
+                <p>Instantly see every API call, its cost, and whether your agent is stuck in a loop burning through your budget.</p>
             </div>
             <div class="step">
                 <div class="step-num">3</div>
-                <h3>Approve</h3>
-                <p>High-risk actions are held for human review. You decide what gets through and what gets blocked.</p>
+                <h3>Protect</h3>
+                <p>Start in Shadow Mode to observe, then flip to enforcement. Loop detection and spend limits kick in automatically.</p>
             </div>
         </div>
     </section>
@@ -781,39 +782,29 @@
     <hr class="divider">
 
     <section id="features" class="section">
-        <p class="section-label">Features</p>
-        <h2 class="section-title">Everything you need to govern AI</h2>
-        <p class="section-desc">A complete toolkit for organizations deploying autonomous AI agents in production.</p>
-        <div class="features">
+        <p class="section-label">Core Features</p>
+        <h2 class="section-title">Know what your agents cost. Stop what they shouldn't do.</h2>
+        <p class="section-desc">The tools you actually need before your AI agents go to production.</p>
+        <div class="features" style="grid-template-columns: repeat(2, 1fr);">
             <div class="feature-card">
-                <div class="feature-icon">&#x25C9;</div>
-                <h3>Real-Time Monitoring</h3>
-                <p>Watch every agent action as it happens. Live dashboard shows pending, approved, and blocked actions with full context and risk scores.</p>
+                <div class="feature-icon">&#x1F4B0;</div>
+                <h3>Spend Monitor</h3>
+                <p>Real-time cost tracking with daily burn rate and 30-day projections. Never get surprised by your API bill again.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">&#x2696;</div>
-                <h3>Constitutional Rules Engine</h3>
-                <p>Define your organization's AI constitution with granular rules. Set boundaries on what agents can and cannot do, with configurable severity levels.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">&#x1F6E1;</div>
-                <h3>Tool Safety Catalog</h3>
-                <p>Every tool is automatically graded A through F by AI. Unsafe tools are auto-blocked, safe tools are fast-tracked, and you control everything in between.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">&#x26A0;</div>
-                <h3>Blast Radius Governor</h3>
-                <p>Automatic rate limiting stops runaway agents. If an agent makes too many calls too fast, it's locked out instantly to prevent damage.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">&#x1F3AF;</div>
-                <h3>Honeypot Tripwires</h3>
-                <p>Plant fake "decoy" tools that no legitimate agent should ever call. If one triggers, you know there's a breach and the API key is auto-locked.</p>
+                <div class="feature-icon">&#x1F504;</div>
+                <h3>Loop Detector</h3>
+                <p>Automatically catches hallucination loops — the #1 cause of accidental AI spend. Same tool, same args, 3x in 30 seconds = blocked.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">&#x1F510;</div>
-                <h3>Identity Vault</h3>
-                <p>Securely inject credentials into approved tool calls. Your agents never see or store raw API keys, reducing your attack surface.</p>
+                <h3>Credential Proxy</h3>
+                <p>Agents get proxy tokens, not your real API keys. Even if compromised, attackers only get a revocable session token.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#x1F441;</div>
+                <h3>Shadow Mode</h3>
+                <p>Observe everything your agents do without blocking anything. See what would be caught before you flip to enforcement.</p>
             </div>
         </div>
     </section>
@@ -821,24 +812,29 @@
     <hr class="divider">
 
     <section class="section">
-        <p class="section-label">Why It Matters</p>
-        <h2 class="section-title">Deploy AI agents with confidence</h2>
-        <p class="section-desc">As AI agents become more autonomous, the need for governance and control becomes critical.</p>
-        <div class="why-grid">
+        <p class="section-label">Advanced Governance</p>
+        <h2 class="section-title">Ready for Enterprise?</h2>
+        <p class="section-desc">When you're ready to go beyond monitoring, the full governance layer is built in.</p>
+        <div class="why-grid" style="grid-template-columns: repeat(4, 1fr);">
             <div class="why-card">
-                <div class="why-icon">&#x2693;</div>
-                <h3>Build Trust</h3>
-                <p>Demonstrate to stakeholders that your AI systems operate within defined boundaries with transparent oversight and accountability.</p>
+                <div class="why-icon">&#x2696;</div>
+                <h3>Custom Automation Rules</h3>
+                <p>Define policies in plain English. Auto-approve safe actions, escalate risky ones, and block anything that violates your constitution.</p>
             </div>
             <div class="why-card">
-                <div class="why-icon">&#x2731;</div>
-                <h3>Ensure Safety</h3>
-                <p>Prevent unintended consequences by catching risky actions before they execute. Define guardrails that evolve with your needs.</p>
+                <div class="why-icon">&#x1F4CB;</div>
+                <h3>Schema Validation</h3>
+                <p>Validate every tool call's arguments against strict schemas before execution. Catch malformed or dangerous inputs automatically.</p>
             </div>
             <div class="why-card">
-                <div class="why-icon">&#x2637;</div>
-                <h3>Stay Compliant</h3>
-                <p>Meet regulatory requirements with comprehensive audit logs, policy enforcement, and documented human oversight of AI decisions.</p>
+                <div class="why-icon">&#x1F6E1;</div>
+                <h3>Tool Safety Catalog</h3>
+                <p>Every tool graded A through F by AI. Unsafe tools auto-blocked, safe tools fast-tracked, and you control everything in between.</p>
+            </div>
+            <div class="why-card">
+                <div class="why-icon">&#x1F3E2;</div>
+                <h3>Multi-Tenant Orgs</h3>
+                <p>Share rules, API keys, and review queues across your team with role-based access. Built for teams shipping AI to production.</p>
             </div>
         </div>
     </section>
@@ -920,8 +916,8 @@
     </section>
 
     <section class="final-cta">
-        <h2>Ready to take control?</h2>
-        <p>Start governing your AI agents today. Set up your firewall in minutes and gain full visibility into every action.</p>
+        <h2>Stop guessing what your agents cost.</h2>
+        <p>Set up in 5 minutes. See your first spend report today. Catch your first hallucination loop before it drains your budget.</p>
         <a href="{{ login_url }}" class="cta cta-primary">
             Get Started <span>&rarr;</span>
         </a>
@@ -932,7 +928,7 @@
             <span class="logo-sm">&#x1F6E1;</span>
             Agentic Firewall
         </div>
-        <p>AI safety and governance platform</p>
+        <p>AI spend monitoring & agent protection platform</p>
     </footer>
 
     <script>

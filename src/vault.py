@@ -1,4 +1,6 @@
 import os
+import secrets as secrets_module
+from datetime import datetime
 
 
 def get_vault_entries(tenant_id):
@@ -81,3 +83,79 @@ def get_vault_credentials(tool_name, tenant_id):
         "header_name": entry.header_name,
         "header_value": f"{entry.header_prefix}{secret_value}" if entry.header_prefix else secret_value,
     }
+
+
+def generate_proxy_token(tenant_id, vault_entry_id, label=None):
+    from app import db
+    from models import VaultEntry, ProxyToken
+
+    entry = VaultEntry.query.filter_by(id=vault_entry_id, tenant_id=tenant_id).first()
+    if not entry:
+        return None
+
+    token = "agfw_" + secrets_module.token_hex(24)
+
+    proxy = ProxyToken(
+        tenant_id=tenant_id,
+        token=token,
+        vault_entry_id=vault_entry_id,
+        label=label or f"Token for {entry.tool_name}",
+    )
+    db.session.add(proxy)
+    db.session.commit()
+    d = proxy.to_dict()
+    d["token"] = token
+    d["one_time_view"] = True
+    return d
+
+
+def resolve_proxy_token(token_value):
+    from models import ProxyToken, VaultEntry
+    from app import db
+
+    proxy = ProxyToken.query.filter_by(token=token_value, is_active=True).first()
+    if not proxy:
+        return None
+
+    entry = VaultEntry.query.get(proxy.vault_entry_id)
+    if not entry:
+        return None
+
+    secret_value = os.environ.get(entry.secret_key)
+    if not secret_value:
+        return None
+
+    proxy.last_used_at = datetime.utcnow()
+    proxy.use_count = (proxy.use_count or 0) + 1
+    db.session.commit()
+
+    return {
+        "header_name": entry.header_name,
+        "header_value": f"{entry.header_prefix}{secret_value}" if entry.header_prefix else secret_value,
+        "tool_name": entry.tool_name,
+        "tenant_id": proxy.tenant_id,
+    }
+
+
+def get_proxy_tokens(tenant_id):
+    from models import ProxyToken
+    tokens = ProxyToken.query.filter_by(tenant_id=tenant_id).order_by(ProxyToken.created_at.desc()).all()
+    result = []
+    for t in tokens:
+        d = t.to_dict()
+        d["token_preview"] = t.token[:10] + "..."
+        d["token"] = d["token_preview"]
+        result.append(d)
+    return result
+
+
+def revoke_proxy_token(token_id, tenant_id):
+    from app import db
+    from models import ProxyToken
+    proxy = ProxyToken.query.filter_by(id=token_id, tenant_id=tenant_id).first()
+    if not proxy:
+        return False
+    proxy.is_active = False
+    proxy.revoked_at = datetime.utcnow()
+    db.session.commit()
+    return True

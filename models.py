@@ -329,9 +329,17 @@ class ToolCatalog(db.Model):
     reviewed_at = db.Column(db.DateTime, nullable=True)
     first_seen = db.Column(db.DateTime, default=datetime.utcnow)
     call_count = db.Column(db.Integer, default=0)
+    schema_json = db.Column(db.Text, nullable=True)
+    schema_enforcement = db.Column(db.String(10), default='flexible')
     __table_args__ = (UniqueConstraint('tenant_id', 'tool_name', name='uq_tenant_tool'),)
 
     def to_dict(self):
+        schema_parsed = None
+        if self.schema_json:
+            try:
+                schema_parsed = json.loads(self.schema_json)
+            except Exception:
+                schema_parsed = None
         return {
             "id": self.id,
             "tool_name": self.tool_name,
@@ -344,6 +352,8 @@ class ToolCatalog(db.Model):
             "reviewed_at": self.reviewed_at.isoformat() if self.reviewed_at else None,
             "first_seen": self.first_seen.isoformat() if self.first_seen else None,
             "call_count": self.call_count,
+            "schema": schema_parsed,
+            "schema_enforcement": self.schema_enforcement,
         }
 
 
@@ -473,6 +483,27 @@ class LoopDetectorEvent(db.Model):
         }
 
 
+class SchemaViolationEvent(db.Model):
+    __tablename__ = 'schema_violation_events'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=False, index=True)
+    tool_name = db.Column(db.String, nullable=False)
+    enforcement_mode = db.Column(db.String(10), default='flexible')
+    violation_count = db.Column(db.Integer, default=0)
+    violations_json = db.Column(db.Text, nullable=True)
+    detected_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "tool_name": self.tool_name,
+            "enforcement_mode": self.enforcement_mode,
+            "violation_count": self.violation_count,
+            "violations": json.loads(self.violations_json) if self.violations_json else [],
+            "detected_at": self.detected_at.isoformat() if self.detected_at else None,
+        }
+
+
 class TenantSettings(db.Model):
     __tablename__ = 'tenant_settings'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -539,6 +570,33 @@ class SelfHostedInstall(db.Model):
             "use_case": self.use_case,
             "template_clicked": self.template_clicked,
             "registered_at": self.registered_at.isoformat() if self.registered_at else None,
+        }
+
+
+class ProxyToken(db.Model):
+    __tablename__ = 'proxy_tokens'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=False, index=True)
+    token = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    vault_entry_id = db.Column(db.Integer, db.ForeignKey('vault_entries.id'), nullable=False)
+    label = db.Column(db.String(100), nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    last_used_at = db.Column(db.DateTime, nullable=True)
+    use_count = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    revoked_at = db.Column(db.DateTime, nullable=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "token": self.token,
+            "vault_entry_id": self.vault_entry_id,
+            "label": self.label,
+            "is_active": self.is_active,
+            "last_used_at": self.last_used_at.isoformat() if self.last_used_at else None,
+            "use_count": self.use_count,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "revoked_at": self.revoked_at.isoformat() if self.revoked_at else None,
         }
 
 

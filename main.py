@@ -48,10 +48,11 @@ from src.email_service import send_blocked_action_email, send_critical_risk_emai
 from src.tool_catalog import check_tool_catalog, get_catalog, update_tool_status, regrade_tool
 from src.blast_radius import check_blast_radius, get_blast_radius_config, update_blast_radius_config, get_blast_radius_events, clear_lockout, get_active_lockouts
 from src.honeypot import check_honeypot, get_honeypots, create_honeypot, delete_honeypot, toggle_honeypot, get_honeypot_alerts
-from src.vault import get_vault_entries, create_vault_entry, delete_vault_entry, update_vault_entry, get_vault_credentials
+from src.vault import get_vault_entries, create_vault_entry, delete_vault_entry, update_vault_entry, get_vault_credentials, generate_proxy_token, resolve_proxy_token, get_proxy_tokens, revoke_proxy_token
 from src.deception import analyze_deception
 from src.loop_detector import check_for_loop, get_loop_events, get_loop_stats
-from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings, LoopDetectorEvent
+from src.schema_guard import validate_tool_params, get_schema_stats
+from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings, LoopDetectorEvent, SchemaViolationEvent, ProxyToken
 
 
 import uuid as _uuid_mod
@@ -458,6 +459,12 @@ def intercept_tool_call():
             "loop_info": loop_result,
         }), 429
 
+    schema_result = validate_tool_params(data["tool_name"], params, tenant_id)
+    if schema_result["violations"]:
+        if schema_result["enforcement"] == "strict" and schema_result["params_modified"]:
+            params = schema_result["stripped_params"]
+            tool_call["parameters"] = params
+
     shadow_active = is_shadow_mode(tenant_id)
 
     try:
@@ -473,6 +480,10 @@ def intercept_tool_call():
     shadow_violations = audit_result.pop("shadow_violations", [])
 
     response_extra = {}
+    if schema_result["violations"]:
+        response_extra["schema_violations"] = schema_result["violations"]
+        if schema_result["enforcement"] == "strict" and schema_result.get("params_modified"):
+            response_extra["params_stripped"] = True
     if api_key:
         _, remaining, reset_at = check_rate_limit(api_key.id)
         response_extra["rate_limit"] = {"remaining": remaining, "reset_at": reset_at}
@@ -492,9 +503,14 @@ def intercept_tool_call():
     if shadow_active and not audit_result.get("allowed", False):
         log_action(tool_call, audit_result, "shadow-blocked", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id)
         _track_usage(tenant_id)
-        vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
-        if vault_creds:
-            response_extra["vault_credentials"] = vault_creds
+        if data.get("proxy_token"):
+            proxy_creds = resolve_proxy_token(data["proxy_token"])
+            if proxy_creds:
+                response_extra["vault_credentials"] = {"header_name": proxy_creds["header_name"], "header_value": proxy_creds["header_value"]}
+        else:
+            vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
+            if vault_creds:
+                response_extra["vault_credentials"] = vault_creds
         return jsonify({
             "status": "allowed",
             "audit": audit_result,
@@ -507,9 +523,14 @@ def intercept_tool_call():
     if audit_result.get("allowed", False):
         log_action(tool_call, audit_result, "allowed", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id)
         _track_usage(tenant_id)
-        vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
-        if vault_creds:
-            response_extra["vault_credentials"] = vault_creds
+        if data.get("proxy_token"):
+            proxy_creds = resolve_proxy_token(data["proxy_token"])
+            if proxy_creds:
+                response_extra["vault_credentials"] = {"header_name": proxy_creds["header_name"], "header_value": proxy_creds["header_value"]}
+        else:
+            vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
+            if vault_creds:
+                response_extra["vault_credentials"] = vault_creds
         return jsonify({
             "status": "allowed",
             "audit": audit_result,
@@ -520,9 +541,14 @@ def intercept_tool_call():
         if check_auto_approve(tool_call, audit_result, agent_id, tenant_id=tenant_id):
             log_action(tool_call, audit_result, "auto-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id)
             _track_usage(tenant_id)
-            vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
-            if vault_creds:
-                response_extra["vault_credentials"] = vault_creds
+            if data.get("proxy_token"):
+                proxy_creds = resolve_proxy_token(data["proxy_token"])
+                if proxy_creds:
+                    response_extra["vault_credentials"] = {"header_name": proxy_creds["header_name"], "header_value": proxy_creds["header_value"]}
+            else:
+                vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
+                if vault_creds:
+                    response_extra["vault_credentials"] = vault_creds
             return jsonify({
                 "status": "auto-approved",
                 "audit": audit_result,
@@ -2044,6 +2070,36 @@ def loop_detector_stats():
     return jsonify(get_loop_stats(tenant_id))
 
 
+@app.route("/api/tools/<int:tool_id>/schema", methods=["PUT"])
+@require_login
+def update_tool_schema(tool_id):
+    tenant_id = get_current_tenant_id()
+    entry = ToolCatalog.query.get(tool_id)
+    if not entry or entry.tenant_id != tenant_id:
+        return jsonify({"error": "Tool not found"}), 404
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No JSON payload provided"}), 400
+    schema = data.get("schema")
+    enforcement = data.get("enforcement", "flexible")
+    if enforcement not in ("strict", "flexible"):
+        return jsonify({"error": "enforcement must be 'strict' or 'flexible'"}), 400
+    if schema is not None:
+        entry.schema_json = json.dumps(schema)
+    else:
+        entry.schema_json = None
+    entry.schema_enforcement = enforcement
+    db.session.commit()
+    return jsonify({"status": "updated", "tool": entry.to_dict()})
+
+
+@app.route("/api/schema-guard/stats", methods=["GET"])
+@require_login
+def schema_guard_stats():
+    tenant_id = get_current_tenant_id()
+    return jsonify(get_schema_stats(tenant_id))
+
+
 @app.route("/api/honeypots", methods=["GET"])
 @require_login
 def list_honeypots():
@@ -2133,6 +2189,36 @@ def modify_vault_entry(entry_id):
     if not result:
         return jsonify({"error": "Vault entry not found"}), 404
     return jsonify({"entry": result})
+
+
+@app.route("/api/vault/proxy-tokens", methods=["GET"])
+@require_login
+def list_proxy_tokens():
+    tenant_id = get_current_tenant_id()
+    tokens = get_proxy_tokens(tenant_id)
+    return jsonify({"tokens": tokens})
+
+
+@app.route("/api/vault/proxy-tokens", methods=["POST"])
+@require_login
+def create_proxy_token_endpoint():
+    tenant_id = get_current_tenant_id()
+    data = request.get_json()
+    if not data or not data.get("vault_entry_id"):
+        return jsonify({"error": "vault_entry_id required"}), 400
+    result = generate_proxy_token(tenant_id, data["vault_entry_id"], label=data.get("label"))
+    if not result:
+        return jsonify({"error": "Vault entry not found"}), 404
+    return jsonify(result), 201
+
+
+@app.route("/api/vault/proxy-tokens/<int:token_id>/revoke", methods=["POST"])
+@require_login
+def revoke_proxy_token_endpoint(token_id):
+    tenant_id = get_current_tenant_id()
+    if revoke_proxy_token(token_id, tenant_id):
+        return jsonify({"status": "revoked"})
+    return jsonify({"error": "Token not found"}), 404
 
 
 @app.route("/api/analytics/timeline", methods=["GET"])
@@ -2487,9 +2573,33 @@ def overview_stats():
         AuditLogEntry.created_at.desc()
     ).limit(10).all()
 
+    blocked_loop = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='blocked-loop').count()
+
+    loop_stats = get_loop_stats(tenant_id)
+    schema_stats = get_schema_stats(tenant_id)
+
+    total_blocked_all = blocked + blocked_br + blocked_loop
+    estimated_cost_per_call = 0.01
+    total_savings = round((total_blocked_all) * estimated_cost_per_call + loop_stats.get("total_estimated_savings", 0), 2)
+
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_intercepts = AuditLogEntry.query.filter(
+        AuditLogEntry.tenant_id == tenant_id,
+        AuditLogEntry.created_at >= today_start
+    ).count()
+    today_spend = round(today_intercepts * estimated_cost_per_call, 2)
+
+    first_entry = AuditLogEntry.query.filter_by(tenant_id=tenant_id).order_by(AuditLogEntry.created_at.asc()).first()
+    hours_active = 0
+    if first_entry and first_entry.created_at:
+        hours_active = max(1, (datetime.utcnow() - first_entry.created_at).total_seconds() / 3600)
+    daily_rate = round((total / max(hours_active, 1)) * 24 * estimated_cost_per_call, 2) if total > 0 else 0
+    projected_30d = round(daily_rate * 30, 2)
+
     return jsonify({
         "total_intercepts": total,
-        "blocked": blocked + blocked_br,
+        "blocked": total_blocked_all,
+        "blocked_loops": blocked_loop,
         "shadow_blocked": shadow_blocked,
         "allowed": allowed,
         "approved": approved,
@@ -2500,7 +2610,16 @@ def overview_stats():
         "active_agents": agents,
         "shadow_mode": settings.shadow_mode,
         "approval_rate": round((approved / max(approved + denied, 1)) * 100, 1),
-        "block_rate": round(((blocked + blocked_br) / max(total, 1)) * 100, 1),
+        "block_rate": round((total_blocked_all / max(total, 1)) * 100, 1),
+        "total_savings": total_savings,
+        "loops_detected": loop_stats.get("total_loops", 0),
+        "loop_savings": loop_stats.get("total_estimated_savings", 0),
+        "schema_violations": schema_stats.get("total_violations", 0),
+        "params_stripped": schema_stats.get("total_params_stripped", 0),
+        "today_spend": today_spend,
+        "daily_rate": daily_rate,
+        "projected_30d": projected_30d,
+        "hours_active": round(hours_active, 1),
         "recent_activity": [{
             "id": e.id,
             "tool_name": e.tool_name,
