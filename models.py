@@ -24,6 +24,7 @@ class User(UserMixin, db.Model):
     active_tenant_type = db.Column(db.String, default='personal')
     display_name = db.Column(db.String, nullable=True)
     onboarded = db.Column(db.Boolean, default=False)
+    tos_accepted_at = db.Column(db.DateTime, nullable=True)
 
 
 class OAuth(OAuthConsumerMixin, db.Model):

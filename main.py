@@ -8,7 +8,7 @@ import secrets
 import threading
 from datetime import datetime
 from functools import wraps
-from flask import request, jsonify, render_template, session, url_for, Response, stream_with_context
+from flask import request, jsonify, render_template, session, url_for, Response, stream_with_context, redirect
 from flask_login import current_user
 
 from app import app, db
@@ -117,7 +117,27 @@ def make_session_permanent():
 def dashboard():
     if not current_user.is_authenticated:
         return render_template("login.html", login_url=url_for("replit_auth.login"))
+    if not current_user.tos_accepted_at:
+        return redirect(url_for("tos_page"))
     return render_template("dashboard.html", user=current_user)
+
+
+@app.route("/tos")
+def tos_page():
+    if not current_user.is_authenticated:
+        return redirect(url_for("dashboard"))
+    if current_user.tos_accepted_at:
+        return redirect(url_for("dashboard"))
+    return render_template("tos.html", user=current_user)
+
+
+@app.route("/api/accept-tos", methods=["POST"])
+def accept_tos():
+    if not current_user.is_authenticated:
+        return jsonify({"error": "Not authenticated"}), 401
+    current_user.tos_accepted_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({"status": "accepted", "redirect": "/"})
 
 
 @app.route("/pricing")
