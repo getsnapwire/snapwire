@@ -803,7 +803,7 @@
 
                 <div style="padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);margin-bottom:16px;">
                     <h4 style="margin-bottom:12px;font-size:14px;">&#x2709; Email Notifications</h4>
-                    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Receive email alerts for blocked actions and critical violations. Requires a connected email service (SendGrid or Resend).</p>
+                    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Receive email alerts for blocked actions and critical violations. Emails are sent automatically to your verified Replit email.</p>
 
                     <div class="form-group" style="margin-bottom:14px;">
                         <label style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;display:block;">Email Address</label>
@@ -829,8 +829,10 @@
                         </label>
                     </div>
 
-                    <div style="display:flex;gap:8px;">
+                    <div style="display:flex;gap:8px;align-items:center;">
                         <button class="btn btn-approve" onclick="saveNotificationSettings()">Save Email Settings</button>
+                        <button class="btn" onclick="testEmailNotification(this)" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;">Send Test Email</button>
+                        <span id="test-email-status" style="font-size:12px;color:var(--text-secondary);"></span>
                     </div>
                 </div>
             </div>
@@ -1044,6 +1046,7 @@
                 <button class="analytics-range-btn" onclick="loadAnalytics(14, this)" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">14 Days</button>
                 <button class="analytics-range-btn" onclick="loadAnalytics(30, this)" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">30 Days</button>
                 <button class="analytics-range-btn" onclick="loadAnalytics(90, this)" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">90 Days</button>
+                <a id="analytics-export-btn" href="/api/analytics/export?days=30" class="btn-export" download style="margin-left:auto;">&#128229; Export CSV</a>
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
@@ -3038,6 +3041,30 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
             } catch (e) { alert('Error: ' + e.message); }
         }
 
+        async function testEmailNotification(btn) {
+            const statusEl = document.getElementById('test-email-status');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            statusEl.textContent = '';
+            try {
+                const res = await fetch('/api/notifications/test-email', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    statusEl.style.color = 'var(--accent-green)';
+                    statusEl.textContent = data.message || 'Test email sent!';
+                } else {
+                    statusEl.style.color = 'var(--accent-red)';
+                    statusEl.textContent = data.error || 'Failed to send test email.';
+                }
+            } catch (e) {
+                statusEl.style.color = 'var(--accent-red)';
+                statusEl.textContent = 'Error: ' + e.message;
+            }
+            btn.disabled = false;
+            btn.textContent = 'Send Test Email';
+            setTimeout(() => { statusEl.textContent = ''; }, 5000);
+        }
+
         fetchPending();
         fetchAuditLog();
         fetchRules();
@@ -3469,6 +3496,8 @@ if check_with_firewall("send_email", {"to": "user@example.com"}):
                 btn.style.border = 'none';
                 btn.style.fontWeight = '600';
             }
+            const exportBtn = document.getElementById('analytics-export-btn');
+            if (exportBtn) exportBtn.href = `/api/analytics/export?days=${days}`;
             try {
                 const res = await fetch(`/api/analytics/timeline?days=${days}`);
                 const data = await res.json();

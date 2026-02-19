@@ -43,6 +43,7 @@ import src.rate_limiter as rate_limiter_module
 from src.input_sanitizer import sanitize_parameters
 from src.nlp_rule_builder import parse_natural_language_rule, detect_rule_conflicts, test_rule_against_action
 from src.notifications import send_slack_notification, send_notification_to_configured_webhooks
+from src.email_service import send_blocked_action_email, send_critical_risk_email
 from src.tool_catalog import check_tool_catalog, get_catalog, update_tool_status, regrade_tool
 from src.blast_radius import check_blast_radius, get_blast_radius_config, update_blast_radius_config, get_blast_radius_events, clear_lockout, get_active_lockouts
 from src.honeypot import check_honeypot, get_honeypots, create_honeypot, delete_honeypot, toggle_honeypot, get_honeypot_alerts
@@ -338,6 +339,13 @@ def intercept_tool_call():
                 if slack_url:
                     send_slack_notification(slack_url, notification_data)
                 send_notification_to_configured_webhooks(notification_data, event_type="blocked")
+                if notif_settings.get("email_enabled") and notif_settings.get("email_on_block"):
+                    send_blocked_action_email(notification_data)
+                if notif_settings.get("email_enabled") and notif_settings.get("email_on_critical"):
+                    violations = audit_result.get("violations", [])
+                    has_critical = any(v.get("severity") == "critical" for v in violations)
+                    if has_critical:
+                        send_critical_risk_email(notification_data)
         except Exception:
             pass
 
@@ -1814,6 +1822,68 @@ def analytics_timeline():
         "top_tools": tools_data,
         "days": days,
     })
+
+
+@app.route("/api/analytics/export", methods=["GET"])
+@require_login
+def export_analytics():
+    from sqlalchemy import func, cast, Date
+    tenant_id = get_current_tenant_id()
+    try:
+        days = max(1, min(365, int(request.args.get("days", 30))))
+    except (ValueError, TypeError):
+        days = 30
+
+    cutoff = datetime.utcnow() - __import__('datetime').timedelta(days=days)
+
+    rows = db.session.query(
+        cast(AuditLogEntry.created_at, Date).label("day"),
+        AuditLogEntry.status,
+        func.count().label("cnt")
+    ).filter(AuditLogEntry.created_at >= cutoff)
+    if tenant_id:
+        rows = rows.filter(AuditLogEntry.tenant_id == tenant_id)
+    rows = rows.group_by("day", AuditLogEntry.status).order_by("day").all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Date", "Status", "Count"])
+    for row in rows:
+        writer.writerow([
+            row.day.isoformat() if row.day else "unknown",
+            row.status,
+            row.cnt,
+        ])
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=analytics_{days}d.csv"}
+    )
+
+
+@app.route("/api/notifications/test-email", methods=["POST"])
+@require_login
+def test_email_notification():
+    from src.email_service import send_email
+    result = send_email(
+        subject="Agentic Firewall - Test Email",
+        text_body="This is a test email from your Agentic Firewall dashboard. If you received this, email notifications are working correctly!",
+        html_body="""
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: #1e293b; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+                <h2 style="margin: 0;">Test Email</h2>
+            </div>
+            <div style="background: #f8fafc; padding: 20px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px;">
+                <p style="color: #10b981; font-weight: 600; font-size: 18px;">Email notifications are working!</p>
+                <p style="color: #475569;">This is a test email from your Agentic Firewall dashboard. You will receive notifications when actions are blocked or critical risks are detected.</p>
+            </div>
+        </div>
+        """
+    )
+    if result:
+        return jsonify({"status": "sent", "message": "Test email sent successfully."})
+    return jsonify({"error": "Failed to send test email. This feature requires a deployed environment."}), 500
 
 
 if __name__ == "__main__":
