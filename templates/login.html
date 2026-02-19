@@ -588,6 +588,8 @@
         .animate-d2 { animation-delay: 0.2s; opacity: 0; }
         .animate-d3 { animation-delay: 0.3s; opacity: 0; }
 
+        .deploy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 880px; margin: 0 auto; }
+
         @media (max-width: 768px) {
             .hero { padding: 120px 20px 80px; }
             .hero h1 { font-size: 36px; letter-spacing: -1px; }
@@ -602,6 +604,7 @@
             .nav { padding: 0 16px; }
             .nav-links a:not(.nav-btn) { display: none; }
             .cta-secondary { display: none; }
+            .deploy-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 1024px) and (min-width: 769px) {
@@ -623,6 +626,7 @@
         <div class="nav-links">
             <a href="#how-it-works">How It Works</a>
             <a href="#features">Features</a>
+            <a href="/audit">Free Audit</a>
             <a href="/pricing">Pricing</a>
             <a href="/docs">API Docs</a>
             <a href="#faq">FAQ</a>
@@ -641,13 +645,79 @@
                 Monitor, audit, and control every action your AI agents take. Define constitutional rules, enforce compliance, and keep humans in the loop.
             </p>
             <div class="cta-group animate animate-d3">
-                <a href="{{ login_url }}" class="cta cta-primary">
+                <a href="#get-started" class="cta cta-primary">
                     Get Started <span>&rarr;</span>
                 </a>
-                <a href="#how-it-works" class="cta cta-secondary">See How It Works</a>
+                <a href="/audit" class="cta cta-secondary">Free Security Audit</a>
             </div>
         </div>
     </section>
+
+    <section id="get-started" style="padding:80px 32px 64px;background:var(--gray-50);">
+        <p class="section-label">Get Started</p>
+        <h2 class="section-title">Choose your deployment</h2>
+        <p class="section-desc">Run on our cloud or deploy to your own infrastructure. Same schema, easy migration.</p>
+        <div class="deploy-grid">
+            <div style="background:var(--white);border:2px solid var(--blue-500);border-radius:16px;padding:36px;position:relative;overflow:hidden;">
+                <div style="position:absolute;top:0;right:0;background:var(--blue-600);color:white;font-size:11px;font-weight:700;padding:6px 16px;border-radius:0 0 0 12px;text-transform:uppercase;letter-spacing:0.5px;">Recommended</div>
+                <div style="font-size:28px;margin-bottom:12px;">&#x2601;</div>
+                <h3 style="font-size:22px;font-weight:700;margin-bottom:8px;color:var(--gray-900);">Cloud</h3>
+                <p style="font-size:14px;color:var(--gray-500);line-height:1.6;margin-bottom:24px;">Fully managed. Sign up and start protecting your agents in under 2 minutes. We handle infrastructure, updates, and scaling.</p>
+                <ul style="list-style:none;margin-bottom:28px;font-size:13px;color:var(--gray-600);">
+                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green-500);">&#10003;</span> Instant setup, no servers needed</li>
+                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green-500);">&#10003;</span> Automatic updates & scaling</li>
+                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green-500);">&#10003;</span> Free tier available</li>
+                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green-500);">&#10003;</span> Dashboard & analytics included</li>
+                </ul>
+                <a href="{{ login_url }}" style="display:block;text-align:center;background:var(--blue-600);color:white;padding:14px 28px;border-radius:10px;font-size:15px;font-weight:600;text-decoration:none;transition:all 0.2s;">Sign Up Free &rarr;</a>
+            </div>
+            <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:16px;padding:36px;">
+                <div style="font-size:28px;margin-bottom:12px;">&#x1F3E0;</div>
+                <h3 style="font-size:22px;font-weight:700;margin-bottom:8px;color:var(--gray-900);">Self-Hosted</h3>
+                <p style="font-size:14px;color:var(--gray-500);line-height:1.6;margin-bottom:24px;">Deploy on your own infrastructure with full control. Same code, same schema. Migrate to Cloud anytime with zero data loss.</p>
+                <ul style="list-style:none;margin-bottom:28px;font-size:13px;color:var(--gray-600);">
+                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green-500);">&#10003;</span> Full source code access</li>
+                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green-500);">&#10003;</span> Your infrastructure, your data</li>
+                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green-500);">&#10003;</span> Compatible schema for migration</li>
+                    <li style="padding:6px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green-500);">&#10003;</span> One-click Replit template deploy</li>
+                </ul>
+                <button onclick="document.getElementById('self-hosted-modal').style.display='flex'" style="display:block;width:100%;text-align:center;background:var(--white);color:var(--gray-700);padding:14px 28px;border-radius:10px;font-size:15px;font-weight:600;border:1px solid var(--gray-300);cursor:pointer;transition:all 0.2s;">Get Template &rarr;</button>
+            </div>
+        </div>
+    </section>
+
+    <div id="self-hosted-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+        <div style="background:white;border-radius:16px;padding:36px;max-width:480px;width:90%;position:relative;">
+            <button onclick="document.getElementById('self-hosted-modal').style.display='none'" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-400);">&times;</button>
+            <h3 style="font-size:20px;font-weight:700;margin-bottom:6px;color:var(--gray-900);">Get Your Self-Hosted Template</h3>
+            <p style="font-size:13px;color:var(--gray-500);margin-bottom:24px;">Tell us a bit about yourself so we can help you get the most out of your deployment.</p>
+            <form id="self-hosted-form" onsubmit="submitSelfHosted(event)">
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">Name *</label>
+                    <input type="text" id="sh-name" required placeholder="Your name" style="width:100%;padding:10px 14px;border:1px solid var(--gray-300);border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">Email *</label>
+                    <input type="email" id="sh-email" required placeholder="you@company.com" style="width:100%;padding:10px 14px;border:1px solid var(--gray-300);border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">Company</label>
+                    <input type="text" id="sh-company" placeholder="Company name (optional)" style="width:100%;padding:10px 14px;border:1px solid var(--gray-300);border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom:20px;">
+                    <label style="display:block;font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">Use Case</label>
+                    <textarea id="sh-usecase" rows="2" placeholder="What will you use the firewall for?" style="width:100%;padding:10px 14px;border:1px solid var(--gray-300);border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+                </div>
+                <div id="sh-error" style="display:none;color:var(--red-500);font-size:13px;margin-bottom:12px;"></div>
+                <button type="submit" id="sh-submit-btn" style="width:100%;padding:14px;background:var(--gray-900);color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">Get Template Link &rarr;</button>
+            </form>
+            <div id="sh-success" style="display:none;text-align:center;padding:20px 0;">
+                <div style="font-size:40px;margin-bottom:12px;">&#x1F389;</div>
+                <h4 style="font-size:18px;font-weight:700;color:var(--gray-900);margin-bottom:8px;">You're all set!</h4>
+                <p style="font-size:14px;color:var(--gray-500);margin-bottom:20px;">Redirecting you to the template...</p>
+            </div>
+        </div>
+    </div>
 
     <hr class="divider">
 
@@ -845,6 +915,45 @@
         function toggleFaq(btn) {
             const item = btn.parentElement;
             item.classList.toggle('open');
+        }
+
+        async function submitSelfHosted(e) {
+            e.preventDefault();
+            const errEl = document.getElementById('sh-error');
+            const btn = document.getElementById('sh-submit-btn');
+            errEl.style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = 'Registering...';
+            try {
+                const res = await fetch('/api/self-hosted/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: document.getElementById('sh-name').value.trim(),
+                        email: document.getElementById('sh-email').value.trim(),
+                        company: document.getElementById('sh-company').value.trim(),
+                        use_case: document.getElementById('sh-usecase').value.trim(),
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('self-hosted-form').style.display = 'none';
+                    document.getElementById('sh-success').style.display = 'block';
+                    setTimeout(() => {
+                        window.open(data.template_url, '_blank');
+                    }, 1500);
+                } else {
+                    errEl.textContent = data.error || 'Registration failed. Please try again.';
+                    errEl.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Get Template Link \u2192';
+                }
+            } catch (err) {
+                errEl.textContent = 'Network error. Please try again.';
+                errEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Get Template Link \u2192';
+            }
         }
     </script>
 </body>

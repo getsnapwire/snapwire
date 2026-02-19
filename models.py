@@ -1,4 +1,5 @@
 import hashlib
+import json
 import uuid
 from datetime import datetime
 from app import db
@@ -412,4 +413,49 @@ class HoneypotAlert(db.Model):
             "intent": self.intent,
             "api_key_locked": self.api_key_locked,
             "triggered_at": self.triggered_at.isoformat() if self.triggered_at else None,
+        }
+
+
+class SelfHostedInstall(db.Model):
+    __tablename__ = 'self_hosted_installs'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    email = db.Column(db.String, nullable=False)
+    company = db.Column(db.String, nullable=True)
+    use_case = db.Column(db.Text, nullable=True)
+    ip_address = db.Column(db.String, nullable=True)
+    template_clicked = db.Column(db.Boolean, default=False)
+    registered_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "email": self.email,
+            "company": self.company,
+            "use_case": self.use_case,
+            "template_clicked": self.template_clicked,
+            "registered_at": self.registered_at.isoformat() if self.registered_at else None,
+        }
+
+
+class PublicAudit(db.Model):
+    __tablename__ = 'public_audits'
+    id = db.Column(db.Integer, primary_key=True)
+    prompt_hash = db.Column(db.String, nullable=False)
+    prompt_preview = db.Column(db.String(200), nullable=True)
+    safety_score = db.Column(db.Integer, nullable=True)
+    vulnerabilities_json = db.Column(db.Text, nullable=True)
+    ip_address = db.Column(db.String, nullable=True)
+    converted = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "prompt_preview": self.prompt_preview,
+            "safety_score": self.safety_score,
+            "vulnerabilities": json.loads(self.vulnerabilities_json) if self.vulnerabilities_json else [],
+            "converted": self.converted,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }

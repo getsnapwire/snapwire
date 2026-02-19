@@ -56,5 +56,14 @@ The Agentic Firewall is built with a Python Flask backend and a PostgreSQL datab
 -   **Web Framework**: Flask
 -   **WSGI Server**: Gunicorn
 
+## Deployment Paths
+-   **Cloud (Managed SaaS)**: Users sign up via Replit Auth and get a fully managed experience with dashboard, analytics, and auto-scaling.
+-   **Self-Hosted (Replit Template)**: Users register (name, email, company, use case) before accessing the template. Registrations tracked in `self_hosted_installs` table. Same database schema enables future migration to Cloud.
+-   **Public Audit Tool**: Free lead-generation tool at `/audit`. Anyone can paste a system prompt to get an AI-powered security analysis with Safety Score (0-100), vulnerability cards, and a downloadable shareable PNG image (1200x630). Rate limited to 10/hour per IP. Tracked in `public_audits` table.
+
+## Admin Endpoints
+-   `GET /api/admin/self-hosted` - View self-hosted registrations (requires login)
+-   `GET /api/admin/public-audits` - View public audit stats and recent audits (requires login)
+
 ## Pending Integrations
 -   **Stripe**: Payment processing for pricing tiers (Free/Pro/Enterprise) is not yet connected. User dismissed the Stripe connector setup. To enable billing, the user needs to connect Stripe via the integrations panel or provide a Stripe API key as a secret.

@@ -15,6 +15,7 @@ from app import app, db
 from replit_auth import require_login, make_replit_blueprint
 from models import User, ApiKey, RuleVersion, AuditLogEntry, WebhookConfig
 from models import Organization, OrgMembership, ConstitutionRule, NotificationSetting, UsageRecord
+from models import SelfHostedInstall, PublicAudit
 from src.tenant import get_current_tenant_id, get_tenant_id_for_api_key, is_tenant_admin, get_user_tenants, switch_tenant
 from src.constitution import (
     load_constitution, update_rule, add_rule, delete_rule, update_rule_full,
@@ -1884,6 +1885,165 @@ def test_email_notification():
     if result:
         return jsonify({"status": "sent", "message": "Test email sent successfully."})
     return jsonify({"error": "Failed to send test email. This feature requires a deployed environment."}), 500
+
+
+REPLIT_TEMPLATE_URL = "https://replit.com/@fastfitness4u/workspace?v=1"
+
+
+@app.route("/audit")
+def public_audit_page():
+    return render_template("audit.html")
+
+
+@app.route("/api/self-hosted/register", methods=["POST"])
+def register_self_hosted():
+    data = request.get_json() or {}
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip()
+    company = (data.get("company") or "").strip()
+    use_case = (data.get("use_case") or "").strip()
+
+    if not name or not email:
+        return jsonify({"error": "Name and email are required"}), 400
+    if "@" not in email:
+        return jsonify({"error": "Please enter a valid email address"}), 400
+
+    install = SelfHostedInstall(
+        name=name,
+        email=email,
+        company=company or None,
+        use_case=use_case or None,
+        ip_address=request.remote_addr,
+        template_clicked=True,
+    )
+    db.session.add(install)
+    db.session.commit()
+
+    return jsonify({
+        "status": "registered",
+        "template_url": REPLIT_TEMPLATE_URL,
+        "message": "Registration successful! Redirecting to template...",
+    })
+
+
+@app.route("/api/public/audit", methods=["POST"])
+def public_audit_api():
+    from anthropic import Anthropic
+    from datetime import timedelta as _td
+
+    ip = request.remote_addr or "unknown"
+    now = datetime.utcnow()
+    one_hour_ago = now - _td(hours=1)
+    recent_count = PublicAudit.query.filter(
+        PublicAudit.ip_address == ip,
+        PublicAudit.created_at >= one_hour_ago
+    ).count()
+    if recent_count >= 10:
+        return jsonify({"error": "Rate limit exceeded. Please try again later (max 10 audits per hour)."}), 429
+
+    data = request.get_json() or {}
+    prompt = (data.get("prompt") or "").strip()
+    if not prompt:
+        return jsonify({"error": "Please provide a system prompt to audit"}), 400
+    if len(prompt) > 10000:
+        return jsonify({"error": "System prompt is too long (max 10,000 characters)"}), 400
+
+    api_key = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
+    base_url = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_BASE_URL")
+    client = Anthropic(api_key=api_key, base_url=base_url)
+
+    system_msg = """You are a security auditor specializing in AI agent system prompts. Analyze the given system prompt for security vulnerabilities.
+
+Return a JSON response with this exact structure:
+{
+  "safety_score": <integer 0-100, where 100 is perfectly safe>,
+  "vulnerabilities": [
+    {
+      "title": "Short vulnerability name",
+      "severity": "critical" | "high" | "medium",
+      "description": "Clear, non-technical explanation of the vulnerability and its potential impact",
+      "recommendation": "Specific actionable fix"
+    }
+  ],
+  "summary": "One sentence overall assessment"
+}
+
+Always find exactly 3 vulnerabilities, even if some are lower severity. Focus on:
+- Prompt injection susceptibility
+- Data exfiltration risks
+- Privilege escalation possibilities
+- Lack of output filtering
+- Missing safety boundaries
+- Overly broad permissions
+- Social engineering vectors
+- Jailbreak susceptibility
+
+Be specific about the vulnerabilities found in THIS particular prompt. Do not be generic.
+Return ONLY valid JSON, no markdown formatting."""
+
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1500,
+            messages=[{"role": "user", "content": f"Analyze this AI agent system prompt for security vulnerabilities:\n\n---\n{prompt}\n---"}],
+            system=system_msg,
+        )
+        result_text = response.content[0].text.strip()
+        if result_text.startswith("```"):
+            result_text = result_text.split("\n", 1)[1] if "\n" in result_text else result_text[3:]
+            if result_text.endswith("```"):
+                result_text = result_text[:-3]
+            result_text = result_text.strip()
+
+        result = json.loads(result_text)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Failed to parse audit results. Please try again."}), 500
+    except Exception as e:
+        return jsonify({"error": "Audit service temporarily unavailable. Please try again."}), 503
+
+    prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()[:16]
+    audit_record = PublicAudit(
+        prompt_hash=prompt_hash,
+        prompt_preview=prompt[:200],
+        safety_score=result.get("safety_score", 50),
+        vulnerabilities_json=json.dumps(result.get("vulnerabilities", [])),
+        ip_address=ip,
+    )
+    db.session.add(audit_record)
+    db.session.commit()
+
+    return jsonify({
+        "safety_score": result.get("safety_score", 50),
+        "vulnerabilities": result.get("vulnerabilities", []),
+        "summary": result.get("summary", ""),
+        "audit_id": audit_record.id,
+    })
+
+
+@app.route("/api/admin/self-hosted", methods=["GET"])
+@require_login
+def admin_self_hosted():
+    installs = SelfHostedInstall.query.order_by(SelfHostedInstall.registered_at.desc()).limit(100).all()
+    return jsonify({"installs": [i.to_dict() for i in installs]})
+
+
+@app.route("/api/admin/public-audits", methods=["GET"])
+@require_login
+def admin_public_audits():
+    from sqlalchemy import func
+    total = PublicAudit.query.count()
+    today = datetime.utcnow().date()
+    today_count = PublicAudit.query.filter(
+        func.date(PublicAudit.created_at) == today
+    ).count()
+    avg_score = db.session.query(func.avg(PublicAudit.safety_score)).scalar() or 0
+    recent = PublicAudit.query.order_by(PublicAudit.created_at.desc()).limit(20).all()
+    return jsonify({
+        "total": total,
+        "today": today_count,
+        "avg_score": round(float(avg_score), 1),
+        "recent": [a.to_dict() for a in recent],
+    })
 
 
 if __name__ == "__main__":
