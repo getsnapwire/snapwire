@@ -11,12 +11,12 @@
 
         :root {
             --white: #ffffff;
-            --base: #0f172a;
-            --surface: #1e293b;
-            --border: rgba(148, 163, 184, 0.1);
-            --border-hover: rgba(148, 163, 184, 0.2);
+            --base: #111827;
+            --surface: #1f2937;
+            --border: rgba(148, 163, 184, 0.15);
+            --border-hover: rgba(148, 163, 184, 0.25);
             --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
+            --text-secondary: #9ca3af;
             --text-tertiary: #64748b;
             --text-muted: #475569;
             --accent: #FF6600;
@@ -46,7 +46,7 @@
             left: 0;
             right: 0;
             z-index: 100;
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(17, 24, 39, 0.9);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
             border-bottom: 1px solid var(--border);
@@ -113,9 +113,9 @@
         }
 
         .hero {
-            padding: 160px 32px 120px;
+            padding: 180px 32px 140px;
             text-align: center;
-            background: linear-gradient(180deg, var(--base) 0%, #131c31 100%);
+            background: linear-gradient(180deg, var(--base) 0%, #1a2235 100%);
             position: relative;
             overflow: hidden;
         }
@@ -227,7 +227,7 @@
         .cta-secondary {
             color: var(--text-secondary);
             border: 1px solid var(--border-hover);
-            background: rgba(30, 41, 59, 0.5);
+            background: rgba(31, 41, 55, 0.5);
         }
 
         .cta-secondary:hover {
@@ -237,7 +237,7 @@
         }
 
         .section {
-            padding: 120px 32px;
+            padding: 140px 32px;
             max-width: 1140px;
             margin: 0 auto;
         }
@@ -357,6 +357,7 @@
             border-radius: 16px;
             padding: 32px;
             transition: all 0.25s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
 
         .feature-card:hover {
@@ -409,6 +410,7 @@
             background: var(--surface);
             border: 1px solid var(--border);
             transition: all 0.25s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
 
         .why-card:hover {
@@ -515,8 +517,8 @@
 
         .final-cta {
             text-align: center;
-            padding: 120px 32px;
-            background: linear-gradient(180deg, var(--base) 0%, #131c31 100%);
+            padding: 140px 32px;
+            background: linear-gradient(180deg, var(--base) 0%, #1a2235 100%);
             position: relative;
             overflow: hidden;
         }
@@ -620,10 +622,10 @@
         .deploy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 880px; margin: 0 auto; }
 
         @media (max-width: 768px) {
-            .hero { padding: 140px 20px 100px; }
+            .hero { padding: 160px 20px 120px; }
             .hero h1 { font-size: 36px; letter-spacing: -1px; }
             .hero-sub { font-size: 16px; }
-            .section { padding: 80px 20px; }
+            .section { padding: 100px 20px; }
             .section-title { font-size: 28px; }
             .steps { grid-template-columns: 1fr; gap: 32px; }
             .steps::before { display: none; }
@@ -683,7 +685,7 @@
         </div>
     </section>
 
-    <section id="get-started" style="padding:100px 32px 80px;background:var(--surface);">
+    <section id="get-started" style="padding:120px 32px 100px;background:var(--surface);">
         <p class="section-label">Get Started</p>
         <h2 class="section-title">Choose your deployment</h2>
         <p class="section-desc">Run on our cloud or deploy to your own infrastructure. Same schema, easy migration.</p>
@@ -1012,8 +1014,8 @@
                         submitBtn.style.cursor = 'pointer';
                     } else {
                         submitBtn.disabled = true;
-                        submitBtn.style.background = '#30363d';
-                        submitBtn.style.color = '#6e7681';
+                        submitBtn.style.background = '#374151';
+                        submitBtn.style.color = '#9ca3af';
                         submitBtn.style.cursor = 'not-allowed';
                     }
                 });

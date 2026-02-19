@@ -3946,8 +3946,8 @@ def handle_tool_call(tool_call):
             canvas.height = 340;
             const ctx = canvas.getContext('2d');
             const grad = ctx.createLinearGradient(0, 0, 600, 340);
-            grad.addColorStop(0, '#0f172a');
-            grad.addColorStop(1, '#1e293b');
+            grad.addColorStop(0, '#111827');
+            grad.addColorStop(1, '#1f2937');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.roundRect(0, 0, 600, 340, 20);
@@ -3961,7 +3961,7 @@ def handle_tool_call(tool_call):
             ctx.fillStyle = '#10b981';
             ctx.font = 'bold 52px "Fira Code", monospace';
             ctx.fillText(savings, 30, 130);
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = '#9ca3af';
             ctx.font = '14px Inter, sans-serif';
             ctx.fillText('Total Savings from blocked loops & violations', 30, 155);
             ctx.fillStyle = '#e2e8f0';
@@ -3976,7 +3976,7 @@ def handle_tool_call(tool_call):
             ctx.fillStyle = '#64748b';
             ctx.font = '12px Inter, sans-serif';
             ctx.fillText('Tool Calls Monitored', 200, 230);
-            ctx.strokeStyle = '#334155';
+            ctx.strokeStyle = '#374151';
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(30, 260);
@@ -4852,7 +4852,7 @@ if (result.status === "allowed") {
         checkFirstVisit();
     </script>
 
-    <div style="text-align:center;padding:16px;color:#94a3b8;font-size:12px;border-top:1px solid rgba(148,163,184,0.1);">
+    <div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px;border-top:1px solid rgba(148,163,184,0.15);">
         Powered by <a href="https://github.com/snapwire/snapwire" target="_blank" style="color:#FF6600;text-decoration:none;">Snapwire</a>
         {% if is_self_hosted %}
         &nbsp;&middot;&nbsp;
