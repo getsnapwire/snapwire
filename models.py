@@ -467,6 +467,32 @@ class InstallConfig(db.Model):
     version = db.Column(db.String(20), default='1.0.0')
 
 
+class TelemetryPing(db.Model):
+    __tablename__ = 'telemetry_pings'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    install_id = db.Column(db.String(64), nullable=False, index=True)
+    version = db.Column(db.String(20), nullable=True)
+    platform = db.Column(db.String(50), nullable=True)
+    total_rules = db.Column(db.Integer, default=0)
+    total_intercepts_24h = db.Column(db.Integer, default=0)
+    total_agents = db.Column(db.Integer, default=0)
+    uptime_hours = db.Column(db.Float, default=0)
+    received_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "install_id": self.install_id,
+            "version": self.version,
+            "platform": self.platform,
+            "total_rules": self.total_rules,
+            "total_intercepts_24h": self.total_intercepts_24h,
+            "total_agents": self.total_agents,
+            "uptime_hours": self.uptime_hours,
+            "received_at": self.received_at.isoformat() if self.received_at else None,
+        }
+
+
 class SelfHostedInstall(db.Model):
     __tablename__ = 'self_hosted_installs'
     id = db.Column(db.Integer, primary_key=True)

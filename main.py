@@ -11,11 +11,11 @@ from functools import wraps
 from flask import request, jsonify, render_template, session, url_for, Response, stream_with_context, redirect
 from flask_login import current_user
 
-from app import app, db
+from app import app, db, limiter
 from replit_auth import require_login, make_replit_blueprint, IS_REPLIT
 from models import User, ApiKey, RuleVersion, AuditLogEntry, WebhookConfig
 from models import Organization, OrgMembership, ConstitutionRule, NotificationSetting, UsageRecord
-from models import SelfHostedInstall, PublicAudit, InstallConfig
+from models import SelfHostedInstall, PublicAudit, InstallConfig, TelemetryPing
 from src.tenant import get_current_tenant_id, get_tenant_id_for_api_key, is_tenant_admin, get_user_tenants, switch_tenant
 from src.constitution import (
     load_constitution, update_rule, add_rule, delete_rule, update_rule_full,
@@ -232,10 +232,11 @@ def start_telemetry_ping_timer():
                         "uptime_hours": uptime_hours,
                     }
                     
-                    endpoint = os.environ.get("TELEMETRY_ENDPOINT", "https://telemetry.agenticfirewall.ai/api/v1/ping")
+                    endpoint = os.environ.get("TELEMETRY_ENDPOINT", "https://telemetry.agenticfirewall.ai/api/telemetry/ingest")
                     requests.post(endpoint, json=payload, timeout=10)
-            except Exception:
-                pass
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).debug(f"Telemetry ping failed: {e}")
     
     t = threading.Thread(target=run, daemon=True)
     t.start()
@@ -2610,15 +2611,97 @@ def telemetry_transparency():
     })
 
 
+@app.route("/api/telemetry/ingest", methods=["POST"])
+@limiter.limit("10 per minute")
+def telemetry_ingest():
+    if request.content_length and request.content_length > 4096:
+        return jsonify({"error": "Payload too large"}), 413
+
+    data = request.get_json(silent=True)
+    if not data or not isinstance(data, dict):
+        return jsonify({"error": "Valid JSON object required"}), 400
+
+    install_id = data.get("install_id")
+    if not install_id or not isinstance(install_id, str) or len(install_id) > 64:
+        return jsonify({"error": "install_id required (string, max 64 chars)"}), 400
+
+    def safe_int(val, default=0, max_val=1000000):
+        try:
+            v = int(val)
+            return max(0, min(v, max_val))
+        except (TypeError, ValueError):
+            return default
+
+    def safe_float(val, default=0.0, max_val=100000.0):
+        try:
+            v = float(val)
+            return max(0.0, min(v, max_val))
+        except (TypeError, ValueError):
+            return default
+
+    version = data.get("version")
+    if version and (not isinstance(version, str) or len(version) > 20):
+        version = None
+
+    platform = data.get("platform")
+    if platform and (not isinstance(platform, str) or len(platform) > 50):
+        platform = None
+
+    ping = TelemetryPing(
+        install_id=install_id[:64],
+        version=version,
+        platform=platform,
+        total_rules=safe_int(data.get("total_rules")),
+        total_intercepts_24h=safe_int(data.get("total_intercepts_24h")),
+        total_agents=safe_int(data.get("total_agents")),
+        uptime_hours=safe_float(data.get("uptime_hours")),
+    )
+    db.session.add(ping)
+    db.session.commit()
+    return jsonify({"status": "ok"}), 200
+
+
 @app.route("/api/admin/telemetry-dashboard", methods=["GET"])
 @require_login
 def telemetry_dashboard():
+    from datetime import timedelta
     config = get_install_id()
+
+    unique_installs = db.session.query(db.func.count(db.func.distinct(TelemetryPing.install_id))).scalar() or 0
+    total_pings = TelemetryPing.query.count()
+
+    cutoff_7d = datetime.utcnow() - timedelta(days=7)
+    active_7d = db.session.query(db.func.count(db.func.distinct(TelemetryPing.install_id))).filter(
+        TelemetryPing.received_at >= cutoff_7d
+    ).scalar() or 0
+
+    version_rows = db.session.query(
+        TelemetryPing.version,
+        db.func.count(db.func.distinct(TelemetryPing.install_id))
+    ).group_by(TelemetryPing.version).all()
+    version_dist = {v: c for v, c in version_rows if v}
+
+    platform_rows = db.session.query(
+        TelemetryPing.platform,
+        db.func.count(db.func.distinct(TelemetryPing.install_id))
+    ).group_by(TelemetryPing.platform).all()
+    platform_dist = {p: c for p, c in platform_rows if p}
+
+    recent = TelemetryPing.query.order_by(TelemetryPing.received_at.desc()).limit(20).all()
+
     return jsonify({
         "install_id": config.install_id,
         "telemetry_enabled": config.telemetry_enabled,
         "version": config.version,
         "first_installed": config.created_at.isoformat() + "Z" if config.created_at else None,
+        "network": {
+            "unique_installs": unique_installs,
+            "total_pings": total_pings,
+            "active_7d": active_7d,
+            "version_distribution": version_dist,
+            "platform_distribution": platform_dist,
+        },
+        "recent_pings": [p.to_dict() for p in recent],
     })
 
 

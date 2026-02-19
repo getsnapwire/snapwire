@@ -9,7 +9,7 @@ from flask import g, session, redirect, request, render_template, url_for, jsoni
 from flask_login import LoginManager, login_user, logout_user, current_user
 from werkzeug.local import LocalProxy
 
-from app import app, db
+from app import app, db, limiter
 from models import User
 
 IS_REPLIT = bool(os.environ.get("REPL_ID"))
@@ -176,6 +176,7 @@ else:
         return render_template("local_login.html")
 
     @local_auth_bp.route("/login", methods=["POST"])
+    @limiter.limit("5 per minute")
     def login_post():
         data = request.form
         email = (data.get("email") or "").strip().lower()
@@ -201,6 +202,7 @@ else:
         return render_template("local_register.html")
 
     @local_auth_bp.route("/register", methods=["POST"])
+    @limiter.limit("3 per hour")
     def register_post():
         from src.tenant import ensure_personal_tenant
         from src.email_service import send_email
@@ -336,6 +338,7 @@ else:
         return render_template("forgot_password.html")
 
     @local_auth_bp.route("/forgot-password", methods=["POST"])
+    @limiter.limit("3 per hour")
     def forgot_password_post():
         from src.email_service import send_email
         from datetime import datetime, timedelta
@@ -361,6 +364,7 @@ else:
         return render_template("forgot_password.html", message="If an account exists with that email, you'll receive a reset link.")
 
     @local_auth_bp.route("/reset-password/<token>", methods=["GET", "POST"])
+    @limiter.limit("5 per minute")
     def reset_password(token):
         from datetime import datetime
 

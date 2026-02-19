@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt 2>/dev/null || true
+          pip install -e ".[dev]" 2>/dev/null || true
+          pip install pytest flask flask-sqlalchemy flask-login flask-dance flask-limiter gunicorn psycopg2-binary bcrypt anthropic openai pyjwt requests werkzeug sqlalchemy
+
+      - name: Run tests
+        env:
+          TESTING: "1"
+        run: |
+          python -m pytest tests/ -v --tb=short
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pyflakes
+
+      - name: Lint with pyflakes
+        run: |
+          pyflakes main.py app.py models.py replit_auth.py src/

@@ -84,6 +84,16 @@ The Agentic Firewall is built with a Python Flask backend and supports PostgreSQ
 -   `POST /api/rules/import` - Import rule packs
 -   `GET /api/telemetry/transparency` - View telemetry transparency info
 -   `GET /api/settings/telemetry` - Check/toggle telemetry status
+-   `POST /api/telemetry/ingest` - Receive telemetry pings from other instances
+-   `GET /api/admin/telemetry-dashboard` - Admin dashboard with network-wide stats
+
+## Security
+-   **Rate Limiting**: Flask-Limiter applied to auth endpoints (login: 5/min, register: 3/hr, forgot-password: 3/hr, reset-password: 5/min, telemetry ingest: 10/min)
+
+## Testing & CI/CD
+-   **Test Suite**: pytest-based tests in `tests/` covering health, auth, rules CRUD, config export/import, telemetry, and overview endpoints
+-   **CI Pipeline**: GitHub Actions (`.github/workflows/ci.yml`) runs tests and linting on push/PR to main
+-   Run tests: `python -m pytest tests/ -v`
 
 ## Pending Integrations
 -   **Stripe**: Payment processing for pricing tiers (Free/Pro/Enterprise) is not yet connected.
