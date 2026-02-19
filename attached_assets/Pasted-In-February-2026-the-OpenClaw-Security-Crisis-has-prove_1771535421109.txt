@@ -1,0 +1,77 @@
+In February 2026, the **"OpenClaw Security Crisis"** has proven that autonomous agents aren't just tools; they are **Non-Human Identities (NHIs)** that require a digital passport and a financial leash.
+
+To achieve your vision of a **Hybrid Agentic Gateway**, you need to combine **Cost Utility** (the "hook") with **Zero-Trust Intelligence** (the "moat"). Here is the consolidated summary of the master prompts you need to send to your AI builder to launch **SentryPort** (The "Sentry Way").
+
+---
+
+### **1. The Core Infrastructure: "The Sentry Gateway"**
+
+This builds the "Flight Recorder" and "Identity Proxy" that makes your tool an acquisition target for companies like Palo Alto or Okta.
+
+**The "Zero-Trust Identity Proxy" Prompt:**
+
+> *"Implement the **SentryPort Identity Proxy**.
+> 1. Upgrade `vault.py` to act as a **Zero-Knowledge Proxy**. Instead of storing raw API keys, generate disposable **'Proxy Tokens'** (e.g., `sentry_live_abc123`) for agents.
+> 2. In the interceptor, swap these tokens for real keys at the network layer only—never expose them to the agent's memory or logs.
+> 3. Add a **'Global Revoke'** button to the dashboard that instantly kills all active Proxy Tokens in the event of a breach."*
+> 
+> 
+
+---
+
+### **2. The Viral Utility: "The Economic Brake"**
+
+This provides the "Minute One" value that stops users from burning their credit cards while they sleep.
+
+**The "Loop Detector & Spend Forecast" Prompt:**
+
+> *"Build the **'Utility Wedge'** features:
+> 1. **Agentic Loop Detector:** If an agent calls the same tool with the same arguments 3x in 30 seconds, trigger an emergency block and alert: 'Safety Brake Applied 🦉'.
+> 2. **30-Day Spend Forecast:** Create a dashboard gauge showing 'Current Burn Rate' and 'Projected 30-Day Spend.'
+> 3. **Total Savings Counter:** Implement a 'Savings' metric that calculates money saved by blocking hallucination loops and unauthorized tool calls. Display this as the primary hero stat."*
+> 
+> 
+
+---
+
+### **3. The Intelligence Layer: "Risk, Not Judgment"**
+
+This adds the "Trust Score" features in a low-liability, informational-only way.
+
+**The "Reputation & Trust Score" Prompt:**
+
+> *"Implement the **'Risk Confidence Index'** (0-100 score).
+> 1. Fetch **GitHub Reputation** (account age, stars) for any tool's source code and display it as a 'Signal,' not a guarantee.
+> 2. Integrate a **URL Malware Scanner** via third-party API for all web-browsing tool calls.
+> 3. Label all security alerts as **'Intelligence Signals'** and include a legal disclaimer: 'Signals are probabilistic and for informational use only; final action remains User responsibility.'"*
+> 
+> 
+
+---
+
+### **4. The Branding & UI: "The Sentry Way"**
+
+This injects the catchy, shareable "OpenClaw-style" personality into your app.
+
+**The "Sentry Personality" UI Prompt:**
+
+> *"Rebrand the UI to the **'Sentry Way'**.
+> 1. Use the **Cyber-Owl (Sentry)** mascot across the dashboard. Rename 'Constitutional Auditor' to **'Automation Rules'**.
+> 2. Update the **Landing Page** to lead with 'Stop the Loop, Secure the Key.'
+> 3. Add a **'Share My Savings'** button that generates a viral-ready image of how much money SentryPort saved the user today.
+> 4. Ensure the **Onboarding Wizard** is a 3-step 'Passport & Allowance' setup: Generate Token -> Set Spend Limit -> Activate Shadow Monitor."*
+> 
+> 
+
+---
+
+### **The "Hybrid" Strategy Summary**
+
+| Phase | Focus | Marketing Vibe | Goal |
+| --- | --- | --- | --- |
+| **Launch** | Spend & Loops | *"Protect Your Wallet"* | 10k+ Viral Users |
+| **Growth** | Proxy Tokens | *"The Lobster's Armor"* | Community Standard |
+| **Exit** | Evidence Mapping | *"Compliance-Ready"* | $300M+ Acquisition |
+
+**Your Next Step:**
+Run the **"Zero-Trust Identity Proxy"** prompt first. It is the technical foundation of the entire 2026 security moat. **Would you like me to draft the "Technical Manifesto" for your GitHub README that explains why SentryPort is the only way to safely run OpenClaw agents in 2026?**
