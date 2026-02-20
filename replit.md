@@ -30,7 +30,7 @@ Key capabilities include:
 - Dashboard supports dark/light mode toggle (default: dark, saved in localStorage)
 - Browser notifications for blocked actions
 - Plain-language explanations everywhere
-- Footer disclaimer on all pages: "Snapwire is a technical monitoring utility. Use at your own risk. User assumes all liability for agent behavior."
+- Footer disclaimer on all pages: "Snapwire is a technical monitoring utility. All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator."
 
 ## System Architecture
 Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite databases via SQLAlchemy ORM.
@@ -108,6 +108,7 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   Run tests: `python -m pytest tests/ -v`
 
 ## Recent Changes
+- **2026-02-20**: Safe Harbor disclaimer update — replaced generic footer disclaimer across all 14 templates and dashboard with precise legal language: "All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator." Added section-level disclaimer to Snap-Card review queue and per-card disclaimer on each Snap-Card.
 - **2026-02-20**: Landing page GTM copy refresh — new headline "The Real-Time Circuit Breaker for AI Agents", competitive positioning against static scanners, Burn Meter as lead feature, revised "Industrial Guardian" tone. Replaced Shadow Mode with Snap-Card Review Queue in core features. Renamed deception detector to "Goal Drift Alerts". Added Roadmap section (Egress Allowlisting, Compliance Export as "Coming March 2026"). Updated final CTA. Removed unbuilt features from main feature list.
 - **2026-02-20**: Snap-Card Review Queue — redesigned pending approvals with structured Snap-Cards (reason badge, dual-panel Agent Intent / Security Signal layout, mobile-responsive stacking). Three action buttons: Reject, Edit & Release (JSON editor modal with validation), Trust 24h (creates TTL auto-approve rule for agent+tool combo). Added TrustRule model, trust-approved intercept logic, and toast notifications. Pulse animation on new cards.
 - **2026-02-20**: Industrial Safety palette overhaul — True Charcoal (#0B0D10) base, Deep Slate (#151A21) surfaces, Electric Cyan (#40E0FF) for monitoring, Holographic Teal (#00F5D4) for success, Ion Gold (#FFD66B) for warnings, Cloud Dancer (#F0EEE9) text. Night Plum (#2B1538) cinematic mesh gradient on hero sections. All 14+ templates, static/style.css, and dashboard canvas colors updated.

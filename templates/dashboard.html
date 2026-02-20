@@ -797,6 +797,9 @@
                 <button class="btn btn-deny" onclick="bulkResolve('denied')">Deny Selected</button>
             </div>
             <div id="pending-list"></div>
+            <div style="text-align:center;padding:16px 20px;margin-top:12px;font-size:11px;color:var(--text-secondary);opacity:0.65;border-top:1px solid var(--border);line-height:1.6;">
+                Snapwire is a technical monitoring utility. All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator.
+            </div>
         </div>
 
         <div id="panel-home" class="panel active">
@@ -2282,7 +2285,7 @@ def handle_tool_call(tool_call):
                             <button class="btn snap-btn-edit" onclick="openEditRelease('${action.id}', ${JSON.stringify(JSON.stringify(params))})" title="Edit the parameters and release the action">&#x270E; Edit & Release</button>
                             <button class="btn snap-btn-trust" onclick="trustTool24h('${action.id}')" title="Approve and auto-allow this agent+tool combo for 24 hours">&#x2714; Trust 24h</button>
                         </div>
-                        <div style="text-align:center;margin-top:4px;font-size:10px;color:var(--text-secondary);opacity:0.7;">Snapwire is a Runtime Intermediary. User assumes final liability for released actions.</div>
+                        <div style="text-align:center;margin-top:4px;font-size:10px;color:var(--text-secondary);opacity:0.7;">All signals are heuristic and advisory. The final Duty of Care rests with the human operator.</div>
                     </div>`;
             }).join('');
         }
