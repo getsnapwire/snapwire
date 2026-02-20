@@ -22,13 +22,12 @@ Key capabilities include:
 ## Brand Identity
 - **Name**: Snapwire
 - **Tagline**: "The Safety Fuse for Your AI Agents."
-- **Style**: Industrial, high-contrast Dark Mode with Safety Orange (#FF6600) accents
+- **Style**: "Industrial Safety" palette — True Charcoal (#0B0D10) base, Deep Slate (#151A21) surfaces, Safety Orange (#FF6B00) for actions, Electric Cyan (#40E0FF) for monitoring/intelligence, Holographic Teal (#00F5D4) for success, Ion Gold (#FFD66B) for warnings, Cloud Dancer (#F0EEE9) text, Night Plum (#2B1538) hero gradient accents
 - **Terminology**: "The Fuse" (security layer), "Snap-Tokens" (proxy identity tokens), "The Snap" (kill-switch), "Fuse Breaker" (loop detector), "Live Burn Meter" (spend monitor)
 - **Legal Position**: Neutral Intermediary — monitoring utility, not liable for AI actions
 
 ## User Preferences
 - Dashboard supports dark/light mode toggle (default: dark, saved in localStorage)
-- Industrial dark theme with Safety Orange (#FF6600) primary accent
 - Browser notifications for blocked actions
 - Plain-language explanations everywhere
 - Footer disclaimer on all pages: "Snapwire is a technical monitoring utility. Use at your own risk. User assumes all liability for agent behavior."
@@ -103,6 +102,7 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   Run tests: `python -m pytest tests/ -v`
 
 ## Recent Changes
+- **2026-02-20**: Industrial Safety palette overhaul — True Charcoal (#0B0D10) base, Deep Slate (#151A21) surfaces, Electric Cyan (#40E0FF) for monitoring, Holographic Teal (#00F5D4) for success, Ion Gold (#FFD66B) for warnings, Cloud Dancer (#F0EEE9) text. Night Plum (#2B1538) cinematic mesh gradient on hero sections. All 14+ templates, static/style.css, and dashboard canvas colors updated.
 - **2026-02-19**: Second design pass — lightened dark theme further to #111827/#1f2937 for more open, airy feel. Added card shadows for depth. Removed "Ready for Enterprise?" section from landing page. All 14+ templates consistent.
 - **2026-02-19**: Design refresh — shifted from heavy industrial black to softer dark slate/navy with refined orange accents. Updated all 14 templates to new palette. Added welcome banner onboarding, better empty states, mobile responsiveness, platform-agnostic vault messaging. Simplified pricing to Free + Pro (removed Enterprise tier). Updated TOS liability cap from $100 to "fees paid in prior 30 days". 
 - **2026-02-19**: Full rebrand from "Agentic Firewall" to "Snapwire". Added Live Burn Meter, Broken Circuit animation, Snap-Token acknowledgment gate, The Snap kill-switch, privacy policy page. Updated all templates, backend, SDK, tests, and documentation.

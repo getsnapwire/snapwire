@@ -11,15 +11,15 @@
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --bg: #111827;
-            --card-bg: #1f2937;
-            --border: #374151;
-            --text: #c9d1d9;
-            --text-muted: #9ca3af;
-            --text-bright: #f1f5f9;
-            --orange: #FF6600;
-            --orange-dim: rgba(255, 102, 0, 0.15);
-            --green: #3fb950;
+            --bg: #0B0D10;
+            --card-bg: #151A21;
+            --border: #273140;
+            --text: #F0EEE9;
+            --text-muted: #8B919A;
+            --text-bright: #F0EEE9;
+            --orange: #FF6B00;
+            --orange-dim: rgba(255, 107, 0, 0.15);
+            --green: #00F5D4;
         }
 
         body {
@@ -238,12 +238,12 @@
             background: var(--orange);
             color: white;
             cursor: pointer;
-            box-shadow: 0 4px 14px rgba(255, 102, 0, 0.3);
+            box-shadow: 0 4px 14px rgba(255, 107, 0, 0.3);
         }
 
         .agree-btn.enabled:hover {
             transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(255, 102, 0, 0.4);
+            box-shadow: 0 6px 20px rgba(255, 107, 0, 0.4);
         }
 
         .agree-btn.enabled:active {
@@ -452,7 +452,7 @@
                 const data = await res.json();
                 if (res.ok) {
                     agreeBtn.innerHTML = '<span>&#x2714;</span> Accepted!';
-                    agreeBtn.style.background = '#3fb950';
+                    agreeBtn.style.background = '#00F5D4';
                     setTimeout(() => {
                         window.location.href = data.redirect || '/';
                     }, 800);

@@ -11,26 +11,26 @@
 
         :root {
             --white: #ffffff;
-            --base: #111827;
-            --surface: #1f2937;
-            --border: rgba(148, 163, 184, 0.15);
-            --border-hover: rgba(148, 163, 184, 0.25);
-            --text-primary: #f1f5f9;
-            --text-secondary: #9ca3af;
-            --text-tertiary: #64748b;
-            --text-muted: #475569;
-            --accent: #FF6600;
-            --accent-hover: #E55C00;
-            --accent-subtle: rgba(255, 102, 0, 0.08);
-            --accent-border: rgba(255, 102, 0, 0.15);
-            --green: #34d399;
-            --green-subtle: rgba(52, 211, 153, 0.1);
+            --base: #0B0D10;
+            --surface: #151A21;
+            --border: rgba(39, 49, 64, 0.6);
+            --border-hover: rgba(39, 49, 64, 0.8);
+            --text-primary: #F0EEE9;
+            --text-secondary: #8B919A;
+            --text-tertiary: #5A6270;
+            --text-muted: #3D4654;
+            --accent: #FF6B00;
+            --accent-hover: #E56000;
+            --accent-subtle: rgba(255, 107, 0, 0.08);
+            --accent-border: rgba(255, 107, 0, 0.15);
+            --green: #00F5D4;
+            --green-subtle: rgba(0, 245, 212, 0.1);
             --red: #f87171;
             --red-subtle: rgba(248, 113, 113, 0.1);
-            --amber: #fbbf24;
-            --amber-subtle: rgba(251, 191, 36, 0.1);
-            --blue: #60a5fa;
-            --blue-subtle: rgba(96, 165, 250, 0.1);
+            --amber: #FFD66B;
+            --amber-subtle: rgba(255, 214, 107, 0.1);
+            --blue: #40E0FF;
+            --blue-subtle: rgba(64, 224, 255, 0.1);
         }
 
         body {
@@ -46,7 +46,7 @@
             left: 0;
             right: 0;
             z-index: 100;
-            background: rgba(17, 24, 39, 0.9);
+            background: rgba(11, 13, 16, 0.92);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
             border-bottom: 1px solid var(--border);
@@ -70,7 +70,7 @@
         .nav-logo .logo-icon {
             width: 32px;
             height: 32px;
-            background: linear-gradient(135deg, #FF6600, #CC5200);
+            background: linear-gradient(135deg, #FF6B00, #CC5500);
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -115,7 +115,7 @@
         .hero {
             padding: 180px 32px 140px;
             text-align: center;
-            background: linear-gradient(180deg, var(--base) 0%, #1a2235 100%);
+            background: linear-gradient(135deg, #0B0D10 0%, #0B0D10 60%, #2B1538 100%);
             position: relative;
             overflow: hidden;
         }
@@ -128,7 +128,7 @@
             transform: translateX(-50%);
             width: 900px;
             height: 900px;
-            background: radial-gradient(circle, rgba(255, 102, 0, 0.06) 0%, rgba(255, 102, 0, 0.02) 40%, transparent 70%);
+            background: radial-gradient(circle, rgba(255, 107, 0, 0.06) 0%, rgba(255, 107, 0, 0.02) 40%, transparent 70%);
             pointer-events: none;
         }
 
@@ -176,7 +176,7 @@
         }
 
         .hero h1 span {
-            background: linear-gradient(135deg, #FF6600, #FF8C42);
+            background: linear-gradient(135deg, #FF6B00, #FF8C42);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -215,13 +215,13 @@
         .cta-primary {
             background: var(--accent);
             color: #fff;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 102, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 107, 0, 0.1);
         }
 
         .cta-primary:hover {
             background: var(--accent-hover);
             transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(255, 102, 0, 0.25);
+            box-shadow: 0 4px 16px rgba(255, 107, 0, 0.25);
         }
 
         .cta-secondary {
@@ -232,7 +232,7 @@
 
         .cta-secondary:hover {
             color: var(--text-primary);
-            border-color: rgba(148, 163, 184, 0.3);
+            border-color: rgba(39, 49, 64, 0.9);
             background: var(--surface);
         }
 
@@ -323,13 +323,13 @@
         .step:nth-child(2) .step-num {
             background: var(--blue-subtle);
             color: var(--blue);
-            border: 1px solid rgba(96, 165, 250, 0.15);
+            border: 1px solid rgba(64, 224, 255, 0.15);
         }
 
         .step:nth-child(3) .step-num {
             background: var(--green-subtle);
             color: var(--green);
-            border: 1px solid rgba(52, 211, 153, 0.15);
+            border: 1px solid rgba(0, 245, 212, 0.15);
         }
 
         .step h3 {
@@ -484,7 +484,7 @@
         }
 
         .faq-question:hover {
-            background: rgba(148, 163, 184, 0.04);
+            background: rgba(240, 238, 233, 0.03);
         }
 
         .faq-arrow {
@@ -518,7 +518,7 @@
         .final-cta {
             text-align: center;
             padding: 140px 32px;
-            background: linear-gradient(180deg, var(--base) 0%, #1a2235 100%);
+            background: linear-gradient(135deg, #0B0D10 0%, #0B0D10 60%, #2B1538 100%);
             position: relative;
             overflow: hidden;
         }
@@ -531,7 +531,7 @@
             transform: translate(-50%, -50%);
             width: 600px;
             height: 600px;
-            background: radial-gradient(circle, rgba(255, 102, 0, 0.06) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255, 107, 0, 0.06) 0%, transparent 70%);
             pointer-events: none;
         }
 
@@ -579,7 +579,7 @@
         .footer-brand .logo-sm {
             width: 20px;
             height: 20px;
-            background: linear-gradient(135deg, #FF6600, #CC5200);
+            background: linear-gradient(135deg, #FF6B00, #CC5500);
             border-radius: 5px;
             display: inline-flex;
             align-items: center;
@@ -690,7 +690,7 @@
         <h2 class="section-title">Choose your deployment</h2>
         <p class="section-desc">Run on our cloud or deploy to your own infrastructure. Same schema, easy migration.</p>
         <div class="deploy-grid">
-            <div style="background:var(--base);border:1px solid var(--accent-border);border-radius:16px;padding:40px;position:relative;overflow:hidden;box-shadow:0 0 0 1px rgba(255,102,0,0.08),0 8px 32px rgba(0,0,0,0.2);">
+            <div style="background:var(--base);border:1px solid var(--accent-border);border-radius:16px;padding:40px;position:relative;overflow:hidden;box-shadow:0 0 0 1px rgba(255,107,0,0.08),0 8px 32px rgba(0,0,0,0.2);">
                 <div style="position:absolute;top:0;right:0;background:var(--accent);color:white;font-size:11px;font-weight:700;padding:6px 16px;border-radius:0 0 0 12px;text-transform:uppercase;letter-spacing:0.5px;">Recommended</div>
                 <div style="font-size:28px;margin-bottom:12px;">&#x2601;</div>
                 <h3 style="font-size:22px;font-weight:700;margin-bottom:10px;color:var(--text-primary);">Cloud</h3>
@@ -770,7 +770,7 @@
                 </div>
                 <div style="margin-bottom:16px;">
                     <label id="sh-agree-label" style="display:flex;align-items:flex-start;gap:8px;cursor:not-allowed;opacity:0.5;transition:all 0.3s;">
-                        <input type="checkbox" id="sh-agree-check" disabled style="margin-top:2px;width:16px;height:16px;accent-color:#FF6600;">
+                        <input type="checkbox" id="sh-agree-check" disabled style="margin-top:2px;width:16px;height:16px;accent-color:#FF6B00;">
                         <span style="font-size:13px;color:var(--text-primary);line-height:1.4;">I have read and agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong></span>
                     </label>
                 </div>
@@ -1009,13 +1009,13 @@
                 agreeCheck.addEventListener('change', function() {
                     if (agreeCheck.checked) {
                         submitBtn.disabled = false;
-                        submitBtn.style.background = '#FF6600';
+                        submitBtn.style.background = '#FF6B00';
                         submitBtn.style.color = 'white';
                         submitBtn.style.cursor = 'pointer';
                     } else {
                         submitBtn.disabled = true;
-                        submitBtn.style.background = '#374151';
-                        submitBtn.style.color = '#9ca3af';
+                        submitBtn.style.background = '#273140';
+                        submitBtn.style.color = '#8B919A';
                         submitBtn.style.cursor = 'not-allowed';
                     }
                 });

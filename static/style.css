@@ -1,19 +1,22 @@
 :root {
-    --bg-primary: #111827;
-    --bg-secondary: #1f2937;
-    --bg-card: #1f2937;
-    --border: #374151;
-    --text-primary: #f1f5f9;
-    --text-secondary: #9ca3af;
+    --bg-primary: #0B0D10;
+    --bg-secondary: #151A21;
+    --bg-card: #151A21;
+    --border: #273140;
+    --text-primary: #F0EEE9;
+    --text-secondary: #8B919A;
     --accent-red: #ff4d6a;
-    --accent-green: #2dd4a8;
-    --accent-yellow: #ffb84d;
-    --accent-blue: #4d8bff;
+    --accent-green: #00F5D4;
+    --accent-yellow: #FFD66B;
+    --accent-blue: #40E0FF;
     --accent-purple: #9b6dff;
-    --accent-orange: #FF6600;
-    --snap-orange: #FF6600;
-    --snap-orange-dim: rgba(255, 102, 0, 0.15);
-    --snap-orange-border: rgba(255, 102, 0, 0.35);
+    --accent-orange: #FF6B00;
+    --snap-orange: #FF6B00;
+    --snap-orange-dim: rgba(255, 107, 0, 0.15);
+    --snap-orange-border: rgba(255, 107, 0, 0.35);
+    --cyan: #40E0FF;
+    --teal: #00F5D4;
+    --gold: #FFD66B;
 }
 
 * {
@@ -62,9 +65,9 @@ body {
 }
 
 .status-active {
-    background: rgba(45, 212, 168, 0.15);
+    background: rgba(0, 245, 212, 0.12);
     color: var(--accent-green);
-    border: 1px solid rgba(45, 212, 168, 0.3);
+    border: 1px solid rgba(0, 245, 212, 0.25);
 }
 
 .pulse {
@@ -311,7 +314,7 @@ body {
 }
 
 .btn-approve:hover {
-    background: #24b890;
+    background: #00d4b8;
     transform: translateY(-1px);
 }
 
@@ -358,7 +361,7 @@ body {
 }
 
 .log-allowed {
-    background: rgba(45, 212, 168, 0.15);
+    background: rgba(0, 245, 212, 0.12);
     color: var(--accent-green);
 }
 
@@ -571,7 +574,7 @@ body {
 }
 
 .toggle-switch input:checked + .toggle-slider {
-    background: rgba(45, 212, 168, 0.3);
+    background: rgba(0, 245, 212, 0.3);
 }
 
 .toggle-switch input:checked + .toggle-slider::after {
@@ -818,7 +821,7 @@ body {
 
 .onboarding-dots .dot.active {
     background: var(--snap-orange);
-    box-shadow: 0 0 6px rgba(255, 102, 0, 0.5);
+    box-shadow: 0 0 6px rgba(255, 107, 0, 0.5);
 }
 
 [data-tooltip] {
@@ -841,8 +844,8 @@ body {
     transform: translateX(-50%) translateY(4px);
     padding: 8px 14px;
     border-radius: 8px;
-    background: #2a2d3e;
-    color: #e4e6f0;
+    background: #1C2230;
+    color: #F0EEE9;
     font-size: 12px;
     font-weight: 400;
     line-height: 1.5;
@@ -862,7 +865,7 @@ body {
     left: 50%;
     transform: translateX(-50%) translateY(4px);
     border: 6px solid transparent;
-    border-top-color: #2a2d3e;
+    border-top-color: #1C2230;
 }
 
 [data-tooltip]:hover::before,
@@ -881,7 +884,7 @@ body {
     bottom: auto;
     top: calc(100% + 4px);
     border-top-color: transparent;
-    border-bottom-color: #2a2d3e;
+    border-bottom-color: #1C2230;
     transform: translateX(-50%) translateY(-4px);
 }
 
@@ -1033,7 +1036,7 @@ body {
 .circuit-break-flash {
     animation: circuitBreak 0.6s ease-out;
     border-color: var(--snap-orange) !important;
-    box-shadow: 0 0 20px rgba(255, 102, 0, 0.3) !important;
+    box-shadow: 0 0 20px rgba(255, 107, 0, 0.3) !important;
 }
 
 .snap-token-badge {

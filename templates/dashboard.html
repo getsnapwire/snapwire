@@ -309,7 +309,7 @@
             transition: all 0.2s;
         }
         .admin-toggle-btn.active {
-            background: rgba(45, 212, 168, 0.15);
+            background: rgba(0, 245, 212, 0.12);
             color: var(--accent-green);
         }
         .admin-toggle-btn.revoked {
@@ -347,7 +347,7 @@
         </div>
     </div>
 
-    <div id="welcome-banner" style="display:none;margin:20px 32px 0;padding:24px 28px;background:linear-gradient(135deg, rgba(255,102,0,0.08), rgba(255,102,0,0.02));border:1px solid rgba(255,102,0,0.2);border-radius:16px;">
+    <div id="welcome-banner" style="display:none;margin:20px 32px 0;padding:24px 28px;background:linear-gradient(135deg, rgba(255,107,0,0.08), rgba(255,107,0,0.02));border:1px solid rgba(255,107,0,0.2);border-radius:16px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
             <div>
                 <h2 style="font-size:18px;font-weight:700;margin-bottom:8px;color:var(--text-primary);">Welcome to Snapwire</h2>
@@ -384,7 +384,7 @@
             <span style="color:#b45309;font-weight:600;">Shadow Mode Active</span>
             <span style="color:#92400e;opacity:0.8;"> &mdash; Observing only. Tool calls are audited and logged but never blocked. This is the recommended starting mode.</span>
         </div>
-        <button id="shadow-mode-toggle-btn" style="background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:6px 16px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Switch to Blocking Mode</button>
+        <button id="shadow-mode-toggle-btn" style="background:#FFD66B;color:#0B0D10;border:none;border-radius:6px;padding:6px 16px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Switch to Blocking Mode</button>
     </div>
 
     <div class="container">
@@ -546,7 +546,7 @@
                 <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
                     <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Fuse Breaker</div>
                     <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
-                        <div id="loop-heartbeat" style="width:10px;height:10px;border-radius:50%;background:#10b981;animation:pulse-dot 2s infinite;"></div>
+                        <div id="loop-heartbeat" style="width:10px;height:10px;border-radius:50%;background:#00F5D4;animation:pulse-dot 2s infinite;"></div>
                         <div id="ov-loops" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--text-primary);">0</div>
                     </div>
                     <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">circuits snapped</div>
@@ -558,7 +558,7 @@
                 </div>
                 <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
                     <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Pending</div>
-                    <div id="ov-pending" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-yellow,#f59e0b);">0</div>
+                    <div id="ov-pending" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-yellow,#FFD66B);">0</div>
                     <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">awaiting approval</div>
                 </div>
             </div>
@@ -567,7 +567,7 @@
                 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                         <h4 style="font-size:14px;margin:0;color:var(--snap-orange);">&#9889; Live Burn Meter</h4>
-                        <span id="spend-label" style="font-size:11px;color:var(--snap-orange);background:rgba(255,102,0,0.1);padding:3px 8px;border-radius:4px;border:1px solid rgba(255,102,0,0.25);">Current Burn Rate</span>
+                        <span id="spend-label" style="font-size:11px;color:var(--snap-orange);background:rgba(255,107,0,0.1);padding:3px 8px;border-radius:4px;border:1px solid rgba(255,107,0,0.25);">Current Burn Rate</span>
                     </div>
                     <div class="burn-meter" style="margin-bottom:14px;">
                         <div id="burn-meter-needle" class="burn-meter-needle" style="left:0%;"></div>
@@ -583,7 +583,7 @@
                         </div>
                         <div>
                             <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">30-Day Projected</div>
-                            <div id="ov-projected" style="font-size:22px;font-weight:600;font-family:'Fira Code',monospace;color:var(--accent-yellow,#f59e0b);">$0.00</div>
+                            <div id="ov-projected" style="font-size:22px;font-weight:600;font-family:'Fira Code',monospace;color:var(--accent-yellow,#FFD66B);">$0.00</div>
                         </div>
                     </div>
                     <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
@@ -597,7 +597,7 @@
                         </div>
                         <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
                             <span style="color:var(--text-secondary);">Schema Violations</span>
-                            <span id="ov-schema" style="color:var(--accent-yellow,#f59e0b);font-weight:600;font-family:'Fira Code',monospace;">0</span>
+                            <span id="ov-schema" style="color:var(--accent-yellow,#FFD66B);font-weight:600;font-family:'Fira Code',monospace;">0</span>
                         </div>
                         <div style="display:flex;justify-content:space-between;font-size:12px;">
                             <span style="color:var(--text-secondary);">Block Rate</span>
@@ -2195,9 +2195,9 @@ def handle_tool_call(tool_call):
                 const data = await res.json();
                 msgEl.style.display = 'block';
                 if (res.ok) {
-                    msgEl.style.background = 'rgba(45, 212, 168, 0.12)';
+                    msgEl.style.background = 'rgba(0, 245, 212, 0.12)';
                     msgEl.style.color = 'var(--accent-green)';
-                    msgEl.style.border = '1px solid rgba(45, 212, 168, 0.3)';
+                    msgEl.style.border = '1px solid rgba(0, 245, 212, 0.25)';
                     msgEl.textContent = data.message || `Imported ${data.imported_count} rule(s).`;
                     fetchRules();
                 } else {
@@ -3899,7 +3899,7 @@ def handle_tool_call(tool_call):
                 const resp = await fetch('/api/vault/proxy-tokens/revoke-all', {method:'POST'});
                 const data = await resp.json();
                 btn.innerHTML = `&#x2714; ${data.count} tokens revoked`;
-                btn.style.background = '#10b981';
+                btn.style.background = '#00F5D4';
                 document.getElementById('panel-vault').classList.add('circuit-break-flash');
                 setTimeout(() => {
                     btn.innerHTML = '&#x26A0; The Snap — Revoke All';
@@ -3946,37 +3946,37 @@ def handle_tool_call(tool_call):
             canvas.height = 340;
             const ctx = canvas.getContext('2d');
             const grad = ctx.createLinearGradient(0, 0, 600, 340);
-            grad.addColorStop(0, '#111827');
-            grad.addColorStop(1, '#1f2937');
+            grad.addColorStop(0, '#0B0D10');
+            grad.addColorStop(1, '#151A21');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.roundRect(0, 0, 600, 340, 20);
             ctx.fill();
-            ctx.fillStyle = '#10b981';
+            ctx.fillStyle = '#00F5D4';
             ctx.font = 'bold 14px Inter, sans-serif';
             ctx.fillText('SNAPWIRE', 30, 40);
-            ctx.fillStyle = '#64748b';
+            ctx.fillStyle = '#5A6270';
             ctx.font = '12px Inter, sans-serif';
             ctx.fillText('AI Spend Monitoring & Agent Protection', 30, 58);
-            ctx.fillStyle = '#10b981';
+            ctx.fillStyle = '#00F5D4';
             ctx.font = 'bold 52px "Fira Code", monospace';
             ctx.fillText(savings, 30, 130);
-            ctx.fillStyle = '#9ca3af';
+            ctx.fillStyle = '#8B919A';
             ctx.font = '14px Inter, sans-serif';
             ctx.fillText('Total Savings from blocked loops & violations', 30, 155);
-            ctx.fillStyle = '#e2e8f0';
+            ctx.fillStyle = '#F0EEE9';
             ctx.font = 'bold 28px "Fira Code", monospace';
             ctx.fillText(loops, 30, 210);
-            ctx.fillStyle = '#64748b';
+            ctx.fillStyle = '#5A6270';
             ctx.font = '12px Inter, sans-serif';
             ctx.fillText('Loops Caught', 30, 230);
-            ctx.fillStyle = '#e2e8f0';
+            ctx.fillStyle = '#F0EEE9';
             ctx.font = 'bold 28px "Fira Code", monospace';
             ctx.fillText(total, 200, 210);
-            ctx.fillStyle = '#64748b';
+            ctx.fillStyle = '#5A6270';
             ctx.font = '12px Inter, sans-serif';
             ctx.fillText('Tool Calls Monitored', 200, 230);
-            ctx.strokeStyle = '#374151';
+            ctx.strokeStyle = '#273140';
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(30, 260);
@@ -4017,7 +4017,7 @@ def handle_tool_call(tool_call):
                 const data = await resp.json();
                 const resultDiv = document.getElementById('risk-check-result');
                 resultDiv.style.display = 'block';
-                const gradeColor = data.grade === 'A' ? '#10b981' : data.grade === 'B' ? '#3b82f6' : data.grade === 'C' ? '#f59e0b' : '#ef4444';
+                const gradeColor = data.grade === 'A' ? '#00F5D4' : data.grade === 'B' ? '#40E0FF' : data.grade === 'C' ? '#FFD66B' : '#ef4444';
                 resultDiv.innerHTML = `
                     <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
                         <div style="width:60px;height:60px;border-radius:50%;border:4px solid ${gradeColor};display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:${gradeColor};font-family:'Fira Code',monospace;">${data.score}</div>
@@ -4057,7 +4057,7 @@ def handle_tool_call(tool_call):
                 if (summaryData.tools && summaryData.tools.length > 0) {
                     summaryEmpty.style.display = 'none';
                     summaryList.innerHTML = summaryData.tools.map(t => {
-                        const gradeColor = t.grade === 'A' ? '#10b981' : t.grade === 'B' ? '#3b82f6' : t.grade === 'C' ? '#f59e0b' : '#ef4444';
+                        const gradeColor = t.grade === 'A' ? '#00F5D4' : t.grade === 'B' ? '#40E0FF' : t.grade === 'C' ? '#FFD66B' : '#ef4444';
                         const barWidth = t.score + '%';
                         return `<div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:10px 14px;">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -4080,9 +4080,9 @@ def handle_tool_call(tool_call):
                 if (signalsData.signals && signalsData.signals.length > 0) {
                     signalsEmpty.style.display = 'none';
                     signalsList.innerHTML = signalsData.signals.slice(0, 20).map(s => {
-                        const gradeColor = s.grade === 'A' ? '#10b981' : s.grade === 'B' ? '#3b82f6' : s.grade === 'C' ? '#f59e0b' : '#ef4444';
+                        const gradeColor = s.grade === 'A' ? '#00F5D4' : s.grade === 'B' ? '#40E0FF' : s.grade === 'C' ? '#FFD66B' : '#ef4444';
                         const signalIcons = (s.signals || []).slice(0, 3).map(sig =>
-                            `<span title="${sig.detail}" style="font-size:11px;padding:1px 6px;border-radius:3px;background:${sig.type==='positive'?'rgba(16,185,129,0.1)':sig.type==='warning'?'rgba(239,68,68,0.1)':'rgba(148,163,184,0.1)'};">${sig.type==='positive'?'&#x2705;':'&#x26A0;'} ${sig.label}</span>`
+                            `<span title="${sig.detail}" style="font-size:11px;padding:1px 6px;border-radius:3px;background:${sig.type==='positive'?'rgba(0,245,212,0.1)':sig.type==='warning'?'rgba(239,68,68,0.1)':'rgba(39,49,64,0.3)'};">${sig.type==='positive'?'&#x2705;':'&#x26A0;'} ${sig.label}</span>`
                         ).join(' ');
                         return `<div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:8px 12px;">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -4465,7 +4465,7 @@ def handle_tool_call(tool_call):
                     if (alertsList && loopData.events && loopData.events.length > 0) {
                         alertsList.innerHTML = loopData.events.slice(0, 5).map(e => {
                             const t = new Date(e.detected_at).toLocaleString();
-                            return `<div class="circuit-break-flash" style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(255,102,0,0.08);border:1px solid rgba(255,102,0,0.2);border-radius:6px;font-size:12px;">
+                            return `<div class="circuit-break-flash" style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(255,107,0,0.08);border:1px solid rgba(255,107,0,0.2);border-radius:6px;font-size:12px;">
                                 <div><span style="color:var(--snap-orange);font-weight:600;">&#9889; Snapped</span> <span style="color:var(--text-primary);">${e.tool_name}</span> <span style="color:var(--text-secondary);">x${e.repeat_count}</span></div>
                                 <span style="color:var(--text-secondary);font-size:11px;">${t}</span>
                             </div>`;
@@ -4478,7 +4478,7 @@ def handle_tool_call(tool_call):
                 if (d.recent_activity && d.recent_activity.length > 0) {
                     recentEmpty.style.display = 'none';
                     recentList.innerHTML = d.recent_activity.map(a => {
-                        const statusColor = a.status === 'allowed' ? 'var(--accent-green)' : a.status === 'blocked' ? 'var(--accent-red)' : a.status === 'shadow-blocked' ? '#f59e0b' : a.status === 'approved' ? 'var(--accent-blue)' : a.status === 'pending' ? '#f59e0b' : 'var(--text-secondary)';
+                        const statusColor = a.status === 'allowed' ? 'var(--accent-green)' : a.status === 'blocked' ? 'var(--accent-red)' : a.status === 'shadow-blocked' ? '#FFD66B' : a.status === 'approved' ? 'var(--accent-blue)' : a.status === 'pending' ? '#FFD66B' : 'var(--text-secondary)';
                         const statusLabel = a.status === 'shadow-blocked' ? 'shadow' : a.status;
                         return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border);">
                             <div style="display:flex;align-items:center;gap:10px;">
@@ -4752,9 +4752,9 @@ if (result.status === "allowed") {
             if (_shadowMode) {
                 banner.style.display = 'flex';
                 if (statusBadge) {
-                    statusBadge.innerHTML = '<div class="pulse" style="background:#f59e0b;"></div> Shadow Mode';
-                    statusBadge.style.background = 'rgba(245,158,11,0.15)';
-                    statusBadge.style.color = '#f59e0b';
+                    statusBadge.innerHTML = '<div class="pulse" style="background:#FFD66B;"></div> Shadow Mode';
+                    statusBadge.style.background = 'rgba(255,214,107,0.15)';
+                    statusBadge.style.color = '#FFD66B';
                 }
             } else {
                 banner.style.display = 'none';
@@ -4852,11 +4852,11 @@ if (result.status === "allowed") {
         checkFirstVisit();
     </script>
 
-    <div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px;border-top:1px solid rgba(148,163,184,0.15);">
-        Powered by <a href="https://github.com/snapwire/snapwire" target="_blank" style="color:#FF6600;text-decoration:none;">Snapwire</a>
+    <div style="text-align:center;padding:16px;color:#8B919A;font-size:12px;border-top:1px solid rgba(39,49,64,0.6);">
+        Powered by <a href="https://github.com/snapwire/snapwire" target="_blank" style="color:#FF6B00;text-decoration:none;">Snapwire</a>
         {% if is_self_hosted %}
         &nbsp;&middot;&nbsp;
-        <a href="/pricing" style="color:#FF6600;text-decoration:none;font-weight:500;">&#9889; Upgrade to Cloud</a>
+        <a href="/pricing" style="color:#FF6B00;text-decoration:none;font-weight:500;">&#9889; Upgrade to Cloud</a>
         {% endif %}
     </div>
     <div class="snapwire-footer-disclaimer">
