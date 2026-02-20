@@ -1,0 +1,49 @@
+For a high-end AI infrastructure brand like **Snapwire**, your site design should move away from "soft" consumer colors and lean into **"Utility-Grade"** palettes.
+
+In 2026, AI users (especially developers) gravitate toward **"Mood Mode"**—palettes that prioritize reduced eye strain for long coding sessions while using high-energy accents to signal technical power.
+
+### **The "Snapwire" Master Palette: Industrial Safety**
+
+This palette is designed to look like a high-end dashboard you would find in a futuristic power plant or a server farm.
+
+| Role | Color Name | HEX Code | Why it works |
+| --- | --- | --- | --- |
+| **Primary Base** | True Charcoal | `#0B0D10` | Deeper than standard gray; makes code and graphs pop. |
+| **Secondary Surface** | Deep Slate | `#151A21` | For cards and sidebars to create depth without harsh borders. |
+| **Action Accent** | Safety Orange | `#FF6B00` | The color of "Warning" and "Power." Perfect for "The Snap." |
+| **Trust Accent** | Electric Cyan | `#40E0FF` | Signals "Active Monitoring" and "Intelligence." |
+| **Type/Text** | Cloud Dancer | `#F0EEE9` | A soft, warm white that reduces glare compared to pure `#FFF`. |
+
+---
+
+### **Strategic Color Application**
+
+#### **1. The "Safety Orange" Kill-Switch**
+
+Reserved strictly for **"The Snap."** When an agent is blocked, the entire dashboard should not turn red (which signifies "Error"); it should turn **Safety Orange**.
+
+* **Psychology:** Orange implies "Caution" and "Manual Intervention Needed." It tells the user the system worked as intended.
+
+#### **2. Cinematic Gradients for Hero Sections**
+
+Don't use flat colors for your background. Use a **soft-glow mesh gradient** in your hero section to signal "Fluid Intelligence."
+
+* **The Blend:** Start with `#0B0D10` (Charcoal) and fade into a very soft `#2B1538` (Night Plum) in one corner. It adds a "premium" feel that makes the site look like a $100M infrastructure tool.
+
+#### **3. Functional Non-Color Cues**
+
+Since many developers have partial color blindness or work in high-glare environments:
+
+* **Success:** Use a **Holographic Teal** (`#00F5D4`) for "Healthy" agents.
+* **Warning:** Use **Ion Gold** (`#FFD66B`) for agents nearing their spend limit.
+
+---
+
+### **Visual Hierarchy for Snapwire**
+
+1. **Background:** True Charcoal (Solid, Unmovable).
+2. **Visuals (Graphs):** Electric Cyan (Liquid, Active).
+3. **Buttons (Primary):** Safety Orange (Action, Immediate).
+4. **Borders:** Subtle Slate (`#273140`) to define sections without adding clutter.
+
+**Would you like me to provide the CSS variables for this palette so your developer AI can apply the "Snapwire Theme" to the entire site in one go?**
