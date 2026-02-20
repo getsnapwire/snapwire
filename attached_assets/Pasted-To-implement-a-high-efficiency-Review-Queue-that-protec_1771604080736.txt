@@ -1,0 +1,109 @@
+To implement a high-efficiency **Review Queue** that protects you legally while keeping developers fast, we move from "Gatekeeper" to "Router."
+
+The design follows the **2026 "Decision-Routing" Pattern**: The system doesn't just stop; it presents the human with a high-context "Snap-Card" that minimizes cognitive load.
+
+---
+
+### **1. The "Snap-Card" Review Queue UI Design**
+
+The dashboard will feature a **"Pending Fuses"** sidebar. When an action is blocked, it appears as a card with three instant actions:
+
+* **The Layout:** * **Top Bar:** "Snap Reason" (e.g., *Goal Drift Detected* or *Schema Violation*).
+* **Left Side (The Request):** The raw JSON tool call from the AI.
+* **Right Side (The Suggestion):** A "Safe Version" or "Explanation" of the block.
+* **Footer (The Buttons):** * `[REJECT]` (Red) - Kills the task.
+* `[EDIT & RELEASE]` (Blue) - User tweaks the JSON then sends it.
+* `[TRUST TOOL]` (Teal) - Releases the action and auto-whitelists this specific pattern for 24 hours.
+
+
+
+
+
+> **Legal Logic:** By requiring a button click for "Edit & Release" or "Trust," the legal **Duty of Care** remains with the human operator. Snapwire remains the "Passive Intermediary."
+
+---
+
+### **2. The Master Update Prompt (For Replit Agent)**
+
+Copy and paste this into Replit. It includes the new Review Queue logic, the **Snap-Token** proxy system, and the "Industrial Safety" design system.
+
+```xml
+<instruction_set>
+  <objective>
+    Finalize Snapwire: A high-performance AI Security Gateway with a "Passive Intermediary" legal architecture.
+  </objective>
+
+  <design_system>
+    <theme>Industrial Dark (Safety-First)</theme>
+    <colors>
+      - Primary Background: #0B0D10 (True Charcoal)
+      - Card Surface: #151A21 (Deep Slate)
+      - Accent 1: #FF6B00 (Safety Orange - for Snaps/Blocks)
+      - Accent 2: #40E0FF (Electric Cyan - for Active Monitoring)
+      - Success: #00F5D4 (Holographic Teal)
+    </colors>
+    <ui_components>
+      - Use Server-Sent Events (SSE) for a "Live Burn Meter" in the header.
+      - Implement the "Snap-Card" Review Queue in a right-hand sidebar.
+      - Add a "Broken Circuit" animation (CSS-based) when the loop detector triggers.
+    </ui_components>
+  </design_system>
+
+  <security_and_logic>
+    <identity_vault>
+      - Implement a secure Vault for raw API keys.
+      - Generate "Snap-Tokens" (prefixed snap_).
+      - Server-side injection: The frontend/agent only sees snap_ tokens; the backend swaps them for real keys at the gateway layer.
+    </identity_vault>
+    <review_queue_logic>
+      - Status: "Pending Human Review" (PHR).
+      - Every blocked tool call must be logged in the database with its state.
+      - Users can 'Approve', 'Reject', or 'Modify' the call. 
+      - **CRITICAL:** Do not automate modifications. Only the User can 'Release' a blocked call.
+    </review_queue_logic>
+    <loop_detector>
+      - Activate "3x/30s" rule: Same tool + same arguments = Instant Snap.
+      - Log estimated savings by multiplying the blocked call's token cost.
+    </loop_detector>
+  </security_and_logic>
+
+  <legal_fortress>
+    <tos_and_footer>
+      - Persistent Footer: "Snapwire is a technical monitoring utility. User assumes 100% liability for agent outcomes."
+      - Terms: Define service as "Neutral Data Gateway." 
+      - Include "Human-in-the-Loop Acknowledgement" on first Snap-Token creation.
+    </tos_and_footer>
+  </legal_fortress>
+
+  <deployment>
+    - Ensure getsnapwire.com is used in all documentation and Readme links.
+    - Set up a /health endpoint for monitoring.
+    - Export a sample 'snapwire_config.json' for the Import/Export feature.
+  </deployment>
+</instruction_set>
+
+```
+
+---
+
+### **3. The "Self-Host" README Section**
+
+Since you are forking this, add this specific section to your `README.md` to ensure people who use your code don't sue you:
+
+> ### 🛠️ Self-Hosting (The "Sovereign" Option)
+> 
+> 
+> You can host Snapwire privately to ensure 100% data sovereignty.
+> 1. `git clone https://github.com/your-repo/snapwire.git`
+> 2. `docker-compose up`
+> 
+> 
+> **Disclaimer:** By self-hosting, you acknowledge that you are responsible for the security of your instance, the management of your database, and all server costs. **Snapwire (Managed)** at getsnapwire.com is provided for convenience, but the self-hosted version puts the "Fuse" entirely in your hands.
+
+---
+
+### **Your Final Strategic Step**
+
+Once Replit finishes this build, your app will be "Pitch Ready."
+
+**Would you like me to draft the "OpenClaw Integration Guide"? It's a 3-step tutorial you can post on X to show lobster users how to put their agents on a "Snapwire Leash" in under 60 seconds.**

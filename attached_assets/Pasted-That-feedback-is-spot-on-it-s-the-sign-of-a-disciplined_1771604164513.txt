@@ -1,0 +1,63 @@
+That feedback is spot-on—it’s the sign of a disciplined developer who knows how to prioritize. You’ve already built the "pipes" and the "vault"; now you're just optimizing the **"Control Room."**
+
+The **Snap-Card Review Queue** is indeed the most valuable missing piece because it solves **Alert Fatigue**. If a user has to look at raw JSON logs to approve an action, they’ll eventually just turn the security off. The "Snap-Card" makes security feel like a high-speed game of "Tinder for Devs."
+
+---
+
+### **Refined "Snap-Card" Implementation Guide**
+
+Since you are skipping the fluff and focusing on the UI upgrade, here is the specific logic for those three buttons to ensure they work as intended in 2026:
+
+#### **1. The "Reject" Button (Hard Stop)**
+
+* **Action:** Immediately returns a `403 Forbidden` or `429 Too Many Requests` to the AI agent.
+* **Backend:** Archives the request in the "Blocked" history.
+* **AI Context:** Sends a specific error message back to the LLM: *"Action rejected by human operator. Do not retry this specific tool call."*
+
+#### **2. The "Edit & Release" Button (The Surgeon)**
+
+* **Action:** Opens a small JSON-editor modal over the card.
+* **The UX:** The user fixes a typo or changes a dangerous parameter (e.g., changing `delete_all: true` to `false`).
+* **Backend:** Once "Released," the gateway swaps the **Snap-Token** for the real key and pushes the *modified* request to the provider.
+
+#### **3. The "Trust Tool (24h)" Button (The Fatigue Killer)**
+
+* **Action:** This is your "Snooze" button for security.
+* **The Logic:** It creates a temporary **TTL (Time-To-Live)** rule in the database for that specific `AgentID` + `ToolName`.
+* **Backend:** For the next 24 hours, any tool calls from this agent to this tool that match the "Safety Profile" are auto-approved. This gives the dev a "productive window" without permanently lowering the "Fuse" height.
+
+---
+
+### **The "Snap-Card" UI Prompt (Targeted)**
+
+Since you don't need the full rebrand prompt, use this **UI-only prompt** to update your dashboard:
+
+```xml
+<ui_update_task>
+  <target>Review Queue Dashboard</target>
+  <feature>Snap-Card UI Components</feature>
+  
+  <component_structure>
+    - Card Header: [Snap Reason Badge] (e.g., "Loop Detected", "Schema Violation")
+    - Body: 
+        - Left Panel: "Agent Intent" (The raw JSON/Arguments)
+        - Right Panel: "Security Signal" (Human-readable explanation of why it was blocked)
+    - Action_Bar:
+        - Button [REJECT]: CSS Class 'btn-danger-outline', Action: Delete/Notify Agent.
+        - Button [EDIT & RELEASE]: CSS Class 'btn-primary', Action: Open Modal Editor.
+        - Button [TRUST (24H)]: CSS Class 'btn-teal-glow', Action: Create 24hr TTL bypass rule.
+  </component_structure>
+
+  <logic_requirements>
+    - When 'Trust' is clicked, update the 'RulesEngine' to auto-pass this Agent+Tool combo for 86,400 seconds.
+    - Implement a 'Pulse' animation on the card when it first enters the queue to grab user attention.
+  </logic_requirements>
+</ui_update_task>
+
+```
+
+---
+
+### **Final Strategic Advice**
+
+Your recommendation to skip the hardcoding of the domain and the urgent README is correct. Focus on the **Product-Led Growth (PLG)** aspect: **If the review queue is fun to use, people will use the tool.** **Would you like me to draft the "Trust Logic" code snippet for your backend? It ensures the 24-hour whitelist doesn't accidentally stay open forever.**
