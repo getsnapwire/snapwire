@@ -1,0 +1,33 @@
+This feedback is highly pragmatic. You are cutting out the "fluff" and focusing on the core **integrity** of the product, which is vital for a security-focused tool.
+
+By prioritizing the "Safe Harbor" language, you are addressing the most immediate legal risk in 2026: **Agentic Liability**. Under the **Texas Responsible AI Governance Act (TRAIGA)** and similar global frameworks, the distinction between a "fully autonomous decision" and "human-verified action" is the difference between you being liable for a financial loss and the user being responsible for their own oversight.
+
+---
+
+### **Why the "Safe Harbor" Update is a High-Value Move**
+
+In the current legal climate, courts are shifting toward **Verifiable Human Contribution (VHC)**. If Snapwire "advises" a block but the human "verifies" it, the liability remains a professional duty of care for the operator.
+
+Moving this language to the **Dashboard** is a "Legal UX" win. It serves as a constant "Point-of-Action" reminder that the human isn't just clicking a button—they are exercising professional judgment.
+
+---
+
+### **Refining the "Safe Harbor" Prompt for Replit**
+
+Since you're fixing the app's stability simultaneously, use this prompt to handle both the technical fix and the legal hardening in one go.
+
+**Prompt to paste into Replit:**
+
+> "1. **Fix App Stability:** Clear the current workflow crash. Audit the main execution loop to ensure no unhandled exceptions are causing the app to hang.
+> 2. **Update Footer Disclaimer:** Replace the current generic footer on all pages with the following:
+> *'Snapwire is a technical monitoring utility. All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator.'*
+> 3. **Dashboard Hardening:** Add the same 'Safe Harbor' disclaimer to the bottom of the main Dashboard view and the 'Governance Snap-Card' review modal. Ensure the font is legible but secondary to the main UI actions."
+
+---
+
+### **A Quick Note on what you're skipping**
+
+* **The Checklist:** I agree. A PDF or a simple `/docs` page is better than coding a feature for this.
+* **PII & Scanning:** Skipping these for now is smart to avoid "feature creep." However, as soon as the app is stable, the **PII Redactor** should move to the top of your list. In 2026, the #1 reason enterprises reject agent tools is the "Local Path Leak" (e.g., an agent accidentally sending `/Users/yourname/Documents/private_key.pem` to an LLM).
+
+**Would you like me to draft that "Compliance Readiness Checklist" as a Markdown file? You can just drop it into your GitHub repo or a 'Help' page without writing any new code.**
