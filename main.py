@@ -15,7 +15,7 @@ from app import app, db, limiter
 from replit_auth import require_login, make_replit_blueprint, IS_REPLIT
 from models import User, ApiKey, RuleVersion, AuditLogEntry, WebhookConfig
 from models import Organization, OrgMembership, ConstitutionRule, NotificationSetting, UsageRecord
-from models import SelfHostedInstall, PublicAudit, InstallConfig, TelemetryPing
+from models import SelfHostedInstall, PublicAudit, InstallConfig, TelemetryPing, TrustRule
 from src.tenant import get_current_tenant_id, get_tenant_id_for_api_key, is_tenant_admin, get_user_tenants, switch_tenant
 from src.constitution import (
     load_constitution, update_rule, add_rule, delete_rule, update_rule_full,
@@ -558,6 +558,27 @@ def intercept_tool_call():
             **response_extra,
         })
     else:
+        trust_match = TrustRule.query.filter_by(
+            tenant_id=tenant_id, agent_id=agent_id, tool_name=data["tool_name"], is_active=True
+        ).first()
+        if trust_match and not trust_match.is_expired():
+            log_action(tool_call, audit_result, "trust-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id)
+            _track_usage(tenant_id)
+            if data.get("proxy_token"):
+                proxy_creds = resolve_proxy_token(data["proxy_token"])
+                if proxy_creds:
+                    response_extra["vault_credentials"] = {"header_name": proxy_creds["header_name"], "header_value": proxy_creds["header_value"]}
+            else:
+                vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
+                if vault_creds:
+                    response_extra["vault_credentials"] = vault_creds
+            return jsonify({
+                "status": "trust-approved",
+                "audit": audit_result,
+                "message": f"Tool call auto-approved by active trust rule (expires {trust_match.expires_at.isoformat()}).",
+                **response_extra,
+            })
+
         if check_auto_approve(tool_call, audit_result, agent_id, tenant_id=tenant_id):
             log_action(tool_call, audit_result, "auto-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id)
             _track_usage(tenant_id)
@@ -667,6 +688,105 @@ def resolve(action_id):
         return jsonify({"error": "Action not found or already resolved"}), 404
 
     return jsonify({"status": decision, "action": result})
+
+
+@app.route("/api/actions/<action_id>/edit-release", methods=["POST"])
+@require_admin
+def edit_and_release(action_id):
+    from models import PendingAction
+    data = request.get_json()
+    if not data or "parameters" not in data:
+        return jsonify({"error": "Must provide 'parameters' with modified tool call parameters"}), 400
+
+    tenant_id = get_current_tenant_id()
+    action = PendingAction.query.filter_by(id=action_id, status="pending")
+    if tenant_id:
+        action = action.filter_by(tenant_id=tenant_id)
+    action = action.first()
+    if not action:
+        return jsonify({"error": "Action not found or already resolved"}), 404
+
+    try:
+        modified_params = data["parameters"]
+        if not isinstance(modified_params, dict):
+            return jsonify({"error": "Parameters must be a JSON object"}), 400
+        action.tool_params = json.dumps(modified_params)
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid JSON parameters"}), 400
+
+    result = resolve_action(action_id, "approved", resolved_by="user-edited", tenant_id=tenant_id)
+    if not result:
+        return jsonify({"error": "Failed to release action"}), 500
+
+    return jsonify({"status": "released", "action": result, "message": "Action released with modified parameters."})
+
+
+@app.route("/api/actions/<action_id>/trust", methods=["POST"])
+@require_admin
+def trust_tool_24h(action_id):
+    from models import PendingAction
+    tenant_id = get_current_tenant_id()
+    action = PendingAction.query.filter_by(id=action_id, status="pending")
+    if tenant_id:
+        action = action.filter_by(tenant_id=tenant_id)
+    action = action.first()
+    if not action:
+        return jsonify({"error": "Action not found or already resolved"}), 404
+
+    from datetime import timedelta
+    expires_at = datetime.utcnow() + timedelta(hours=24)
+    existing = TrustRule.query.filter_by(
+        tenant_id=tenant_id, agent_id=action.agent_id, tool_name=action.tool_name, is_active=True
+    ).first()
+    if existing and not existing.is_expired():
+        existing.expires_at = expires_at
+    else:
+        trust_rule = TrustRule(
+            tenant_id=tenant_id,
+            agent_id=action.agent_id,
+            tool_name=action.tool_name,
+            created_by=current_user.id if current_user.is_authenticated else "user",
+            source_action_id=action_id,
+            expires_at=expires_at,
+        )
+        db.session.add(trust_rule)
+
+    result = resolve_action(action_id, "approved", resolved_by="trust-24h", tenant_id=tenant_id)
+    if not result:
+        return jsonify({"error": "Failed to release action"}), 500
+
+    db.session.commit()
+    return jsonify({
+        "status": "trusted",
+        "action": result,
+        "trust_rule": {
+            "agent_id": action.agent_id,
+            "tool_name": action.tool_name,
+            "expires_at": expires_at.isoformat(),
+        },
+        "message": f"Action approved. Agent '{action.agent_id}' trusted for tool '{action.tool_name}' for 24 hours.",
+    })
+
+
+@app.route("/api/trust-rules", methods=["GET"])
+@require_login
+def list_trust_rules():
+    tenant_id = get_current_tenant_id()
+    rules = TrustRule.query.filter_by(tenant_id=tenant_id, is_active=True).all()
+    active_rules = [r.to_dict() for r in rules if not r.is_expired()]
+    return jsonify({"trust_rules": active_rules})
+
+
+@app.route("/api/trust-rules/<int:rule_id>/revoke", methods=["POST"])
+@require_admin
+def revoke_trust_rule(rule_id):
+    tenant_id = get_current_tenant_id()
+    rule = TrustRule.query.filter_by(id=rule_id, tenant_id=tenant_id, is_active=True).first()
+    if not rule:
+        return jsonify({"error": "Trust rule not found"}), 404
+    rule.is_active = False
+    db.session.commit()
+    return jsonify({"status": "revoked", "rule": rule.to_dict()})
 
 
 @app.route("/api/audit-log", methods=["GET"])
@@ -1384,7 +1504,7 @@ def agent_trust_scores():
             }
         a = agents[aid]
         a["total_actions"] += 1
-        if entry.status in ("allowed", "approved", "auto-approved"):
+        if entry.status in ("allowed", "approved", "auto-approved", "trust-approved"):
             a["allowed_count"] += 1
         elif entry.status == "denied":
             a["denied_count"] += 1
@@ -2325,7 +2445,7 @@ def analytics_timeline():
         d = row.day.isoformat() if row.day else "unknown"
         if d not in timeline:
             timeline[d] = {"date": d, "allowed": 0, "blocked": 0, "pending": 0, "total": 0}
-        if row.status in ("allowed", "approved", "auto-approved"):
+        if row.status in ("allowed", "approved", "auto-approved", "trust-approved"):
             timeline[d]["allowed"] += row.cnt
         elif row.status in ("blocked", "denied", "blocked-sanitizer", "blocked-honeypot", "blocked-blast-radius", "blocked-catalog"):
             timeline[d]["blocked"] += row.cnt

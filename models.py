@@ -624,6 +624,35 @@ class RiskSignal(db.Model):
         }
 
 
+class TrustRule(db.Model):
+    __tablename__ = 'trust_rules'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=False, index=True)
+    agent_id = db.Column(db.String, nullable=False)
+    tool_name = db.Column(db.String, nullable=False)
+    created_by = db.Column(db.String, nullable=True)
+    source_action_id = db.Column(db.String, nullable=True)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def is_expired(self):
+        return datetime.utcnow() > self.expires_at
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "agent_id": self.agent_id,
+            "tool_name": self.tool_name,
+            "created_by": self.created_by,
+            "source_action_id": self.source_action_id,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "is_active": self.is_active and not self.is_expired(),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "remaining_seconds": max(0, int((self.expires_at - datetime.utcnow()).total_seconds())) if self.expires_at else 0,
+        }
+
+
 class PublicAudit(db.Model):
     __tablename__ = 'public_audits'
     id = db.Column(db.Integer, primary_key=True)

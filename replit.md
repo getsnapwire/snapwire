@@ -62,6 +62,8 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **Deception & Goal Drift Detector**: Analyzes `inner_monologue` via LLM.
 -   **Honeypot Tripwires**: Decoy tools to detect unauthorized access.
 -   **TOS Acceptance Gate**: Users must scroll through and accept Terms of Service before dashboard access.
+-   **Snap-Card Review Queue**: Redesigned review queue with "Snap-Cards" — each blocked action shows as a structured card with Snap Reason badge, dual-panel layout (Agent Intent vs Security Signal), and three actions: Reject, Edit & Release (JSON editor modal), Trust 24h (creates temporary auto-approve rule).
+-   **Trust Rules (24h TTL)**: `TrustRule` model enables temporary auto-approval for specific agent+tool combinations. Created via "Trust 24h" button on Snap-Cards. Auto-expires after 24 hours. Revocable from API.
 
 ## External Dependencies
 -   **Database**: PostgreSQL (production) / SQLite (development/testing)
@@ -92,6 +94,10 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   `POST /api/rules/export` - Export rules as branded JSON
 -   `POST /api/rules/import` - Import rule packs
 -   `GET /privacy` - Privacy policy page
+-   `POST /api/actions/<id>/edit-release` - Edit parameters and release a blocked action
+-   `POST /api/actions/<id>/trust` - Approve and create 24h trust rule for agent+tool
+-   `GET /api/trust-rules` - List active trust rules
+-   `POST /api/trust-rules/<id>/revoke` - Revoke a trust rule
 
 ## Security
 -   **Rate Limiting**: Flask-Limiter applied to auth endpoints
@@ -102,6 +108,7 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   Run tests: `python -m pytest tests/ -v`
 
 ## Recent Changes
+- **2026-02-20**: Snap-Card Review Queue — redesigned pending approvals with structured Snap-Cards (reason badge, dual-panel Agent Intent / Security Signal layout, mobile-responsive stacking). Three action buttons: Reject, Edit & Release (JSON editor modal with validation), Trust 24h (creates TTL auto-approve rule for agent+tool combo). Added TrustRule model, trust-approved intercept logic, and toast notifications. Pulse animation on new cards.
 - **2026-02-20**: Industrial Safety palette overhaul — True Charcoal (#0B0D10) base, Deep Slate (#151A21) surfaces, Electric Cyan (#40E0FF) for monitoring, Holographic Teal (#00F5D4) for success, Ion Gold (#FFD66B) for warnings, Cloud Dancer (#F0EEE9) text. Night Plum (#2B1538) cinematic mesh gradient on hero sections. All 14+ templates, static/style.css, and dashboard canvas colors updated.
 - **2026-02-19**: Second design pass — lightened dark theme further to #111827/#1f2937 for more open, airy feel. Added card shadows for depth. Removed "Ready for Enterprise?" section from landing page. All 14+ templates consistent.
 - **2026-02-19**: Design refresh — shifted from heavy industrial black to softer dark slate/navy with refined orange accents. Updated all 14 templates to new palette. Added welcome banner onboarding, better empty states, mobile responsiveness, platform-agnostic vault messaging. Simplified pricing to Free + Pro (removed Enterprise tier). Updated TOS liability cap from $100 to "fees paid in prior 30 days". 

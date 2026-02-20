@@ -280,7 +280,7 @@ def get_stats(tenant_id=None):
     pending_count = pending_query.count()
     total = total_log + pending_count
 
-    allowed_query = log_query.filter(AuditLogEntry.status.in_(["allowed", "approved", "auto-approved"]))
+    allowed_query = log_query.filter(AuditLogEntry.status.in_(["allowed", "approved", "auto-approved", "trust-approved"]))
     denied_query = log_query.filter(AuditLogEntry.status == "denied")
     allowed = allowed_query.count()
     denied = denied_query.count()
@@ -334,7 +334,7 @@ def get_stats(tenant_id=None):
     for entry in all_entries:
         aid = entry.agent_id or "unknown"
         agent_stats[aid]["total"] += 1
-        if entry.status in ("allowed", "approved", "auto-approved"):
+        if entry.status in ("allowed", "approved", "auto-approved", "trust-approved"):
             agent_stats[aid]["allowed"] += 1
         else:
             agent_stats[aid]["blocked"] += 1
@@ -513,7 +513,7 @@ def get_weekly_digest(tenant_id=None):
         query = query.filter_by(tenant_id=tenant_id)
     entries = query.all()
     total = len(entries)
-    allowed = len([e for e in entries if e.status in ("allowed", "approved", "auto-approved")])
+    allowed = len([e for e in entries if e.status in ("allowed", "approved", "auto-approved", "trust-approved")])
     denied = len([e for e in entries if e.status == "denied"])
     blocked = total - allowed
 

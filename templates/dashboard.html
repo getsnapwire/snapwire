@@ -113,6 +113,270 @@
         .timeline-content { flex: 1; color: var(--text-primary); }
         .timeline-time { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
 
+        .snap-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 0;
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        .snap-card:hover {
+            border-color: rgba(64,224,255,0.3);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .snap-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px 8px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .snap-reason-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        .snap-reason-critical { background: rgba(255,77,77,0.18); color: #ff4d4d; border: 1px solid rgba(255,77,77,0.3); }
+        .snap-reason-high { background: rgba(255,107,0,0.15); color: #FF6B00; border: 1px solid rgba(255,107,0,0.3); }
+        .snap-reason-medium { background: rgba(255,214,107,0.15); color: #FFD66B; border: 1px solid rgba(255,214,107,0.3); }
+        .snap-tool-name {
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .snap-risk-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 32px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: 'Fira Code', monospace;
+        }
+        .snap-risk-pill.risk-high { background: rgba(255,77,77,0.15); color: #ff4d4d; }
+        .snap-risk-pill.risk-medium { background: rgba(255,214,107,0.15); color: #FFD66B; }
+        .snap-risk-pill.risk-low { background: rgba(0,245,212,0.12); color: #00F5D4; }
+        .snap-card-meta {
+            padding: 0 18px 10px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .snap-card-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 0 18px 12px;
+        }
+        @media (max-width: 768px) {
+            .snap-card-body { grid-template-columns: 1fr; }
+        }
+        .snap-panel {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 14px;
+            border-left: 3px solid transparent;
+        }
+        .snap-panel-request { border-left-color: var(--accent-blue); }
+        .snap-panel-signal { border-left-color: var(--accent-red, #ff4d4d); }
+        .snap-panel-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .snap-json-preview {
+            background: rgba(0,0,0,0.25);
+            border-radius: 6px;
+            padding: 8px 10px;
+            margin-top: 6px;
+        }
+        .snap-deception-warning {
+            margin: 0 18px 10px;
+            background: rgba(255,77,77,0.1);
+            border: 1px solid rgba(255,77,77,0.3);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #ff4d4d;
+        }
+        .snap-risk-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 18px 10px;
+        }
+        .snap-card-actions {
+            display: flex;
+            gap: 8px;
+            padding: 0 18px 14px;
+            flex-wrap: wrap;
+        }
+        .snap-btn-reject {
+            background: transparent;
+            color: #ff4d4d;
+            border: 1px solid rgba(255,77,77,0.4);
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 100px;
+        }
+        .snap-btn-reject:hover { background: rgba(255,77,77,0.12); border-color: #ff4d4d; }
+        .snap-btn-edit {
+            background: transparent;
+            color: var(--accent-blue);
+            border: 1px solid rgba(64,224,255,0.4);
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 100px;
+        }
+        .snap-btn-edit:hover { background: rgba(64,224,255,0.1); border-color: var(--accent-blue); }
+        .snap-btn-trust {
+            background: rgba(0,245,212,0.12);
+            color: var(--accent-green);
+            border: 1px solid rgba(0,245,212,0.4);
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 100px;
+        }
+        .snap-btn-trust:hover {
+            background: rgba(0,245,212,0.2);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 12px rgba(0,245,212,0.2);
+        }
+
+        @keyframes snapPulse {
+            0% { box-shadow: 0 0 0 0 rgba(64,224,255,0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(64,224,255,0); }
+            100% { box-shadow: 0 0 0 0 rgba(64,224,255,0); }
+        }
+        .snap-card-pulse {
+            animation: snapPulse 1.5s ease-out 1;
+            border-color: rgba(64,224,255,0.5);
+        }
+
+        .edit-release-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .edit-release-modal.show { display: flex; }
+        .edit-release-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            max-width: 640px;
+            width: 100%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .edit-release-header {
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .edit-release-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+        .edit-release-close {
+            background: none; border: none; color: var(--text-secondary);
+            font-size: 22px; cursor: pointer; padding: 4px 8px;
+        }
+        .edit-release-close:hover { color: var(--text-primary); }
+        .edit-release-body { padding: 18px 22px; flex: 1; overflow-y: auto; }
+        .edit-release-body textarea {
+            width: 100%;
+            min-height: 250px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            padding: 14px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+        .edit-release-body textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(64,224,255,0.15);
+        }
+        .edit-release-error {
+            display: none;
+            background: rgba(255,77,77,0.1);
+            border: 1px solid rgba(255,77,77,0.3);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #ff4d4d;
+        }
+        .edit-release-footer {
+            padding: 14px 22px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .snap-toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 12px 22px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 20000;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+        .snap-toast.show { opacity: 1; transform: translateY(0); }
+        .snap-toast-success { background: rgba(0,245,212,0.15); color: var(--accent-green); border: 1px solid rgba(0,245,212,0.3); }
+        .snap-toast-error { background: rgba(255,77,77,0.15); color: #ff4d4d; border: 1px solid rgba(255,77,77,0.3); }
+
         .bulk-toolbar {
             display: flex;
             align-items: center;
@@ -664,6 +928,7 @@
                         <option value="denied">Denied</option>
                         <option value="approved">Approved</option>
                         <option value="auto-approved">Auto-Approved</option>
+                        <option value="trust-approved">Trust-Approved</option>
                         <option value="pending">Pending</option>
                     </select>
                     <input type="text" id="audit-filter-agent" placeholder="Agent ID" class="audit-filter-input audit-filter-agent">
@@ -1929,18 +2194,32 @@ def handle_tool_call(tool_call):
             }
         }
 
+        function getSnapReason(violations) {
+            const reasonMap = {
+                'loop_detector': 'Loop Detected',
+                'deception_detector': 'Goal Drift Detected',
+                'schema_guard': 'Schema Violation',
+                'blast_radius': 'Blast Radius Exceeded',
+                'honeypot': 'Honeypot Triggered',
+                'fail_block': 'Auditor Unavailable',
+            };
+            if (!violations || violations.length === 0) return 'Rule Violation';
+            const first = violations[0];
+            return reasonMap[first.rule] || first.rule.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+
         function renderPending(actions) {
             const container = document.getElementById('pending-list');
             if (actions.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="icon">&#9989;</div>
-                        <p>All clear — no actions waiting for review. When Snapwire blocks an agent action, it will appear here for you to approve or deny.</p>
+                        <p>All clear — no actions waiting for review. When Snapwire blocks an agent action, it will appear here as a Snap-Card for you to decide.</p>
                     </div>`;
                 return;
             }
 
-            container.innerHTML = actions.map(action => {
+            container.innerHTML = actions.map((action, idx) => {
                 const violations = action.audit_result?.violations || [];
                 const riskScore = action.audit_result?.risk_score || 0;
                 const riskClass = riskScore > 70 ? 'risk-high' : riskScore > 40 ? 'risk-medium' : 'risk-low';
@@ -1948,65 +2227,62 @@ def handle_tool_call(tool_call):
                     const order = { critical: 3, high: 2, medium: 1 };
                     return (order[v.severity] || 0) > (order[max] || 0) ? v.severity : max;
                 }, 'medium');
-
+                const snapReason = getSnapReason(violations);
                 const params = action.tool_call.parameters || {};
-                const paramEntries = Object.entries(params);
-                const paramPreview = paramEntries.slice(0, 4).map(([k,v]) => {
-                    const val = typeof v === 'string' ? v : JSON.stringify(v);
-                    return `<span style="display:inline-block;background:var(--bg-tertiary);padding:2px 8px;border-radius:4px;font-size:11px;margin:2px;"><strong>${k}:</strong> ${val.length > 60 ? val.substring(0,60) + '...' : val}</span>`;
-                }).join('');
+                const isNew = (Date.now() - new Date(action.created_at).getTime()) < 10000;
 
                 return `
-                    <div class="action-card">
-                        <div class="action-header">
-                            <div style="display:flex;align-items:flex-start;gap:10px;">
+                    <div class="snap-card ${isNew ? 'snap-card-pulse' : ''}">
+                        <div class="snap-card-header">
+                            <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
                                 <input type="checkbox" class="pending-checkbox" data-action-id="${action.id}">
-                                <div>
-                                    <div class="tool-name">${action.tool_call.tool_name}</div>
-                                    <div class="action-id">ID: ${action.id} &middot; Agent: ${action.agent_id || 'unknown'} &middot; ${new Date(action.created_at).toLocaleString()}</div>
-                                </div>
+                                <span class="snap-reason-badge snap-reason-${maxSeverity}">${snapReason}</span>
+                                <span class="snap-tool-name">${action.tool_call.tool_name}</span>
                             </div>
-                            <span class="severity-badge severity-${maxSeverity}">${maxSeverity}</span>
+                            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                                <span class="snap-risk-pill ${riskClass}">${riskScore}</span>
+                                <span class="severity-badge severity-${maxSeverity}">${maxSeverity}</span>
+                            </div>
+                        </div>
+                        <div class="snap-card-meta">
+                            ID: ${action.id} &middot; Agent: <strong>${action.agent_id || 'unknown'}</strong> &middot; ${new Date(action.created_at).toLocaleString()}
                         </div>
 
-                        <div style="background:var(--bg-secondary);border-radius:8px;padding:12px 14px;margin-bottom:10px;border-left:3px solid var(--accent-blue);">
-                            <div style="font-size:11px;font-weight:700;color:var(--accent-blue);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">&#x1F4CB; Audit Trail &mdash; Why This Agent Wants This Action</div>
-                            ${action.tool_call.intent ? `<div style="margin-bottom:6px;"><span style="font-size:11px;font-weight:600;color:var(--text-secondary);">Stated Intent:</span><div style="font-size:13px;color:var(--text-primary);margin-top:2px;">${action.tool_call.intent}</div></div>` : '<div style="font-size:12px;color:var(--text-secondary);font-style:italic;margin-bottom:6px;">No intent provided by agent</div>'}
-                            ${action.tool_call.context ? `<div style="margin-bottom:6px;"><span style="font-size:11px;font-weight:600;color:var(--text-secondary);">Context:</span><div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${action.tool_call.context}</div></div>` : ''}
-                            ${paramEntries.length > 0 ? `<div><span style="font-size:11px;font-weight:600;color:var(--text-secondary);">Parameters:</span><div style="margin-top:4px;line-height:1.8;">${paramPreview}${paramEntries.length > 4 ? `<span style="font-size:11px;color:var(--text-secondary);margin-left:4px;">+${paramEntries.length - 4} more</span>` : ''}</div></div>` : ''}
-                        </div>
-
-                        <div style="background:var(--bg-secondary);border-radius:8px;padding:12px 14px;margin-bottom:10px;border-left:3px solid var(--accent-red);">
-                            <div style="font-size:11px;font-weight:700;color:var(--accent-red);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">&#x1F6AB; Why It Was Blocked</div>
-                            <div class="violations-list" style="margin-bottom:0;">
+                        <div class="snap-card-body">
+                            <div class="snap-panel snap-panel-request">
+                                <div class="snap-panel-label" style="color:var(--accent-blue);">&#x1F4CB; Agent Intent</div>
+                                ${action.tool_call.intent ? `<div style="margin-bottom:8px;font-size:13px;color:var(--text-primary);">${action.tool_call.intent}</div>` : '<div style="font-size:12px;color:var(--text-secondary);font-style:italic;margin-bottom:8px;">No intent provided</div>'}
+                                ${action.tool_call.context ? `<div style="margin-bottom:8px;font-size:12px;color:var(--text-secondary);">${action.tool_call.context}</div>` : ''}
+                                <div class="snap-json-preview"><pre style="margin:0;font-size:11px;font-family:'Fira Code',monospace;white-space:pre-wrap;word-break:break-all;color:var(--text-primary);max-height:120px;overflow-y:auto;">${JSON.stringify(params, null, 2)}</pre></div>
+                            </div>
+                            <div class="snap-panel snap-panel-signal">
+                                <div class="snap-panel-label" style="color:var(--accent-red);">&#x1F6AB; Security Signal</div>
                                 ${violations.map(v => `
-                                    <div class="violation-item">
-                                        <div class="rule-name">${v.rule} <span class="severity-badge severity-${v.severity}" style="font-size:10px;">${v.severity}</span></div>
-                                        <div class="reason">${v.reason}</div>
+                                    <div style="margin-bottom:8px;">
+                                        <div style="font-size:12px;font-weight:600;color:var(--text-primary);">${v.rule} <span class="severity-badge severity-${v.severity}" style="font-size:10px;">${v.severity}</span></div>
+                                        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${v.reason}</div>
                                     </div>
                                 `).join('')}
+                                ${action.audit_result?.analysis ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;color:var(--text-secondary);line-height:1.5;">${action.audit_result.analysis}</div>` : ''}
                             </div>
                         </div>
 
-                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-                            <span style="font-size:12px;color:var(--text-secondary);">Risk Score</span>
-                            <div class="risk-bar" style="flex:1;">
+                        ${(violations.some(v => v.rule === 'deception_detector') || action.audit_result?.deception_warning) ? `<div class="snap-deception-warning">&#9888; Deception Warning &mdash; This agent's stated intent may not match its actual action. Review carefully.</div>` : ''}
+
+                        <div class="snap-risk-bar-row">
+                            <span style="font-size:11px;color:var(--text-secondary);">Risk</span>
+                            <div class="risk-bar" style="flex:1;height:6px;">
                                 <div class="fill ${riskClass}" style="width:${riskScore}%"></div>
                             </div>
-                            <span style="font-size:13px;font-weight:600;">${riskScore}/100</span>
+                            <span style="font-size:12px;font-weight:600;font-family:'Fira Code',monospace;">${riskScore}/100</span>
                         </div>
 
-                        ${(violations.some(v => v.rule === 'deception_detector') || action.audit_result?.deception_warning) ? `<div style="background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.3);border-radius:8px;padding:10px 14px;margin-bottom:8px;">
-                            <div style="font-weight:600;color:var(--accent-red);font-size:12px;">&#9888; Deception Warning</div>
-                            <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">This agent's stated intent may not match its actual action. Review carefully before approving.</div>
-                        </div>` : ''}
-
-                        ${action.audit_result?.analysis ? `<div style="background:var(--bg-secondary);border-radius:8px;padding:10px 14px;margin-bottom:10px;border-left:3px solid var(--text-secondary);"><div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">&#x1F916; AI Auditor Reasoning</div><p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin:0;">${action.audit_result.analysis}</p></div>` : ''}
-
-                        <div class="action-buttons">
-                            <button class="btn btn-approve" onclick="resolveAction('${action.id}', 'approved')">&#x2714; Approve</button>
-                            <button class="btn btn-deny" onclick="resolveAction('${action.id}', 'denied')">&#x2716; Deny</button>
+                        <div class="snap-card-actions">
+                            <button class="btn snap-btn-reject" onclick="resolveAction('${action.id}', 'denied')" title="Reject this action and notify the agent not to retry">&#x2716; Reject</button>
+                            <button class="btn snap-btn-edit" onclick="openEditRelease('${action.id}', ${JSON.stringify(JSON.stringify(params))})" title="Edit the parameters and release the action">&#x270E; Edit & Release</button>
+                            <button class="btn snap-btn-trust" onclick="trustTool24h('${action.id}')" title="Approve and auto-allow this agent+tool combo for 24 hours">&#x2714; Trust 24h</button>
                         </div>
+                        <div style="text-align:center;margin-top:4px;font-size:10px;color:var(--text-secondary);opacity:0.7;">Snapwire is a Runtime Intermediary. User assumes final liability for released actions.</div>
                     </div>`;
             }).join('');
         }
@@ -2026,6 +2302,99 @@ def handle_tool_call(tool_call):
             } catch (e) {
                 console.error('Resolve error:', e);
             }
+        }
+
+        async function trustTool24h(actionId) {
+            try {
+                const res = await fetch(`/api/actions/${actionId}/trust`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    stats.allowed++;
+                    fetchPending();
+                    fetchAuditLog();
+                    const msg = data.trust_rule ? `Trusted: ${data.trust_rule.agent_id} + ${data.trust_rule.tool_name} for 24h` : 'Trust rule created';
+                    showToast(msg, 'success');
+                } else {
+                    showToast(data.error || 'Failed to create trust rule', 'error');
+                }
+            } catch (e) {
+                console.error('Trust error:', e);
+                showToast('Failed to create trust rule', 'error');
+            }
+        }
+
+        function openEditRelease(actionId, paramsJson) {
+            const modal = document.getElementById('edit-release-modal');
+            const editor = document.getElementById('edit-release-editor');
+            const errEl = document.getElementById('edit-release-error');
+            modal.dataset.actionId = actionId;
+            try {
+                const parsed = JSON.parse(paramsJson);
+                editor.value = JSON.stringify(parsed, null, 2);
+            } catch(e) {
+                editor.value = paramsJson;
+            }
+            errEl.textContent = '';
+            errEl.style.display = 'none';
+            modal.classList.add('show');
+        }
+
+        function closeEditRelease() {
+            document.getElementById('edit-release-modal').classList.remove('show');
+        }
+
+        async function submitEditRelease() {
+            const modal = document.getElementById('edit-release-modal');
+            const editor = document.getElementById('edit-release-editor');
+            const errEl = document.getElementById('edit-release-error');
+            const actionId = modal.dataset.actionId;
+            let params;
+            try {
+                params = JSON.parse(editor.value);
+                if (typeof params !== 'object' || Array.isArray(params)) {
+                    throw new Error('Parameters must be a JSON object');
+                }
+            } catch(e) {
+                errEl.textContent = 'Invalid JSON: ' + e.message;
+                errEl.style.display = 'block';
+                return;
+            }
+            errEl.style.display = 'none';
+            try {
+                const res = await fetch(`/api/actions/${actionId}/edit-release`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ parameters: params })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    stats.allowed++;
+                    closeEditRelease();
+                    fetchPending();
+                    fetchAuditLog();
+                    showToast('Action released with modified parameters', 'success');
+                } else {
+                    errEl.textContent = data.error || 'Failed to release action';
+                    errEl.style.display = 'block';
+                }
+            } catch(e) {
+                errEl.textContent = 'Network error';
+                errEl.style.display = 'block';
+            }
+        }
+
+        function showToast(message, type) {
+            const existing = document.querySelector('.snap-toast');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = `snap-toast snap-toast-${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
         }
 
         function applyAuditFilters() {
@@ -2967,7 +3336,7 @@ def handle_tool_call(tool_call):
                     return;
                 }
                 container.innerHTML = actions.map(a => {
-                    const statusColor = ['allowed','approved','auto-approved'].includes(a.status) ? 'var(--accent-green)' : a.status === 'pending' ? 'var(--accent-yellow)' : 'var(--accent-red)';
+                    const statusColor = ['allowed','approved','auto-approved','trust-approved'].includes(a.status) ? 'var(--accent-green)' : a.status === 'pending' ? 'var(--accent-yellow)' : 'var(--accent-red)';
                     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;">
                         <span style="width:8px;height:8px;border-radius:50%;background:${statusColor};flex-shrink:0;"></span>
                         <span style="font-family:'Fira Code',monospace;color:var(--text-primary);">${a.tool_call?.tool_name || 'unknown'}</span>
@@ -4861,6 +5230,24 @@ if (result.status === "allowed") {
     </div>
     <div class="snapwire-footer-disclaimer">
         Snapwire is a technical monitoring utility. Use at your own risk. User assumes all liability for agent behavior.
+    </div>
+
+    <div id="edit-release-modal" class="edit-release-modal" onclick="if(event.target===this)closeEditRelease()">
+        <div class="edit-release-content">
+            <div class="edit-release-header">
+                <h3>&#x270E; Edit & Release</h3>
+                <button class="edit-release-close" onclick="closeEditRelease()">&times;</button>
+            </div>
+            <div class="edit-release-body">
+                <p style="font-size:13px;color:var(--text-secondary);margin:0 0 12px;">Edit the tool call parameters below, then release. The modified action will be sent to the agent's provider.</p>
+                <textarea id="edit-release-editor" spellcheck="false"></textarea>
+                <div id="edit-release-error" class="edit-release-error"></div>
+            </div>
+            <div class="edit-release-footer">
+                <button class="btn snap-btn-reject" onclick="closeEditRelease()" style="flex:none;min-width:auto;padding:8px 20px;">Cancel</button>
+                <button class="btn snap-btn-edit" onclick="submitEditRelease()" style="flex:none;min-width:auto;padding:8px 20px;">&#x2714; Validate & Release</button>
+            </div>
+        </div>
     </div>
 </body>
 </html>
