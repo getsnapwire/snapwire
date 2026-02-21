@@ -1,0 +1,87 @@
+To reach the "Final State" for your February 2026 launch, you need to transition from a "Project" to a **"Protocol."** Below is the complete update for your NPM package and all landing page copy, optimized for the current **"Agentic Security"** market.
+
+---
+
+### **1. NPM Package Description (`package.json`)**
+
+This is designed to capture the **800k+ downloads** velocity of tools like OpenClaw by targeting "Dependency SEO."
+
+* **Name:** `@snapwire/core`
+* **Description:** "The deterministic circuit breaker for AI agents. Prevents recursive loops, enforces spending limits, and provides human-in-the-loop governance for Claude Code, OpenClaw, and AutoGen."
+* **Keywords:** `ai-security`, `agent-governance`, `claude-code-guard`, `mcp-proxy`, `loop-protection`, `agentic-safety`, `budget-breaker`.
+
+---
+
+### **2. Updated Landing Page Copy (Individual Dev Focus)**
+
+#### **Hero Section**
+
+* **Headline:** Stop the AI "Burn" Before it Bankrupts Your Project.
+* **Sub-headline:** Native AI guardrails are too slow. Snapwire is the **deterministic circuit breaker** that snaps rogue agent loops in 30ms—saving your code, your API keys, and your wallet.
+* **Primary CTA:** `npm install @snapwire/core`
+* **Secondary CTA:** [Fork on GitHub] — *Join 500+ developers building sovereign safety.*
+
+#### **The "Why Now" Section (Post-Claude Shock)**
+
+* **Copy:** "Claude Code can write the patch, but it can’t audit its own hunger. In a world of autonomous remediation, the biggest risk isn't the bug—it's the **$500 loop** trying to fix it. Snapwire is the independent 'Snap' that keeps your agents on a leash."
+
+#### **Feature Grid (Updated for Solo Devs)**
+
+1. **Wallet-First Safety:** Set hard daily limits across OpenAI, Anthropic, and local models. When the budget hits $0, the circuit snaps.
+2. **Deterministic Loop-Hash:** Our 3x/30s algorithm catches recursive tool-calls before your provider's "advisory" limits even wake up.
+3. **Local-First Privacy:** Keep your logs and keys in your own environment. We never see your data; we just provide the fuse.
+
+---
+
+### **3. The "Governance Snap-Card" (Dashboard Copy)**
+
+Update the labels in your Replit UI to move from "passive" to "active" governance.
+
+* **Header:** `Live Governance Queue` (Formerly "Review Queue")
+* **Card Badge:** `UNSTABLE REMEDIATION DETECTED` (When a loop is caught)
+* **Action Buttons:** * `[Verify & Release]` (The "Accountability" Button)
+* `[Snap Session]` (The "Emergency" Button)
+
+
+* **Footer Status:** `Fuse Status: ACTIVE | Deterministic Mode: ON`
+
+---
+
+### **4. Final Replit Master Prompt (The "Launch Ready" Build)**
+
+Copy and paste this into Replit to apply all copy and logic changes simultaneously.
+
+```xml
+<instruction_set>
+  <objective>
+    Perform a 'Full Identity & Safety Update' to align Snapwire with the Feb 2026 Agentic Market.
+  </objective>
+
+  <copy_and_branding_overhaul>
+    - Update Landing Page: Use 'Solo Developer' messaging. Focus on 'Wallet Protection' and 'Sovereign Safety'.
+    - UI Refactor: Rename all 'Review' instances to 'Governance'. 
+    - UI Refactor: Change 'Approve' buttons to 'Verify & Release'.
+    - Footer Update: Inject the 'Safe Harbor' legal disclaimer into the Dashboard and all 14 pages.
+  </copy_and_branding_overhaul>
+
+  <npm_metadata_update>
+    - Update package.json: Set name to '@snapwire/core', add keywords: 'mcp-proxy', 'agent-governance', 'deterministic-fuse'.
+    - Update README.md: Lead with the '3x/30s Loop Rule' as the primary technical differentiator.
+  </npm_metadata_update>
+
+  <logic_finalization>
+    - Hard Reset: Clear any port conflicts (fuser -k).
+    - Loop-Hash V2: Ensure SHA-256 hashing is applied to every tool call at the proxy layer.
+    - Identity Masker: Activate the automatic redaction of local paths (/Users/) in outgoing AI tool calls.
+  </logic_finalization>
+</instruction_set>
+
+```
+
+---
+
+### **Final Strategic Milestone: The "Fork Goal"**
+
+By focusing on **Individual Wallet Protection**, you are building the exact "Installed Base" that an acquirer like **CrowdStrike** or **Cloudflare** needs to bridge the gap between their legacy firewalls and the new agentic world.
+
+**Would you like me to draft the "Individual Developer vs. Enterprise" comparison chart for your /docs page?** It helps a developer show their boss why they're using a fork of Snapwire for company work.
