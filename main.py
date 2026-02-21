@@ -307,7 +307,7 @@ def privacy_page():
 
 @app.route("/pricing")
 def pricing_page():
-    return render_template("pricing.html", login_url=_get_login_url())
+    return redirect("/")
 
 
 @app.route("/docs")
