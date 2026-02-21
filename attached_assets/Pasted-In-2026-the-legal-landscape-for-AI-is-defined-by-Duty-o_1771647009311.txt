@@ -1,0 +1,63 @@
+In 2026, the legal landscape for AI is defined by **"Duty of Care."** Your current messaging is strategically brilliant because it positions Snapwire as a **mechanical utility** (a "fuse") rather than a **legal agent** (a "manager").
+
+However, to ensure you are protected during an acquisition—where lawyers will pick apart every word—there are three specific areas where we should tighten the language to avoid "Feature Liability."
+
+---
+
+### **1. The "Deterministic" Shield**
+
+Your current use of the word **"Deterministic"** is your best legal defense.
+
+* **The Risk:** If you claim your AI "understands" safety, you are liable when the AI hallucinates and fails to block a bad action.
+* **The Fix:** Always frame the core protection as a "Hard Fuse."
+* **Change:** Instead of saying "Snapwire ensures your agent is safe," say **"Snapwire enforces user-defined deterministic limits."** * **Why:** This shifts the liability to the **User** (who defined the limits) rather than your **Software** (which just enforced them).
+
+### **2. The "Deception Audit" Disclaimer**
+
+You mentioned "Goal Drift" and "Deception Audits" in your roadmap/features. These are "High Liability" terms.
+
+* **The Risk:** If an agent deceptions a user and Snapwire didn't catch it, the user could claim "Failure of Promised Function."
+* **The Fix:** Add the word **"Probabilistic"** or **"Heuristic"** to these specific features.
+* **Homepage Edit:** *"Goal Drift Alerts: Uses **probabilistic** modeling to flag behavioral shifts for human review."*
+
+### **3. The "Human-in-the-Loop" Mandate**
+
+To avoid being blamed for a "False Negative" (letting a bad action through), your site must emphasize that you are a **Decision-Support Tool**, not a Decision-Maker.
+
+---
+
+### **Specific Copy Edits for Liability Reduction**
+
+| Current Copy | Recommended Edit | Legal Reason |
+| --- | --- | --- |
+| "Snapwire proves it behaves safely." | "Snapwire **enforces** behavioral boundaries." | You cannot "prove" safety in a probabilistic system; you can only enforce a boundary. |
+| "Catches a $500 loop before it starts." | "**Designed to detect** and intercept loops based on user-defined velocity." | Avoids an "Absolute Guarantee" of success. |
+| "Secure your agents." | "**Govern** your agents." | "Secure" is a binary state that is hard to prove in court. "Govern" is a process. |
+
+---
+
+### **The "Terms of Service" (The Invisible Shield)**
+
+Your developer has already placed the **"Non-Agency"** and **"Non-Fiduciary"** clauses in the TOS. This is vital. In 2026, courts are looking for the **"Principal-Agent"** relationship.
+
+**One final addition for the Footer/TOS:**
+
+> *"Snapwire is a technical monitoring utility. All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator."*
+
+---
+
+### **Summary for Replit**
+
+You don't need to rewrite the whole site—just swap a few "Guarantee" words for "Enforcement" words.
+
+**Prompt for the Developer:**
+
+> "1. **Legal Refinement:** Review the homepage and replace absolute claims (e.g., 'Proves', 'Ensures') with enforcement terms (e.g., 'Governs', 'Enforces', 'Monitors').
+> 2. **Footer Update:** Ensure the 'Duty of Care' disclaimer is visible on every page, not just the TOS modal.
+> 3. **Feature Labeling:** Add 'Beta' or 'Heuristic' to the Goal Drift and Deception Audit feature descriptions."
+
+### **The Verdict**
+
+These changes actually **increase** your acquisition value. Professional buyers (like **CrowdStrike**) are scared of "Magic AI Safety" startups because of the liability. They love "Deterministic Infrastructure" because the liability remains with the end-user.
+
+**Would you like me to draft the "Responsibility Matrix" for your documentation?** It’s a simple table that shows exactly where Snapwire's responsibility ends and the User's begins—a favorite for corporate legal teams.
