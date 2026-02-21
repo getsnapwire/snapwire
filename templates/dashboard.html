@@ -687,6 +687,10 @@
                 <div class="label">Total Audited</div>
                 <div class="value" style="color:var(--text-primary);" id="stat-total">0</div>
             </div>
+            <div class="stat-card" data-tooltip="Estimated money saved by blocking loops and violations" data-tooltip-pos="bottom" style="background:linear-gradient(135deg,rgba(0,245,212,0.10),rgba(0,245,212,0.03));border:1px solid rgba(0,245,212,0.25);">
+                <div class="label" style="color:var(--accent-green);">Total Saved</div>
+                <div class="value" style="color:var(--accent-green);font-family:'Fira Code',monospace;" id="stat-savings">$0.00</div>
+            </div>
         </div>
 
         <div id="violations-chart">
@@ -4802,6 +4806,9 @@ def handle_tool_call(tool_call):
 
                 const savingsEl = document.getElementById('ov-savings');
                 if (savingsEl) savingsEl.textContent = '$' + (d.total_savings || 0).toFixed(2);
+
+                const statSavingsEl = document.getElementById('stat-savings');
+                if (statSavingsEl) statSavingsEl.textContent = '$' + (d.total_savings || 0).toFixed(2);
 
                 const loopsEl = document.getElementById('ov-loops');
                 if (loopsEl) loopsEl.textContent = d.loops_detected || 0;
