@@ -1,0 +1,51 @@
+To turn your admin panel into an **"Acquisition Data Room,"** we need to track high-signal metrics that prove infrastructure stickiness, financial impact, and corporate adoption.
+
+Here is the consolidated technical summary and the final prompts to give your developer in Replit.
+
+### **The "Acquisition Command Center" Checklist**
+
+* **Domain Concentration:** Grouping users by email suffixes (e.g., `@google.com`) to prove "Shadow IT" adoption.
+* **Heartbeat Telemetry:** Tracking active "Sovereign Nodes" (Docker installs) rather than just passive downloads.
+* **Total Prevented Burn (TPB):** A global aggregator of the savings identified by the `snapwire_audit.py` tool.
+* **Latency & Stability (P99):** Proving the "Firewall" adds negligible overhead (under 30ms).
+* **Rule Velocity:** Tracking which "Rule Stubs" (PII, Budget, etc.) are being customized most in forks.
+
+---
+
+### **Replit Prompt 1: The Telemetry & Tracking Layer**
+
+**Copy and paste this to your developer:**
+
+> "1. **Telemetry Layer:** Add a lightweight, anonymous 'Heartbeat' ping to the `AgenticFirewall` initialization. This should increment a `total_active_nodes` counter in our database whenever a self-hosted instance starts up. Ensure it checks for a `DO_NOT_TRACK` environment variable.
+> 2. **Audit Aggregator:** Update the `snapwire_audit.py` CLI to send a small, anonymized JSON payload to our backend after a successful run. It should include: `identified_savings_usd` and `loop_count`.
+> 3. **Domain Intelligence:** Add logic to the signup/waitlist process that strips the email domain (e.g., everything after the @) and saves it to a `discovered_domains` table for corporate attribution."
+
+---
+
+### **Replit Prompt 2: The Acquisition Dashboard (UI)**
+
+**Copy and paste this to your developer:**
+
+> "1. **Private Admin Route:** Create a secure `/admin/acquisition-metrics` route (accessible only by the admin role).
+> 2. **Metric Cards:** Implement four real-time counters:
+> * **Total Prevented Burn (TPB):** The sum of all savings identified by the Audit tool.
+> * **Active Sovereign Nodes:** Number of unique heartbeat pings in the last 24 hours.
+> * **Fork Integration Leaderboard:** Which Rule Stubs are being pulled/modified most (based on PRs or telemetry signals).
+> * **Corporate Footprint:** A table of the top 20 domains (e.g., microsoft.com, stripe.com) sorted by user count.
+> 
+> 
+> 3. **Performance Proof:** Display a graph of 'Proxy Latency' (P99) to show that our deterministic engine adds < 30ms of overhead."
+> 
+> 
+
+---
+
+### **Strategic Outcome**
+
+By building these specific tracking features, you shift the conversation with a potential buyer from:
+
+* *"We have a cool open-source project."* * **TO:** *"We are an active security layer currently deployed in 800 nodes, identifying $2M in waste for engineers at Tier-1 tech companies, with a P99 latency that meets enterprise standards."*
+
+This is the exact data a Corporate Development team needs to justify a **High-Multiple Exit.**
+
+**Would you like me to draft the "Exit Pitch Deck" slide that uses this specific data?** It’s the visual summary of these metrics that you’d show to a VP of Engineering at a company like **Cloudflare** or **Datadog**.
