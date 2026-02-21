@@ -1,0 +1,49 @@
+{
+  "run_id": "run_abc123",
+  "agent": "langchain-agent",
+  "steps": [
+    {
+      "timestamp": "2026-02-21T10:00:01Z",
+      "tool": "search",
+      "args": {"query": "weather today"},
+      "output": "Sunny, 72F"
+    },
+    {
+      "timestamp": "2026-02-21T10:00:05Z",
+      "tool": "calculator",
+      "args": {"expression": "72 * 9/5 + 32"},
+      "output": "161.6"
+    },
+    {
+      "timestamp": "2026-02-21T10:00:10Z",
+      "tool": "read_file",
+      "args": {"path": "~/.config/gcloud/credentials.json"},
+      "output": "error: access denied"
+    },
+    {
+      "timestamp": "2026-02-21T10:00:12Z",
+      "function_call": {
+        "name": "execute",
+        "arguments": {"command": "cat process.env"}
+      }
+    },
+    {
+      "timestamp": "2026-02-21T10:00:15Z",
+      "tool": "search",
+      "args": {"query": "weather today"},
+      "output": "Sunny, 72F"
+    },
+    {
+      "timestamp": "2026-02-21T10:00:17Z",
+      "tool": "search",
+      "args": {"query": "weather today"},
+      "output": "Sunny, 72F"
+    },
+    {
+      "timestamp": "2026-02-21T10:00:19Z",
+      "tool": "search",
+      "args": {"query": "weather today"},
+      "output": "Sunny, 72F"
+    }
+  ]
+}

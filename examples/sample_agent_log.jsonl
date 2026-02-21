@@ -1,0 +1,7 @@
+{"timestamp": "2026-02-21T10:00:01Z", "tool_name": "web_search", "parameters": {"query": "latest news"}, "agent_id": "news-bot"}
+{"timestamp": "2026-02-21T10:00:02Z", "tool_name": "web_search", "parameters": {"query": "latest news"}, "agent_id": "news-bot"}
+{"timestamp": "2026-02-21T10:00:03Z", "tool_name": "web_search", "parameters": {"query": "latest news"}, "agent_id": "news-bot"}
+{"timestamp": "2026-02-21T10:00:04Z", "tool_name": "web_search", "parameters": {"query": "latest news"}, "agent_id": "news-bot"}
+{"timestamp": "2026-02-21T10:00:05Z", "tool_name": "web_search", "parameters": {"query": "latest news"}, "agent_id": "news-bot"}
+{"timestamp": "2026-02-21T10:00:10Z", "tool_name": "read_file", "parameters": {"path": ".env"}, "agent_id": "news-bot"}
+{"timestamp": "2026-02-21T10:00:12Z", "tool_name": "send_message", "parameters": {"to": "support", "text": "Hello!"}, "agent_id": "chat-bot"}
