@@ -1,6 +1,6 @@
 """
 Rule: Environment Variable Protection
-Status: STUB — Community Contribution Welcome
+Status: IMPLEMENTED
 
 Blocks tool calls that attempt to read, write, or exfiltrate
 environment variables, .env files, or known secret paths.
@@ -12,6 +12,8 @@ This is a deterministic rule — no AI judgment involved.
 It uses string matching against known dangerous patterns.
 """
 
+import json
+
 BLOCKED_PATTERNS = [
     ".env",
     "ENV[",
@@ -21,11 +23,31 @@ BLOCKED_PATTERNS = [
     "API_KEY",
     "DATABASE_URL",
     "AWS_SECRET",
+    "AWS_ACCESS_KEY",
+    "PRIVATE_KEY",
+    "ANTHROPIC_API_KEY",
+    "OPENAI_API_KEY",
+    "STRIPE_SECRET",
     "/etc/shadow",
     "/etc/passwd",
     "~/.ssh/",
     "~/.aws/credentials",
+    "~/.config/gcloud",
+    ".pem",
+    ".key",
+    "id_rsa",
+    "id_ed25519",
 ]
+
+
+def _flatten_values(obj):
+    if isinstance(obj, str):
+        return obj
+    if isinstance(obj, dict):
+        return " ".join(_flatten_values(v) for v in obj.values())
+    if isinstance(obj, (list, tuple)):
+        return " ".join(_flatten_values(v) for v in obj)
+    return str(obj)
 
 
 def evaluate(tool_name: str, parameters: dict) -> dict:
@@ -41,23 +63,17 @@ def evaluate(tool_name: str, parameters: dict) -> dict:
             - allowed (bool): Whether the call should proceed
             - reason (str): Human-readable explanation
             - rule (str): Rule identifier
+            - matched_pattern (str|None): The pattern that triggered the block
     """
-    # TODO: Implement environment protection
-    #
-    # Suggested approach:
-    #   1. Serialize all parameter values to a single string
-    #   2. Check if any BLOCKED_PATTERNS appear in the string (case-insensitive)
-    #   3. Also check tool_name itself (e.g., "read_file" targeting ".env")
-    #   4. Return allowed=False if any pattern matches
-    #
-    # Example:
-    #   param_str = json.dumps(parameters).lower()
-    #   for pattern in BLOCKED_PATTERNS:
-    #       if pattern.lower() in param_str:
-    #           return {
-    #               "allowed": False,
-    #               "reason": f"Blocked: agent attempted to access '{pattern}'",
-    #               "rule": "env_protection",
-    #           }
+    search_str = (tool_name + " " + _flatten_values(parameters)).lower()
 
-    return {"allowed": True, "reason": "Env protection not yet implemented", "rule": "env_protection"}
+    for pattern in BLOCKED_PATTERNS:
+        if pattern.lower() in search_str:
+            return {
+                "allowed": False,
+                "reason": f"Blocked: agent attempted to access '{pattern}'",
+                "rule": "env_protection",
+                "matched_pattern": pattern,
+            }
+
+    return {"allowed": True, "reason": "No secret access detected", "rule": "env_protection", "matched_pattern": None}

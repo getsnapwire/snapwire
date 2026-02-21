@@ -1,0 +1,134 @@
+[
+  {
+    "timestamp": "2026-02-21T10:00:01Z",
+    "tool_name": "web_search",
+    "parameters": {"query": "current weather in San Francisco"},
+    "agent_id": "research-agent"
+  },
+  {
+    "timestamp": "2026-02-21T10:00:04Z",
+    "tool_name": "web_search",
+    "parameters": {"query": "current weather in San Francisco"},
+    "agent_id": "research-agent"
+  },
+  {
+    "timestamp": "2026-02-21T10:00:07Z",
+    "tool_name": "web_search",
+    "parameters": {"query": "current weather in San Francisco"},
+    "agent_id": "research-agent"
+  },
+  {
+    "timestamp": "2026-02-21T10:00:10Z",
+    "tool_name": "web_search",
+    "parameters": {"query": "current weather in San Francisco"},
+    "agent_id": "research-agent"
+  },
+  {
+    "timestamp": "2026-02-21T10:00:13Z",
+    "tool_name": "web_search",
+    "parameters": {"query": "current weather in San Francisco"},
+    "agent_id": "research-agent"
+  },
+  {
+    "timestamp": "2026-02-21T10:00:30Z",
+    "tool_name": "send_email",
+    "parameters": {"to": "team@company.com", "subject": "Weather report", "body": "It's sunny."},
+    "agent_id": "research-agent"
+  },
+  {
+    "timestamp": "2026-02-21T10:01:00Z",
+    "tool_name": "database_query",
+    "parameters": {"sql": "SELECT * FROM users WHERE active = true"},
+    "agent_id": "data-pipeline"
+  },
+  {
+    "timestamp": "2026-02-21T10:01:02Z",
+    "tool_name": "database_query",
+    "parameters": {"sql": "SELECT * FROM users WHERE active = true"},
+    "agent_id": "data-pipeline"
+  },
+  {
+    "timestamp": "2026-02-21T10:01:04Z",
+    "tool_name": "database_query",
+    "parameters": {"sql": "SELECT * FROM users WHERE active = true"},
+    "agent_id": "data-pipeline"
+  },
+  {
+    "timestamp": "2026-02-21T10:01:06Z",
+    "tool_name": "database_query",
+    "parameters": {"sql": "SELECT * FROM users WHERE active = true"},
+    "agent_id": "data-pipeline"
+  },
+  {
+    "timestamp": "2026-02-21T10:01:08Z",
+    "tool_name": "database_query",
+    "parameters": {"sql": "SELECT * FROM users WHERE active = true"},
+    "agent_id": "data-pipeline"
+  },
+  {
+    "timestamp": "2026-02-21T10:01:10Z",
+    "tool_name": "database_query",
+    "parameters": {"sql": "SELECT * FROM users WHERE active = true"},
+    "agent_id": "data-pipeline"
+  },
+  {
+    "timestamp": "2026-02-21T10:01:12Z",
+    "tool_name": "database_query",
+    "parameters": {"sql": "SELECT * FROM users WHERE active = true"},
+    "agent_id": "data-pipeline"
+  },
+  {
+    "timestamp": "2026-02-21T10:02:00Z",
+    "tool_name": "read_file",
+    "parameters": {"path": "/app/config.yaml"},
+    "agent_id": "data-pipeline"
+  },
+  {
+    "timestamp": "2026-02-21T10:02:15Z",
+    "tool_name": "write_file",
+    "parameters": {"path": "/app/output/report.csv", "content": "id,name,status\n1,Alice,active"},
+    "agent_id": "data-pipeline"
+  },
+  {
+    "timestamp": "2026-02-21T10:03:00Z",
+    "tool_name": "openai_chat",
+    "parameters": {"model": "gpt-4", "messages": [{"role": "user", "content": "Summarize this data"}]},
+    "agent_id": "summarizer"
+  },
+  {
+    "timestamp": "2026-02-21T10:03:03Z",
+    "tool_name": "openai_chat",
+    "parameters": {"model": "gpt-4", "messages": [{"role": "user", "content": "Summarize this data"}]},
+    "agent_id": "summarizer"
+  },
+  {
+    "timestamp": "2026-02-21T10:03:06Z",
+    "tool_name": "openai_chat",
+    "parameters": {"model": "gpt-4", "messages": [{"role": "user", "content": "Summarize this data"}]},
+    "agent_id": "summarizer"
+  },
+  {
+    "timestamp": "2026-02-21T10:03:09Z",
+    "tool_name": "openai_chat",
+    "parameters": {"model": "gpt-4", "messages": [{"role": "user", "content": "Summarize this data"}]},
+    "agent_id": "summarizer"
+  },
+  {
+    "timestamp": "2026-02-21T10:03:30Z",
+    "tool_name": "slack_post",
+    "parameters": {"channel": "#reports", "text": "Daily summary complete."},
+    "agent_id": "summarizer"
+  },
+  {
+    "timestamp": "2026-02-21T10:04:00Z",
+    "tool_name": "github_create_issue",
+    "parameters": {"repo": "acme/backend", "title": "Fix login bug", "body": "Login fails on mobile"},
+    "agent_id": "devops-bot"
+  },
+  {
+    "timestamp": "2026-02-21T10:04:30Z",
+    "tool_name": "read_file",
+    "parameters": {"path": "/home/user/.env"},
+    "agent_id": "devops-bot"
+  }
+]
