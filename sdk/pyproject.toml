@@ -5,12 +5,39 @@ build-backend = "setuptools.backends._legacy:_Backend"
 [project]
 name = "snapwire"
 version = "1.0.0"
-description = "Python SDK for Snapwire - The Safety Fuse for Your AI Agents"
+description = "The deterministic circuit breaker for AI agents. Prevents recursive loops, enforces spending limits, and provides human-in-the-loop governance."
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 requires-python = ">=3.8"
 dependencies = ["requests>=2.28.0"]
+keywords = [
+    "ai-safety",
+    "agent-governance",
+    "loop-protection",
+    "agentic-safety",
+    "deterministic-fuse",
+    "mcp-proxy",
+    "circuit-breaker",
+    "ai-security",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Monitoring",
+]
 
 [project.urls]
 Homepage = "https://github.com/snapwire-ai/snapwire"
 Documentation = "https://docs.snapwire.ai"
+Repository = "https://github.com/snapwire-ai/snapwire"
+"Bug Tracker" = "https://github.com/snapwire-ai/snapwire/issues"
