@@ -48,6 +48,28 @@ We consider security research conducted in good faith to be authorized. We will 
 - Do not exploit a vulnerability beyond what is necessary to confirm it
 - Report vulnerabilities promptly
 
+## Threat Model: Identity Vault
+
+The Snapwire Identity Vault stores proxy credentials (Snap-Tokens) and their mappings to real API keys. This makes the Vault a high-value target.
+
+**Current protections (Development / Local Orchestration):**
+- Snap-Tokens are hashed before storage using SHA-256
+- Real API keys are encrypted at rest via AES-256 (SQLAlchemy-Utils `EncryptedType`)
+- Multi-tenant isolation enforced at the database query layer (`tenant_id` filtering)
+- Snap-Tokens are revocable instantly — compromised tokens can be invalidated with one click ("The Snap")
+
+**Production-hardened environments (Roadmap):**
+- **HSM Integration** — Support for AWS KMS, HashiCorp Vault, and Azure Key Vault as external key management backends. Target: Q3 2026.
+- **Cryptographic Agility** — Key rotation without downtime, algorithm-agnostic encryption layer to enable post-quantum migration when standards finalize.
+- **Audit Trail** — Cryptographically signed access logs for Vault read/write operations.
+
+**Deployment guidance:**
+- For local development and prototyping, the built-in Postgres-backed Vault is sufficient.
+- For production deployments handling real credentials, we recommend placing Snapwire behind a reverse proxy with TLS termination and connecting to an external secrets manager.
+- Never expose the Snapwire dashboard to the public internet without authentication.
+
+> The Identity Vault is designed as a governance layer, not a security finality. Organizations with existing secrets infrastructure (HashiCorp Vault, AWS Secrets Manager) should integrate Snapwire's Snap-Token system with their existing key management rather than storing raw credentials locally.
+
 ## Recognition
 
 We maintain a list of security researchers who have responsibly disclosed vulnerabilities. If you would like to be credited, please let us know in your report.

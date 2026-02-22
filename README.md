@@ -12,9 +12,11 @@
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> &middot;
+  <a href="#how-snapwire-compares">Compare</a> &middot;
   <a href="#audit-cli">Audit CLI</a> &middot;
   <a href="#custom-rules">Custom Rules</a> &middot;
   <a href="#api">API</a> &middot;
+  <a href="#compliance-readiness">Compliance</a> &middot;
   <a href="#self-hosting">Self-Hosting</a> &middot;
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
@@ -289,10 +291,61 @@ Add this to your README to show your agents are governed:
 
 ---
 
+## How Snapwire Compares
+
+| Feature | **LiteLLM / Standard Proxies** | **Guardrails AI** | **Snapwire** |
+|---------|-------------------------------|-------------------|-------------|
+| **Primary Goal** | Model Interoperability | Data Quality / Hallucination | **Agentic Safety & Governance** |
+| **Loop Protection** | None (costs run until timeout) | None | **Deterministic Fuse Breaker (3x/30s)** |
+| **Enforcement Model** | Probabilistic (LLM-checks-LLM) | Probabilistic | **Deterministic Fuses + Optional Heuristic** |
+| **Review Flow** | Silent failures | Retries | **Snap-Card Interactive Queue (Reject / Edit / Trust)** |
+| **Credential Proxy** | Pass-through | Pass-through | **Snap-Tokens with instant revocation** |
+| **Spend Monitoring** | Basic logging | None | **Live Burn Meter with projections** |
+| **Intent Guard** | None | Output validation | **Semantic Goal-Drift Detection [HEURISTIC]** |
+| **EU AI Act Ready** | Manual | Manual | **Built-in Article 12 & 14 conformity** |
+| **Deployment** | Cloud proxy | Python library | **Self-hosted, your infrastructure** |
+
+**The key difference:** Most proxies use another LLM to check the first one — slow, expensive, and can hallucinate. Snapwire's core uses deterministic code (regex, JSON schema, velocity counters). The LLM layer is optional and always labeled `[HEURISTIC]`.
+
+---
+
+## Compliance Readiness
+
+Snapwire provides **Conformity-Ready Infrastructure** for organizations operating under the EU AI Act (2026) and similar regulatory frameworks.
+
+| Requirement | EU AI Act Article | Snapwire Feature |
+|-------------|------------------|-----------------|
+| **Automatic Logging** | Article 12 (Record-keeping) | Full audit trail of every intercepted tool call, with timestamps, agent ID, rule evaluations, and human decisions. Exportable via API. |
+| **Human Oversight** | Article 14 (Human Oversight) | Snap-Card Review Queue with Reject, Edit & Release, and Trust 24h actions. Blocked calls require explicit human approval before proceeding. |
+| **Risk Management** | Article 9 (Risk Management) | Risk Confidence Index per tool, Blast Radius Governor per agent, real-time spend monitoring via Live Burn Meter. |
+| **Technical Documentation** | Article 11 (Technical Documentation) | Config export/import, rule documentation, Audit CLI for offline analysis. |
+
+> Snapwire does not guarantee regulatory compliance. These features provide technical infrastructure that supports compliance programs. Consult qualified legal counsel for your specific obligations.
+
+---
+
+## Performance
+
+Snapwire introduces a **Governance Tax** — the latency overhead of intercepting each tool call through the safety gateway.
+
+**Typical overhead (local testing):**
+- Deterministic checks (Fuse Breaker, Schema Validation, Snap-Token resolution): **< 5ms typical**
+- Full rule evaluation with LLM (when AI-powered rules are active): **200-800ms typical** (varies by LLM provider and network)
+- Dashboard and SSE streaming: **No impact on agent latency**
+
+**The tradeoff:** You are trading single-digit milliseconds of deterministic latency for the certainty that your agent won't enter a $1,000 loop or leak your production credentials. For 99% of agent workloads (which aren't doing high-frequency trading), this overhead is irrelevant compared to the safety gain.
+
+**For high-velocity environments:** The Python/Flask gateway is designed for governance, not hot-path throughput. If you need sub-10ms overhead at scale, the deterministic rule engine can be extracted into a standalone sidecar.
+
+---
+
 ## Roadmap
 
 - **Egress Allowlisting** — Restrict outbound agent requests to approved domains and IPs (Coming March 2026)
 - **Compliance Export** — One-click audit trail exports for SOC 2 / ISO 27001 evidence (Coming March 2026)
+- **HSM Integration** — AWS KMS, HashiCorp Vault, Azure Key Vault as external key backends (Q3 2026)
+- **Snapwire Core (High-Velocity Engine)** — Compiled sidecar for sub-10ms deterministic rule evaluation at scale (Q3/Q4 2026)
+- **Cryptographic Agility** — Post-quantum ready key rotation and algorithm-agnostic encryption layer
 
 ---
 

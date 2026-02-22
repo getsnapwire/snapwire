@@ -62,3 +62,14 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **ORM**: SQLAlchemy
 -   **Web Framework**: Flask
 -   **WSGI Server**: Gunicorn
+
+## Testing
+-   Run tests: `python -m pytest tests/ -v`
+-   89 tests total: 52 core + 37 attack scenarios
+-   Attack scenarios in `tests/scenarios/` cover 6 categories with memorable names (e.g., `sleeper_agent_aws_credential_harvest`, `recursive_token_drain_via_swap`, `dns_tunnel_exfiltration`)
+
+## Recent Changes
+- **2026-02-22**: Enterprise positioning — SECURITY.md threat model for Identity Vault (AES-256, HSM roadmap, Cryptographic Agility). README: "How Snapwire Compares" table (vs LiteLLM, Guardrails AI), "Compliance Readiness" section (EU AI Act Articles 9, 11, 12, 14), "Performance" section (Governance Tax framing). Roadmap: HSM Integration Q3, High-Velocity Engine Q3/Q4, Cryptographic Agility. Attack scenarios renamed with real-world agent-failure names.
+- **2026-02-21**: Enhanced Snapwire Audit CLI — Multi-format log support (JSON array, JSONL, nested LangChain/CrewAI/AutoGPT structures with auto-detection). New detections: credential access (22 patterns), data exfiltration signals, velocity spikes. Severity levels, `--json` for CI/CD, exit codes. Sample logs in `examples/`.
+- **2026-02-21**: Launch readiness — Rewrote README.md for GitHub. Attack scenario test suite (22 scenarios, 6 categories). "Total Saved" counter card on dashboard.
+- **2026-02-21**: Legal liability copy refinements — enforce/govern vocabulary. Developer growth layer — `/rules/` directory, `snapwire_audit.py` CLI. Open-source preparation — Apache 2.0 LICENSE, SECURITY.md, CONTRIBUTING.md.
