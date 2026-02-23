@@ -653,6 +653,142 @@ class TrustRule(db.Model):
         }
 
 
+TIER_FUSE_APPRENTICE = 0
+TIER_CIRCUIT_BREAKER = 1
+TIER_GRID_OPERATOR = 2
+TIER_SENTINEL_PRIME = 3
+
+TIER_NAMES = {
+    TIER_FUSE_APPRENTICE: "Fuse Apprentice",
+    TIER_CIRCUIT_BREAKER: "Circuit Breaker",
+    TIER_GRID_OPERATOR: "Grid Operator",
+    TIER_SENTINEL_PRIME: "Sentinel Prime",
+}
+
+BADGE_DEFINITIONS = [
+    {"key": "fork_deploy", "name": "Fork & Deploy", "description": "Successfully forked and deployed Snapwire", "points": 10, "tier_req": TIER_FUSE_APPRENTICE},
+    {"key": "first_loop_blocked", "name": "First Loop Blocked", "description": "Caught your first hallucination loop", "points": 15, "tier_req": TIER_FUSE_APPRENTICE},
+    {"key": "first_snap_token", "name": "Token Minter", "description": "Created your first Snap-Token", "points": 10, "tier_req": TIER_FUSE_APPRENTICE},
+    {"key": "rule_author_1", "name": "Rule Author", "description": "Submitted 1 verified community rule", "points": 25, "tier_req": TIER_CIRCUIT_BREAKER},
+    {"key": "rule_author_3", "name": "Rule Craftsman", "description": "Submitted 3 verified community rules", "points": 50, "tier_req": TIER_CIRCUIT_BREAKER},
+    {"key": "scenario_contributor", "name": "Scenario Hunter", "description": "Contributed an attack scenario", "points": 20, "tier_req": TIER_CIRCUIT_BREAKER},
+    {"key": "savings_100", "name": "Penny Pincher", "description": "Saved $100 in blocked loops", "points": 30, "tier_req": TIER_CIRCUIT_BREAKER},
+    {"key": "savings_1000", "name": "Budget Guardian", "description": "Saved $1,000 in blocked loops", "points": 75, "tier_req": TIER_GRID_OPERATOR},
+    {"key": "savings_10000", "name": "Vault Keeper", "description": "Saved $10,000 in blocked loops", "points": 150, "tier_req": TIER_SENTINEL_PRIME},
+    {"key": "peer_reviewer_5", "name": "Peer Reviewer", "description": "Rated 5 community rules", "points": 15, "tier_req": TIER_CIRCUIT_BREAKER},
+    {"key": "rule_author_10", "name": "Rule Architect", "description": "Submitted 10 verified community rules", "points": 100, "tier_req": TIER_GRID_OPERATOR},
+    {"key": "all_categories", "name": "Full Spectrum", "description": "Submitted rules covering all 6 attack categories", "points": 75, "tier_req": TIER_GRID_OPERATOR},
+]
+
+
+class CommunityProfile(db.Model):
+    __tablename__ = 'community_profiles'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False, unique=True)
+    display_name = db.Column(db.String(100), nullable=False)
+    instance_hash = db.Column(db.String(64), nullable=True)
+    tier = db.Column(db.Integer, default=TIER_FUSE_APPRENTICE)
+    total_points = db.Column(db.Integer, default=0)
+    total_savings = db.Column(db.Float, default=0.0)
+    rules_submitted = db.Column(db.Integer, default=0)
+    rules_verified = db.Column(db.Integer, default=0)
+    ratings_given = db.Column(db.Integer, default=0)
+    opted_in = db.Column(db.Boolean, default=True)
+    is_founding_sentinel = db.Column(db.Boolean, default=False)
+    joined_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='community_profile_ref', lazy=True)
+
+    def tier_name(self):
+        return TIER_NAMES.get(self.tier, "Unknown")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "display_name": self.display_name,
+            "tier": self.tier,
+            "tier_name": self.tier_name(),
+            "total_points": self.total_points,
+            "total_savings": self.total_savings,
+            "rules_submitted": self.rules_submitted,
+            "rules_verified": self.rules_verified,
+            "ratings_given": self.ratings_given,
+            "is_founding_sentinel": self.is_founding_sentinel,
+            "joined_at": self.joined_at.isoformat() if self.joined_at else None,
+        }
+
+
+class UserBadge(db.Model):
+    __tablename__ = 'user_badges'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    badge_key = db.Column(db.String(50), nullable=False)
+    earned_at = db.Column(db.DateTime, default=datetime.utcnow)
+    __table_args__ = (UniqueConstraint('user_id', 'badge_key', name='uq_user_badge'),)
+
+    def to_dict(self):
+        badge_info = next((b for b in BADGE_DEFINITIONS if b["key"] == self.badge_key), {})
+        return {
+            "badge_key": self.badge_key,
+            "name": badge_info.get("name", self.badge_key),
+            "description": badge_info.get("description", ""),
+            "points": badge_info.get("points", 0),
+            "earned_at": self.earned_at.isoformat() if self.earned_at else None,
+        }
+
+
+class CommunityRule(db.Model):
+    __tablename__ = 'community_rules'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    author_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    slug = db.Column(db.String(100), nullable=False, unique=True)
+    description = db.Column(db.Text, nullable=True)
+    category = db.Column(db.String(50), nullable=True)
+    code = db.Column(db.Text, nullable=False)
+    is_verified = db.Column(db.Boolean, default=False)
+    scenarios_passed = db.Column(db.Integer, default=0)
+    scenarios_total = db.Column(db.Integer, default=0)
+    test_results_json = db.Column(db.Text, nullable=True)
+    avg_rating = db.Column(db.Float, default=0.0)
+    rating_count = db.Column(db.Integer, default=0)
+    import_count = db.Column(db.Integer, default=0)
+    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    verified_at = db.Column(db.DateTime, nullable=True)
+
+    author = db.relationship('User', backref='community_rules', lazy=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "author_id": self.author_id,
+            "author_name": self.author.display_name or self.author.email if self.author else "Unknown",
+            "name": self.name,
+            "slug": self.slug,
+            "description": self.description,
+            "category": self.category,
+            "code": self.code,
+            "is_verified": self.is_verified,
+            "scenarios_passed": self.scenarios_passed,
+            "scenarios_total": self.scenarios_total,
+            "avg_rating": round(self.avg_rating, 1),
+            "rating_count": self.rating_count,
+            "import_count": self.import_count,
+            "submitted_at": self.submitted_at.isoformat() if self.submitted_at else None,
+        }
+
+
+class RuleRating(db.Model):
+    __tablename__ = 'rule_ratings'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    rule_id = db.Column(db.Integer, db.ForeignKey('community_rules.id'), nullable=False)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    __table_args__ = (UniqueConstraint('rule_id', 'user_id', name='uq_rule_rating'),)
+
+
 class PublicAudit(db.Model):
     __tablename__ = 'public_audits'
     id = db.Column(db.Integer, primary_key=True)

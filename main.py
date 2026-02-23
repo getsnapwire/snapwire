@@ -46,6 +46,7 @@ from src.nlp_rule_builder import parse_natural_language_rule, detect_rule_confli
 from src.notifications import send_slack_notification, send_notification_to_configured_webhooks
 from src.email_service import send_blocked_action_email, send_critical_risk_email
 from src.tool_catalog import check_tool_catalog, get_catalog, update_tool_status, regrade_tool
+from community.routes import community_bp
 from src.blast_radius import check_blast_radius, get_blast_radius_config, update_blast_radius_config, get_blast_radius_events, clear_lockout, get_active_lockouts
 from src.honeypot import check_honeypot, get_honeypots, create_honeypot, delete_honeypot, toggle_honeypot, get_honeypot_alerts
 from src.vault import get_vault_entries, create_vault_entry, delete_vault_entry, update_vault_entry, get_vault_credentials, generate_proxy_token, resolve_proxy_token, get_proxy_tokens, revoke_proxy_token, revoke_all_proxy_tokens
@@ -107,6 +108,7 @@ def _track_usage(tenant_id):
 
 
 app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
+app.register_blueprint(community_bp)
 
 
 def _get_login_url():

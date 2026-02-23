@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snapwire — Community Leaderboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        .lb-nav {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 4px;
+            border: 1px solid var(--border);
+        }
+        .lb-nav a {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .lb-nav a:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.05);
+        }
+        .lb-nav a.active {
+            background: var(--snap-orange);
+            color: #fff;
+        }
+
+        .lb-section-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 14px;
+            font-weight: 600;
+        }
+
+        .lb-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .my-status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 768px) {
+            .my-status-grid { grid-template-columns: 1fr 1fr; }
+        }
+        .my-stat {
+            text-align: center;
+            padding: 16px 12px;
+            background: var(--bg-primary);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        .my-stat .label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .my-stat .value {
+            font-size: 24px;
+            font-weight: 700;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .tier-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .tier-0 { color: var(--text-secondary); background: rgba(139,145,154,0.12); border: 1px solid rgba(139,145,154,0.25); }
+        .tier-1 { color: var(--accent-blue); background: rgba(64,224,255,0.10); border: 1px solid rgba(64,224,255,0.25); }
+        .tier-2 { color: var(--accent-green); background: rgba(0,245,212,0.10); border: 1px solid rgba(0,245,212,0.25); }
+        .tier-3 { color: var(--accent-purple); background: rgba(155,109,255,0.10); border: 1px solid rgba(155,109,255,0.25); }
+
+        .my-status-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .my-status-header .display-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .opt-in-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .opt-in-toggle .toggle-switch {
+            cursor: pointer;
+        }
+        .opt-in-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .badges-section {
+            margin-top: 20px;
+        }
+        .badges-grid {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .badge-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-primary);
+            transition: border-color 0.2s;
+        }
+        .badge-item:hover { border-color: var(--accent-blue); }
+        .badge-item.earned { border-color: rgba(0,245,212,0.3); }
+        .badge-item.locked { opacity: 0.4; }
+        .badge-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .badge-icon.earned { background: rgba(0,245,212,0.12); }
+        .badge-icon.locked { background: rgba(139,145,154,0.10); }
+        .badge-pts {
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            color: var(--accent-green);
+            font-weight: 500;
+        }
+        .badge-pts.locked { color: var(--text-secondary); }
+
+        .rankings-table-wrap {
+            overflow-x: auto;
+        }
+        .rankings-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .rankings-table th {
+            text-align: left;
+            padding: 10px 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 11px;
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+        .rankings-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        .rankings-table tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+        .rank-number {
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            min-width: 32px;
+            text-align: center;
+        }
+        .rank-1 { color: #FFD700; }
+        .rank-2 { color: #C0C0C0; }
+        .rank-3 { color: #CD7F32; }
+        .mono-val {
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+        }
+        .founding-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--accent-green);
+            margin-left: 6px;
+        }
+
+        .wof-section {
+            margin-top: 8px;
+        }
+        .wof-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+        }
+        @media (max-width: 768px) {
+            .wof-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+        }
+        .wof-slot {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 8px;
+            text-align: center;
+            font-size: 12px;
+            min-height: 56px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: border-color 0.2s;
+        }
+        .wof-slot.filled {
+            border-color: rgba(0,245,212,0.2);
+        }
+        .wof-slot.filled:hover {
+            border-color: rgba(0,245,212,0.4);
+        }
+        .wof-slot.empty {
+            opacity: 0.25;
+            border-style: dashed;
+        }
+        .wof-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 11px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+        .wof-check {
+            color: var(--accent-green);
+            font-size: 14px;
+        }
+        .wof-counter {
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+        }
+
+        .footer-disclaimer {
+            text-align: center;
+            padding: 32px 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            opacity: 0.6;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .lb-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            gap: 10px;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .lb-card { animation: slideIn 0.3s ease; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span class="shield">&#9889;</span> Snapwire</h1>
+        <div style="display:flex;align-items:center;gap:16px;">
+            {% if user and user.is_authenticated %}
+            <div style="display:flex;align-items:center;gap:10px;">
+                {% if user.profile_image_url %}
+                <img src="{{ user.profile_image_url }}" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">
+                {% endif %}
+                <span style="font-size:13px;color:var(--text-secondary);">{{ user.first_name or user.email or 'User' }}</span>
+                <a href="/auth/logout" style="font-size:12px;color:var(--accent-red);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,77,106,0.3);border-radius:6px;">Sign Out</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="container">
+        <nav class="lb-nav">
+            <a href="/">Dashboard</a>
+            <a href="/leaderboard" class="active">Leaderboard</a>
+            <a href="/community-rules">Community Rules</a>
+        </nav>
+
+        <div id="my-status-section">
+            <h3 class="lb-section-title">My Status</h3>
+            <div class="lb-card" id="my-status-card">
+                <div class="lb-loading" id="status-loading">
+                    <div class="loading"></div>
+                    Loading profile...
+                </div>
+                <div id="status-content" style="display:none;">
+                    <div class="my-status-header">
+                        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                            <span class="display-name" id="my-display-name"></span>
+                            <span class="tier-badge" id="my-tier-badge"></span>
+                            <span class="founding-badge" id="my-founding" style="display:none;">&#10003; Founding Sentinel</span>
+                        </div>
+                        <div class="opt-in-toggle">
+                            <span class="opt-in-label">Show on leaderboard</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="opt-in-checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="my-status-grid">
+                        <div class="my-stat">
+                            <div class="label">Total Points</div>
+                            <div class="value" style="color:var(--accent-blue);" id="my-points">0</div>
+                        </div>
+                        <div class="my-stat">
+                            <div class="label">Est. Savings</div>
+                            <div class="value" style="color:var(--accent-green);" id="my-savings">$0</div>
+                        </div>
+                        <div class="my-stat">
+                            <div class="label">Rules Submitted</div>
+                            <div class="value" style="color:var(--text-primary);" id="my-submitted">0</div>
+                        </div>
+                        <div class="my-stat">
+                            <div class="label">Rules Verified</div>
+                            <div class="value" style="color:var(--accent-green);" id="my-verified">0</div>
+                        </div>
+                    </div>
+                    <div class="badges-section">
+                        <h3 class="lb-section-title">Badges</h3>
+                        <div class="badges-grid" id="badges-grid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="rankings-section">
+            <h3 class="lb-section-title">Rankings — Top Contributors</h3>
+            <div class="lb-card">
+                <div class="lb-loading" id="rankings-loading">
+                    <div class="loading"></div>
+                    Loading rankings...
+                </div>
+                <div class="rankings-table-wrap" id="rankings-content" style="display:none;">
+                    <table class="rankings-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Contributor</th>
+                                <th>Tier</th>
+                                <th>Points</th>
+                                <th>Savings</th>
+                                <th>Submitted</th>
+                                <th>Verified</th>
+                                <th>Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rankings-tbody"></tbody>
+                    </table>
+                    <div id="rankings-empty" style="display:none;text-align:center;padding:32px;color:var(--text-secondary);font-size:14px;">
+                        No contributors yet. Be the first to join the leaderboard!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="wof-section" class="wof-section">
+            <h3 class="lb-section-title">Wall of Fame — Founding Sentinels</h3>
+            <div class="wof-counter" id="wof-counter"></div>
+            <div class="lb-card" style="padding:16px;">
+                <div class="lb-loading" id="wof-loading">
+                    <div class="loading"></div>
+                    Loading wall of fame...
+                </div>
+                <div class="wof-grid" id="wof-grid" style="display:none;"></div>
+            </div>
+        </div>
+
+        <div class="footer-disclaimer">
+            Snapwire is a technical monitoring utility. All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator.
+        </div>
+    </div>
+
+    <script>
+    const TIER_COLORS = {
+        0: 'var(--text-secondary)',
+        1: 'var(--accent-blue)',
+        2: 'var(--accent-green)',
+        3: 'var(--accent-purple)'
+    };
+    const TIER_NAMES = {0: 'Fuse Apprentice', 1: 'Circuit Breaker', 2: 'Grid Operator', 3: 'Sentinel Prime'};
+    const BADGE_ICONS = {
+        'first_rule': '&#9997;',
+        'five_rules': '&#128220;',
+        'first_verified': '&#10003;',
+        'ten_verified': '&#9733;',
+        'founding_sentinel': '&#128737;',
+        'community_voter': '&#9734;',
+        'bug_hunter': '&#128027;',
+        'mentor': '&#127891;'
+    };
+
+    function tierClass(tier) { return 'tier-' + (tier || 0); }
+
+    function formatMoney(val) {
+        if (!val || val === 0) return '$0';
+        return '$' + Number(val).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
+    }
+
+    function formatDate(iso) {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        return d.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    async function loadProfile() {
+        try {
+            const res = await fetch('/api/leaderboard/profile');
+            if (!res.ok) throw new Error('Failed to load profile');
+            const data = await res.json();
+            const p = data.profile;
+
+            document.getElementById('status-loading').style.display = 'none';
+            document.getElementById('status-content').style.display = 'block';
+
+            document.getElementById('my-display-name').textContent = p.display_name || 'Anonymous';
+            const tierBadge = document.getElementById('my-tier-badge');
+            tierBadge.className = 'tier-badge ' + tierClass(p.tier);
+            tierBadge.textContent = p.tier_name || TIER_NAMES[p.tier] || 'Fuse Apprentice';
+
+            if (p.is_founding_sentinel) {
+                document.getElementById('my-founding').style.display = 'inline-flex';
+            }
+
+            document.getElementById('my-points').textContent = (p.total_points || 0).toLocaleString();
+            document.getElementById('my-savings').textContent = formatMoney(p.total_savings);
+            document.getElementById('my-submitted').textContent = (p.rules_submitted || 0).toLocaleString();
+            document.getElementById('my-verified').textContent = (p.rules_verified || 0).toLocaleString();
+
+            document.getElementById('opt-in-checkbox').checked = !!p.opted_in;
+
+            renderBadges(data.badges || [], data.all_badges || []);
+        } catch (e) {
+            document.getElementById('status-loading').innerHTML = '<span style="color:var(--accent-red);">Failed to load profile</span>';
+        }
+    }
+
+    function renderBadges(earned, allBadges) {
+        const grid = document.getElementById('badges-grid');
+        const earnedKeys = new Set(earned.map(b => b.badge_key));
+
+        let html = '';
+        earned.forEach(b => {
+            const icon = BADGE_ICONS[b.badge_key] || '&#11044;';
+            html += '<div class="badge-item earned" title="' + escapeHtml(b.description) + ' — Earned ' + formatDate(b.earned_at) + '">';
+            html += '<span class="badge-icon earned">' + icon + '</span>';
+            html += '<span>' + escapeHtml(b.name) + '</span>';
+            html += '<span class="badge-pts">+' + (b.points || 0) + '</span>';
+            html += '</div>';
+        });
+
+        allBadges.forEach(b => {
+            if (earnedKeys.has(b.key)) return;
+            const icon = BADGE_ICONS[b.key] || '&#11044;';
+            html += '<div class="badge-item locked" title="' + escapeHtml(b.description) + '">';
+            html += '<span class="badge-icon locked">' + icon + '</span>';
+            html += '<span>' + escapeHtml(b.name) + '</span>';
+            html += '<span class="badge-pts locked">+' + (b.points || 0) + '</span>';
+            html += '</div>';
+        });
+
+        grid.innerHTML = html || '<span style="color:var(--text-secondary);font-size:13px;">No badges available yet.</span>';
+    }
+
+    async function loadRankings() {
+        try {
+            const res = await fetch('/api/leaderboard');
+            if (!res.ok) throw new Error('Failed to load rankings');
+            const data = await res.json();
+            const rankings = data.rankings || [];
+
+            document.getElementById('rankings-loading').style.display = 'none';
+            document.getElementById('rankings-content').style.display = 'block';
+
+            if (rankings.length === 0) {
+                document.getElementById('rankings-empty').style.display = 'block';
+                return;
+            }
+
+            const tbody = document.getElementById('rankings-tbody');
+            let html = '';
+            rankings.forEach((r, i) => {
+                const rank = i + 1;
+                const rankClass = rank <= 3 ? ' rank-' + rank : '';
+                const founding = r.is_founding_sentinel ? '<span class="founding-badge">&#10003;</span>' : '';
+                html += '<tr>';
+                html += '<td><span class="rank-number' + rankClass + '">' + rank + '</span></td>';
+                html += '<td><span style="font-weight:600;color:var(--text-primary);">' + escapeHtml(r.display_name || 'Anonymous') + '</span>' + founding + '</td>';
+                html += '<td><span class="tier-badge ' + tierClass(r.tier) + '" style="font-size:11px;padding:2px 8px;">' + escapeHtml(r.tier_name || TIER_NAMES[r.tier] || 'Fuse Apprentice') + '</span></td>';
+                html += '<td><span class="mono-val" style="color:var(--accent-blue);">' + (r.total_points || 0).toLocaleString() + '</span></td>';
+                html += '<td><span class="mono-val" style="color:var(--accent-green);">' + formatMoney(r.total_savings) + '</span></td>';
+                html += '<td><span class="mono-val">' + (r.rules_submitted || 0) + '</span></td>';
+                html += '<td><span class="mono-val" style="color:var(--accent-green);">' + (r.rules_verified || 0) + '</span></td>';
+                html += '<td style="color:var(--text-secondary);font-size:12px;white-space:nowrap;">' + formatDate(r.joined_at) + '</td>';
+                html += '</tr>';
+            });
+            tbody.innerHTML = html;
+        } catch (e) {
+            document.getElementById('rankings-loading').innerHTML = '<span style="color:var(--accent-red);">Failed to load rankings</span>';
+        }
+    }
+
+    async function loadWallOfFame() {
+        try {
+            const res = await fetch('/api/leaderboard/wall-of-fame');
+            if (!res.ok) throw new Error('Failed to load wall of fame');
+            const data = await res.json();
+            const sentinels = data.sentinels || [];
+            const totalSlots = data.total_slots || 150;
+
+            document.getElementById('wof-loading').style.display = 'none';
+            const grid = document.getElementById('wof-grid');
+            grid.style.display = 'grid';
+
+            document.getElementById('wof-counter').textContent = sentinels.length + ' / ' + totalSlots + ' slots claimed';
+
+            let html = '';
+            sentinels.forEach(s => {
+                html += '<div class="wof-slot filled">';
+                html += '<span class="wof-check">&#10003;</span>';
+                html += '<span class="wof-name">' + escapeHtml(s.display_name || 'Sentinel') + '</span>';
+                html += '</div>';
+            });
+
+            const emptyCount = totalSlots - sentinels.length;
+            for (let i = 0; i < emptyCount; i++) {
+                html += '<div class="wof-slot empty">';
+                html += '<span style="font-size:16px;color:var(--text-secondary);">&#43;</span>';
+                html += '</div>';
+            }
+
+            grid.innerHTML = html;
+        } catch (e) {
+            document.getElementById('wof-loading').innerHTML = '<span style="color:var(--accent-red);">Failed to load wall of fame</span>';
+        }
+    }
+
+    document.getElementById('opt-in-checkbox').addEventListener('change', async function() {
+        const optedIn = this.checked;
+        try {
+            const res = await fetch('/api/leaderboard/opt-in', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({opted_in: optedIn})
+            });
+            if (!res.ok) throw new Error('Failed to update opt-in');
+            loadRankings();
+        } catch (e) {
+            this.checked = !optedIn;
+        }
+    });
+
+    loadProfile();
+    loadRankings();
+    loadWallOfFame();
+    </script>
+</body>
+</html>

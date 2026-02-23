@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snapwire — Community Rules</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        .lb-nav {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 4px;
+            border: 1px solid var(--border);
+        }
+        .lb-nav a {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .lb-nav a:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.05);
+        }
+        .lb-nav a.active {
+            background: var(--snap-orange);
+            color: #fff;
+        }
+
+        .cr-filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+        }
+        .cr-filter-bar select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            min-width: 150px;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b8fa3' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 28px;
+        }
+        .cr-filter-bar select:focus { border-color: var(--accent-blue); }
+        .cr-filter-bar label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .cr-filter-bar input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-green);
+            cursor: pointer;
+        }
+
+        .cr-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .cr-header-row h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .cr-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 768px) {
+            .cr-grid { grid-template-columns: 1fr; }
+        }
+
+        .cr-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+        }
+        .cr-card:hover {
+            border-color: rgba(64,224,255,0.3);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .cr-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .cr-card-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        .cr-card-author {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        .cr-cat-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .cr-cat-credential_exfil { background: rgba(255,77,106,0.15); color: var(--accent-red); border: 1px solid rgba(255,77,106,0.3); }
+        .cr-cat-env_access { background: rgba(155,109,255,0.15); color: var(--accent-purple); border: 1px solid rgba(155,109,255,0.3); }
+        .cr-cat-pii_leakage { background: rgba(255,214,107,0.15); color: var(--accent-yellow); border: 1px solid rgba(255,214,107,0.3); }
+        .cr-cat-crypto_transaction { background: rgba(64,224,255,0.15); color: var(--accent-blue); border: 1px solid rgba(64,224,255,0.3); }
+        .cr-cat-domain_exfil { background: rgba(255,107,0,0.15); color: var(--accent-orange); border: 1px solid rgba(255,107,0,0.3); }
+        .cr-cat-safe_calls { background: rgba(0,245,212,0.12); color: var(--accent-green); border: 1px solid rgba(0,245,212,0.3); }
+
+        .cr-verified {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+        .cr-verified .check {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(0,245,212,0.15);
+            font-size: 11px;
+        }
+        .cr-unverified {
+            font-size: 12px;
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        .cr-card-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .cr-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .cr-stars {
+            display: inline-flex;
+            gap: 2px;
+            cursor: pointer;
+        }
+        .cr-stars .star {
+            font-size: 16px;
+            color: var(--border);
+            transition: color 0.15s;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            line-height: 1;
+        }
+        .cr-stars .star.filled { color: var(--accent-yellow); }
+        .cr-stars .star:hover { color: var(--accent-yellow); }
+        .cr-rating-text {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-left: 4px;
+        }
+
+        .cr-imports {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: 'Fira Code', monospace;
+        }
+
+        .cr-btn-import {
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(64,224,255,0.4);
+            background: transparent;
+            color: var(--accent-blue);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .cr-btn-import:hover {
+            background: rgba(64,224,255,0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .cr-btn-submit {
+            padding: 10px 24px;
+            border-radius: 8px;
+            border: none;
+            background: var(--snap-orange);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .cr-btn-submit:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .cr-btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .cr-btn-test {
+            padding: 10px 24px;
+            border-radius: 8px;
+            border: 1px solid rgba(155,109,255,0.4);
+            background: transparent;
+            color: var(--accent-purple);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .cr-btn-test:hover {
+            background: rgba(155,109,255,0.1);
+            border-color: var(--accent-purple);
+        }
+        .cr-btn-test:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .cr-submit-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .cr-submit-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 18px;
+        }
+        .cr-form-group {
+            margin-bottom: 14px;
+        }
+        .cr-form-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        .cr-form-group input,
+        .cr-form-group textarea,
+        .cr-form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .cr-form-group input:focus,
+        .cr-form-group textarea:focus,
+        .cr-form-group select:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(64,224,255,0.1);
+        }
+        .cr-form-group textarea {
+            min-height: 180px;
+            resize: vertical;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .cr-form-group select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b8fa3' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+            cursor: pointer;
+        }
+        .cr-form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .cr-test-results {
+            margin-top: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        .cr-test-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .cr-test-header h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        .cr-test-summary {
+            font-size: 13px;
+            font-family: 'Fira Code', monospace;
+        }
+        .cr-test-summary.pass { color: var(--accent-green); }
+        .cr-test-summary.fail { color: var(--accent-red); }
+        .cr-test-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .cr-test-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-size: 13px;
+        }
+        .cr-test-item:last-child { border-bottom: none; }
+        .cr-test-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 1px;
+        }
+        .cr-test-icon.pass {
+            background: rgba(0,245,212,0.15);
+            color: var(--accent-green);
+        }
+        .cr-test-icon.fail {
+            background: rgba(255,77,106,0.15);
+            color: var(--accent-red);
+        }
+        .cr-test-name {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        .cr-test-detail {
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .cr-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .cr-modal-overlay.show { display: flex; }
+        .cr-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn {
+            from { transform: scale(0.95) translateY(10px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .cr-modal-header {
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .cr-modal-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+        .cr-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 22px;
+            cursor: pointer;
+            padding: 4px 8px;
+            line-height: 1;
+        }
+        .cr-modal-close:hover { color: var(--text-primary); }
+        .cr-modal-body {
+            padding: 18px 22px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .cr-modal-body pre {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .cr-modal-footer {
+            padding: 14px 22px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .cr-btn-copy {
+            padding: 8px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(0,245,212,0.4);
+            background: rgba(0,245,212,0.1);
+            color: var(--accent-green);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .cr-btn-copy:hover {
+            background: rgba(0,245,212,0.2);
+            border-color: var(--accent-green);
+        }
+
+        .cr-toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 12px 22px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 20000;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+        .cr-toast.show { opacity: 1; transform: translateY(0); }
+        .cr-toast.success { background: rgba(0,245,212,0.15); color: var(--accent-green); border: 1px solid rgba(0,245,212,0.3); }
+        .cr-toast.error { background: rgba(255,77,106,0.15); color: var(--accent-red); border: 1px solid rgba(255,77,106,0.3); }
+
+        .cr-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            gap: 10px;
+        }
+
+        .cr-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        .cr-empty .icon { font-size: 48px; margin-bottom: 12px; }
+        .cr-empty p { font-size: 14px; }
+
+        .footer-disclaimer {
+            text-align: center;
+            padding: 32px 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            opacity: 0.6;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span class="shield">&#9889;</span> Snapwire</h1>
+        <div style="display:flex;align-items:center;gap:16px;">
+            {% if user and user.is_authenticated %}
+            <div style="display:flex;align-items:center;gap:10px;">
+                {% if user.profile_image_url %}
+                <img src="{{ user.profile_image_url }}" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">
+                {% endif %}
+                <span style="font-size:13px;color:var(--text-secondary);">{{ user.first_name or user.email or 'User' }}</span>
+                <a href="/auth/logout" style="font-size:12px;color:var(--accent-red);text-decoration:none;padding:4px 10px;border:1px solid rgba(255,77,106,0.3);border-radius:6px;">Sign Out</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="container">
+        <nav class="lb-nav">
+            <a href="/">Dashboard</a>
+            <a href="/leaderboard">Leaderboard</a>
+            <a href="/community-rules" class="active">Community Rules</a>
+        </nav>
+
+        <div class="cr-header-row">
+            <h2>&#128220; Community Rules Catalog</h2>
+            <button class="cr-btn-submit" onclick="document.getElementById('submit-section').scrollIntoView({behavior:'smooth'})">+ Submit New Rule</button>
+        </div>
+
+        <div class="cr-filter-bar">
+            <select id="filter-category">
+                <option value="">All Categories</option>
+                <option value="credential_exfil">Credential Exfil</option>
+                <option value="env_access">Env Access</option>
+                <option value="pii_leakage">PII Leakage</option>
+                <option value="crypto_transaction">Crypto Transaction</option>
+                <option value="domain_exfil">Domain Exfil</option>
+                <option value="safe_calls">Safe Calls</option>
+            </select>
+            <label>
+                <input type="checkbox" id="filter-verified">
+                Verified Only
+            </label>
+            <select id="filter-sort">
+                <option value="newest">Newest</option>
+                <option value="rating">Highest Rated</option>
+                <option value="imports">Most Imported</option>
+            </select>
+        </div>
+
+        <div id="rules-container">
+            <div class="cr-loading" id="rules-loading">
+                <div class="loading"></div>
+                Loading community rules...
+            </div>
+            <div class="cr-grid" id="rules-grid" style="display:none;"></div>
+            <div class="cr-empty" id="rules-empty" style="display:none;">
+                <div class="icon">&#128203;</div>
+                <p>No community rules found. Be the first to submit one!</p>
+            </div>
+        </div>
+
+        <div class="cr-submit-section" id="submit-section">
+            <h3>&#9997; Submit a New Rule</h3>
+            <div class="cr-form-group">
+                <label for="submit-name">Rule Name</label>
+                <input type="text" id="submit-name" placeholder="e.g., Block Sensitive File Access">
+            </div>
+            <div class="cr-form-group">
+                <label for="submit-description">Description</label>
+                <input type="text" id="submit-description" placeholder="What does this rule detect or prevent?">
+            </div>
+            <div class="cr-form-group">
+                <label for="submit-category">Category</label>
+                <select id="submit-category">
+                    <option value="">Select category...</option>
+                    <option value="credential_exfil">Credential Exfil</option>
+                    <option value="env_access">Env Access</option>
+                    <option value="pii_leakage">PII Leakage</option>
+                    <option value="crypto_transaction">Crypto Transaction</option>
+                    <option value="domain_exfil">Domain Exfil</option>
+                    <option value="safe_calls">Safe Calls</option>
+                </select>
+            </div>
+            <div class="cr-form-group">
+                <label for="submit-code">Rule Code</label>
+                <textarea id="submit-code" placeholder="def evaluate(tool_name, parameters):&#10;    # Return {'blocked': True/False, 'reason': '...'}&#10;    pass"></textarea>
+            </div>
+            <div class="cr-form-actions">
+                <button class="cr-btn-test" id="btn-test-code" onclick="testCode()">&#9881; Test Against Scenarios</button>
+                <button class="cr-btn-submit" id="btn-submit-rule" onclick="submitRule()">Submit Rule</button>
+            </div>
+            <div class="cr-test-results" id="test-results">
+                <div class="cr-test-header">
+                    <h4>Test Results</h4>
+                    <span class="cr-test-summary" id="test-summary"></span>
+                </div>
+                <div class="cr-test-list" id="test-list"></div>
+            </div>
+        </div>
+
+        <div class="footer-disclaimer">
+            Snapwire is a technical monitoring utility. All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator.
+        </div>
+    </div>
+
+    <div class="cr-modal-overlay" id="import-modal">
+        <div class="cr-modal">
+            <div class="cr-modal-header">
+                <h3 id="import-modal-title">Import Rule</h3>
+                <button class="cr-modal-close" onclick="closeImportModal()">&times;</button>
+            </div>
+            <div class="cr-modal-body">
+                <pre id="import-modal-code"></pre>
+            </div>
+            <div class="cr-modal-footer">
+                <button class="cr-btn-copy" onclick="copyImportCode()">&#128203; Copy Code</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="cr-toast" id="toast"></div>
+
+    <script>
+    const CATEGORY_LABELS = {
+        'credential_exfil': 'Credential Exfil',
+        'env_access': 'Env Access',
+        'pii_leakage': 'PII Leakage',
+        'crypto_transaction': 'Crypto Transaction',
+        'domain_exfil': 'Domain Exfil',
+        'safe_calls': 'Safe Calls'
+    };
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function showToast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'cr-toast ' + type;
+        requestAnimationFrame(() => t.classList.add('show'));
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function renderStars(avgRating, ratingCount, ruleId) {
+        let html = '<div class="cr-stars" data-rule-id="' + ruleId + '">';
+        for (let i = 1; i <= 5; i++) {
+            const filled = i <= Math.round(avgRating) ? ' filled' : '';
+            html += '<button class="star' + filled + '" data-star="' + i + '" onclick="rateRule(' + ruleId + ',' + i + ')">&#9733;</button>';
+        }
+        html += '</div>';
+        html += '<span class="cr-rating-text">' + (avgRating ? avgRating.toFixed(1) : '0.0') + ' (' + (ratingCount || 0) + ')</span>';
+        return html;
+    }
+
+    function renderRuleCard(rule) {
+        const catClass = 'cr-cat-' + (rule.category || 'safe_calls');
+        const catLabel = CATEGORY_LABELS[rule.category] || rule.category || 'Unknown';
+
+        let verifiedHtml = '';
+        if (rule.is_verified) {
+            verifiedHtml = '<span class="cr-verified"><span class="check">&#10003;</span> ' + rule.scenarios_passed + '/' + rule.scenarios_total + ' scenarios</span>';
+        } else {
+            verifiedHtml = '<span class="cr-unverified">' + (rule.scenarios_passed || 0) + '/' + (rule.scenarios_total || 0) + ' scenarios</span>';
+        }
+
+        const desc = escapeHtml(rule.description || 'No description provided.');
+
+        return '<div class="cr-card">' +
+            '<div class="cr-card-top">' +
+                '<div>' +
+                    '<h4 class="cr-card-name">' + escapeHtml(rule.name) + '</h4>' +
+                    '<div class="cr-card-author">by ' + escapeHtml(rule.author_name || 'Anonymous') + '</div>' +
+                '</div>' +
+                '<span class="cr-cat-badge ' + catClass + '">' + escapeHtml(catLabel) + '</span>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">' +
+                verifiedHtml +
+            '</div>' +
+            '<div class="cr-card-desc">' + desc + '</div>' +
+            '<div class="cr-card-footer">' +
+                '<div style="display:flex;align-items:center;gap:6px;">' +
+                    renderStars(rule.avg_rating, rule.rating_count, rule.id) +
+                '</div>' +
+                '<div style="display:flex;align-items:center;gap:12px;">' +
+                    '<span class="cr-imports">&#8595; ' + (rule.import_count || 0) + '</span>' +
+                    '<button class="cr-btn-import" onclick="importRule(' + rule.id + ')">Import</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }
+
+    async function loadRules() {
+        const category = document.getElementById('filter-category').value;
+        const verified = document.getElementById('filter-verified').checked;
+        const sort = document.getElementById('filter-sort').value;
+
+        let url = '/api/community-rules?sort=' + sort;
+        if (category) url += '&category=' + category;
+        if (verified) url += '&verified=true';
+
+        document.getElementById('rules-loading').style.display = 'flex';
+        document.getElementById('rules-grid').style.display = 'none';
+        document.getElementById('rules-empty').style.display = 'none';
+
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('Failed to load rules');
+            const data = await res.json();
+            const rules = data.rules || [];
+
+            if (rules.length === 0) {
+                document.getElementById('rules-loading').style.display = 'none';
+                document.getElementById('rules-empty').style.display = 'block';
+                return;
+            }
+
+            let html = '';
+            rules.forEach(r => { html += renderRuleCard(r); });
+            document.getElementById('rules-grid').innerHTML = html;
+            document.getElementById('rules-loading').style.display = 'none';
+            document.getElementById('rules-grid').style.display = 'grid';
+        } catch (e) {
+            document.getElementById('rules-loading').innerHTML = '<span style="color:var(--accent-red);">Failed to load rules</span>';
+        }
+    }
+
+    async function rateRule(ruleId, rating) {
+        try {
+            const res = await fetch('/api/community-rules/' + ruleId + '/rate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({rating: rating})
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                showToast(err.error || 'Failed to rate', 'error');
+                return;
+            }
+            const data = await res.json();
+            showToast('Rated ' + rating + '/5', 'success');
+
+            const starsContainer = document.querySelector('.cr-stars[data-rule-id="' + ruleId + '"]');
+            if (starsContainer) {
+                const stars = starsContainer.querySelectorAll('.star');
+                stars.forEach((s, i) => {
+                    s.classList.toggle('filled', i < Math.round(data.avg_rating));
+                });
+                const ratingText = starsContainer.nextElementSibling;
+                if (ratingText) {
+                    ratingText.textContent = data.avg_rating.toFixed(1) + ' (' + data.rating_count + ')';
+                }
+            }
+        } catch (e) {
+            showToast('Failed to rate rule', 'error');
+        }
+    }
+
+    let importedCode = '';
+
+    async function importRule(ruleId) {
+        try {
+            const res = await fetch('/api/community-rules/' + ruleId + '/import', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+            if (!res.ok) throw new Error('Failed to import');
+            const data = await res.json();
+            importedCode = data.code;
+            document.getElementById('import-modal-title').textContent = 'Import: ' + escapeHtml(data.name);
+            document.getElementById('import-modal-code').textContent = data.code;
+            document.getElementById('import-modal').classList.add('show');
+            showToast('Rule imported! Imports: ' + data.import_count, 'success');
+            loadRules();
+        } catch (e) {
+            showToast('Failed to import rule', 'error');
+        }
+    }
+
+    function closeImportModal() {
+        document.getElementById('import-modal').classList.remove('show');
+    }
+
+    function copyImportCode() {
+        navigator.clipboard.writeText(importedCode).then(() => {
+            showToast('Code copied to clipboard', 'success');
+        }).catch(() => {
+            const pre = document.getElementById('import-modal-code');
+            const range = document.createRange();
+            range.selectNodeContents(pre);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            showToast('Select all + copy manually', 'error');
+        });
+    }
+
+    document.getElementById('import-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeImportModal();
+    });
+
+    async function testCode() {
+        const code = document.getElementById('submit-code').value.trim();
+        if (!code) {
+            showToast('Please enter rule code first', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('btn-test-code');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="loading" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:6px;"></div> Testing...';
+
+        try {
+            const res = await fetch('/api/community-rules/test-code', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({code: code})
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                showToast(err.error || 'Test failed', 'error');
+                return;
+            }
+
+            const data = await res.json();
+            const tr = data.test_results;
+
+            const resultsEl = document.getElementById('test-results');
+            const summaryEl = document.getElementById('test-summary');
+            const listEl = document.getElementById('test-list');
+
+            summaryEl.textContent = tr.passed + '/' + tr.total + ' passed';
+            summaryEl.className = 'cr-test-summary ' + (tr.success ? 'pass' : 'fail');
+
+            let html = '';
+            (tr.results || []).forEach(r => {
+                const icon = r.passed ? 'pass' : 'fail';
+                const symbol = r.passed ? '&#10003;' : '&#10007;';
+                html += '<div class="cr-test-item">';
+                html += '<div class="cr-test-icon ' + icon + '">' + symbol + '</div>';
+                html += '<div>';
+                html += '<div class="cr-test-name">' + escapeHtml(r.scenario || r.name || 'Scenario') + '</div>';
+                if (r.detail || r.reason || r.error) {
+                    html += '<div class="cr-test-detail">' + escapeHtml(r.detail || r.reason || r.error || '') + '</div>';
+                }
+                html += '</div>';
+                html += '</div>';
+            });
+            listEl.innerHTML = html;
+            resultsEl.style.display = 'block';
+        } catch (e) {
+            showToast('Failed to test code', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '&#9881; Test Against Scenarios';
+        }
+    }
+
+    async function submitRule() {
+        const name = document.getElementById('submit-name').value.trim();
+        const description = document.getElementById('submit-description').value.trim();
+        const category = document.getElementById('submit-category').value;
+        const code = document.getElementById('submit-code').value.trim();
+
+        if (!name) { showToast('Rule name is required', 'error'); return; }
+        if (!code) { showToast('Rule code is required', 'error'); return; }
+
+        const btn = document.getElementById('btn-submit-rule');
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+
+        try {
+            const res = await fetch('/api/community-rules/submit', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, description, category, code})
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                showToast(data.error || 'Submission failed', 'error');
+                return;
+            }
+
+            if (data.is_verified) {
+                showToast('Rule submitted and verified! (' + data.test_results.passed + '/' + data.test_results.total + ' passed)', 'success');
+            } else {
+                showToast('Rule submitted. ' + data.test_results.passed + '/' + data.test_results.total + ' scenarios passed.', 'success');
+            }
+
+            const tr = data.test_results;
+            const resultsEl = document.getElementById('test-results');
+            const summaryEl = document.getElementById('test-summary');
+            const listEl = document.getElementById('test-list');
+
+            summaryEl.textContent = tr.passed + '/' + tr.total + ' passed';
+            summaryEl.className = 'cr-test-summary ' + (tr.success ? 'pass' : 'fail');
+
+            let html = '';
+            (tr.results || []).forEach(r => {
+                const icon = r.passed ? 'pass' : 'fail';
+                const symbol = r.passed ? '&#10003;' : '&#10007;';
+                html += '<div class="cr-test-item">';
+                html += '<div class="cr-test-icon ' + icon + '">' + symbol + '</div>';
+                html += '<div>';
+                html += '<div class="cr-test-name">' + escapeHtml(r.scenario || r.name || 'Scenario') + '</div>';
+                if (r.detail || r.reason || r.error) {
+                    html += '<div class="cr-test-detail">' + escapeHtml(r.detail || r.reason || r.error || '') + '</div>';
+                }
+                html += '</div>';
+                html += '</div>';
+            });
+            listEl.innerHTML = html;
+            resultsEl.style.display = 'block';
+
+            document.getElementById('submit-name').value = '';
+            document.getElementById('submit-description').value = '';
+            document.getElementById('submit-category').value = '';
+            document.getElementById('submit-code').value = '';
+
+            loadRules();
+        } catch (e) {
+            showToast('Failed to submit rule', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Submit Rule';
+        }
+    }
+
+    document.getElementById('filter-category').addEventListener('change', loadRules);
+    document.getElementById('filter-verified').addEventListener('change', loadRules);
+    document.getElementById('filter-sort').addEventListener('change', loadRules);
+
+    loadRules();
+    </script>
+</body>
+</html>
