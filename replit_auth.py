@@ -291,6 +291,17 @@ else:
         db.session.commit()
         ensure_personal_tenant(user)
         login_user(user)
+
+        if data.get("load_seed_data") == "1":
+            try:
+                from src.tenant import get_current_tenant_id
+                tenant_id = get_current_tenant_id()
+                if tenant_id:
+                    from main import _seed_starter_data
+                    _seed_starter_data(tenant_id)
+            except Exception:
+                pass
+
         return redirect("/")
 
     @local_auth_bp.route("/verify-pending")

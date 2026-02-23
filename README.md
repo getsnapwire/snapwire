@@ -45,7 +45,19 @@ Snapwire sits between your AI agents and the tools they call. Before any agent c
 
 ## Quick Start
 
-### Option 1: Docker (recommended for self-hosting)
+### Option 1: Fork on Replit (fastest)
+
+1. Click **Fork** on the [Snapwire Repl](https://replit.com/@snapwire/snapwire) to get your own copy.
+2. Open the **Database** tab and create a PostgreSQL database (auto-configures `DATABASE_URL`).
+3. Open the **Secrets** tab (padlock icon) and add:
+   - `SESSION_SECRET` — any random string (for session encryption)
+   - `ANTHROPIC_API_KEY` — your [Anthropic API key](https://console.anthropic.com/) (optional — needed for AI-powered rule evaluation; deterministic features work without it)
+4. Click **Run**. The setup wizard guides you through creating your admin account.
+5. Check `/health` to verify everything is connected.
+
+> **Tip:** Check the "Load starter rules" box during setup to get 3 security rules and a $25/session spend limit pre-configured.
+
+### Option 2: Docker (recommended for self-hosting)
 
 ```bash
 git clone https://github.com/snapwire-ai/snapwire.git
@@ -56,7 +68,7 @@ docker build -t snapwire .
 docker run -p 5000:5000 --env-file .env snapwire
 ```
 
-### Option 2: Run directly
+### Option 3: Run directly
 
 ```bash
 git clone https://github.com/snapwire-ai/snapwire.git
@@ -69,7 +81,7 @@ python main.py
 
 Visit `http://localhost:5000` — the setup wizard will guide you through first-run configuration.
 
-### Option 3: Python SDK
+### Option 4: Python SDK
 
 ```bash
 pip install snapwire
@@ -236,7 +248,7 @@ curl -X POST http://localhost:5000/api/intercept \
 | `/api/tools/<id>/risk-score` | GET | Risk confidence index for a tool |
 | `/api/rules/export` | POST | Export rules as branded JSON |
 | `/api/rules/import` | POST | Import rule packs |
-| `/health` | GET | Health check |
+| `/health` | GET | Health check (DB, secrets, features, setup status) |
 
 Full API documentation available at `/docs` when running the server.
 

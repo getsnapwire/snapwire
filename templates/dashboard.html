@@ -809,6 +809,37 @@
         </div>
 
         <div id="panel-home" class="panel active">
+            <div id="getting-started-banner" style="display:none;background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(77,139,255,0.08));border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:20px;margin-bottom:16px;animation:slideIn 0.3s ease;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:20px;">&#x1F680;</span>
+                        <span style="font-weight:600;font-size:15px;color:var(--text-primary);">Getting Started</span>
+                    </div>
+                    <button onclick="dismissGettingStarted()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:16px;padding:4px;" title="Dismiss">&times;</button>
+                </div>
+                <div id="gs-checklist" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <div id="gs-rules" class="gs-item" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:var(--bg-secondary);font-size:13px;cursor:pointer;" onclick="document.querySelector('[data-tab=\\'rules\\']').click()">
+                        <span class="gs-icon" style="font-size:14px;">&#9711;</span>
+                        <span>Create your first rule</span>
+                    </div>
+                    <div id="gs-key" class="gs-item" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:var(--bg-secondary);font-size:13px;cursor:pointer;" onclick="document.querySelector('[data-tab=\\'keys\\']').click()">
+                        <span class="gs-icon" style="font-size:14px;">&#9711;</span>
+                        <span>Generate an API key</span>
+                    </div>
+                    <div id="gs-token" class="gs-item" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:var(--bg-secondary);font-size:13px;cursor:pointer;" onclick="document.querySelector('[data-tab=\\'vault\\']').click()">
+                        <span class="gs-icon" style="font-size:14px;">&#9711;</span>
+                        <span>Create a Snap-Token</span>
+                    </div>
+                    <div id="gs-test" class="gs-item" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:var(--bg-secondary);font-size:13px;cursor:pointer;" onclick="document.querySelector('[data-tab=\\'test\\']').click()">
+                        <span class="gs-icon" style="font-size:14px;">&#9711;</span>
+                        <span>Try the API sandbox</span>
+                    </div>
+                </div>
+                <div id="gs-progress-bar" style="margin-top:12px;height:4px;background:var(--bg-secondary);border-radius:2px;overflow:hidden;">
+                    <div id="gs-progress-fill" style="height:100%;background:linear-gradient(90deg,var(--accent-purple),var(--accent-blue));width:0%;transition:width 0.5s ease;border-radius:2px;"></div>
+                </div>
+            </div>
+
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:20px;">
                 <div class="stat-card" style="background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(16,185,129,0.04));border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:20px;text-align:center;">
                     <div style="font-size:11px;color:var(--accent-green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Total Savings</div>
@@ -5167,6 +5198,39 @@ if (result.status === "allowed") {
         loadShadowMode();
 
         setTimeout(checkOnboarding, 500);
+
+        async function loadGettingStarted() {
+            if (localStorage.getItem('snapwire_gs_dismissed')) return;
+            try {
+                const res = await fetch('/api/onboarding/status');
+                const data = await res.json();
+                const steps = data.steps || {};
+                const done = [steps.rules, steps.api_key, steps.snap_token, steps.tested];
+                const completed = done.filter(Boolean).length;
+                if (completed >= 4) return;
+                const banner = document.getElementById('getting-started-banner');
+                if (banner) banner.style.display = 'block';
+
+                const ids = ['gs-rules', 'gs-key', 'gs-token', 'gs-test'];
+                const keys = ['rules', 'api_key', 'snap_token', 'tested'];
+                for (let i = 0; i < ids.length; i++) {
+                    const el = document.getElementById(ids[i]);
+                    if (el && done[i]) {
+                        el.querySelector('.gs-icon').innerHTML = '&#10003;';
+                        el.querySelector('.gs-icon').style.color = 'var(--accent-green)';
+                        el.style.opacity = '0.6';
+                    }
+                }
+                const fill = document.getElementById('gs-progress-fill');
+                if (fill) fill.style.width = ((completed / 4) * 100) + '%';
+            } catch(e) {}
+        }
+        function dismissGettingStarted() {
+            localStorage.setItem('snapwire_gs_dismissed', '1');
+            const b = document.getElementById('getting-started-banner');
+            if (b) b.style.display = 'none';
+        }
+        setTimeout(loadGettingStarted, 800);
 
         async function loadTelemetrySettings() {
             try {

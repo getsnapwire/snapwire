@@ -2704,17 +2704,59 @@ def admin_public_audits():
 @app.route("/health", methods=["GET"])
 def health_check():
     import platform
-    status = {"status": "healthy", "version": "1.0.0", "uptime_seconds": int(time.time() - _app_start_time)}
+    checks = {}
+    overall = "healthy"
+
     try:
         db.session.execute(db.text("SELECT 1"))
-        status["database"] = "connected"
+        try:
+            user_count = db.session.execute(db.text("SELECT count(*) FROM users")).scalar()
+        except Exception:
+            user_count = 0
+        checks["database"] = {"status": "connected", "users": user_count}
     except Exception as e:
-        status["database"] = "error"
-        status["database_error"] = str(e)
-        status["status"] = "degraded"
-    status["python_version"] = platform.python_version()
-    status["timestamp"] = datetime.utcnow().isoformat()
-    return jsonify(status), 200 if status["status"] == "healthy" else 503
+        checks["database"] = {"status": "error", "error": str(e)}
+        overall = "degraded"
+
+    checks["secrets"] = {}
+    session_secret = os.environ.get("SESSION_SECRET")
+    checks["secrets"]["SESSION_SECRET"] = "set" if session_secret else "missing (auto-generated fallback)"
+
+    anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
+    openai_key = os.environ.get("OPENAI_API_KEY")
+    if anthropic_key:
+        checks["secrets"]["LLM_PROVIDER"] = "anthropic (configured)"
+    elif openai_key:
+        checks["secrets"]["LLM_PROVIDER"] = "openai (configured)"
+    else:
+        checks["secrets"]["LLM_PROVIDER"] = "not configured (AI features disabled, deterministic features still work)"
+
+    checks["secrets"]["DATABASE_URL"] = "set" if os.environ.get("DATABASE_URL") else "not set (using SQLite fallback)"
+
+    checks["features"] = {
+        "loop_detection": "active",
+        "schema_guard": "active",
+        "snap_tokens": "active",
+        "burn_meter": "active",
+        "ai_rule_evaluation": "active" if (anthropic_key or openai_key) else "inactive (no LLM key)",
+        "goal_drift_detection": "active" if (anthropic_key or openai_key) else "inactive (no LLM key)",
+    }
+
+    first_run = checks["database"].get("users", 0) == 0
+    checks["setup"] = {
+        "first_run": first_run,
+        "setup_url": "/auth/setup" if first_run else None,
+    }
+
+    status = {
+        "status": overall,
+        "version": "1.0.0",
+        "uptime_seconds": int(time.time() - _app_start_time),
+        "python_version": platform.python_version(),
+        "timestamp": datetime.utcnow().isoformat(),
+        "checks": checks,
+    }
+    return jsonify(status), 200 if overall == "healthy" else 503
 
 
 @app.route("/api/onboarding/complete", methods=["POST"])
@@ -2732,14 +2774,69 @@ def onboarding_status():
     has_rules = ConstitutionRule.query.filter_by(tenant_id=tenant_id).count() > 0
     has_keys = ApiKey.query.filter_by(user_id=current_user.id).count() > 0
     has_tested = AuditLogEntry.query.filter_by(tenant_id=tenant_id).count() > 0
+    has_snap_token = ProxyToken.query.filter_by(tenant_id=tenant_id).count() > 0
     return jsonify({
         "completed": current_user.onboarding_completed_at is not None,
         "steps": {
             "rules": has_rules,
             "api_key": has_keys,
             "tested": has_tested,
+            "snap_token": has_snap_token,
         }
     })
+
+
+STARTER_RULES = [
+    {"name": "Block credential access", "description": "Prevent agents from reading environment variables, .env files, SSH keys, or cloud credentials.", "content": "Block any tool call that reads, writes, or accesses environment variables, .env files, SSH keys, AWS credentials, or any secret/credential paths. Agents should use Snap-Tokens instead.", "severity": "critical", "category": "security"},
+    {"name": "Block file deletion", "description": "Prevent agents from deleting critical system or project files.", "content": "Block any tool call that deletes files in system directories (/etc, /usr, /var) or deletes configuration files (.env, package.json, Dockerfile, etc).", "severity": "high", "category": "safety"},
+    {"name": "Block outbound data to unknown domains", "description": "Prevent agents from sending data to unrecognized external services.", "content": "Block any tool call that sends HTTP requests, uploads files, or transmits data to domains that are not well-known trusted services (github.com, googleapis.com, etc). Flag suspicious exfiltration patterns.", "severity": "high", "category": "security"},
+]
+
+
+def _seed_starter_data(tenant_id):
+    seeded = {}
+    existing_rules = ConstitutionRule.query.filter_by(tenant_id=tenant_id).count()
+    if existing_rules == 0:
+        for i, rule_data in enumerate(STARTER_RULES):
+            rule = ConstitutionRule(
+                tenant_id=tenant_id,
+                name=rule_data["name"],
+                description=rule_data["description"],
+                content=rule_data["content"],
+                severity=rule_data["severity"],
+                is_active=True,
+                sort_order=i,
+            )
+            db.session.add(rule)
+        seeded["rules"] = len(STARTER_RULES)
+    else:
+        seeded["rules"] = 0
+
+    existing_blast = BlastRadiusConfig.query.filter_by(tenant_id=tenant_id).first()
+    if not existing_blast:
+        blast_config = BlastRadiusConfig(
+            tenant_id=tenant_id,
+            enabled=True,
+            max_actions_per_session=100,
+            max_spend_per_session=25.0,
+            require_manual_reset=True,
+        )
+        db.session.add(blast_config)
+        seeded["spend_limit"] = "$25/session"
+    else:
+        seeded["spend_limit"] = "already configured"
+
+    db.session.commit()
+    return seeded
+
+
+@app.route("/api/seed-data", methods=["POST"])
+@require_admin
+def seed_demo_data():
+    tenant_id = get_current_tenant_id()
+    seeded = _seed_starter_data(tenant_id)
+    seeded["message"] = "Demo data loaded! You now have starter rules and spend limits configured."
+    return jsonify(seeded)
 
 
 @app.route("/api/overview", methods=["GET"])
