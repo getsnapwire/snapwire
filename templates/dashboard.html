@@ -611,29 +611,6 @@
         </div>
     </div>
 
-    <div id="welcome-banner" style="display:none;margin:20px 32px 0;padding:24px 28px;background:linear-gradient(135deg, rgba(255,107,0,0.08), rgba(255,107,0,0.02));border:1px solid rgba(255,107,0,0.2);border-radius:16px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-            <div>
-                <h2 style="font-size:18px;font-weight:700;margin-bottom:8px;color:var(--text-primary);">Welcome to Snapwire</h2>
-                <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;margin-bottom:16px;">Get started in 3 quick steps:</p>
-                <div style="display:flex;flex-direction:column;gap:10px;">
-                    <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text-primary);">
-                        <span style="width:28px;height:28px;border-radius:50%;background:var(--snap-orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">1</span>
-                        <span>Add your automation rules — tell Snapwire what your agents should and shouldn't do</span>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text-primary);">
-                        <span style="width:28px;height:28px;border-radius:50%;background:var(--snap-orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">2</span>
-                        <span>Store your API keys in the Identity Vault — works with any platform or service</span>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text-primary);">
-                        <span style="width:28px;height:28px;border-radius:50%;background:var(--snap-orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">3</span>
-                        <span>Point your agents to Snapwire's intercept endpoint — see the API Docs for integration guides</span>
-                    </div>
-                </div>
-            </div>
-            <button onclick="dismissWelcome()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:18px;padding:4px 8px;line-height:1;">&times;</button>
-        </div>
-    </div>
 
     <div class="workspace-bar" id="workspace-bar" style="background:rgba(77,139,255,0.08);border-bottom:1px solid var(--border);padding:8px 32px;display:flex;align-items:center;gap:12px;font-size:13px;">
         <span style="color:var(--text-secondary);">Workspace:</span>
@@ -715,37 +692,22 @@
                     <div style="font-weight:600;color:var(--accent-red);font-size:13px;">Agent Lockout Active</div>
                     <div id="lockout-alert-text" style="font-size:12px;color:var(--text-secondary);margin-top:2px;"></div>
                 </div>
-                <button onclick="document.querySelector('[data-tab=blast]').click();" style="background:var(--accent-red);border:none;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">View Details</button>
+                <button onclick="navigateTo('blast')" style="background:var(--accent-red);border:none;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">View Details</button>
             </div>
         </div>
 
         <div class="tabs">
             <button class="tab active" data-tab="home" data-tooltip="Overview of savings, spend monitoring, and system health" data-tooltip-pos="bottom">Home</button>
-            <button class="tab" data-tab="pending" data-tooltip="Actions that were blocked and need your decision to allow or deny" data-tooltip-pos="bottom">Pending Approvals</button>
-            <button class="tab" data-tab="log" data-tooltip="A history of everything Snapwire has checked, and what happened" data-tooltip-pos="bottom">Audit Log</button>
-            <button class="tab" data-tab="rules" data-tooltip="Custom automation rules that define what your AI agent can and cannot do" data-tooltip-pos="bottom">Automation Rules</button>
-            <button class="tab" data-tab="test" data-tooltip="Try out a fake action to see how Snapwire would respond" data-tooltip-pos="bottom">Sandbox</button>
-            <button class="tab" data-tab="history" data-tooltip="View all changes made to rules with rollback capability" data-tooltip-pos="bottom">Rule History</button>
-            <button class="tab" data-tab="keys" data-tooltip="Generate and manage API keys for your AI agents" data-tooltip-pos="bottom">API Keys</button>
-            <button class="tab" data-tab="stream" data-tooltip="Watch agent actions happen in real-time" data-tooltip-pos="bottom">Live Stream</button>
-            <button class="tab" data-tab="agents" data-tooltip="View action history grouped by agent" data-tooltip-pos="bottom">Agents</button>
-            <button class="tab" data-tab="digest" data-tooltip="Weekly safety summary report" data-tooltip-pos="bottom">Digest</button>
+            <button class="tab" data-tab="activity" data-tooltip="Pending approvals, audit log, live stream, and digest" data-tooltip-pos="bottom">Activity</button>
+            <button class="tab" data-tab="rules-group" data-tooltip="Manage automation rules, view history, and test in sandbox" data-tooltip-pos="bottom">Rules</button>
+            <button class="tab" data-tab="agents-group" data-tooltip="View agents and usage analytics" data-tooltip-pos="bottom">Agents</button>
             {% if user and user.role == 'admin' %}
-            <button class="tab" data-tab="settings" data-tooltip="Rate limits and webhook configuration" data-tooltip-pos="bottom">Settings</button>
-            <button class="tab" data-tab="telemetry" data-tooltip="Instance telemetry and growth metrics" data-tooltip-pos="bottom">Telemetry</button>
-            <button class="tab" data-tab="admin" data-tooltip="Manage users, roles, and access controls" data-tooltip-pos="bottom">Admin</button>
-            <button class="tab" data-tab="catalog" data-tooltip="View and manage the tool safety catalog with schema enforcement" data-tooltip-pos="bottom">Tool Catalog</button>
-            <button class="tab" data-tab="vault" data-tooltip="Manage Snap-Tokens for secure tool access" data-tooltip-pos="bottom">Snap-Tokens</button>
-            <button class="tab" data-tab="honeypots" data-tooltip="Set up honeypot decoy tools to detect breaches" data-tooltip-pos="bottom">Honeypots</button>
-            <button class="tab" data-tab="blast" data-tooltip="Control how fast agents can make calls — prevents runaway loops" data-tooltip-pos="bottom">Blast Radius</button>
-            <button class="tab" data-tab="risk" data-tooltip="Risk Confidence Index — intelligence signals for tool trust scoring" data-tooltip-pos="bottom">Risk Intelligence</button>
+            <button class="tab" data-tab="security" data-tooltip="Snap-Tokens, honeypots, blast radius, tool catalog, and risk intelligence" data-tooltip-pos="bottom">Security</button>
             {% endif %}
-            <button class="tab" data-tab="org" data-tooltip="Manage your organization" data-tooltip-pos="bottom">Organization</button>
-            <button class="tab" data-tab="analytics" data-tooltip="Usage analytics with charts and trends" data-tooltip-pos="bottom">Analytics</button>
-            <button class="tab" data-tab="account" data-tooltip="Your account settings" data-tooltip-pos="bottom">Account</button>
+            <button class="tab" data-tab="settings-group" data-tooltip="API keys, organization, account, and admin settings" data-tooltip-pos="bottom">Settings</button>
             <a href="/leaderboard" class="tab" style="text-decoration:none;color:var(--accent-green);" data-tooltip="Community leaderboard with badges and rankings" data-tooltip-pos="bottom">Leaderboard</a>
             <a href="/community-rules" class="tab" style="text-decoration:none;color:var(--accent-blue);" data-tooltip="Browse and submit community safety rules" data-tooltip-pos="bottom">Community Rules</a>
-            <button class="tab" data-tab="quickstart" data-tooltip="Get started with Snapwire" data-tooltip-pos="bottom">Quick Start</button>
+            <button class="help-btn" onclick="toggleHelpOverlay()" data-tooltip="Quick Start guide and integration help" data-tooltip-pos="bottom">?</button>
         </div>
 
         <div id="onboarding-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:none;align-items:center;justify-content:center;">
@@ -797,6 +759,55 @@
             </div>
         </div>
 
+        <div id="panel-activity" class="panel">
+            <div class="sub-tabs">
+                <button class="sub-tab active" data-subtab="pending" data-group="activity">Pending <span class="badge" id="pending-badge" style="display:none;">0</span></button>
+                <button class="sub-tab" data-subtab="log" data-group="activity">Audit Log</button>
+                <button class="sub-tab" data-subtab="stream" data-group="activity">Live Stream</button>
+                <button class="sub-tab" data-subtab="digest" data-group="activity">Digest</button>
+            </div>
+        </div>
+
+        <div id="panel-rules-group" class="panel">
+            <div class="sub-tabs">
+                <button class="sub-tab active" data-subtab="rules" data-group="rules-group">My Rules</button>
+                <button class="sub-tab" data-subtab="history" data-group="rules-group">Rule History</button>
+                <button class="sub-tab" data-subtab="test" data-group="rules-group">Sandbox</button>
+            </div>
+        </div>
+
+        <div id="panel-agents-group" class="panel">
+            <div class="sub-tabs">
+                <button class="sub-tab active" data-subtab="agents" data-group="agents-group">Agents</button>
+                <button class="sub-tab" data-subtab="analytics" data-group="agents-group">Analytics</button>
+            </div>
+        </div>
+
+        {% if user and user.role == 'admin' %}
+        <div id="panel-security" class="panel">
+            <div class="sub-tabs">
+                <button class="sub-tab active" data-subtab="vault" data-group="security">Snap-Tokens</button>
+                <button class="sub-tab" data-subtab="honeypots" data-group="security">Honeypots</button>
+                <button class="sub-tab" data-subtab="blast" data-group="security">Blast Radius</button>
+                <button class="sub-tab" data-subtab="catalog" data-group="security">Tool Catalog</button>
+                <button class="sub-tab" data-subtab="risk" data-group="security">Risk Intelligence</button>
+            </div>
+        </div>
+        {% endif %}
+
+        <div id="panel-settings-group" class="panel">
+            <div class="sub-tabs">
+                <button class="sub-tab active" data-subtab="keys" data-group="settings-group">API Keys</button>
+                <button class="sub-tab" data-subtab="org" data-group="settings-group">Organization</button>
+                <button class="sub-tab" data-subtab="account" data-group="settings-group">Account</button>
+                {% if user and user.role == 'admin' %}
+                <button class="sub-tab" data-subtab="settings" data-group="settings-group">Webhooks &amp; Notifications</button>
+                <button class="sub-tab" data-subtab="admin" data-group="settings-group">Users</button>
+                <button class="sub-tab" data-subtab="telemetry" data-group="settings-group">Telemetry</button>
+                {% endif %}
+            </div>
+        </div>
+
         <div id="panel-pending" class="panel">
             <div class="bulk-toolbar" id="bulk-toolbar">
                 <label><input type="checkbox" id="select-all-pending" onchange="selectAllPending()"> Select All</label>
@@ -810,35 +821,10 @@
         </div>
 
         <div id="panel-home" class="panel active">
-            <div id="getting-started-banner" style="display:none;background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(77,139,255,0.08));border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:20px;margin-bottom:16px;animation:slideIn 0.3s ease;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span style="font-size:20px;">&#x1F680;</span>
-                        <span style="font-weight:600;font-size:15px;color:var(--text-primary);">Getting Started</span>
-                    </div>
-                    <button onclick="dismissGettingStarted()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:16px;padding:4px;" title="Dismiss">&times;</button>
-                </div>
-                <div id="gs-checklist" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                    <div id="gs-rules" class="gs-item" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:var(--bg-secondary);font-size:13px;cursor:pointer;" onclick="document.querySelector('[data-tab=\\'rules\\']').click()">
-                        <span class="gs-icon" style="font-size:14px;">&#9711;</span>
-                        <span>Create your first rule</span>
-                    </div>
-                    <div id="gs-key" class="gs-item" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:var(--bg-secondary);font-size:13px;cursor:pointer;" onclick="document.querySelector('[data-tab=\\'keys\\']').click()">
-                        <span class="gs-icon" style="font-size:14px;">&#9711;</span>
-                        <span>Generate an API key</span>
-                    </div>
-                    <div id="gs-token" class="gs-item" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:var(--bg-secondary);font-size:13px;cursor:pointer;" onclick="document.querySelector('[data-tab=\\'vault\\']').click()">
-                        <span class="gs-icon" style="font-size:14px;">&#9711;</span>
-                        <span>Create a Snap-Token</span>
-                    </div>
-                    <div id="gs-test" class="gs-item" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:var(--bg-secondary);font-size:13px;cursor:pointer;" onclick="document.querySelector('[data-tab=\\'test\\']').click()">
-                        <span class="gs-icon" style="font-size:14px;">&#9711;</span>
-                        <span>Try the API sandbox</span>
-                    </div>
-                </div>
-                <div id="gs-progress-bar" style="margin-top:12px;height:4px;background:var(--bg-secondary);border-radius:2px;overflow:hidden;">
-                    <div id="gs-progress-fill" style="height:100%;background:linear-gradient(90deg,var(--accent-purple),var(--accent-blue));width:0%;transition:width 0.5s ease;border-radius:2px;"></div>
-                </div>
+            <div id="tip-banner" class="tip-banner" style="display:none;">
+                <span style="font-size:16px;">&#128161;</span>
+                <span id="tip-text">Try Shadow Mode to observe your agents without blocking anything. Switch from the banner above when you're ready to enforce.</span>
+                <button class="tip-dismiss" onclick="dismissTip()">&times;</button>
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:20px;">
@@ -913,10 +899,10 @@
                 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
                     <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Quick Actions</div>
                     <div style="display:flex;flex-direction:column;gap:8px;">
-                        <button onclick="document.querySelector('[data-tab=keys]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F511; Generate Snap-Token</button>
-                        <button onclick="document.querySelector('[data-tab=blast]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F4B0; Set Spend Limits</button>
-                        <button onclick="document.querySelector('[data-tab=rules]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x2699; Automation Rules <span style="color:var(--text-secondary);font-size:11px;margin-left:4px;" id="ov-rules-count"></span></button>
-                        <button onclick="document.querySelector('[data-tab=test]').click()" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F9EA; Test in Sandbox</button>
+                        <button onclick="navigateTo('keys')" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F511; Generate Snap-Token</button>
+                        <button onclick="navigateTo('blast')" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F4B0; Set Spend Limits</button>
+                        <button onclick="navigateTo('rules')" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x2699; Automation Rules <span style="color:var(--text-secondary);font-size:11px;margin-left:4px;" id="ov-rules-count"></span></button>
+                        <button onclick="navigateTo('test')" style="text-align:left;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;">&#x1F9EA; Test in Sandbox</button>
                     </div>
                 </div>
             </div>
@@ -980,6 +966,11 @@
                 </div>
             </div>
             <div id="audit-log-list"></div>
+            <div id="audit-log-empty" class="empty-state" style="display:none;">
+                <div class="empty-state-icon">&#128196;</div>
+                <div class="empty-state-msg">No activity yet. Send your first tool call to see it here.</div>
+                <button class="empty-state-link" onclick="toggleHelpOverlay()">View Quick Start Guide</button>
+            </div>
         </div>
 
         <div id="import-modal-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
@@ -1546,6 +1537,11 @@
                 </div>
             </div>
             <div id="agent-sessions-list"></div>
+            <div id="agents-empty" class="empty-state" style="display:none;">
+                <div class="empty-state-icon">&#129302;</div>
+                <div class="empty-state-msg">No agents detected yet. Connect your first agent using the API key from Settings.</div>
+                <button class="empty-state-link" onclick="navigateTo('keys')">Go to API Keys</button>
+            </div>
         </div>
 
         <div id="panel-digest" class="panel">
@@ -1558,6 +1554,10 @@
                     <button class="btn btn-test" onclick="fetchDigest()" style="padding:8px 16px;font-size:13px;">Refresh</button>
                 </div>
                 <div id="digest-content"></div>
+                <div id="digest-empty" class="empty-state" style="display:none;">
+                    <div class="empty-state-icon">&#128231;</div>
+                    <div class="empty-state-msg">Your first weekly digest will appear after 7 days of activity.</div>
+                </div>
             </div>
         </div>
 
@@ -1571,6 +1571,11 @@
                     <button class="btn btn-test" onclick="fetchRuleHistory()" style="padding:8px 16px;font-size:13px;">Refresh</button>
                 </div>
                 <div id="rule-history-list"></div>
+                <div id="history-empty" class="empty-state" style="display:none;">
+                    <div class="empty-state-icon">&#128338;</div>
+                    <div class="empty-state-msg">No rule changes yet. Edit a rule to see its history here.</div>
+                    <button class="empty-state-link" onclick="navigateTo('rules')">Go to Rules</button>
+                </div>
             </div>
         </div>
 
@@ -1730,7 +1735,7 @@
             <h3 style="margin-bottom:16px;">Quick Start Guide</h3>
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;">
                 <h4 style="color:var(--accent-blue);margin-bottom:12px;">Step 1: Generate an API Key</h4>
-                <p style="color:var(--text-secondary);font-size:14px;margin-bottom:12px;">Go to the <a href="#" onclick="document.querySelector('[data-tab=keys]').click();return false;" style="color:var(--accent-purple);">API Keys</a> tab and create a key for your agent.</p>
+                <p style="color:var(--text-secondary);font-size:14px;margin-bottom:12px;">Go to the <a href="#" onclick="navigateTo('keys');return false;" style="color:var(--accent-purple);">API Keys</a> tab and create a key for your agent.</p>
             </div>
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;">
                 <h4 style="color:var(--accent-blue);margin-bottom:12px;">Step 2: Send Tool Calls to Snapwire</h4>
@@ -1757,7 +1762,7 @@ Authorization: Bearer af_YOUR_API_KEY
             </div>
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;">
                 <h4 style="color:var(--accent-blue);margin-bottom:12px;">Step 4: Configure Your Rules</h4>
-                <p style="color:var(--text-secondary);font-size:14px;">Go to the <a href="#" onclick="document.querySelector('[data-tab=rules]').click();return false;" style="color:var(--accent-purple);">Constitution</a> tab to customize your safety rules, or install a <a href="#" onclick="document.querySelector('[data-tab=rules]').click();return false;" style="color:var(--accent-purple);">template pack</a> to get started quickly.</p>
+                <p style="color:var(--text-secondary);font-size:14px;">Go to the <a href="#" onclick="navigateTo('rules');return false;" style="color:var(--accent-purple);">Rules</a> tab to customize your safety rules, or install a <a href="#" onclick="navigateTo('rules');return false;" style="color:var(--accent-purple);">template pack</a> to get started quickly.</p>
             </div>
             <div style="background:rgba(77,139,255,0.08);border:1px solid rgba(77,139,255,0.25);border-radius:12px;padding:20px;">
                 <h4 style="color:var(--accent-blue);margin-bottom:8px;">Python Example</h4>
@@ -1857,6 +1862,15 @@ def handle_tool_call(tool_call):
         </div>
     </div>
 
+    <div class="help-overlay-backdrop" id="help-backdrop" onclick="toggleHelpOverlay()"></div>
+    <div class="help-overlay" id="help-overlay">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h3 style="margin:0;">Quick Start Guide</h3>
+            <button onclick="toggleHelpOverlay()" style="background:none;border:none;color:var(--text-secondary);font-size:20px;cursor:pointer;padding:4px 8px;">&times;</button>
+        </div>
+        <div id="help-content"></div>
+    </div>
+
     <div id="create-org-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:400px;width:90%;">
             <h3 style="margin-bottom:16px;">Create Organization</h3>
@@ -1890,7 +1904,10 @@ def handle_tool_call(tool_call):
             </div>
         </div>
         <div id="catalog-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-        <div id="catalog-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No tools discovered yet. When an agent makes its first tool call through Snapwire, it will appear here with an automatic safety grade.</div>
+        <div id="catalog-empty" class="empty-state" style="display:none;">
+            <div class="empty-state-icon">&#128736;</div>
+            <div class="empty-state-msg">No tools cataloged yet. Tools are automatically added when agents make their first calls.</div>
+        </div>
     </div>
 
     <div id="panel-vault" class="panel">
@@ -1914,7 +1931,11 @@ def handle_tool_call(tool_call):
         <div id="honeypot-list" style="display:flex;flex-direction:column;gap:8px;"></div>
         <h4 style="margin-top:24px;margin-bottom:12px;color:var(--text-secondary);font-size:14px;">Recent Alerts</h4>
         <div id="honeypot-alerts" style="display:flex;flex-direction:column;gap:8px;"></div>
-        <div id="honeypot-empty" style="color:var(--text-secondary);font-size:13px;display:none;">No honeypots set up yet. Create a decoy tool name — if any agent tries to use it, Snapwire instantly locks their credentials and alerts you.</div>
+        <div id="honeypot-empty" class="empty-state" style="display:none;">
+            <div class="empty-state-icon">&#127855;</div>
+            <div class="empty-state-msg">No honeypots configured. Create decoy tools to detect unauthorized agent access.</div>
+            <button class="empty-state-link" onclick="showAddHoneypotModal()">+ Add Honeypot</button>
+        </div>
     </div>
 
     <div id="panel-blast" class="panel">
@@ -2165,25 +2186,126 @@ def handle_tool_call(tool_call):
             Notification.requestPermission();
         }
 
-        document.querySelectorAll('.tab').forEach(tab => {
+        const GROUP_DEFAULTS = {
+            'activity': 'pending',
+            'rules-group': 'rules',
+            'agents-group': 'agents',
+            'security': 'vault',
+            'settings-group': 'keys'
+        };
+
+        const GROUP_CHILDREN = {
+            'activity': ['pending', 'log', 'stream', 'digest'],
+            'rules-group': ['rules', 'history', 'test'],
+            'agents-group': ['agents', 'analytics'],
+            'security': ['vault', 'honeypots', 'blast', 'catalog', 'risk'],
+            'settings-group': ['keys', 'org', 'account', 'settings', 'admin', 'telemetry']
+        };
+
+        let activeSubTabs = {};
+        Object.keys(GROUP_DEFAULTS).forEach(g => { activeSubTabs[g] = GROUP_DEFAULTS[g]; });
+
+        function hideAllPanels() {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        }
+
+        function showSubPanel(group, subName) {
+            GROUP_CHILDREN[group].forEach(child => {
+                const p = document.getElementById('panel-' + child);
+                if (p) p.classList.remove('active');
+            });
+            const target = document.getElementById('panel-' + subName);
+            if (target) target.classList.add('active');
+            activeSubTabs[group] = subName;
+            const groupPanel = document.getElementById('panel-' + group);
+            if (groupPanel) {
+                groupPanel.querySelectorAll('.sub-tab').forEach(st => {
+                    st.classList.toggle('active', st.dataset.subtab === subName);
+                });
+            }
+            triggerSubLoad(subName);
+        }
+
+        function triggerSubLoad(name) {
+            if (name === 'home') loadOverview();
+            if (name === 'org') loadOrgPanel();
+            if (name === 'account') loadAccountPanel();
+            if (name === 'catalog') loadCatalog();
+            if (name === 'vault') loadVault();
+            if (name === 'honeypots') loadHoneypots();
+            if (name === 'blast') loadBlastRadius();
+            if (name === 'risk') loadRiskIntelligence();
+            if (name === 'analytics') loadAnalytics(7);
+            if (name === 'telemetry') loadAdminTab();
+        }
+
+        document.querySelectorAll('.tab[data-tab]').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                hideAllPanels();
                 tab.classList.add('active');
                 const tabName = tab.dataset.tab;
-                document.getElementById('panel-' + tabName).classList.add('active');
-                if (tabName === 'home') loadOverview();
-                if (tabName === 'org') loadOrgPanel();
-                if (tabName === 'account') loadAccountPanel();
-                if (tabName === 'catalog') loadCatalog();
-                if (tabName === 'vault') loadVault();
-                if (tabName === 'honeypots') loadHoneypots();
-                if (tabName === 'blast') loadBlastRadius();
-                if (tabName === 'risk') loadRiskIntelligence();
-                if (tabName === 'analytics') loadAnalytics(7);
-                if (tabName === 'telemetry') loadAdminTab();
+                const groupPanel = document.getElementById('panel-' + tabName);
+                if (groupPanel) groupPanel.classList.add('active');
+                if (GROUP_CHILDREN[tabName]) {
+                    const defaultSub = activeSubTabs[tabName] || GROUP_DEFAULTS[tabName];
+                    showSubPanel(tabName, defaultSub);
+                } else {
+                    triggerSubLoad(tabName);
+                }
             });
         });
+
+        document.querySelectorAll('.sub-tab[data-subtab]').forEach(st => {
+            st.addEventListener('click', () => {
+                const group = st.dataset.group;
+                const sub = st.dataset.subtab;
+                showSubPanel(group, sub);
+            });
+        });
+
+        function toggleHelpOverlay() {
+            const overlay = document.getElementById('help-overlay');
+            const backdrop = document.getElementById('help-backdrop');
+            const isOpen = overlay.classList.contains('active');
+            overlay.classList.toggle('active');
+            backdrop.classList.toggle('active');
+            if (!isOpen) {
+                const qs = document.getElementById('panel-quickstart');
+                if (qs) {
+                    document.getElementById('help-content').innerHTML = qs.innerHTML;
+                }
+            }
+        }
+
+        function navigateTo(subName) {
+            const subToGroup = {};
+            Object.keys(GROUP_CHILDREN).forEach(g => {
+                GROUP_CHILDREN[g].forEach(c => { subToGroup[c] = g; });
+            });
+            const group = subToGroup[subName];
+            if (group) {
+                const groupTab = document.querySelector('[data-tab="' + group + '"]');
+                if (groupTab) groupTab.click();
+                showSubPanel(group, subName);
+            } else {
+                const tab = document.querySelector('[data-tab="' + subName + '"]');
+                if (tab) tab.click();
+            }
+        }
+
+        function dismissTip() {
+            const tip = document.getElementById('tip-banner');
+            if (tip) tip.style.display = 'none';
+            localStorage.setItem('snapwire_tip_dismissed', '1');
+        }
+
+        function showTipBanner() {
+            if (!localStorage.getItem('snapwire_tip_dismissed') && !localStorage.getItem('snapwire_onboarding_done')) {
+                const tip = document.getElementById('tip-banner');
+                if (tip) tip.style.display = 'flex';
+            }
+        }
 
         function sendBrowserNotification(title, body) {
             if ('Notification' in window && Notification.permission === 'granted') {
@@ -2194,7 +2316,7 @@ def handle_tool_call(tool_call):
                 });
                 n.onclick = () => {
                     window.focus();
-                    document.querySelector('[data-tab="pending"]').click();
+                    document.querySelector('[data-tab="activity"]').click();
                     n.close();
                 };
             }
@@ -2206,6 +2328,16 @@ def handle_tool_call(tool_call):
                 const data = await res.json();
                 const pending = data.pending_actions || [];
                 stats.pending = pending.length;
+
+                const badge = document.getElementById('pending-badge');
+                if (badge) {
+                    if (pending.length > 0) {
+                        badge.textContent = pending.length;
+                        badge.style.display = 'inline-flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
 
                 if (pending.length > lastPendingCount) {
                     const newest = pending[pending.length - 1];
@@ -4026,9 +4158,7 @@ def handle_tool_call(tool_call):
             setTimeout(() => { statusEl.textContent = ''; }, 5000);
         }
 
-        if (!localStorage.getItem('snapwire_welcome_dismissed')) {
-            document.getElementById('welcome-banner').style.display = 'block';
-        }
+        showTipBanner();
 
         fetchPending();
         fetchAuditLog();
@@ -4326,7 +4456,6 @@ def handle_tool_call(tool_call):
         }
 
         function dismissWelcome() {
-            document.getElementById('welcome-banner').style.display = 'none';
             localStorage.setItem('snapwire_welcome_dismissed', '1');
         }
 
@@ -5199,39 +5328,6 @@ if (result.status === "allowed") {
         loadShadowMode();
 
         setTimeout(checkOnboarding, 500);
-
-        async function loadGettingStarted() {
-            if (localStorage.getItem('snapwire_gs_dismissed')) return;
-            try {
-                const res = await fetch('/api/onboarding/status');
-                const data = await res.json();
-                const steps = data.steps || {};
-                const done = [steps.rules, steps.api_key, steps.snap_token, steps.tested];
-                const completed = done.filter(Boolean).length;
-                if (completed >= 4) return;
-                const banner = document.getElementById('getting-started-banner');
-                if (banner) banner.style.display = 'block';
-
-                const ids = ['gs-rules', 'gs-key', 'gs-token', 'gs-test'];
-                const keys = ['rules', 'api_key', 'snap_token', 'tested'];
-                for (let i = 0; i < ids.length; i++) {
-                    const el = document.getElementById(ids[i]);
-                    if (el && done[i]) {
-                        el.querySelector('.gs-icon').innerHTML = '&#10003;';
-                        el.querySelector('.gs-icon').style.color = 'var(--accent-green)';
-                        el.style.opacity = '0.6';
-                    }
-                }
-                const fill = document.getElementById('gs-progress-fill');
-                if (fill) fill.style.width = ((completed / 4) * 100) + '%';
-            } catch(e) {}
-        }
-        function dismissGettingStarted() {
-            localStorage.setItem('snapwire_gs_dismissed', '1');
-            const b = document.getElementById('getting-started-banner');
-            if (b) b.style.display = 'none';
-        }
-        setTimeout(loadGettingStarted, 800);
 
         async function loadTelemetrySettings() {
             try {

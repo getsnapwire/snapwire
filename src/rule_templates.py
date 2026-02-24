@@ -294,6 +294,80 @@ EGRESS_ALLOWLIST_PACK = {
 RULE_TEMPLATES["egress_allowlist"] = EGRESS_ALLOWLIST_PACK
 
 
+SHELL_SAFETY_PACK = {
+    "display_name": "Shell Safety Pack",
+    "description": "Detects and blocks dangerous shell command patterns in tool calls like exec_command, run_shell, subprocess, bash, and terminal. Prevents destructive operations, code injection, and credential leakage.",
+    "rules": {
+        "block_recursive_delete": {
+            "value": False,
+            "display_name": "Block Recursive Deletion (rm -rf)",
+            "description": "Can the agent execute recursive file deletion commands?",
+            "hint": "Blocks patterns like 'rm -rf', 'rm -r', and 'rmdir --ignore-fail-on-non-empty'. Recursive deletion can wipe entire directory trees in seconds and is almost always irreversible.",
+            "severity": "critical",
+            "detection": "rm\\s+-(r|f|rf|fr)\\b"
+        },
+        "block_eval_exec": {
+            "value": False,
+            "display_name": "Block eval() / exec() in Parameters",
+            "description": "Can the agent pass eval() or exec() calls in shell parameters?",
+            "hint": "eval and exec interpret arbitrary strings as code, enabling injection attacks. An agent tricked into running eval could execute anything.",
+            "severity": "critical",
+            "detection": "\\b(eval|exec)\\s*\\("
+        },
+        "block_env_export": {
+            "value": False,
+            "display_name": "Block Environment Variable Export",
+            "description": "Can the agent export environment variables via shell?",
+            "hint": "Exporting env vars can leak credentials, API keys, or tokens to child processes or logs. Secrets should be managed through a vault, not shell exports.",
+            "severity": "high",
+            "detection": "\\bexport\\s+\\w+="
+        },
+        "block_remote_code_exec": {
+            "value": False,
+            "display_name": "Block Remote Code Execution (curl|bash)",
+            "description": "Can the agent pipe remote scripts into a shell interpreter?",
+            "hint": "Patterns like 'curl | bash' or 'wget | sh' download and execute arbitrary code from the internet. This is one of the most dangerous shell patterns — it runs unreviewed code with full permissions.",
+            "severity": "critical",
+            "detection": "(curl|wget)\\s+.*\\|\\s*(bash|sh|zsh|dash)"
+        },
+        "block_chmod_777": {
+            "value": False,
+            "display_name": "Block Overly Permissive chmod",
+            "description": "Can the agent set world-writable file permissions?",
+            "hint": "chmod 777 makes files readable, writable, and executable by everyone. This is a major security risk, especially for config files, scripts, or directories containing sensitive data.",
+            "severity": "high",
+            "detection": "chmod\\s+777\\b"
+        },
+        "block_alias_override": {
+            "value": False,
+            "display_name": "Block Alias Overrides",
+            "description": "Can the agent create shell aliases that override existing commands?",
+            "hint": "Malicious aliases can hijack common commands (e.g., alias sudo='keylogger && sudo'). Blocking alias creation prevents command substitution attacks.",
+            "severity": "high",
+            "detection": "\\balias\\s+\\w+="
+        },
+        "block_background_processes": {
+            "value": False,
+            "display_name": "Block Background Process Spawning (nohup)",
+            "description": "Can the agent spawn background processes that persist after the session?",
+            "hint": "nohup and disown let processes run indefinitely in the background, even after the agent disconnects. This can lead to resource exhaustion, crypto miners, or persistent backdoors.",
+            "severity": "high",
+            "detection": "\\b(nohup|disown)\\s+"
+        },
+        "block_sensitive_redirect": {
+            "value": False,
+            "display_name": "Block Redirects to Sensitive Paths",
+            "description": "Can the agent write output to sensitive system files?",
+            "hint": "Redirecting output (> or >>) to files like /etc/passwd, .ssh/authorized_keys, or .env can overwrite credentials, inject SSH keys, or modify system configuration. These paths should never be writable by an agent.",
+            "severity": "critical",
+            "detection": ">{1,2}\\s*['\"]?(/etc/passwd|/etc/shadow|\\.ssh/|\\.env|\\.bashrc|\\.profile)"
+        }
+    }
+}
+
+RULE_TEMPLATES["shell_safety"] = SHELL_SAFETY_PACK
+
+
 def get_starter_pack():
     return UNIVERSAL_STARTER_PACK
 

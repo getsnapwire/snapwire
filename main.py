@@ -205,6 +205,8 @@ def start_telemetry_ping_timer():
                 time.sleep(86400)
             try:
                 with app.app_context():
+                    if os.environ.get("DO_NOT_TRACK") == "1":
+                        continue
                     config = get_install_id()
                     if not config.telemetry_enabled:
                         continue
@@ -254,9 +256,10 @@ start_telemetry_ping_timer()
 
 VERIFY_EXEMPT_PATHS = {
     '/auth/verify', '/auth/resend-verification', '/auth/logout',
-    '/auth/login', '/auth/register', '/auth/setup',
+    '/auth/login', '/auth/register', '/auth/setup', '/auth/setup-register',
     '/auth/forgot-password', '/auth/reset-password',
     '/static', '/health', '/api/telemetry/transparency',
+    '/api/self-hosted/register',
 }
 
 @app.before_request
@@ -1344,6 +1347,15 @@ def update_user_role(user_id):
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
+    tenant_id = get_current_tenant_id()
+    tenant_type = current_user.active_tenant_type or 'personal'
+    if tenant_type == 'org':
+        membership = OrgMembership.query.filter_by(org_id=tenant_id, user_id=user_id).first()
+        if not membership:
+            return jsonify({"error": "User does not belong to your tenant"}), 403
+    else:
+        if user_id != current_user.id:
+            return jsonify({"error": "User does not belong to your tenant"}), 403
     if user.id == current_user.id and data["role"] != "admin":
         return jsonify({"error": "Cannot demote yourself"}), 400
     user.role = data["role"]
@@ -1360,6 +1372,15 @@ def update_user_access(user_id):
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
+    tenant_id = get_current_tenant_id()
+    tenant_type = current_user.active_tenant_type or 'personal'
+    if tenant_type == 'org':
+        membership = OrgMembership.query.filter_by(org_id=tenant_id, user_id=user_id).first()
+        if not membership:
+            return jsonify({"error": "User does not belong to your tenant"}), 403
+    else:
+        if user_id != current_user.id:
+            return jsonify({"error": "User does not belong to your tenant"}), 403
     if user.id == current_user.id:
         return jsonify({"error": "Cannot revoke your own access"}), 400
     user.is_active = data["is_active"]
@@ -2815,14 +2836,14 @@ Return ONLY the Python code, no markdown formatting, no explanation."""
 
 
 @app.route("/api/admin/self-hosted", methods=["GET"])
-@require_login
+@require_admin
 def admin_self_hosted():
     installs = SelfHostedInstall.query.order_by(SelfHostedInstall.registered_at.desc()).limit(100).all()
     return jsonify({"installs": [i.to_dict() for i in installs]})
 
 
 @app.route("/api/admin/public-audits", methods=["GET"])
-@require_login
+@require_admin
 def admin_public_audits():
     from sqlalchemy import func
     total = PublicAudit.query.count()
@@ -3131,8 +3152,10 @@ with app.app_context():
 @require_login
 def get_telemetry_settings():
     config = get_install_id()
+    do_not_track = os.environ.get("DO_NOT_TRACK") == "1"
     return jsonify({
-        "telemetry_enabled": config.telemetry_enabled,
+        "telemetry_enabled": config.telemetry_enabled and not do_not_track,
+        "do_not_track_env": do_not_track,
         "install_id": config.install_id,
         "version": config.version,
     })
@@ -3144,11 +3167,15 @@ def toggle_telemetry():
     data = request.get_json() or {}
     if "enabled" not in data:
         return jsonify({"error": "Must provide 'enabled': true or false"}), 400
+    do_not_track = os.environ.get("DO_NOT_TRACK") == "1"
+    if do_not_track and data.get("enabled"):
+        return jsonify({"error": "Cannot enable telemetry: DO_NOT_TRACK=1 environment variable is set. Remove it to enable telemetry."}), 400
     config = get_install_id()
     config.telemetry_enabled = bool(data["enabled"])
     db.session.commit()
     return jsonify({
-        "telemetry_enabled": config.telemetry_enabled,
+        "telemetry_enabled": config.telemetry_enabled and not do_not_track,
+        "do_not_track_env": do_not_track,
         "message": "Telemetry enabled" if config.telemetry_enabled else "Telemetry disabled",
     })
 
@@ -3243,7 +3270,7 @@ def telemetry_ingest():
 
 
 @app.route("/api/admin/telemetry-dashboard", methods=["GET"])
-@require_login
+@require_admin
 def telemetry_dashboard():
     from datetime import timedelta
     config = get_install_id()

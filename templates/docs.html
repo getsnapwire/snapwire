@@ -134,11 +134,20 @@
             <a href="#rules">Constitution Rules</a>
             <a href="#api-keys">API Keys</a>
             <a href="#webhooks">Webhooks</a>
+            <h3>Advanced</h3>
+            <a href="#loop-detection">Loop Detection</a>
+            <a href="#shadow-mode">Shadow Mode</a>
+            <a href="#trust-rules">Trust Rules</a>
+            <a href="#snap-tokens">Snap-Tokens</a>
+            <a href="#config-export-import">Config Export/Import</a>
             <h3>Security</h3>
             <a href="#catalog">Tool Catalog</a>
             <a href="#blast-radius">Blast Radius</a>
             <a href="#honeypots">Honeypots</a>
             <a href="#vault">Identity Vault</a>
+            <h3>Reference</h3>
+            <a href="#rate-limits">Rate Limits</a>
+            <a href="#error-reference">Error Reference</a>
             <h3>SDKs</h3>
             <a href="#sdk-python">Python</a>
             <a href="#sdk-node">Node.js</a>
@@ -311,13 +320,6 @@ if allowed:
             </div>
             <p>Retrieve the safety catalog showing all known tools, their safety grades (A–F), and approval status.</p>
 
-            <h2 id="blast-radius">Blast Radius Governor</h2>
-            <div class="endpoint-card">
-                <span class="endpoint-method method-get">GET</span>
-                <span class="endpoint-path">/api/blast-radius/config</span>
-            </div>
-            <p>Get or update blast radius settings (max calls per window, lockout duration). Prevents runaway agents from overwhelming your systems.</p>
-
             <h2 id="honeypots">Honeypot Tripwires</h2>
             <div class="endpoint-card">
                 <span class="endpoint-method method-get">GET</span>
@@ -331,6 +333,450 @@ if allowed:
                 <span class="endpoint-path">/api/vault</span>
             </div>
             <p>Manage credential entries. The vault injects credentials into approved tool calls so agents never see raw secrets. Agents receive Snap-Tokens instead of real credentials.</p>
+
+            <h2 id="loop-detection">Loop Detection (Fuse Breaker)</h2>
+            <p>Snapwire's Loop Detector automatically identifies when an agent is stuck in a repetitive cycle — calling the same tool with the same parameters over and over. When a loop is detected, Snapwire triggers a <strong>Fuse Breaker</strong> that blocks further calls from that agent until the loop clears, preventing runaway behavior and wasted resources.</p>
+
+            <h3>How Fuse Breaker Works</h3>
+            <p>The detector tracks a rolling window of recent tool calls per agent. If the same <code class="inline-code">tool_name</code> + <code class="inline-code">parameters</code> combination appears more than a configurable threshold (default: 5 times in 60 seconds), the agent is flagged. Subsequent calls are blocked with a <code class="inline-code">429</code> status and a <code class="inline-code">blocked-loop</code> audit entry until the window expires.</p>
+
+            <h3>Get Loop Events</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/loop-detector/events</span>
+            </div>
+            <p>Retrieve recent loop detection events for your workspace.</p>
+            <table class="param-table">
+                <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                <tr><td>limit</td><td class="type">integer</td><td>Number of events to return (default: 20)</td></tr>
+            </table>
+            <div class="response-label">Response</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "events": [
+    {
+      "id": 1,
+      "agent_id": "research-agent",
+      "tool_name": "web_search",
+      "repeat_count": 7,
+      "pattern_hash": "a1b2c3d4",
+      "detected_at": "2026-02-24T10:30:00Z",
+      "window_seconds": 60
+    }
+  ]
+}</pre>
+
+            <h3>Get Loop Statistics</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/loop-detector/stats</span>
+            </div>
+            <p>Get aggregate loop detection statistics for your workspace, including total loops detected and most common offending agents.</p>
+            <div class="response-label">Response</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "total_loops_detected": 42,
+  "unique_agents": 3,
+  "top_agents": [
+    {"agent_id": "research-agent", "loop_count": 25},
+    {"agent_id": "data-agent", "loop_count": 12}
+  ],
+  "top_tools": [
+    {"tool_name": "web_search", "loop_count": 30}
+  ]
+}</pre>
+
+            <h2 id="shadow-mode">Shadow Mode</h2>
+            <p>Shadow Mode lets you observe what Snapwire <em>would</em> block without actually blocking anything. All tool calls pass through, but violations are logged as <code class="inline-code">shadow-blocked</code> in the audit log. This is ideal for onboarding new rules, testing configurations, or monitoring agents in production without disrupting their work.</p>
+
+            <h3>Modes</h3>
+            <p><strong>Shadow (observe)</strong> — All tool calls are allowed. Violations are logged but not enforced. Responses include <code class="inline-code">"shadow_mode": true</code>.</p>
+            <p><strong>Enforce (block)</strong> — Violations are actively blocked. This is the default production mode.</p>
+            <p><strong>Disabled</strong> — No rule evaluation occurs (not recommended).</p>
+
+            <h3>Get Shadow Mode Status</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/settings/shadow-mode</span>
+            </div>
+            <div class="response-label">Response</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "shadow_mode": true,
+  "changed_at": "2026-02-24T09:15:00Z",
+  "changed_by": 1
+}</pre>
+
+            <h3>Toggle Shadow Mode</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-patch">PATCH</span>
+                <span class="endpoint-path">/api/settings/shadow-mode</span>
+            </div>
+            <table class="param-table">
+                <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                <tr><td>enabled</td><td class="type">boolean</td><td>Set to <code class="inline-code">true</code> for shadow mode, <code class="inline-code">false</code> for enforce mode. Omit to toggle.</td></tr>
+            </table>
+            <div class="response-label">Response</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "shadow_mode": false,
+  "message": "Blocking Mode enabled - violations will be blocked"
+}</pre>
+
+            <h2 id="trust-rules">Trust Rules</h2>
+            <p>Trust Rules let you auto-approve specific tool + agent combinations so trusted, routine actions don't require human review. When you approve a pending action, you can create a Trust Rule that auto-approves identical future calls for a set duration (default: 24 hours). This dramatically reduces review queue noise for known-safe patterns.</p>
+
+            <h3>How 24-Hour Auto-Approve Works</h3>
+            <p>When a reviewer approves a pending action, they can check "Trust this pattern." Snapwire creates a Trust Rule matching the <code class="inline-code">tool_name</code> and <code class="inline-code">agent_id</code>. For the next 24 hours, matching calls skip the review queue and are auto-approved. Trust Rules expire automatically, and admins can revoke them early if needed.</p>
+
+            <h3>List Trust Rules</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/trust-rules</span>
+            </div>
+            <p>Retrieve all active (non-expired) trust rules for your workspace.</p>
+            <div class="response-label">Response</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "trust_rules": [
+    {
+      "id": 1,
+      "tool_name": "send_email",
+      "agent_id": "report-agent",
+      "created_at": "2026-02-24T08:00:00Z",
+      "expires_at": "2026-02-25T08:00:00Z",
+      "is_active": true,
+      "approved_by": 1
+    }
+  ]
+}</pre>
+
+            <h3>Revoke a Trust Rule</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-post">POST</span>
+                <span class="endpoint-path">/api/trust-rules/{rule_id}/revoke</span>
+            </div>
+            <p>Immediately deactivate a trust rule. Requires admin access. Future matching calls will go back to the review queue.</p>
+            <div class="response-label">Response</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "status": "revoked",
+  "rule": {
+    "id": 1,
+    "tool_name": "send_email",
+    "agent_id": "report-agent",
+    "is_active": false
+  }
+}</pre>
+
+            <h2 id="snap-tokens">Snap-Tokens (Credential Proxy)</h2>
+            <p>Snap-Tokens are proxy tokens that replace real credentials in agent workflows. Instead of giving your agent a raw API key or database password, you store the credential in the Identity Vault and issue a Snap-Token. The agent uses the Snap-Token, and Snapwire injects the real credential only into approved tool calls. If an agent is compromised, revoke the Snap-Token — the real credential is never exposed.</p>
+
+            <h3>Credential Proxy Flow</h3>
+            <p>1. Store a credential in the <a href="#vault">Identity Vault</a>.</p>
+            <p>2. Generate a Snap-Token linked to that vault entry.</p>
+            <p>3. Give the Snap-Token to your agent (e.g., <code class="inline-code">snap_abc123</code>).</p>
+            <p>4. The agent passes <code class="inline-code">"proxy_token": "snap_abc123"</code> in the intercept request.</p>
+            <p>5. If the call is approved, Snapwire resolves the token and injects the real credential into the response.</p>
+
+            <h3>List Proxy Tokens</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/vault/proxy-tokens</span>
+            </div>
+            <p>List all proxy tokens for your workspace.</p>
+            <div class="response-label">Response</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "tokens": [
+    {
+      "id": 1,
+      "token_prefix": "snap_abc1...",
+      "vault_entry_id": 5,
+      "label": "Stripe key for billing-agent",
+      "created_at": "2026-02-24T10:00:00Z",
+      "is_active": true
+    }
+  ]
+}</pre>
+
+            <h3>Create a Proxy Token</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-post">POST</span>
+                <span class="endpoint-path">/api/vault/proxy-tokens</span>
+            </div>
+            <table class="param-table">
+                <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                <tr><td>vault_entry_id <span class="required">REQUIRED</span></td><td class="type">integer</td><td>ID of the vault entry to link this token to</td></tr>
+                <tr><td>label</td><td class="type">string</td><td>Human-readable label for the token (e.g., "Stripe key for billing-agent")</td></tr>
+            </table>
+            <div class="response-label">Response (201 Created)</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "token": "snap_a1b2c3d4e5f6",
+  "token_id": 1,
+  "vault_entry_id": 5,
+  "label": "Stripe key for billing-agent"
+}</pre>
+            <p><strong>Important:</strong> The full token value is only returned once at creation. Store it securely.</p>
+
+            <h3>Revoke a Proxy Token</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-post">POST</span>
+                <span class="endpoint-path">/api/vault/proxy-tokens/{token_id}/revoke</span>
+            </div>
+            <p>Revoke a single proxy token. The linked credential remains in the vault.</p>
+
+            <h3>Revoke All Proxy Tokens</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-post">POST</span>
+                <span class="endpoint-path">/api/vault/proxy-tokens/revoke-all</span>
+            </div>
+            <p>Revoke all proxy tokens in the workspace. Use this for emergency credential rotation.</p>
+            <div class="response-label">Response</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "status": "all_revoked",
+  "count": 5
+}</pre>
+
+            <h2 id="config-export-import">Config Export / Import</h2>
+            <p>Export your entire rule configuration as a portable JSON file, and import it into another Snapwire instance. This is useful for migrating rules between environments (dev → staging → prod), sharing configurations across teams, or backing up your setup.</p>
+
+            <h3>Export Rules</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-post">POST</span>
+                <span class="endpoint-path">/api/rules/export</span>
+            </div>
+            <p>Export all rules as a JSON object.</p>
+            <div class="response-label">Response</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "_meta": {
+    "generator": "Snapwire",
+    "version": "1.0.0",
+    "exported_at": "2026-02-24T12:00:00Z",
+    "rule_count": 8
+  },
+  "rules": [
+    {
+      "name": "no_external_emails",
+      "description": "Block emails to external domains",
+      "rule_text": "Do not allow send_email to non-company domains",
+      "severity": "high",
+      "category": "Email Safety",
+      "enabled": true
+    }
+  ]
+}</pre>
+
+            <h3>Download Rules as File</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/rules/export/download</span>
+            </div>
+            <p>Download the export as a <code class="inline-code">.json</code> file attachment (Content-Disposition header set). File is named <code class="inline-code">snapwire-rules-YYYY-MM-DD.json</code>.</p>
+
+            <h3>Import Rules</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-post">POST</span>
+                <span class="endpoint-path">/api/rules/import</span>
+            </div>
+            <p>Import rules from a Snapwire export file. Accepts either a JSON body or a multipart file upload. Requires admin access. Existing rules with the same name are skipped (not overwritten).</p>
+            <table class="param-table">
+                <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                <tr><td>_meta <span class="required">REQUIRED</span></td><td class="type">object</td><td>Must contain <code class="inline-code">"generator": "Snapwire"</code></td></tr>
+                <tr><td>rules <span class="required">REQUIRED</span></td><td class="type">array</td><td>Array of rule objects (see export format above)</td></tr>
+            </table>
+            <div class="response-label">Response</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "status": "imported",
+  "imported_count": 6,
+  "skipped_count": 2,
+  "skipped_rules": ["no_external_emails", "budget_cap"],
+  "message": "Successfully imported 6 rule(s). Skipped 2 existing rule(s)."
+}</pre>
+            <pre><span class="lang-tag">cURL (file upload)</span>
+curl -X POST {{ base_url }}/api/rules/import \
+  -H "Authorization: Bearer af_your_key_here" \
+  -F "file=@snapwire-rules-2026-02-24.json"</pre>
+
+            <h2 id="blast-radius">Blast Radius Governor</h2>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/blast-radius/config</span>
+            </div>
+            <p>The Blast Radius Governor prevents runaway agents from overwhelming your systems. It enforces per-agent rate limits on tool calls within a rolling time window. When an agent exceeds its limit, it is locked out for a configurable duration.</p>
+
+            <h3>Get Configuration</h3>
+            <p>Retrieve the current blast radius settings for your workspace.</p>
+            <div class="response-label">Response</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "enabled": true,
+  "max_calls": 50,
+  "window_seconds": 300,
+  "lockout_seconds": 600,
+  "max_spend_per_session": 10.0,
+  "require_manual_reset": false
+}</pre>
+
+            <h3>Update Configuration</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-patch">PATCH</span>
+                <span class="endpoint-path">/api/blast-radius/config</span>
+            </div>
+            <p>Update blast radius settings. Requires admin access. All fields are optional — only include what you want to change.</p>
+            <table class="param-table">
+                <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                <tr><td>enabled</td><td class="type">boolean</td><td>Enable or disable the governor</td></tr>
+                <tr><td>max_calls</td><td class="type">integer</td><td>Maximum tool calls per agent per window</td></tr>
+                <tr><td>window_seconds</td><td class="type">integer</td><td>Rolling window duration in seconds</td></tr>
+                <tr><td>lockout_seconds</td><td class="type">integer</td><td>How long an agent is locked out after exceeding the limit</td></tr>
+                <tr><td>max_spend_per_session</td><td class="type">float</td><td>Maximum estimated cost per agent session</td></tr>
+                <tr><td>require_manual_reset</td><td class="type">boolean</td><td>If true, locked-out agents require manual admin clearance</td></tr>
+            </table>
+
+            <h3>Get Blast Radius Events</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/blast-radius/events</span>
+            </div>
+            <p>List recent blast radius events (agents that hit or approached their limits).</p>
+
+            <h3>Get Active Lockouts</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/blast-radius/lockouts</span>
+            </div>
+            <p>List agents currently locked out by the blast radius governor.</p>
+
+            <h3>Clear a Lockout</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-post">POST</span>
+                <span class="endpoint-path">/api/blast-radius/clear/{agent_id}</span>
+            </div>
+            <p>Manually clear a lockout for a specific agent. Requires admin access.</p>
+            <div class="response-label">Response</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "status": "cleared",
+  "agent_id": "research-agent"
+}</pre>
+
+            <h2 id="rate-limits">Rate Limits</h2>
+            <p>Snapwire enforces per-API-key rate limits on the <code class="inline-code">/api/intercept</code> endpoint to protect against abuse and ensure fair usage. The default limit is <strong>60 requests per minute</strong> per API key.</p>
+
+            <h3>How It Works</h3>
+            <p>Each API key has an independent counter that resets every 60 seconds. When the limit is reached, Snapwire returns a <code class="inline-code">429 Too Many Requests</code> response. The response includes a <code class="inline-code">Retry-After</code>-style field indicating when the window resets.</p>
+            <p>Every successful intercept response includes rate limit metadata:</p>
+            <pre><span class="lang-tag">JSON (in intercept response)</span>
+{
+  "status": "allowed",
+  "rate_limit": {
+    "remaining": 45,
+    "reset_at": 1708790460
+  }
+}</pre>
+
+            <h3>Check Rate Limit Status</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/rate-limits</span>
+            </div>
+            <p>Get rate limit usage for all API keys in your workspace. Requires admin access.</p>
+            <div class="response-label">Response</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "global_limit": 60,
+  "keys": [
+    {
+      "key_id": 1,
+      "key_name": "Production Key",
+      "agent_name": "research-agent",
+      "limit": 60,
+      "request_count": 15,
+      "requests_remaining": 45,
+      "reset_at": 1708790460
+    }
+  ]
+}</pre>
+
+            <h3>Update Global Rate Limit</h3>
+            <div class="endpoint-card">
+                <span class="endpoint-method method-patch">PATCH</span>
+                <span class="endpoint-path">/api/rate-limits/global</span>
+            </div>
+            <p>Change the global rate limit for all API keys. Requires admin access.</p>
+            <table class="param-table">
+                <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                <tr><td>limit <span class="required">REQUIRED</span></td><td class="type">integer</td><td>New rate limit per minute (1–1000)</td></tr>
+            </table>
+            <div class="response-label">Response</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "status": "updated",
+  "global_limit": 120
+}</pre>
+
+            <h3>Handling Rate Limit Errors</h3>
+            <p>When rate limited, implement exponential backoff. Check the <code class="inline-code">reset_at</code> field (Unix timestamp) to know exactly when to retry:</p>
+            <pre><span class="lang-tag">Python</span>
+import time, requests
+
+def intercept_with_retry(tool_name, params, max_retries=3):
+    for attempt in range(max_retries):
+        resp = requests.post(
+            f"{BASE_URL}/api/intercept",
+            headers={"Authorization": f"Bearer {API_KEY}"},
+            json={"tool_name": tool_name, "parameters": params}
+        )
+        if resp.status_code != 429:
+            return resp.json()
+        reset_at = resp.json().get("rate_limit", {}).get("reset_at", 0)
+        wait = max(1, reset_at - time.time())
+        time.sleep(wait)
+    raise Exception("Rate limit exceeded after retries")</pre>
+
+            <h2 id="error-reference">Error Reference</h2>
+            <p>All Snapwire API errors return a JSON body with an <code class="inline-code">"error"</code> field describing the issue. Here are the HTTP status codes you may encounter:</p>
+
+            <table class="param-table">
+                <tr><th>Status Code</th><th>Meaning</th><th>Common Causes</th><th>How to Handle</th></tr>
+                <tr><td><strong>400</strong> Bad Request</td><td>Invalid or missing request data</td><td>Missing <code class="inline-code">tool_name</code>, invalid JSON, malformed parameters</td><td>Check your request body matches the documented schema</td></tr>
+                <tr><td><strong>401</strong> Unauthorized</td><td>Authentication failed</td><td>Missing or invalid API key, expired session</td><td>Verify your <code class="inline-code">Authorization: Bearer</code> header contains a valid, active API key</td></tr>
+                <tr><td><strong>403</strong> Forbidden</td><td>Action blocked by policy</td><td>Rule violation, honeypot triggered, deception detected, tool blocked in catalog, input sanitizer flagged malicious content, admin-only endpoint</td><td>Check the <code class="inline-code">violations</code> array for specific rule details; review your constitutional rules</td></tr>
+                <tr><td><strong>404</strong> Not Found</td><td>Resource does not exist</td><td>Invalid action ID, rule ID, or vault entry ID</td><td>Verify the resource ID is correct and belongs to your workspace</td></tr>
+                <tr><td><strong>429</strong> Too Many Requests</td><td>Rate limit or blast radius exceeded</td><td>Too many API calls per minute, agent locked out by blast radius governor, agent stuck in a loop</td><td>Check <code class="inline-code">rate_limit.reset_at</code> or <code class="inline-code">blast_radius</code> fields; implement exponential backoff</td></tr>
+                <tr><td><strong>500</strong> Internal Server Error</td><td>Unexpected server error</td><td>Database issues, AI auditor unavailable</td><td>Retry after a short delay; if persistent, check the <code class="inline-code">/health</code> endpoint and server logs</td></tr>
+            </table>
+
+            <h3>Error Response Format</h3>
+            <pre><span class="lang-tag">JSON (403 example)</span>
+{
+  "status": "blocked",
+  "message": "Tool call blocked: violates constitutional rule.",
+  "violations": [
+    {
+      "rule": "no_external_emails",
+      "severity": "high",
+      "reason": "Sending email to external address requires approval."
+    }
+  ]
+}</pre>
+            <pre><span class="lang-tag">JSON (429 example)</span>
+{
+  "error": "Rate limit exceeded. Please slow down.",
+  "rate_limit": {
+    "remaining": 0,
+    "reset_at": 1708790460
+  }
+}</pre>
+            <pre><span class="lang-tag">JSON (401 example)</span>
+{
+  "error": "Authentication required. Provide an API key via Authorization header or sign in."
+}</pre>
 
             <h2 id="sdk-python">Python SDK</h2>
             <p>A minimal Python wrapper for quick integration:</p>

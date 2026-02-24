@@ -302,7 +302,13 @@ else:
             except Exception:
                 pass
 
-        return redirect("/")
+        return redirect("/auth/setup-register")
+
+    @local_auth_bp.route("/setup-register", methods=["GET"])
+    def setup_register():
+        if not current_user.is_authenticated:
+            return redirect("/")
+        return render_template("setup_wizard.html", show_register=True, user=current_user)
 
     @local_auth_bp.route("/verify-pending")
     def verify_pending():

@@ -520,7 +520,7 @@ class InstallConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     install_id = db.Column(db.String(64), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    telemetry_enabled = db.Column(db.Boolean, default=False)
+    telemetry_enabled = db.Column(db.Boolean, default=True)
     version = db.Column(db.String(20), default='1.0.0')
 
 
