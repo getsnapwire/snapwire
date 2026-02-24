@@ -7,6 +7,7 @@ import os
 GRADER_SCRIPT = os.path.join(os.path.dirname(__file__), "_grader_runner.py")
 MAX_CODE_SIZE = 10000
 TIMEOUT_SECONDS = 10
+MAX_RULE_LATENCY_MS = 5
 
 ALLOWED_IMPORTS = {"json", "re", "string", "math", "hashlib", "collections", "functools", "itertools", "copy"}
 
@@ -96,6 +97,21 @@ def grade_rule_code(code_string):
             }
 
         output = json.loads(result.stdout)
+
+        if output.get("success"):
+            slow_scenarios = [
+                r for r in output.get("results", [])
+                if r.get("execution_time_ms", 0) > MAX_RULE_LATENCY_MS
+            ]
+            if slow_scenarios:
+                worst = max(slow_scenarios, key=lambda r: r["execution_time_ms"])
+                output["success"] = False
+                output["error"] = (
+                    f"Your rule was rejected. Latency detected: "
+                    f"{worst['execution_time_ms']}ms (Limit: {MAX_RULE_LATENCY_MS}ms). "
+                    f"Please optimize your regex/logic and resubmit."
+                )
+
         return output
 
     except subprocess.TimeoutExpired:

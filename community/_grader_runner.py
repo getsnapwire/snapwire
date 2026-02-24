@@ -5,6 +5,7 @@ Outputs JSON results to stdout.
 """
 import json
 import sys
+import time
 import types
 import resource
 
@@ -72,9 +73,15 @@ def main():
         print(json.dumps({"success": False, "error": "Rule must define an evaluate(tool_name, parameters) function", "passed": 0, "total": total, "results": [], "pass_rate": 0.0}))
         sys.exit(1)
 
+    total_start = time.perf_counter()
+
     for scenario in SCENARIOS:
         try:
+            scenario_start = time.perf_counter()
             result = module.evaluate(scenario["tool_name"], scenario["parameters"])
+            scenario_end = time.perf_counter()
+            execution_time_ms = round((scenario_end - scenario_start) * 1000, 3)
+
             was_blocked = not result.get("allowed", True)
             expected_block = scenario["should_block"]
             correct = was_blocked == expected_block
@@ -90,6 +97,7 @@ def main():
                 "actual": "blocked" if was_blocked else "allowed",
                 "correct": correct,
                 "reason": result.get("reason", ""),
+                "execution_time_ms": execution_time_ms,
             })
         except Exception as e:
             results.append({
@@ -100,7 +108,13 @@ def main():
                 "actual": "error",
                 "correct": False,
                 "reason": f"Error: {str(e)}",
+                "execution_time_ms": 0.0,
             })
+
+    total_end = time.perf_counter()
+    total_execution_time_ms = round((total_end - total_start) * 1000, 3)
+    latency_values = [r["execution_time_ms"] for r in results if r["execution_time_ms"] > 0]
+    avg_latency_ms = round(sum(latency_values) / len(latency_values), 3) if latency_values else 0.0
 
     pass_rate = (passed / total * 100) if total > 0 else 0
     output = {
@@ -110,6 +124,8 @@ def main():
         "pass_rate": round(pass_rate, 1),
         "results": results,
         "error": None,
+        "total_execution_time_ms": total_execution_time_ms,
+        "avg_latency_ms": avg_latency_ms,
     }
     print(json.dumps(output))
     sys.exit(0)

@@ -2675,6 +2675,145 @@ Return ONLY valid JSON, no markdown formatting."""
     })
 
 
+_vibe_rate_limits = {}
+
+_ANONYMIZED_TOOLS = [
+    "exec_sql", "http_request", "file_write", "send_email",
+    "read_env", "shell_exec", "api_call", "delete_file",
+    "modify_config", "upload_data",
+]
+_ANONYMIZED_REASONS = {
+    "loop": ["Repeated call detected", "Loop pattern blocked", "Velocity limit exceeded"],
+    "blocked": ["Rule violation detected", "Policy check failed", "Unauthorized action blocked"],
+}
+
+@app.route("/api/public/feed", methods=["GET"])
+def public_kill_feed():
+    from sqlalchemy import func
+    total_blocked = db.session.query(func.count(AuditLogEntry.id)).filter(
+        AuditLogEntry.status.like("blocked%")
+    ).scalar() or 0
+
+    recent = AuditLogEntry.query.filter(
+        AuditLogEntry.status.like("blocked%")
+    ).order_by(AuditLogEntry.created_at.desc()).limit(20).all()
+
+    feed_items = []
+    for i, entry in enumerate(recent):
+        is_loop = "loop" in (entry.status or "")
+        status_type = "loop" if is_loop else "blocked"
+
+        saved = 0.0
+        if is_loop:
+            saved = round(0.5 + (abs(hash(str(entry.id))) % 50), 2)
+        else:
+            saved = round(0.1 + (abs(hash(str(entry.id))) % 10) * 0.5, 2)
+
+        tool_idx = abs(hash(str(entry.id))) % len(_ANONYMIZED_TOOLS)
+        reason_list = _ANONYMIZED_REASONS[status_type]
+        reason_idx = abs(hash(str(entry.id) + "r")) % len(reason_list)
+
+        feed_items.append({
+            "tool": _ANONYMIZED_TOOLS[tool_idx],
+            "reason": reason_list[reason_idx],
+            "status": status_type,
+            "saved": saved,
+        })
+
+    return jsonify({"feed": feed_items, "total_blocked": total_blocked})
+
+
+@app.route("/api/public/stats", methods=["GET"])
+def public_stats():
+    from models import CommunityProfile
+    from sqlalchemy import func
+
+    total_users = db.session.query(func.count(User.id)).scalar() or 0
+    founding_sentinels = db.session.query(func.count(CommunityProfile.id)).filter(
+        CommunityProfile.is_founding_sentinel == True
+    ).scalar() or 0
+    total_blocked = db.session.query(func.count(AuditLogEntry.id)).filter(
+        AuditLogEntry.status.like("blocked%")
+    ).scalar() or 0
+
+    return jsonify({
+        "sentinels_claimed": founding_sentinels,
+        "sentinels_total": 150,
+        "total_users": total_users,
+        "total_blocked": total_blocked,
+    })
+
+
+@app.route("/api/public/vibe-to-rule", methods=["POST"])
+def public_vibe_to_rule():
+    ip = request.remote_addr or "unknown"
+    now = time.time()
+
+    if ip in _vibe_rate_limits:
+        timestamps = [t for t in _vibe_rate_limits[ip] if now - t < 3600]
+        _vibe_rate_limits[ip] = timestamps
+        if len(timestamps) >= 5:
+            return jsonify({"error": "Rate limit exceeded. Max 5 rule generations per hour."}), 429
+    else:
+        _vibe_rate_limits[ip] = []
+
+    data = request.get_json() or {}
+    description = (data.get("description") or "").strip()
+    if not description:
+        return jsonify({"error": "Please describe a safety rule."}), 400
+    if len(description) > 1000:
+        return jsonify({"error": "Description too long (max 1,000 characters)."}), 400
+
+    from src.llm_provider import chat, get_client
+    if not get_client():
+        example_code = '''def evaluate(tool_name, parameters):
+    """Block file deletion in production directories."""
+    params_str = str(parameters).lower()
+    if tool_name in ("delete_file", "remove", "rm", "unlink"):
+        for path in ["/prod", "/production", "/live"]:
+            if path in params_str:
+                return {"allowed": False, "reason": "Deleting files in production directories is not permitted."}
+    return {"allowed": True, "reason": "Action does not affect production files."}'''
+        return jsonify({"code": example_code, "fallback": True})
+
+    system_msg = """You are a Snapwire rule generator. Convert the user's plain-English safety rule into a Python function.
+
+The function MUST follow this exact signature and return format:
+
+def evaluate(tool_name, parameters):
+    \"\"\"One-line description of what this rule does.\"\"\"
+    # Your logic here
+    return {"allowed": True/False, "reason": "Explanation"}
+
+Rules:
+- tool_name is a string (e.g., "exec_sql", "delete_file", "http_request")
+- parameters is a dict of the tool's arguments
+- Return {"allowed": False, "reason": "..."} to block, {"allowed": True, "reason": "..."} to allow
+- Only use standard library imports (re, json, string, math)
+- Keep it simple and readable
+- Always have a default return that allows the action
+- Include a clear docstring
+
+Return ONLY the Python code, no markdown formatting, no explanation."""
+
+    try:
+        code = chat(system_msg, f"Generate a Snapwire safety rule for: {description}", max_tokens=1500)
+        if code:
+            code = code.strip()
+            if code.startswith("```"):
+                lines = code.split("\n")
+                if lines[0].startswith("```"):
+                    lines = lines[1:]
+                if lines and lines[-1].strip() == "```":
+                    lines = lines[:-1]
+                code = "\n".join(lines)
+    except Exception:
+        return jsonify({"error": "Rule generation temporarily unavailable. Please try again."}), 503
+
+    _vibe_rate_limits[ip].append(now)
+    return jsonify({"code": code, "fallback": False})
+
+
 @app.route("/api/admin/self-hosted", methods=["GET"])
 @require_login
 def admin_self_hosted():

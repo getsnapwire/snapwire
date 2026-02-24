@@ -190,6 +190,64 @@ UNIVERSAL_STARTER_PACK = {
 RULE_TEMPLATES["universal_starter"] = UNIVERSAL_STARTER_PACK
 
 
+SQL_REDLINE_PACK = {
+    "display_name": "SQL Redline Pack",
+    "description": "Detects and blocks dangerous SQL patterns that can destroy data, drop tables, or escalate privileges. Essential for any agent with database access.",
+    "rules": {
+        "block_drop_table": {
+            "value": False,
+            "display_name": "Block DROP TABLE / DATABASE / SCHEMA",
+            "description": "Can the agent execute DROP TABLE, DROP DATABASE, or DROP SCHEMA statements?",
+            "hint": "Prevents irreversible destruction of entire tables, databases, or schemas. A single DROP statement can wipe out all your data.",
+            "severity": "critical",
+            "detection": "DROP\\s+(TABLE|DATABASE|SCHEMA)\\s+"
+        },
+        "block_delete_without_where": {
+            "value": False,
+            "display_name": "Block DELETE Without WHERE",
+            "description": "Can the agent execute DELETE FROM without a WHERE clause?",
+            "hint": "A DELETE FROM without WHERE deletes every row in the table. This rule ensures all DELETE statements include a WHERE filter.",
+            "severity": "critical",
+            "detection": "DELETE\\s+FROM\\s+\\S+\\s*(?!.*\\bWHERE\\b)(?:;|$)"
+        },
+        "block_grant_revoke": {
+            "value": False,
+            "display_name": "Block GRANT / REVOKE Privilege Changes",
+            "description": "Can the agent modify database user privileges?",
+            "hint": "Prevents agents from escalating their own database permissions or revoking access from other users. Privilege changes should require human approval.",
+            "severity": "critical",
+            "detection": "(GRANT|REVOKE)\\s+"
+        },
+        "block_alter_drop_column": {
+            "value": False,
+            "display_name": "Block ALTER TABLE DROP COLUMN",
+            "description": "Can the agent drop columns from existing tables?",
+            "hint": "Dropping a column permanently removes all data in that column. This is irreversible and can break applications that depend on it.",
+            "severity": "critical",
+            "detection": "ALTER\\s+TABLE\\s+\\S+\\s+DROP\\s+COLUMN\\s+"
+        },
+        "block_truncate": {
+            "value": False,
+            "display_name": "Block TRUNCATE TABLE",
+            "description": "Can the agent truncate tables, removing all rows instantly?",
+            "hint": "TRUNCATE removes all data from a table without logging individual row deletions. It's faster than DELETE but cannot be rolled back in most databases.",
+            "severity": "critical",
+            "detection": "TRUNCATE\\s+(TABLE\\s+)?\\S+"
+        },
+        "block_update_without_where": {
+            "value": False,
+            "display_name": "Block UPDATE Without WHERE",
+            "description": "Can the agent execute UPDATE without a WHERE clause?",
+            "hint": "An UPDATE without WHERE modifies every row in the table. This rule ensures all UPDATE statements include a WHERE filter to target specific rows.",
+            "severity": "critical",
+            "detection": "UPDATE\\s+\\S+\\s+SET\\s+(?!.*\\bWHERE\\b).+(?:;|$)"
+        }
+    }
+}
+
+RULE_TEMPLATES["sql_redline"] = SQL_REDLINE_PACK
+
+
 def get_starter_pack():
     return UNIVERSAL_STARTER_PACK
 

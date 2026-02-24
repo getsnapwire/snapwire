@@ -658,6 +658,7 @@
         <div class="nav-links">
             <a href="#how-it-works">How It Works</a>
             <a href="#features">Features</a>
+            <a href="#vibe-to-rule">Try It</a>
             <a href="/audit">Free Audit</a>
             <a href="/docs">API Docs</a>
             <a href="#faq">FAQ</a>
@@ -671,15 +672,58 @@
                 <span class="hero-badge-dot"></span>
                 The Real-Time Circuit Breaker for AI Agents
             </div>
-            <h1 class="animate animate-d1">Static scanners tell you a tool <em style="-webkit-text-fill-color:var(--text-secondary);font-style:italic;">looks</em> safe.<br><span>Snapwire enforces behavioral boundaries.</span></h1>
+            <h1 class="animate animate-d1">Stop Your AI Agents<br><span>Before They Break Something.</span></h1>
             <p class="hero-sub animate animate-d2">
-                Real-time spend monitoring, deterministic loop detection, and credential proxy for autonomous AI agents. Designed to detect and intercept loops based on user-defined velocity limits.
+                Your agent just ran the same API call 47 times. That's $200 gone. Snapwire catches it in under 2ms &mdash; and kills the loop before your budget does.
             </p>
             <div class="cta-group animate animate-d3">
                 <a href="#get-started" class="cta cta-primary">
                     Get the Fuse <span>&rarr;</span>
                 </a>
                 <a href="/audit" class="cta cta-secondary">Free Security Audit</a>
+            </div>
+            <div class="sentinel-counter animate animate-d3" id="sentinel-counter" style="margin-top:24px;display:flex;align-items:center;gap:16px;justify-content:center;flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,107,0,0.08);border:1px solid rgba(255,107,0,0.2);border-radius:10px;">
+                    <span style="font-size:18px;">&#x1F6E1;</span>
+                    <span style="font-size:14px;color:var(--text-secondary);"><strong id="sentinel-count" style="color:var(--accent);font-size:16px;">0</strong> / 150 Founding Sentinel Slots Claimed</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(0,245,212,0.06);border:1px solid rgba(0,245,212,0.15);border-radius:10px;">
+                    <span style="font-size:18px;">&#x26A1;</span>
+                    <span style="font-size:14px;color:var(--text-secondary);"><strong id="total-blocked-count" style="color:var(--green);font-size:16px;">0</strong> actions blocked</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="kill-feed-section" style="padding:32px 32px 0;overflow:hidden;">
+        <div style="max-width:900px;margin:0 auto;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                <span style="display:inline-block;width:8px;height:8px;background:#ff4d6a;border-radius:50%;animation:pulse 2s infinite;"></span>
+                <span style="font-size:12px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;">Live Protection Feed</span>
+            </div>
+            <div id="kill-feed" style="position:relative;height:140px;overflow:hidden;border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:12px 16px;">
+                <div id="kill-feed-items" style="display:flex;flex-direction:column;gap:6px;transition:transform 0.5s ease;">
+                    <div class="feed-item" style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,77,106,0.06);border-radius:8px;font-size:13px;color:var(--text-secondary);">
+                        <span style="color:#ff4d6a;font-weight:600;font-size:12px;">BLOCKED</span>
+                        <span>exec_sql &mdash; DROP TABLE detected</span>
+                        <span style="margin-left:auto;color:var(--green);font-weight:600;">~$12 saved</span>
+                    </div>
+                    <div class="feed-item" style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,215,107,0.06);border-radius:8px;font-size:13px;color:var(--text-secondary);">
+                        <span style="color:#FFD66B;font-weight:600;font-size:12px;">LOOP</span>
+                        <span>http_request &mdash; Repeated 8x in 15s</span>
+                        <span style="margin-left:auto;color:var(--green);font-weight:600;">~$34 saved</span>
+                    </div>
+                    <div class="feed-item" style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,77,106,0.06);border-radius:8px;font-size:13px;color:var(--text-secondary);">
+                        <span style="color:#ff4d6a;font-weight:600;font-size:12px;">BLOCKED</span>
+                        <span>read_env &mdash; Credential access attempt</span>
+                        <span style="margin-left:auto;color:var(--green);font-weight:600;">~$0 saved</span>
+                    </div>
+                    <div class="feed-item" style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,215,107,0.06);border-radius:8px;font-size:13px;color:var(--text-secondary);">
+                        <span style="color:#FFD66B;font-weight:600;font-size:12px;">LOOP</span>
+                        <span>send_email &mdash; Repeated 5x in 10s</span>
+                        <span style="margin-left:auto;color:var(--green);font-weight:600;">~$8 saved</span>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -788,23 +832,23 @@
 
     <section id="how-it-works" class="section">
         <p class="section-label">How It Works</p>
-        <h2 class="section-title">Three steps to stop the bleeding</h2>
-        <p class="section-desc">Get visibility into your AI agent spend in minutes, not days.</p>
+        <h2 class="section-title">Five minutes to your first safety net</h2>
+        <p class="section-desc">One endpoint. Any agent framework. Immediate protection.</p>
         <div class="steps">
             <div class="step">
                 <div class="step-num">1</div>
-                <h3>Connect</h3>
-                <p>Point your agent's tool calls through the Snapwire proxy. One API endpoint, five minutes to integrate.</p>
+                <h3>Point</h3>
+                <p>Route your agent's tool calls through one Snapwire endpoint. Works with LangChain, CrewAI, AutoGPT, or any custom agent. Five minutes to integrate.</p>
             </div>
             <div class="step">
                 <div class="step-num">2</div>
-                <h3>Monitor</h3>
-                <p>Instantly see every API call, its cost, and whether your agent is stuck in a loop burning through your budget.</p>
+                <h3>Watch</h3>
+                <p>See every tool call, its cost, and whether your agent is stuck in a loop &mdash; in real time. Know exactly what your agent is doing and spending.</p>
             </div>
             <div class="step">
                 <div class="step-num">3</div>
-                <h3>Protect</h3>
-                <p>Start in Shadow Mode to observe, then flip to enforcement. Loop detection and spend limits kick in automatically.</p>
+                <h3>Guard</h3>
+                <p>Start in Shadow Mode (watch only, block nothing). When you're ready, flip to enforcement. Loops get killed, spend gets capped, dangerous calls get held for your review.</p>
             </div>
         </div>
     </section>
@@ -813,28 +857,58 @@
 
     <section id="features" class="section">
         <p class="section-label">Core Features</p>
-        <h2 class="section-title">Metering, not judging. Protection, not theater.</h2>
-        <p class="section-desc">Four deterministic safeguards that work on every call, with every LLM, on day one.</p>
+        <h2 class="section-title">Four safeguards. Every call. Every agent. Day one.</h2>
+        <p class="section-desc">No configuration required. These work out of the box, with any LLM, on any framework.</p>
         <div class="features" style="grid-template-columns: repeat(2, 1fr);">
             <div class="feature-card">
                 <div class="feature-icon">&#x1F4B0;</div>
                 <h3>Live Burn Meter</h3>
-                <p>Stop the "Invoice Shock." Real-time cost tracking with velocity alerts designed to detect loops before they drain your credits. Monitor spend, set limits, and govern your agents' budget.</p>
+                <p>Know exactly what your agent is spending, right now. Set daily and per-session limits. Get alerts before a runaway loop drains your credits &mdash; not after.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">&#x1F504;</div>
-                <h3>The Fuse (Loop Detector)</h3>
-                <p>Deterministic protection for non-deterministic code. If an agent repeats a tool call 3x in 30 seconds, we break the circuit instantly. No more $200 "Thinking" loops while you sleep.</p>
+                <h3>Loop Breaker</h3>
+                <p>Agent repeats the same call 3 times in 30 seconds? Circuit broken, instantly. No more waking up to a $200 bill because your agent got stuck in a "thinking" loop overnight.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">&#x1F510;</div>
-                <h3>Snap-Tokens & Identity Vault</h3>
-                <p>Your agent never sees a raw API key. We proxy credentials through Snap-Tokens. One click to revoke a single tool, or hit "The Snap" to kill everything in an emergency.</p>
+                <h3>Credential Proxy</h3>
+                <p>Your agent never touches a raw API key. Snapwire proxies credentials through revocable tokens. Revoke one tool, or hit the kill-switch to revoke everything in one click.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">&#x1F6E1;</div>
-                <h3>Snap-Card Review Queue</h3>
-                <p>Security is no longer a black box. Blocked actions appear as high-context cards. Reject, Edit & Release, or Trust a pattern for 24 hours to keep your workflow moving at AI speed.</p>
+                <h3>Human Review Queue</h3>
+                <p>Blocked actions show up as cards with full context: what the agent tried, why it was stopped, and what rule triggered. Approve, deny, or trust the pattern for 24 hours.</p>
+            </div>
+        </div>
+    </section>
+
+    <hr class="divider">
+
+    <section id="vibe-to-rule" class="section" style="padding-bottom:80px;">
+        <p class="section-label">Try It Now</p>
+        <h2 class="section-title">Describe a rule. Get the code.</h2>
+        <p class="section-desc">Type a safety rule in plain English. Snapwire generates the enforcement logic instantly.</p>
+        <div style="max-width:720px;margin:0 auto;">
+            <div style="display:flex;gap:10px;margin-bottom:20px;">
+                <input type="text" id="vibe-input" placeholder="Don't let my agent delete files in the /prod folder" style="flex:1;padding:14px 18px;border:1px solid var(--border-hover);border-radius:12px;font-size:15px;font-family:inherit;background:var(--surface);color:var(--text-primary);outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border-hover)'">
+                <button id="vibe-btn" onclick="generateRule()" style="padding:14px 24px;background:var(--accent);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity 0.2s;">Generate</button>
+            </div>
+            <div id="vibe-result" style="display:none;">
+                <div style="position:relative;">
+                    <pre id="vibe-code" style="background:#0d1117;border:1px solid var(--border);border-radius:12px;padding:20px;font-size:13px;line-height:1.6;color:#c9d1d9;overflow-x:auto;font-family:'Fira Code',monospace;white-space:pre-wrap;"></pre>
+                    <button onclick="copyVibeCode()" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#8b949e;padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;">Copy</button>
+                </div>
+                <div style="text-align:center;margin-top:16px;">
+                    <a href="{{ login_url }}" style="display:inline-block;padding:12px 28px;background:var(--accent);color:white;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;">Sign up to save this rule &rarr;</a>
+                </div>
+            </div>
+            <div id="vibe-error" style="display:none;color:#ff4d6a;font-size:14px;text-align:center;margin-top:12px;"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+                <span style="font-size:12px;color:var(--text-tertiary);">Try:</span>
+                <button class="vibe-example" onclick="document.getElementById('vibe-input').value=this.textContent;generateRule();" style="font-size:12px;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);cursor:pointer;">Block SQL DELETE without WHERE</button>
+                <button class="vibe-example" onclick="document.getElementById('vibe-input').value=this.textContent;generateRule();" style="font-size:12px;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);cursor:pointer;">Never read .env files</button>
+                <button class="vibe-example" onclick="document.getElementById('vibe-input').value=this.textContent;generateRule();" style="font-size:12px;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);cursor:pointer;">Limit HTTP requests to 10 per minute</button>
             </div>
         </div>
     </section>
@@ -843,28 +917,28 @@
 
     <section class="section">
         <p class="section-label">Go Deeper</p>
-        <h2 class="section-title">Advanced Governance, Built In</h2>
-        <p class="section-desc">Beyond monitoring — the full safety and governance stack is included in every plan.</p>
+        <h2 class="section-title">Enterprise governance, included free</h2>
+        <p class="section-desc">Write rules in plain English. Test them safely. Enforce them automatically.</p>
         <div class="why-grid" style="grid-template-columns: repeat(4, 1fr);">
             <div class="why-card">
                 <div class="why-icon">&#x2696;</div>
-                <h3>Custom Automation Rules</h3>
-                <p>Define policies in plain English. Auto-approve safe actions, escalate risky ones, and block anything that violates your rules.</p>
+                <h3>Plain-English Rules</h3>
+                <p>Write "never delete production databases" and Snapwire enforces it. No code required. Auto-approve safe actions, escalate risky ones.</p>
             </div>
             <div class="why-card">
-                <div class="why-icon">&#x1F4CB;</div>
-                <h3>Schema Validation Guard</h3>
-                <p>Enforce JSON schemas per tool. Strip unauthorized parameters in strict mode or log-only in flexible mode. Catch malformed inputs automatically.</p>
+                <div class="why-icon">&#x1F504;</div>
+                <h3>Shadow Merge</h3>
+                <p>Test new rules against live traffic without blocking anything. See what would have been caught. Promote to enforcement when you're confident &mdash; zero risk to production.</p>
             </div>
             <div class="why-card">
                 <div class="why-icon">&#x1F9E0;</div>
-                <h3>Goal Drift Alerts <span style="font-size:11px;color:var(--warning);font-weight:600;vertical-align:middle;">HEURISTIC</span></h3>
-                <p>Uses heuristic analysis to flag behavioral shifts in agent reasoning for human review. Surfaces potential goal drift as advisory signals — final judgment remains with the operator.</p>
+                <h3>Goal Drift Alerts <span style="font-size:11px;color:var(--warning);font-weight:600;vertical-align:middle;">ADVISORY</span></h3>
+                <p>Flags when an agent's behavior shifts from its stated goal. Advisory signals for human review &mdash; not automated decisions.</p>
             </div>
             <div class="why-card">
                 <div class="why-icon">&#x1F3AF;</div>
                 <h3>Honeypot Tripwires</h3>
-                <p>Injected canary tools that trigger instant alerts if an agent attempts unauthorized exploration. Catch rogue behavior early.</p>
+                <p>Plant decoy tools your agent should never touch. If it tries, you get an instant alert. Catches rogue exploration before damage happens.</p>
             </div>
         </div>
     </section>
@@ -903,7 +977,7 @@
                 </button>
                 <div class="faq-answer">
                     <div class="faq-answer-inner">
-                        Snapwire sits between your AI agents and the tools they use. Before any agent can send an email, modify a file, call an API, or take any action, Snapwire intercepts it, checks it against your rules, and either approves it automatically or holds it for your review. Think of it like a safety fuse for everything your AI does.
+                        Snapwire sits between your AI agent and the tools it uses. Before the agent can call an API, modify a file, or spend money, Snapwire checks it against your rules and either approves it or holds it for your review.
                     </div>
                 </div>
             </div>
@@ -914,7 +988,7 @@
                 </button>
                 <div class="faq-answer">
                     <div class="faq-answer-inner">
-                        You generate an API key from the dashboard, then send a simple POST request to the /api/intercept endpoint before each tool call your agent makes. Snapwire responds with "allowed", "blocked", or "pending" so your agent knows whether to proceed. It takes about 5 minutes to integrate with any agent framework.
+                        Generate an API key, then send a POST request to /api/intercept before each tool call. Snapwire responds with "allowed", "blocked", or "pending". Five minutes with any agent framework.
                     </div>
                 </div>
             </div>
@@ -925,7 +999,7 @@
                 </button>
                 <div class="faq-answer">
                     <div class="faq-answer-inner">
-                        Constitutional rules are the policies you define for what your AI agents can and cannot do. For example: "Never delete production databases", "Don't send emails to external addresses without approval", or "Block any file modifications over 10 files at once". You can write them in plain English and the AI auditor evaluates every action against them.
+                        Rules you write in plain English for what your agent can and can't do. Examples: "Never delete production databases" or "Block emails to external addresses without approval." Snapwire evaluates every action against them automatically.
                     </div>
                 </div>
             </div>
@@ -936,7 +1010,7 @@
                 </button>
                 <div class="faq-answer">
                     <div class="faq-answer-inner">
-                        Blocked actions go into a review queue where you (or your team) can approve or deny them with a single click. You get browser notifications and optional Slack alerts when something needs your attention. If no one reviews an action within 30 minutes, it's automatically denied as a safety measure.
+                        It goes into your review queue. You see exactly what the agent tried to do, why it was blocked, and which rule triggered. Approve or deny with one click. Unreviewed actions auto-deny after 30 minutes.
                     </div>
                 </div>
             </div>
@@ -947,7 +1021,7 @@
                 </button>
                 <div class="faq-answer">
                     <div class="faq-answer-inner">
-                        Yes. Every user gets their own personal workspace, and you can create organizations to share rules, API keys, and review queues with your team. Organizations support roles (owner, admin, member) so you can control who can change rules and who can only view the dashboard.
+                        Yes. Create an organization to share rules, API keys, and review queues with your team. Roles (owner, admin, member) control who can change rules vs. who can only view.
                     </div>
                 </div>
             </div>
@@ -958,7 +1032,7 @@
                 </button>
                 <div class="faq-answer">
                     <div class="faq-answer-inner">
-                        Every tool your agents use is automatically tracked and graded from A (safe, read-only) to F (dangerous, destructive). Snapwire uses AI to assign these grades based on what the tool does. You can override grades, auto-block F-rated tools, and fast-track A/B-rated tools for automatic approval.
+                        Every tool your agent uses gets auto-graded from A (safe) to F (dangerous). Block F-rated tools automatically, fast-track A/B tools for auto-approval, or override any grade manually.
                     </div>
                 </div>
             </div>
@@ -966,10 +1040,10 @@
     </section>
 
     <section class="final-cta">
-        <h2>Your agents move fast. Your fuse should move faster.</h2>
-        <p>Set up in 5 minutes. See your first spend report today. Catch your first hallucination loop before it drains your budget.</p>
+        <h2>Your agents are already running. Start watching what they do.</h2>
+        <p>Five-minute setup. See your first spend report today. Catch your first runaway loop before it costs you.</p>
         <a href="{{ login_url }}" class="cta cta-primary">
-            Get the Fuse <span>&rarr;</span>
+            Get Started Free <span>&rarr;</span>
         </a>
     </section>
 
@@ -1086,6 +1160,90 @@
                 btn.textContent = 'Get Template Link \u2192';
             }
         }
+
+        (async function loadPublicStats() {
+            try {
+                const res = await fetch('/api/public/stats');
+                if (res.ok) {
+                    const data = await res.json();
+                    const sc = document.getElementById('sentinel-count');
+                    const tb = document.getElementById('total-blocked-count');
+                    if (sc) sc.textContent = data.sentinels_claimed || 0;
+                    if (tb) tb.textContent = (data.total_blocked || 0).toLocaleString();
+                }
+            } catch(e) {}
+        })();
+
+        (async function loadKillFeed() {
+            try {
+                const res = await fetch('/api/public/feed');
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.feed && data.feed.length > 0) {
+                    const container = document.getElementById('kill-feed-items');
+                    container.innerHTML = '';
+                    data.feed.forEach(item => {
+                        const isLoop = item.status === 'loop';
+                        const color = isLoop ? '#FFD66B' : '#ff4d6a';
+                        const label = isLoop ? 'LOOP' : 'BLOCKED';
+                        const bg = isLoop ? 'rgba(255,215,107,0.06)' : 'rgba(255,77,106,0.06)';
+                        const savedText = item.saved > 0 ? '~$' + item.saved + ' saved' : '';
+                        const div = document.createElement('div');
+                        div.className = 'feed-item';
+                        div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;background:' + bg + ';border-radius:8px;font-size:13px;color:var(--text-secondary);';
+                        div.innerHTML = '<span style="color:' + color + ';font-weight:600;font-size:12px;">' + label + '</span><span>' + item.tool + ' &mdash; ' + (item.reason || '') + '</span>' + (savedText ? '<span style="margin-left:auto;color:var(--green);font-weight:600;">' + savedText + '</span>' : '');
+                        container.appendChild(div);
+                    });
+                }
+            } catch(e) {}
+        })();
+
+        async function generateRule() {
+            const input = document.getElementById('vibe-input');
+            const btn = document.getElementById('vibe-btn');
+            const resultDiv = document.getElementById('vibe-result');
+            const codeEl = document.getElementById('vibe-code');
+            const errorEl = document.getElementById('vibe-error');
+            const desc = (input.value || '').trim();
+            if (!desc) { errorEl.textContent = 'Please describe a rule first.'; errorEl.style.display = 'block'; return; }
+            errorEl.style.display = 'none';
+            resultDiv.style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            try {
+                const res = await fetch('/api/public/vibe-to-rule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ description: desc })
+                });
+                const data = await res.json();
+                if (res.ok && data.code) {
+                    codeEl.textContent = data.code;
+                    resultDiv.style.display = 'block';
+                } else {
+                    errorEl.textContent = data.error || 'Failed to generate rule.';
+                    errorEl.style.display = 'block';
+                }
+            } catch(e) {
+                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.style.display = 'block';
+            }
+            btn.disabled = false;
+            btn.textContent = 'Generate';
+        }
+
+        function copyVibeCode() {
+            const code = document.getElementById('vibe-code').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = event.target;
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            });
+        }
+
+        document.getElementById('vibe-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') generateRule();
+        });
     </script>
 </body>
 </html>

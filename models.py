@@ -751,6 +751,7 @@ class CommunityRule(db.Model):
     scenarios_passed = db.Column(db.Integer, default=0)
     scenarios_total = db.Column(db.Integer, default=0)
     test_results_json = db.Column(db.Text, nullable=True)
+    avg_latency_ms = db.Column(db.Float, nullable=True)
     avg_rating = db.Column(db.Float, default=0.0)
     rating_count = db.Column(db.Integer, default=0)
     import_count = db.Column(db.Integer, default=0)
@@ -775,6 +776,7 @@ class CommunityRule(db.Model):
             "avg_rating": round(self.avg_rating, 1),
             "rating_count": self.rating_count,
             "import_count": self.import_count,
+            "avg_latency_ms": self.avg_latency_ms,
             "submitted_at": self.submitted_at.isoformat() if self.submitted_at else None,
         }
 

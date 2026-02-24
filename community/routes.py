@@ -163,6 +163,7 @@ def api_submit_rule():
         scenarios_passed=test_results["passed"],
         scenarios_total=test_results["total"],
         test_results_json=json.dumps(test_results["results"]),
+        avg_latency_ms=test_results.get("avg_latency_ms"),
         verified_at=datetime.utcnow() if is_verified else None,
     )
     db.session.add(rule)
@@ -199,6 +200,7 @@ def api_test_rule(rule_id):
     rule.scenarios_passed = test_results["passed"]
     rule.scenarios_total = test_results["total"]
     rule.test_results_json = json.dumps(test_results["results"])
+    rule.avg_latency_ms = test_results.get("avg_latency_ms")
     if test_results["success"]:
         rule.verified_at = datetime.utcnow()
     db.session.commit()
