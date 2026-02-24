@@ -45,15 +45,31 @@ Snapwire sits between your AI agents and the tools they call. Before any agent c
 
 ## Quick Start
 
+> **Zero Config:** Snapwire works out of the box with SQLite and no API keys. Fork → Run → Working in 30 seconds. Add PostgreSQL and an LLM key later for full features.
+
 ### Option 1: Fork on Replit (fastest)
 
 1. Click **Fork** on the [Snapwire Repl](https://replit.com/@snapwire/snapwire) to get your own copy.
 2. Open the **Database** tab and create a PostgreSQL database (auto-configures `DATABASE_URL`).
 3. Open the **Secrets** tab (padlock icon) and add:
    - `SESSION_SECRET` — any random string (for session encryption)
-   - `ANTHROPIC_API_KEY` — your [Anthropic API key](https://console.anthropic.com/) (optional — needed for AI-powered rule evaluation; deterministic features work without it)
+   - `ANTHROPIC_API_KEY` *(optional)* — your [Anthropic API key](https://console.anthropic.com/). Deterministic features (loop detection, spend monitoring, schema guard) work without any LLM key.
 4. Click **Run**. The setup wizard guides you through creating your admin account.
-5. Check `/health` to verify everything is connected.
+5. Check `/health` to verify everything is connected:
+
+```json
+{
+  "status": "ok",
+  "database": "connected",
+  "setup_complete": true,
+  "features": {
+    "loop_detection": true,
+    "spend_monitoring": true,
+    "schema_guard": true,
+    "llm_rules": false
+  }
+}
+```
 
 > **Tip:** Check the "Load starter rules" box during setup to get 3 security rules and a $25/session spend limit pre-configured.
 
@@ -70,6 +86,8 @@ docker run -p 5000:5000 --env-file .env snapwire
 
 ### Option 3: Run directly
 
+**Requires Python 3.11+**
+
 ```bash
 git clone https://github.com/snapwire-ai/snapwire.git
 cd snapwire
@@ -80,6 +98,11 @@ python main.py
 ```
 
 Visit `http://localhost:5000` — the setup wizard will guide you through first-run configuration.
+
+Verify with:
+```bash
+curl http://localhost:5000/health
+```
 
 ### Option 4: Python SDK
 
@@ -106,6 +129,14 @@ elif result["action"] == "block":
 elif result["action"] == "pending":
     print("Held for human review")
 ```
+
+### Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| **Port 5000 already in use** | Set the `PORT` environment variable to a different port: `PORT=8080 python main.py` |
+| **`psycopg2` installation fails** | Snapwire falls back to SQLite automatically — no PostgreSQL driver required for local development. |
+| **No LLM API key** | Deterministic features (loop detection, spend monitoring, schema guard, Snap-Tokens) work without any API key. Only AI-powered rule evaluation and goal drift analysis require a key. |
 
 ---
 
@@ -305,17 +336,19 @@ Add this to your README to show your agents are governed:
 
 ## How Snapwire Compares
 
-| Feature | **LiteLLM / Standard Proxies** | **Guardrails AI** | **Snapwire** |
-|---------|-------------------------------|-------------------|-------------|
-| **Primary Goal** | Model Interoperability | Data Quality / Hallucination | **Agentic Safety & Governance** |
-| **Loop Protection** | None (costs run until timeout) | None | **Deterministic Fuse Breaker (3x/30s)** |
-| **Enforcement Model** | Probabilistic (LLM-checks-LLM) | Probabilistic | **Deterministic Fuses + Optional Heuristic** |
-| **Review Flow** | Silent failures | Retries | **Snap-Card Interactive Queue (Reject / Edit / Trust)** |
-| **Credential Proxy** | Pass-through | Pass-through | **Snap-Tokens with instant revocation** |
-| **Spend Monitoring** | Basic logging | None | **Live Burn Meter with projections** |
-| **Intent Guard** | None | Output validation | **Semantic Goal-Drift Detection [HEURISTIC]** |
-| **EU AI Act Ready** | Manual | Manual | **Built-in Article 12 & 14 conformity** |
-| **Deployment** | Cloud proxy | Python library | **Self-hosted, your infrastructure** |
+| Feature | **Agent Sandboxes** | **LiteLLM / Standard Proxies** | **Guardrails AI** | **Snapwire** |
+|---------|---------------------|-------------------------------|-------------------|-------------|
+| **Primary Goal** | Runtime Isolation | Model Interoperability | Data Quality / Hallucination | **Agentic Safety & Governance** |
+| **Loop Protection** | None | None (costs run until timeout) | None | **Deterministic Fuse Breaker (3x/30s)** |
+| **Enforcement Model** | OS-level containment | Probabilistic (LLM-checks-LLM) | Probabilistic | **Deterministic Fuses + Optional Heuristic** |
+| **Review Flow** | None | Silent failures | Retries | **Snap-Card Interactive Queue (Reject / Edit / Trust)** |
+| **Credential Proxy** | None | Pass-through | Pass-through | **Snap-Tokens with instant revocation** |
+| **Spend Monitoring** | None | Basic logging | None | **Live Burn Meter with projections** |
+| **Intent Guard** | None | None | Output validation | **Semantic Goal-Drift Detection [HEURISTIC]** |
+| **EU AI Act Ready** | Manual | Manual | Manual | **Built-in Article 12 & 14 conformity** |
+| **Deployment** | Container / VM | Cloud proxy | Python library | **Self-hosted, your infrastructure** |
+
+**Sandboxes and Snapwire are complementary.** Sandboxes protect your machine — they isolate the agent's filesystem, network, and OS access. Snapwire protects your business — it intercepts tool calls, enforces spend limits, and guards credentials. Snapwire runs inside any sandbox, container, or cloud, adding the governance layer that isolation alone can't provide.
 
 **The key difference:** Most proxies use another LLM to check the first one — slow, expensive, and can hallucinate. Snapwire's core uses deterministic code (regex, JSON schema, velocity counters). The LLM layer is optional and always labeled `[HEURISTIC]`.
 

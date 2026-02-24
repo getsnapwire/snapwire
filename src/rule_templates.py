@@ -248,6 +248,52 @@ SQL_REDLINE_PACK = {
 RULE_TEMPLATES["sql_redline"] = SQL_REDLINE_PACK
 
 
+EGRESS_ALLOWLIST_PACK = {
+    "display_name": "Egress Allowlist Pack",
+    "description": "Checks HTTP and webhook tool calls against a configurable allowlist of trusted domains. Blocks outbound requests to unapproved destinations.",
+    "rules": {
+        "enforce_egress_allowlist": {
+            "value": True,
+            "display_name": "Enforce Egress Allowlist",
+            "description": "Block HTTP/webhook tool calls to domains not on the allowlist?",
+            "hint": "When enabled, any outbound HTTP request or webhook call to a domain not in the trusted list will be blocked automatically.",
+            "severity": "critical"
+        },
+        "allowed_domains": {
+            "value": [
+                "github.com",
+                "googleapis.com",
+                "anthropic.com",
+                "openai.com",
+                "aws.amazon.com",
+                "api.stripe.com",
+                "slack.com"
+            ],
+            "display_name": "Trusted Domain Allowlist",
+            "description": "List of approved domains the agent is allowed to contact",
+            "hint": "Add your trusted API providers, webhooks, and services. Subdomains are matched automatically (e.g., 'googleapis.com' allows 'storage.googleapis.com').",
+            "severity": "critical"
+        },
+        "block_ip_addresses": {
+            "value": True,
+            "display_name": "Block Raw IP Addresses",
+            "description": "Block tool calls that use raw IP addresses instead of domain names?",
+            "hint": "Agents should use named domains, not raw IPs. Blocking IPs prevents bypass of the domain allowlist.",
+            "severity": "high"
+        },
+        "log_blocked_requests": {
+            "value": True,
+            "display_name": "Log Blocked Requests",
+            "description": "Log details of every blocked outbound request for audit?",
+            "hint": "Creates an audit trail of all blocked egress attempts, useful for security reviews and compliance.",
+            "severity": "medium"
+        }
+    }
+}
+
+RULE_TEMPLATES["egress_allowlist"] = EGRESS_ALLOWLIST_PACK
+
+
 def get_starter_pack():
     return UNIVERSAL_STARTER_PACK
 
