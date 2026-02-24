@@ -169,9 +169,62 @@ else:
 
     local_auth_bp = Blueprint('local_auth', __name__)
 
+    def _is_local_network():
+        addr = request.remote_addr or ''
+        return addr in ('127.0.0.1', '::1', 'localhost') or addr.startswith('10.') or addr.startswith('172.') or addr.startswith('192.168.')
+
+    def _auto_login_local_user():
+        from datetime import datetime
+        from src.tenant import ensure_personal_tenant
+        import hashlib
+
+        if User.query.count() > 0:
+            return None
+
+        user = User(
+            id=str(uuid.uuid4()),
+            email="local@snapwire.local",
+            first_name="Local Admin",
+            auth_provider='local',
+            role='admin',
+            last_login_at=datetime.now(),
+            email_verified=True,
+            tos_accepted_at=datetime.now(),
+            onboarding_completed_at=datetime.now(),
+        )
+        db.session.add(user)
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            return None
+        ensure_personal_tenant(user)
+
+        raw_key = f"af_{secrets.token_hex(32)}"
+        key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+        from models import ApiKey
+        api_key = ApiKey(
+            id=str(uuid.uuid4()),
+            user_id=user.id,
+            name="Default Local Key",
+            key_hash=key_hash,
+            key_prefix=raw_key[:12],
+            tenant_id=user.id,
+        )
+        db.session.add(api_key)
+        db.session.commit()
+
+        session['_local_auto_key'] = raw_key
+        login_user(user)
+        return user
+
     @local_auth_bp.route("/login", methods=["GET"])
     def login_page():
         if _is_first_run():
+            if _is_local_network():
+                user = _auto_login_local_user()
+                if user:
+                    return redirect("/")
             return redirect(url_for('local_auth.setup'))
         return render_template("local_login.html")
 

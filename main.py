@@ -280,11 +280,17 @@ def check_email_verification():
 @app.route("/")
 def dashboard():
     if not current_user.is_authenticated:
+        is_self_hosted = not os.environ.get("REPL_ID")
+        if is_self_hosted:
+            from replit_auth import _is_first_run
+            if _is_first_run():
+                return redirect(url_for("local_auth.login_page"))
         return render_template("login.html", login_url=_get_login_url())
     if not current_user.tos_accepted_at:
         return redirect(url_for("tos_page"))
     is_self_hosted = not os.environ.get("REPL_ID")
-    return render_template("dashboard.html", user=current_user, is_self_hosted=is_self_hosted)
+    auto_key = session.pop('_local_auto_key', None)
+    return render_template("dashboard.html", user=current_user, is_self_hosted=is_self_hosted, auto_api_key=auto_key)
 
 
 @app.route("/tos")

@@ -696,7 +696,31 @@
             </div>
         </div>
 
+        {% if is_self_hosted %}
+        <div id="local-mode-banner" style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;font-size:13px;">
+            <span style="color:var(--text-secondary);">&#128274; Running in local mode — no password set.</span>
+            <button onclick="navigateTo('account')" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#b45309;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">Secure your instance &rarr;</button>
+        </div>
+        {% endif %}
+
         <div class="tabs">
+            {% if is_self_hosted %}
+            <button class="tab active" data-tab="home" data-tooltip-pos="bottom">Status</button>
+            <button class="tab" data-tab="activity" data-tooltip-pos="bottom">Kill Feed</button>
+            <button class="tab" data-tab="rules-group" data-tooltip-pos="bottom">Rules</button>
+            <div class="tab-more-wrapper" style="position:relative;display:inline-block;">
+                <button class="tab tab-more-btn" onclick="toggleMoreTabs()" data-tooltip-pos="bottom">More &#x25BE;</button>
+                <div id="more-tabs-dropdown" class="more-tabs-dropdown" style="display:none;">
+                    <button class="tab" data-tab="agents-group">Agents</button>
+                    {% if user and user.role == 'admin' %}
+                    <button class="tab" data-tab="security">Security</button>
+                    {% endif %}
+                    <button class="tab" data-tab="settings-group">Settings</button>
+                    <a href="/leaderboard" class="tab" style="text-decoration:none;color:var(--accent-green);">Leaderboard</a>
+                    <a href="/community-rules" class="tab" style="text-decoration:none;color:var(--accent-blue);">Community Rules</a>
+                </div>
+            </div>
+            {% else %}
             <button class="tab active" data-tab="home" data-tooltip="Overview of savings, spend monitoring, and system health" data-tooltip-pos="bottom">Home</button>
             <button class="tab" data-tab="activity" data-tooltip="Pending approvals, audit log, live stream, and digest" data-tooltip-pos="bottom">Activity</button>
             <button class="tab" data-tab="rules-group" data-tooltip="Manage automation rules, view history, and test in sandbox" data-tooltip-pos="bottom">Rules</button>
@@ -707,6 +731,7 @@
             <button class="tab" data-tab="settings-group" data-tooltip="API keys, organization, account, and admin settings" data-tooltip-pos="bottom">Settings</button>
             <a href="/leaderboard" class="tab" style="text-decoration:none;color:var(--accent-green);" data-tooltip="Community leaderboard with badges and rankings" data-tooltip-pos="bottom">Leaderboard</a>
             <a href="/community-rules" class="tab" style="text-decoration:none;color:var(--accent-blue);" data-tooltip="Browse and submit community safety rules" data-tooltip-pos="bottom">Community Rules</a>
+            {% endif %}
             <button class="help-btn" onclick="toggleHelpOverlay()" data-tooltip="Quick Start guide and integration help" data-tooltip-pos="bottom">?</button>
         </div>
 
@@ -826,6 +851,24 @@
                 <span id="tip-text">Try Shadow Mode to observe your agents without blocking anything. Switch from the banner above when you're ready to enforce.</span>
                 <button class="tip-dismiss" onclick="dismissTip()">&times;</button>
             </div>
+
+            {% if is_self_hosted %}
+            <div id="try-it-card" style="background:linear-gradient(135deg,rgba(255,107,0,0.1),rgba(255,107,0,0.03));border:1px solid rgba(255,107,0,0.3);border-radius:12px;padding:24px;margin-bottom:20px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                    <span style="font-size:24px;">&#9889;</span>
+                    <div>
+                        <h3 style="margin:0;font-size:16px;color:var(--text-primary);">Try It Now — Block a Dangerous SQL Command</h3>
+                        <p style="margin:4px 0 0;font-size:13px;color:var(--text-secondary);">Paste this in your terminal. Snapwire will block the DROP TABLE and you'll see it in the Kill Feed.</p>
+                    </div>
+                </div>
+                <div style="position:relative;">
+                    <pre id="try-it-command" style="background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;padding:14px 48px 14px 14px;font-size:12px;color:var(--accent-green);overflow-x:auto;white-space:pre-wrap;word-break:break-all;line-height:1.6;margin:0;">Loading...</pre>
+                    <button onclick="copyTryItCommand()" style="position:absolute;top:10px;right:10px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;">Copy</button>
+                </div>
+                <div style="margin-top:10px;font-size:12px;color:var(--text-secondary);">Expected: <strong style="color:var(--accent-red);">BLOCKED</strong> by SQL Redline rule &mdash; "Block DROP TABLE statements"</div>
+                <button onclick="dismissTryIt()" style="margin-top:8px;background:none;border:none;color:var(--text-secondary);font-size:11px;cursor:pointer;text-decoration:underline;">Dismiss</button>
+            </div>
+            {% endif %}
 
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:20px;">
                 <div class="stat-card" style="background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(16,185,129,0.04));border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:20px;text-align:center;">
@@ -2244,6 +2287,8 @@ def handle_tool_call(tool_call):
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 hideAllPanels();
                 tab.classList.add('active');
+                const dd = document.getElementById('more-tabs-dropdown');
+                if (dd) dd.style.display = 'none';
                 const tabName = tab.dataset.tab;
                 const groupPanel = document.getElementById('panel-' + tabName);
                 if (groupPanel) groupPanel.classList.add('active');
@@ -2307,6 +2352,79 @@ def handle_tool_call(tool_call):
             }
         }
 
+        function toggleMoreTabs() {
+            const dd = document.getElementById('more-tabs-dropdown');
+            if (dd) dd.style.display = dd.style.display === 'none' ? 'flex' : 'none';
+        }
+        document.addEventListener('click', function(e) {
+            const dd = document.getElementById('more-tabs-dropdown');
+            const btn = document.querySelector('.tab-more-btn');
+            if (dd && btn && !btn.contains(e.target) && !dd.contains(e.target)) {
+                dd.style.display = 'none';
+            }
+        });
+
+        {% if is_self_hosted %}
+        const _autoApiKey = {{ (auto_api_key or '')|tojson }};
+        let _tryItKey = _autoApiKey;
+
+        async function loadTryItCommand() {
+            const card = document.getElementById('try-it-card');
+            if (!card || localStorage.getItem('snapwire_tryit_dismissed')) {
+                if (card) card.style.display = 'none';
+                return;
+            }
+            if (!_tryItKey) {
+                card.style.display = 'none';
+                return;
+            }
+            const key = _tryItKey;
+            const host = window.location.origin;
+            const cmd = `curl -X POST ${host}/api/intercept \\\n  -H "Authorization: Bearer ${key}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"tool_name": "exec_sql", "arguments": {"query": "DROP TABLE users"}}'`;
+            const el = document.getElementById('try-it-command');
+            if (el) el.textContent = cmd;
+        }
+        function copyTryItCommand() {
+            const el = document.getElementById('try-it-command');
+            if (el) {
+                navigator.clipboard.writeText(el.textContent).then(() => {
+                    const btn = el.nextElementSibling;
+                    if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 2000); }
+                });
+            }
+        }
+        function dismissTryIt() {
+            const card = document.getElementById('try-it-card');
+            if (card) card.style.display = 'none';
+            localStorage.setItem('snapwire_tryit_dismissed', '1');
+        }
+        loadTryItCommand();
+
+        let _prevPendingCount = -1;
+        function checkFirstBlock(count) {
+            if (_prevPendingCount === 0 && count > 0 && !localStorage.getItem('snapwire_first_block_seen')) {
+                localStorage.setItem('snapwire_first_block_seen', '1');
+                showFirstBlockCelebration();
+            }
+            _prevPendingCount = count;
+        }
+        function showFirstBlockCelebration() {
+            const card = document.getElementById('try-it-card');
+            if (card) card.style.display = 'none';
+            localStorage.setItem('snapwire_tryit_dismissed', '1');
+            const badge = document.getElementById('pending-badge');
+            if (badge) badge.classList.add('pulse-celebrate');
+            const toast = document.createElement('div');
+            toast.className = 'first-block-toast';
+            toast.innerHTML = '<span style="font-size:20px;">&#127881;</span><div><strong>Your first block!</strong><br><span style="font-size:13px;color:var(--text-secondary);">Snapwire caught a dangerous SQL command. Check the Kill Feed.</span></div>';
+            toast.style.cursor = 'pointer';
+            toast.onclick = function() { navigateTo('pending'); toast.remove(); };
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 50);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 8000);
+        }
+        {% endif %}
+
         function sendBrowserNotification(title, body) {
             if ('Notification' in window && Notification.permission === 'granted') {
                 const n = new Notification(title, {
@@ -2338,6 +2456,8 @@ def handle_tool_call(tool_call):
                         badge.style.display = 'none';
                     }
                 }
+
+                if (typeof checkFirstBlock === 'function') checkFirstBlock(pending.length);
 
                 if (pending.length > lastPendingCount) {
                     const newest = pending[pending.length - 1];

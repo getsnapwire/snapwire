@@ -57,21 +57,30 @@ def ensure_personal_tenant(user):
 def _install_default_rules(tenant_id):
     from app import db
     from models import ConstitutionRule
-    from src.rule_templates import get_starter_pack
+    from src.rule_templates import get_starter_pack, RULE_TEMPLATES
 
-    starter = get_starter_pack()
-    for rule_name, rule_data in starter["rules"].items():
-        rule = ConstitutionRule(
-            tenant_id=tenant_id,
-            rule_name=rule_name,
-            value=json.dumps(rule_data["value"]),
-            display_name=rule_data["display_name"],
-            description=rule_data["description"],
-            hint=rule_data.get("hint", ""),
-            severity=rule_data.get("severity", "medium"),
-            mode="enforce",
-        )
-        db.session.add(rule)
+    packs_to_install = ["universal_starter", "sql_redline", "shell_safety"]
+    for pack_id in packs_to_install:
+        pack = RULE_TEMPLATES.get(pack_id)
+        if not pack:
+            continue
+        for rule_name, rule_data in pack["rules"].items():
+            existing = ConstitutionRule.query.filter_by(
+                tenant_id=tenant_id, rule_name=rule_name
+            ).first()
+            if existing:
+                continue
+            rule = ConstitutionRule(
+                tenant_id=tenant_id,
+                rule_name=rule_name,
+                value=json.dumps(rule_data["value"]),
+                display_name=rule_data["display_name"],
+                description=rule_data["description"],
+                hint=rule_data.get("hint", ""),
+                severity=rule_data.get("severity", "medium"),
+                mode="enforce",
+            )
+            db.session.add(rule)
 
     extra_rules = [
         {
@@ -94,8 +103,12 @@ def _install_default_rules(tenant_id):
         },
     ]
     for rule_data in extra_rules:
-        rule = ConstitutionRule(tenant_id=tenant_id, **rule_data)
-        db.session.add(rule)
+        existing = ConstitutionRule.query.filter_by(
+            tenant_id=tenant_id, rule_name=rule_data["rule_name"]
+        ).first()
+        if not existing:
+            rule = ConstitutionRule(tenant_id=tenant_id, **rule_data)
+            db.session.add(rule)
     db.session.commit()
 
 
