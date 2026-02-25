@@ -18,7 +18,13 @@
         input:focus { outline: none; border-color: #FF6B00; }
         .btn { width: 100%; padding: 14px; background: #FF6B00; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; }
         .btn:hover { background: #E56000; }
+        .btn-magic { background: transparent; border: 1px solid rgba(255,107,0,0.4); color: #FF6B00; margin-top: 0; margin-bottom: 8px; }
+        .btn-magic:hover { background: rgba(255,107,0,0.1); }
         .error { background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.3); color: #e74c3c; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+        .success { background: rgba(46,204,113,0.1); border: 1px solid rgba(46,204,113,0.3); color: #2ecc71; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+        .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: #5A6270; font-size: 12px; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: rgba(39,49,64,0.6); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -29,6 +35,12 @@
         {% if error %}
         <div class="error">{{ error }}</div>
         {% endif %}
+        <div id="magic-status" style="display:none;"></div>
+
+        <button class="btn btn-magic" id="magic-btn" onclick="sendMagicLink()">Send me a sign-in link instead</button>
+
+        <div class="divider">or create with password</div>
+
         <form method="POST" action="/admin-agent">
             <label>Your Name</label>
             <input type="text" name="name" required placeholder="Your name">
@@ -39,5 +51,36 @@
             <button type="submit" class="btn">Create Admin Account</button>
         </form>
     </div>
+    <script>
+        async function sendMagicLink() {
+            const btn = document.getElementById('magic-btn');
+            const status = document.getElementById('magic-status');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            status.style.display = 'none';
+            try {
+                const res = await fetch('/admin-agent/magic-link', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    status.className = 'success';
+                    status.textContent = 'Sign-in link sent to ' + data.email + '. Check your inbox — no password needed.';
+                    status.style.display = 'block';
+                    btn.textContent = 'Link sent — check your email';
+                } else {
+                    status.className = 'error';
+                    status.textContent = data.error || 'Failed to send link.';
+                    status.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Send me a sign-in link instead';
+                }
+            } catch(e) {
+                status.className = 'error';
+                status.textContent = 'Network error. Please try again.';
+                status.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Send me a sign-in link instead';
+            }
+        }
+    </script>
 </body>
 </html>

@@ -394,6 +394,86 @@ def admin_agent():
     return render_template("admin_setup.html", admin_email=admin_email)
 
 
+@app.route("/admin-agent/magic-link", methods=["POST"])
+def admin_magic_link():
+    import secrets
+    from datetime import datetime as _dt, timedelta
+    admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
+    if not admin_email:
+        return jsonify({"error": "ADMIN_EMAIL not configured"}), 403
+
+    token = secrets.token_urlsafe(48)
+    expires = _dt.now() + timedelta(minutes=15)
+
+    existing = User.query.filter_by(email=admin_email).first()
+    if existing:
+        existing.password_reset_token = f"magic:{token}"
+        existing.password_reset_expires_at = expires
+        db.session.commit()
+    else:
+        from src.tenant import ensure_personal_tenant
+        user = User(
+            id=str(_uuid_mod.uuid4()),
+            email=admin_email,
+            first_name="Admin",
+            auth_provider='local',
+            role='admin',
+            email_verified=True,
+            tos_accepted_at=_dt.now(),
+            onboarding_completed_at=_dt.now(),
+            password_reset_token=f"magic:{token}",
+            password_reset_expires_at=expires,
+        )
+        db.session.add(user)
+        db.session.commit()
+        ensure_personal_tenant(user)
+
+    base_url = request.url_root.rstrip('/')
+    magic_url = f"{base_url}/admin-agent/verify/{token}"
+
+    try:
+        from src.email_service import send_email
+        text_body = f"Sign in to Snapwire:\n\n{magic_url}\n\nThis link expires in 15 minutes. If you didn't request this, ignore this email."
+        html_body = f"""<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:20px;">
+            <h2 style="color:#FF6B00;">Snapwire Admin Sign-In</h2>
+            <p>Click the button below to sign in:</p>
+            <a href="{magic_url}" style="display:inline-block;background:#FF6B00;color:white;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0;">Sign In to Snapwire</a>
+            <p style="color:#888;font-size:13px;">Or copy this link: {magic_url}</p>
+            <p style="color:#888;font-size:12px;margin-top:24px;">This link expires in 15 minutes.</p>
+        </div>"""
+        send_email("[Snapwire] Your sign-in link", text_body, html_body, to_email=admin_email)
+    except Exception as e:
+        logging.warning(f"Failed to send magic link email: {e}")
+        return jsonify({"error": "Failed to send email. Check email configuration."}), 500
+
+    return jsonify({"message": "Sign-in link sent", "email": admin_email})
+
+
+@app.route("/admin-agent/verify/<token>")
+def admin_verify_magic_link(token):
+    from datetime import datetime as _dt
+    admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
+    if not admin_email:
+        return "ADMIN_EMAIL not configured.", 403
+
+    user = User.query.filter_by(email=admin_email).first()
+    if not user or user.password_reset_token != f"magic:{token}":
+        return render_template("admin_login.html", admin_email=admin_email, error="Invalid or expired sign-in link. Please request a new one.")
+
+    if user.password_reset_expires_at and user.password_reset_expires_at < _dt.now():
+        user.password_reset_token = None
+        user.password_reset_expires_at = None
+        db.session.commit()
+        return render_template("admin_login.html", admin_email=admin_email, error="This sign-in link has expired. Please request a new one.")
+
+    user.password_reset_token = None
+    user.password_reset_expires_at = None
+    user.last_login_at = _dt.now()
+    db.session.commit()
+    login_user(user)
+    return redirect("/")
+
+
 @app.route("/tos")
 def tos_page():
     if not current_user.is_authenticated:
