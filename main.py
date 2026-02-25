@@ -303,6 +303,15 @@ VERIFY_EXEMPT_PATHS = {
     '/api/self-hosted/register',
 }
 
+@app.after_request
+def set_security_headers(response):
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    return response
+
 @app.before_request
 def make_session_permanent():
     session.permanent = True

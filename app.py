@@ -29,6 +29,9 @@ else:
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {}
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 db = SQLAlchemy(app, model_class=Base)
 
