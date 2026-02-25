@@ -54,6 +54,7 @@ from src.deception import analyze_deception
 from src.loop_detector import check_for_loop, get_loop_events, get_loop_stats
 from src.schema_guard import validate_tool_params, get_schema_stats
 from src.risk_index import calculate_risk_score, record_risk_signal, get_risk_signals, get_tool_risk_summary
+from src.thinking_sentinel import check_thinking_tokens, get_sentinel_stats
 from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings, LoopDetectorEvent, SchemaViolationEvent, ProxyToken, RiskSignal
 
 
@@ -518,25 +519,91 @@ def docs_page():
     return render_template("docs.html", login_url=_get_login_url(), base_url=base_url)
 
 
+def _wrap_mcp_response(response_data, status_code, mcp_id):
+    if status_code >= 400:
+        error_code = -32603
+        if status_code == 400:
+            error_code = -32600
+        elif status_code == 401:
+            error_code = -32001
+        elif status_code == 429:
+            error_code = -32000
+        return jsonify({
+            "jsonrpc": "2.0",
+            "id": mcp_id,
+            "error": {
+                "code": error_code,
+                "message": response_data.get("error") or response_data.get("message", "Request failed"),
+                "data": response_data,
+            },
+        }), 200
+    return jsonify({
+        "jsonrpc": "2.0",
+        "id": mcp_id,
+        "result": response_data,
+    }), 200
+
+
 @app.route("/api/intercept", methods=["POST"])
 def intercept_tool_call():
     data = request.get_json()
     if not data:
         return jsonify({"error": "No JSON payload provided"}), 400
 
+    mcp_request = False
+    mcp_id = None
+
+    if "jsonrpc" in data and "method" in data:
+        mcp_request = True
+        mcp_id = data.get("id")
+        mcp_method = data.get("method", "")
+
+        if mcp_method != "tools/call":
+            log_action(
+                {"tool_name": f"mcp:{mcp_method}", "parameters": {}, "intent": "", "context": ""},
+                {"allowed": False, "violations": [{"rule": "mcp_method_filter", "severity": "info", "reason": f"MCP method '{mcp_method}' is not supported"}], "risk_score": 0, "analysis": f"Unsupported MCP method: {mcp_method}"},
+                "mcp-unsupported",
+                agent_id=data.get("agent_id", "unknown"),
+                tenant_id=None,
+            )
+            return jsonify({
+                "jsonrpc": "2.0",
+                "id": mcp_id,
+                "error": {
+                    "code": -32601,
+                    "message": f"Method not supported: {mcp_method}. Only 'tools/call' is supported.",
+                },
+            }), 400
+
+        mcp_params = data.get("params", {})
+        data = {
+            "tool_name": mcp_params.get("name", ""),
+            "parameters": mcp_params.get("arguments", {}),
+            "agent_id": data.get("agent_id"),
+            "webhook_url": data.get("webhook_url"),
+            "intent": mcp_params.get("intent", ""),
+            "context": mcp_params.get("context", ""),
+        }
+
     api_key = authenticate_api_key()
     if not api_key and not current_user.is_authenticated:
-        return jsonify({"error": "Authentication required. Provide an API key via Authorization header or sign in."}), 401
+        resp = {"error": "Authentication required. Provide an API key via Authorization header or sign in."}
+        if mcp_request:
+            return _wrap_mcp_response(resp, 401, mcp_id)
+        return jsonify(resp), 401
 
     tenant_id = get_tenant_id_for_api_key(api_key) if api_key else get_current_tenant_id()
 
     if api_key:
         allowed, remaining, reset_at = check_rate_limit(api_key.id)
         if not allowed:
-            return jsonify({
+            resp = {
                 "error": "Rate limit exceeded. Please slow down.",
                 "rate_limit": {"remaining": 0, "reset_at": reset_at},
-            }), 429
+            }
+            if mcp_request:
+                return _wrap_mcp_response(resp, 429, mcp_id)
+            return jsonify(resp), 429
 
     agent_id = data.get("agent_id", api_key.agent_name if api_key else None) or "unknown"
     webhook_url = data.get("webhook_url")
@@ -545,7 +612,10 @@ def intercept_tool_call():
     required_fields = ["tool_name"]
     for field in required_fields:
         if field not in data:
-            return jsonify({"error": f"Missing required field: {field}"}), 400
+            resp = {"error": f"Missing required field: {field}"}
+            if mcp_request:
+                return _wrap_mcp_response(resp, 400, mcp_id)
+            return jsonify(resp), 400
 
     params = data.get("parameters", {})
     sanitization = sanitize_parameters(params)
@@ -560,11 +630,14 @@ def intercept_tool_call():
             api_key_id=api_key_id,
             tenant_id=tenant_id,
         )
-        return jsonify({
+        resp = {
             "status": "blocked",
             "message": "Tool call blocked: potentially malicious input detected.",
             "threats": threats,
-        }), 403
+        }
+        if mcp_request:
+            return _wrap_mcp_response(resp, 403, mcp_id)
+        return jsonify(resp), 403
 
     honeypot_result = check_honeypot(
         data["tool_name"], tenant_id, agent_id,
@@ -577,11 +650,14 @@ def intercept_tool_call():
             "blocked-honeypot",
             agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id,
         )
-        return jsonify({
+        resp = {
             "status": "blocked",
             "message": "SECURITY ALERT: This action has been blocked and your API key has been locked.",
             "alert": honeypot_result["alert_message"],
-        }), 403
+        }
+        if mcp_request:
+            return _wrap_mcp_response(resp, 403, mcp_id)
+        return jsonify(resp), 403
 
     try:
         estimated_cost = max(0.0, float(data.get("estimated_cost", 0.0)))
@@ -606,11 +682,14 @@ def intercept_tool_call():
                 })
         except Exception:
             pass
-        return jsonify({
+        resp = {
             "status": "blocked",
             "message": blast_check["message"],
             "blast_radius": blast_check,
-        }), 429
+        }
+        if mcp_request:
+            return _wrap_mcp_response(resp, 429, mcp_id)
+        return jsonify(resp), 429
 
     catalog_result = check_tool_catalog(data["tool_name"], params, tenant_id)
     if catalog_result.get("allowed") is False:
@@ -620,11 +699,14 @@ def intercept_tool_call():
             "blocked-catalog",
             agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id,
         )
-        return jsonify({
+        resp = {
             "status": "blocked",
             "message": f"Tool '{data['tool_name']}' is not approved in your tool catalog.",
             "catalog": catalog_result.get("entry"),
-        }), 403
+        }
+        if mcp_request:
+            return _wrap_mcp_response(resp, 403, mcp_id)
+        return jsonify(resp), 403
 
     tool_call = {
         "tool_name": data["tool_name"],
@@ -645,11 +727,14 @@ def intercept_tool_call():
                     "blocked-deception",
                     agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id,
                 )
-                return jsonify({
+                resp = {
                     "status": "blocked",
                     "message": "DECEPTION DETECTED: The agent's reasoning does not match its intended action.",
                     "deception_analysis": deception_result,
-                }), 403
+                }
+                if mcp_request:
+                    return _wrap_mcp_response(resp, 403, mcp_id)
+                return jsonify(resp), 403
         except Exception:
             pass
 
@@ -661,11 +746,14 @@ def intercept_tool_call():
             "blocked-loop",
             agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id,
         )
-        return jsonify({
+        resp = {
             "status": "blocked",
             "message": loop_result["message"],
             "loop_info": loop_result,
-        }), 429
+        }
+        if mcp_request:
+            return _wrap_mcp_response(resp, 429, mcp_id)
+        return jsonify(resp), 429
 
     schema_result = validate_tool_params(data["tool_name"], params, tenant_id)
     if schema_result["violations"]:
@@ -719,6 +807,11 @@ def intercept_tool_call():
         response_extra["risk_grade"] = risk_result["grade"]
         response_extra["risk_signals"] = risk_result["signals"]
 
+    usage = data.get("usage")
+    sentinel_warning = check_thinking_tokens(usage, agent_id=agent_id, tenant_id=tenant_id)
+    if sentinel_warning:
+        response_extra["thinking_sentinel_warning"] = sentinel_warning
+
     if shadow_active:
         response_extra["shadow_mode"] = True
 
@@ -733,14 +826,17 @@ def intercept_tool_call():
             vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
             if vault_creds:
                 response_extra["vault_credentials"] = vault_creds
-        return jsonify({
+        resp = {
             "status": "allowed",
             "audit": audit_result,
             "message": "Tool call allowed (Shadow Mode active - would have been blocked in enforcement mode).",
             "shadow_mode": True,
             "would_block": True,
             **response_extra,
-        })
+        }
+        if mcp_request:
+            return _wrap_mcp_response(resp, 200, mcp_id)
+        return jsonify(resp)
 
     if audit_result.get("allowed", False):
         log_action(tool_call, audit_result, "allowed", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id)
@@ -753,12 +849,15 @@ def intercept_tool_call():
             vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
             if vault_creds:
                 response_extra["vault_credentials"] = vault_creds
-        return jsonify({
+        resp = {
             "status": "allowed",
             "audit": audit_result,
             "message": "Tool call passed all constitutional checks.",
             **response_extra,
-        })
+        }
+        if mcp_request:
+            return _wrap_mcp_response(resp, 200, mcp_id)
+        return jsonify(resp)
     else:
         trust_match = TrustRule.query.filter_by(
             tenant_id=tenant_id, agent_id=agent_id, tool_name=data["tool_name"], is_active=True
@@ -774,12 +873,15 @@ def intercept_tool_call():
                 vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
                 if vault_creds:
                     response_extra["vault_credentials"] = vault_creds
-            return jsonify({
+            resp = {
                 "status": "trust-approved",
                 "audit": audit_result,
                 "message": f"Tool call auto-approved by active trust rule (expires {trust_match.expires_at.isoformat()}).",
                 **response_extra,
-            })
+            }
+            if mcp_request:
+                return _wrap_mcp_response(resp, 200, mcp_id)
+            return jsonify(resp)
 
         if check_auto_approve(tool_call, audit_result, agent_id, tenant_id=tenant_id):
             log_action(tool_call, audit_result, "auto-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id)
@@ -792,12 +894,15 @@ def intercept_tool_call():
                 vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
                 if vault_creds:
                     response_extra["vault_credentials"] = vault_creds
-            return jsonify({
+            resp = {
                 "status": "auto-approved",
                 "audit": audit_result,
                 "message": "Tool call auto-approved based on previous approval history.",
                 **response_extra,
-            })
+            }
+            if mcp_request:
+                return _wrap_mcp_response(resp, 200, mcp_id)
+            return jsonify(resp)
 
         action_id = add_pending_action(tool_call, audit_result, webhook_url=webhook_url, agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id)
 
@@ -860,7 +965,7 @@ def intercept_tool_call():
             pass
 
         _track_usage(tenant_id)
-        return jsonify({
+        resp = {
             "status": "blocked",
             "action_id": action_id,
             "audit": audit_result,
@@ -868,7 +973,10 @@ def intercept_tool_call():
             "approval_url": f"/api/actions/{action_id}/resolve",
             "poll_url": f"/api/actions/{action_id}",
             **response_extra,
-        }), 403
+        }
+        if mcp_request:
+            return _wrap_mcp_response(resp, 403, mcp_id)
+        return jsonify(resp), 403
 
 
 @app.route("/api/actions/pending", methods=["GET"])
@@ -3410,6 +3518,7 @@ def overview_stats():
 
     loop_stats = get_loop_stats(tenant_id)
     schema_stats = get_schema_stats(tenant_id)
+    sentinel_stats = get_sentinel_stats(tenant_id)
 
     total_blocked_all = blocked + blocked_br + blocked_loop
     estimated_cost_per_call = 0.01
@@ -3449,6 +3558,7 @@ def overview_stats():
         "loop_savings": loop_stats.get("total_estimated_savings", 0),
         "schema_violations": schema_stats.get("total_violations", 0),
         "params_stripped": schema_stats.get("total_params_stripped", 0),
+        "thinking_sentinel_warnings": sentinel_stats.get("total_warnings", 0),
         "today_spend": today_spend,
         "daily_rate": daily_rate,
         "projected_30d": projected_30d,

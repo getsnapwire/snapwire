@@ -336,7 +336,7 @@
                 <p><strong>Last Updated: February 19, 2026</strong></p>
 
                 <h3>1. The "Neutral Gateway" Role</h3>
-                <p>Snapwire is a technical monitoring utility and API gateway. We provide a dashboard to help you view and manage the traffic sent by your autonomous AI agents. We do not create, control, or own the AI agents you connect to our service. <strong>You are the "Master Pilot" and "Deployer";</strong> Snapwire is simply the "Flight Recorder."</p>
+                <p>Snapwire is a <strong>Vendor-Agnostic Governance Layer</strong> — a technical monitoring utility, API gateway, and deterministic governance framework for MCP-compliant agents. We provide a dashboard to help you view and manage the traffic sent by your autonomous AI agents across any provider or framework. We do not create, control, or own the AI agents you connect to our service. <strong>You are the "Master Pilot" and "Deployer";</strong> Snapwire is simply the "Flight Recorder."</p>
 
                 <h3>2. "AS-IS" Service & Use at Your Own Risk</h3>
                 <p><strong>SNAPWIRE IS PROVIDED ON AN "AS-IS" AND "AS-AVAILABLE" BASIS. SNAPWIRE IS A BEST-EFFORT MONITORING UTILITY. WE MAKE NO GUARANTEES THAT OUR SERVICE WILL DETECT EVERY ERROR, BUDGET OVERRUN, OR SECURITY THREAT.</strong></p>
@@ -368,6 +368,12 @@
 
                 <h3>9. Indemnification</h3>
                 <p>You agree to defend and hold Snapwire harmless from any legal claims, damages, or costs (including lawyer fees) that arise from your use of AI agents or your violation of these terms.</p>
+
+                <h3>10. Hallucination Warning / Thinking Token Sentinel</h3>
+                <p>Snapwire's "Hallucination Warning" and "Thinking Token Sentinel" features are <strong>heuristics based on token-to-action ratios</strong>. They are cost-management tools, not clinical or technical guarantees of model accuracy. These features flag anomalous patterns — such as excessive thinking-token consumption without corresponding tool calls — as advisory signals for your review. <strong>No alert, warning, or absence thereof constitutes a guarantee that any AI model output is accurate, safe, or free from hallucination.</strong> You acknowledge that these signals are probabilistic estimates and that the final responsibility for evaluating model output remains solely with you, the human operator.</p>
+
+                <h3>11. MCP Audit Log</h3>
+                <p>Snapwire functions as a <strong>Deterministic Gateway for MCP-Compliant Agents</strong>. The MCP Audit Log provides standardized evidence of agent-to-tool interactions in the Model Context Protocol (MCP) JSON-RPC 2.0 format. These logs are machine-generated records of API traffic routed through Snapwire and are provided as-is for compliance, debugging, and governance purposes. <strong>MCP Audit Logs constitute standardized evidence of traffic patterns, not a certification or endorsement of the safety or correctness of any agent action.</strong> You are solely responsible for interpreting, retaining, and acting upon audit log data in accordance with your own compliance and regulatory obligations.</p>
 
                 <div style="height: 1px;"></div>
             </div>

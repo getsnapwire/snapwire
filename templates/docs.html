@@ -148,6 +148,9 @@
             <h3>Reference</h3>
             <a href="#rate-limits">Rate Limits</a>
             <a href="#error-reference">Error Reference</a>
+            <h3>Governance</h3>
+            <a href="#mcp-compat">MCP Compatibility</a>
+            <a href="#thinking-sentinel">Thinking Token Sentinel</a>
             <h3>SDKs</h3>
             <a href="#sdk-python">Python</a>
             <a href="#sdk-node">Node.js</a>
@@ -223,6 +226,7 @@ if allowed:
                 <tr><td>agent_id</td><td class="type">string</td><td>Identifier for the agent making the call</td></tr>
                 <tr><td>inner_monologue</td><td class="type">string</td><td>Agent's internal reasoning (used by heuristic goal-drift analysis)</td></tr>
                 <tr><td>webhook_url</td><td class="type">string</td><td>URL to receive a callback when a pending action is resolved</td></tr>
+                <tr><td>usage</td><td class="type">object</td><td>Token usage from the LLM response. Fields: <code class="inline-code">thinking_tokens</code>, <code class="inline-code">input_tokens</code>, <code class="inline-code">output_tokens</code>. Used by the Thinking Token Sentinel.</td></tr>
             </table>
 
             <div class="response-label">Response (allowed)</div>
@@ -778,6 +782,94 @@ def intercept_with_retry(tool_name, params, max_retries=3):
   "error": "Authentication required. Provide an API key via Authorization header or sign in."
 }</pre>
 
+            <h2 id="mcp-compat">MCP Compatibility</h2>
+            <p>Snapwire is a <strong>Deterministic Gateway for MCP-Compliant Agents</strong>. The <code class="inline-code">/api/intercept</code> endpoint natively accepts the <strong>Model Context Protocol (MCP) JSON-RPC 2.0</strong> format. If you're running an MCP-compatible agent, you can send requests directly without any translation layer.</p>
+
+            <h3>How It Works</h3>
+            <p>Snapwire auto-detects MCP requests by checking for <code class="inline-code">jsonrpc</code> and <code class="inline-code">method</code> fields. When detected, it translates the MCP format to Snapwire's native format, runs all security checks, and wraps the response back in JSON-RPC 2.0.</p>
+
+            <h3>Supported MCP Method</h3>
+            <table class="param-table">
+                <tr><th>Method</th><th>Description</th></tr>
+                <tr><td><code class="inline-code">tools/call</code></td><td>Intercept and audit a tool call before execution</td></tr>
+            </table>
+
+            <h3>Example Request</h3>
+            <pre><span class="lang-tag">JSON (MCP)</span>
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "send_email",
+    "arguments": {
+      "to": "user@example.com",
+      "subject": "Weekly Report"
+    }
+  }
+}</pre>
+
+            <div class="response-label">Response (allowed — MCP format)</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "status": "allowed",
+    "audit": { ... },
+    "message": "Tool call passed all constitutional checks."
+  }
+}</pre>
+
+            <div class="response-label">Response (blocked — MCP format)</div>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": {
+    "code": -32603,
+    "message": "Tool call blocked. Awaiting manual approval.",
+    "data": {
+      "status": "blocked",
+      "action_id": "a1b2c3d4",
+      "audit": { ... }
+    }
+  }
+}</pre>
+            <p>MCP format detection is automatic — the same <code class="inline-code">/api/intercept</code> endpoint handles both Snapwire-native and MCP JSON-RPC formats. No configuration needed.</p>
+
+            <h2 id="thinking-sentinel">Thinking Token Sentinel</h2>
+            <p>The Thinking Token Sentinel monitors <strong>extended thinking</strong> usage from models like Claude 3.7+ that expose <code class="inline-code">thinking_tokens</code> in their usage metadata. If an agent's model consumes more than <strong>50,000 thinking tokens</strong> without producing a tool call, Snapwire fires a <strong>"Potential Logic Loop"</strong> advisory warning.</p>
+
+            <h3>How to Report Usage</h3>
+            <p>Include the <code class="inline-code">usage</code> object in your intercept request with token counts from your LLM provider's response:</p>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "tool_name": "analyze_data",
+  "parameters": { "query": "Q4 revenue" },
+  "usage": {
+    "thinking_tokens": 62000,
+    "input_tokens": 1500,
+    "output_tokens": 800
+  }
+}</pre>
+
+            <h3>Sentinel Response</h3>
+            <p>When triggered, the response includes a <code class="inline-code">thinking_sentinel_warning</code> field (the tool call still proceeds through the normal pipeline — this is advisory, not a block):</p>
+            <pre><span class="lang-tag">JSON</span>
+{
+  "status": "allowed",
+  "thinking_sentinel_warning": {
+    "triggered": true,
+    "severity": "warning",
+    "thinking_tokens": 62000,
+    "threshold": 50000,
+    "estimated_cost": 0.62,
+    "message": "Potential Logic Loop: 62,000 thinking tokens consumed without a tool call."
+  }
+}</pre>
+            <p><strong>Note:</strong> The Thinking Token Sentinel is a heuristic cost-management tool based on token-to-action ratios. It is not a guarantee of model accuracy or behavior.</p>
+
             <h2 id="sdk-python">Python SDK</h2>
             <p>A minimal Python wrapper for quick integration:</p>
             <pre><span class="lang-tag">Python</span>
@@ -789,16 +881,19 @@ class AgenticFirewall:
         self.base_url = base_url
         self.headers = {"Authorization": f"Bearer {api_key}"}
 
-    def check(self, tool_name, parameters=None, intent="", agent_id="default"):
+    def check(self, tool_name, parameters=None, intent="", agent_id="default", usage=None):
+        payload = {
+            "tool_name": tool_name,
+            "parameters": parameters or {},
+            "intent": intent,
+            "agent_id": agent_id
+        }
+        if usage:
+            payload["usage"] = usage
         resp = requests.post(
             f"{self.base_url}/api/intercept",
             headers=self.headers,
-            json={
-                "tool_name": tool_name,
-                "parameters": parameters or {},
-                "intent": intent,
-                "agent_id": agent_id
-            }
+            json=payload
         )
         return resp.json()
 

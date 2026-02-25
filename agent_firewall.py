@@ -98,7 +98,7 @@ class AgentFirewall:
         else:
             raise FirewallError(f"Firewall unreachable after {self.retries} attempts (fail-block mode): {last_error}")
 
-    def check(self, tool_name, parameters=None, intent="", context="", estimated_cost=0.0, inner_monologue=None, webhook_url=None):
+    def check(self, tool_name, parameters=None, intent="", context="", estimated_cost=0.0, inner_monologue=None, webhook_url=None, usage=None):
         payload = {
             "tool_name": tool_name,
             "parameters": parameters or {},
@@ -111,6 +111,8 @@ class AgentFirewall:
             payload["inner_monologue"] = inner_monologue
         if webhook_url:
             payload["webhook_url"] = webhook_url
+        if usage:
+            payload["usage"] = usage
 
         status_code, result = self._request("POST", "/api/intercept", json_data=payload)
 

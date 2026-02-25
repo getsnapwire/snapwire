@@ -752,7 +752,7 @@
     <!-- SECTION 5: Core Features -->
     <section id="features" class="section">
         <p class="section-label">Core Features</p>
-        <h2 class="section-title">Five safeguards. Every call. Every agent. Day one.</h2>
+        <h2 class="section-title">Seven safeguards. Every call. Every agent. Day one.</h2>
         <p class="section-desc">No configuration required. These work out of the box, with any LLM, on any framework.</p>
         <div class="features" style="grid-template-columns: repeat(2, 1fr);">
             <div class="feature-card">
@@ -780,6 +780,18 @@
                 <div class="feature-icon" style="background:var(--blue-subtle);color:var(--blue);">&#x1F310;</div>
                 <h3>Egress Allowlisting</h3>
                 <p>Lock your agent's network boundary to trusted domains only. Block outbound HTTP and webhook calls to unapproved URLs before they happen.</p>
+            </div>
+            <div class="feature-card" style="position:relative;">
+                <span style="position:absolute;top:12px;right:12px;background:var(--accent);color:white;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:0.5px;">NEW</span>
+                <div class="feature-icon" style="background:rgba(0,245,212,0.08);color:#00F5D4;">&#x1F9E0;</div>
+                <h3>Thinking Token Sentinel</h3>
+                <p>Monitors extended thinking usage (Claude 3.7+). If your model burns 50k+ thinking tokens without a tool call, Snapwire fires a &ldquo;Potential Logic Loop&rdquo; warning before costs spiral.</p>
+            </div>
+            <div class="feature-card" style="position:relative;">
+                <span style="position:absolute;top:12px;right:12px;background:var(--accent);color:white;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:0.5px;">NEW</span>
+                <div class="feature-icon" style="background:rgba(138,43,226,0.08);color:#8A2BE2;">&#x1F50C;</div>
+                <h3>MCP-Compatible</h3>
+                <p>Native JSON-RPC 2.0 support. Send standard MCP <code>tools/call</code> requests directly &mdash; Snapwire auto-detects the format. Works with Cursor, Replit, Claude, and any MCP-compliant agent.</p>
             </div>
         </div>
     </section>

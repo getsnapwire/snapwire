@@ -904,6 +904,17 @@
                 </div>
             </div>
 
+            <div id="thinking-sentinel-banner" style="display:none;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:12px;padding:14px 20px;margin-bottom:20px;align-items:center;gap:12px;font-size:14px;color:var(--text-secondary);">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:20px;">&#129504;</span>
+                    <div>
+                        <span style="font-weight:600;color:#b45309;">Thinking Token Sentinel</span>
+                        <span id="thinking-sentinel-count" style="font-weight:700;color:var(--accent-yellow,#FFD66B);margin-left:6px;">0</span>
+                        <span> warning(s) detected &mdash; agents consumed excessive thinking tokens without tool calls.</span>
+                    </div>
+                </div>
+            </div>
+
             <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:20px;">
                 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
@@ -5531,6 +5542,15 @@ def handle_tool_call(tool_call):
 
                 const schemaEl = document.getElementById('ov-schema');
                 if (schemaEl) schemaEl.textContent = d.schema_violations || 0;
+
+                const sentinelBanner = document.getElementById('thinking-sentinel-banner');
+                const sentinelCount = document.getElementById('thinking-sentinel-count');
+                if (sentinelBanner && d.thinking_sentinel_warnings > 0) {
+                    sentinelBanner.style.display = 'flex';
+                    if (sentinelCount) sentinelCount.textContent = d.thinking_sentinel_warnings;
+                } else if (sentinelBanner) {
+                    sentinelBanner.style.display = 'none';
+                }
 
                 const todayEl = document.getElementById('ov-today-spend');
                 if (todayEl) todayEl.textContent = '$' + (d.today_spend || 0).toFixed(2);
