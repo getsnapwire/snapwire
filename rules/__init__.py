@@ -1,5 +1,5 @@
 """
-Snapwire Community Rules — Deterministic Safety Fuses
+Snapwire Community Rules — Deterministic Firewall Rules
 
 Each rule in this directory implements a single, deterministic safety check
 that runs before an agent tool call is executed. Rules don't use AI judgment;

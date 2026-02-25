@@ -190,5 +190,5 @@ def generate_compliance_report(installed_rule_names):
         "partial": partial_count,
         "gaps": gap_count,
         "categories": categories,
-        "disclaimer": "This report is informational and does not constitute a formal NIST AI RMF audit or certification. It reflects coverage based on installed Snapwire rule packs only.",
+        "disclaimer": "This report is informational and does not constitute a formal NISTIR 8596 audit or certification. It reflects CSF 2.0 alignment based on installed Snapwire rule packs only.",
     }

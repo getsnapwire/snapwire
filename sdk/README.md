@@ -1,6 +1,6 @@
 # Snapwire Python SDK
 
-Official Python SDK for [Snapwire](https://github.com/snapwire-ai/snapwire) — The Safety Fuse for Your AI Agents.
+Official Python SDK for [Snapwire](https://github.com/snapwire-ai/snapwire) — The Firewall for AI Agents.
 
 ## Installation
 

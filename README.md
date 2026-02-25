@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">Snapwire</h1>
-<p align="center"><strong>The Safety Fuse for Your AI Agents</strong></p>
+<p align="center"><strong>The Firewall for AI Agents</strong></p>
 
 <p align="center">
   Real-time spend monitoring, deterministic loop detection, and credential proxy for autonomous AI agents.<br/>

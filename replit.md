@@ -1,7 +1,7 @@
 # Snapwire
 
 ## Overview
-Snapwire is an AI-powered security gateway designed to intercept, audit, and control AI agent tool calls against user-defined automation rules. Its primary purpose is to act as "The Safety Fuse for Your AI Agents," preventing unauthorized or undesirable actions by AI agents. The project aims to provide real-time monitoring and control over AI operations, focusing on spend monitoring, security, and behavioral governance.
+Snapwire is an AI-powered security gateway designed to intercept, audit, and control AI agent tool calls against user-defined automation rules. Its primary purpose is to act as "The Firewall for AI Agents," preventing unauthorized or undesirable actions by AI agents. The project aims to provide real-time monitoring and control over AI operations, focusing on spend monitoring, security, and behavioral governance.
 
 Key capabilities include:
 - **Utility-First Positioning**: Focuses on spend monitoring, loop detection, and credential security.

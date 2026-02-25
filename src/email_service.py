@@ -381,7 +381,7 @@ def send_welcome_email(user_name, user_email, dashboard_url=""):
     subject = "Welcome to Snapwire"
     text_body = (
         f"Hi {user_name},\n\n"
-        f"Welcome to Snapwire — The Safety Fuse for Your AI Agents.\n\n"
+        f"Welcome to Snapwire — The Firewall for AI Agents.\n\n"
         f"Here's how to get started:\n\n"
         f"1. Create your first API key\n"
         f"   Go to Settings > API Keys and generate a key to connect your agents.\n\n"
@@ -399,7 +399,7 @@ def send_welcome_email(user_name, user_email, dashboard_url=""):
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #0B0D10; color: #F0EEE9;">
         <div style="background: linear-gradient(135deg, #FF6B00, #CC5500); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
             <h1 style="margin: 0; font-size: 28px; color: white;">Welcome to Snapwire</h1>
-            <p style="margin: 8px 0 0; color: rgba(255,255,255,0.85); font-size: 15px;">The Safety Fuse for Your AI Agents</p>
+            <p style="margin: 8px 0 0; color: rgba(255,255,255,0.85); font-size: 15px;">The Firewall for AI Agents</p>
         </div>
         <div style="padding: 32px; background: #151A21; border: 1px solid #273140; border-top: none;">
             <p style="color: #F0EEE9; font-size: 16px; margin: 0 0 24px;">Hi {user_name},</p>
@@ -472,7 +472,7 @@ def send_first_block_email(user_name, user_email, tool_name, rule_name, dashboar
             <a href="{dashboard_url}" style="display: block; text-align: center; background: #FF6B00; color: white; padding: 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">Review in Dashboard</a>
         </div>
         <div style="padding: 16px; text-align: center; background: #0B0D10; border-radius: 0 0 12px 12px; border: 1px solid #273140; border-top: none;">
-            <p style="margin: 0; color: #5A6270; font-size: 12px;">Snapwire — The Safety Fuse for Your AI Agents</p>
+            <p style="margin: 0; color: #5A6270; font-size: 12px;">Snapwire — The Firewall for AI Agents</p>
         </div>
     </div>"""
     send_email(subject, text_body, html_body, to_email=user_email)
@@ -519,7 +519,7 @@ def send_digest_email(stats):
             </div>
         </div>
         <div style="background: #f1f5f9; padding: 16px; border-radius: 0 0 8px 8px; border: 1px solid #e2e8f0; border-top: 0; text-align: center;">
-            <p style="margin: 0; color: #64748b; font-size: 14px;">Snapwire — The Safety Fuse for Your AI Agents</p>
+            <p style="margin: 0; color: #64748b; font-size: 14px;">Snapwire — The Firewall for AI Agents</p>
         </div>
     </div>
     """
