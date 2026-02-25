@@ -313,7 +313,7 @@ def dashboard():
             from replit_auth import _is_first_run
             if _is_first_run():
                 return redirect(url_for("local_auth.login_page"))
-        return render_template("login.html", login_url=_get_login_url())
+        return render_template("login.html", login_url=_get_login_url(), turnstile_site_key=os.environ.get("TURNSTILE_SITE_KEY", ""))
     if not current_user.tos_accepted_at:
         return redirect(url_for("tos_page"))
     is_self_hosted = not os.environ.get("REPL_ID")
@@ -2662,6 +2662,70 @@ def register_self_hosted():
         "template_url": REPLIT_TEMPLATE_URL,
         "message": "Registration successful! Redirecting to template...",
     })
+
+
+@app.route("/api/contact", methods=["POST"])
+def contact_submit():
+    from datetime import timedelta as _td
+    from models import ContactSubmission
+
+    ip = request.remote_addr or "unknown"
+    now = datetime.utcnow()
+    one_hour_ago = now - _td(hours=1)
+    recent_count = ContactSubmission.query.filter(
+        ContactSubmission.ip_address == ip,
+        ContactSubmission.created_at >= one_hour_ago
+    ).count()
+    if recent_count >= 3:
+        return jsonify({"error": "Rate limit exceeded. Please try again later."}), 429
+
+    data = request.get_json() or {}
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip()
+    message = (data.get("message") or "").strip()
+
+    if not name or not email or not message:
+        return jsonify({"error": "All fields are required."}), 400
+    if "@" not in email or "." not in email:
+        return jsonify({"error": "Please enter a valid email address."}), 400
+    if len(message) > 5000:
+        return jsonify({"error": "Message too long (max 5000 characters)."}), 400
+
+    turnstile_token = data.get("cf_turnstile_token")
+    turnstile_secret = os.environ.get("TURNSTILE_SECRET_KEY")
+    if turnstile_secret:
+        if not turnstile_token:
+            return jsonify({"error": "CAPTCHA verification required."}), 400
+        try:
+            import urllib.request
+            import urllib.parse
+            verify_data = urllib.parse.urlencode({
+                "secret": turnstile_secret,
+                "response": turnstile_token,
+                "remoteip": ip,
+            }).encode("utf-8")
+            verify_req = urllib.request.Request(
+                "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+                data=verify_data,
+                method="POST",
+            )
+            with urllib.request.urlopen(verify_req, timeout=10) as resp:
+                verify_result = json.loads(resp.read().decode("utf-8"))
+            if not verify_result.get("success"):
+                return jsonify({"error": "CAPTCHA verification failed. Please try again."}), 400
+        except Exception as e:
+            logging.warning(f"Turnstile verification error: {e}")
+
+    submission = ContactSubmission(
+        name=name,
+        email=email,
+        message=message,
+        ip_address=ip,
+    )
+    db.session.add(submission)
+    db.session.commit()
+
+    return jsonify({"status": "sent", "message": "Thank you! We'll get back to you soon."})
 
 
 @app.route("/api/public/audit", methods=["POST"])

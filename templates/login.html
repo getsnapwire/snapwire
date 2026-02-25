@@ -113,7 +113,7 @@
         }
 
         .hero {
-            padding: 180px 32px 140px;
+            padding: 160px 32px 80px;
             text-align: center;
             background: linear-gradient(135deg, #0B0D10 0%, #0B0D10 60%, #2B1538 100%);
             position: relative;
@@ -186,7 +186,7 @@
             font-size: 18px;
             line-height: 1.75;
             color: var(--text-secondary);
-            margin-bottom: 48px;
+            margin-bottom: 36px;
             max-width: 540px;
             margin-left: auto;
             margin-right: auto;
@@ -237,7 +237,7 @@
         }
 
         .section {
-            padding: 140px 32px;
+            padding: 100px 32px;
             max-width: 1140px;
             margin: 0 auto;
         }
@@ -382,7 +382,6 @@
         .feature-card:nth-child(3) .feature-icon { background: var(--blue-subtle); color: var(--blue); }
         .feature-card:nth-child(4) .feature-icon { background: var(--green-subtle); color: var(--green); }
         .feature-card:nth-child(5) .feature-icon { background: var(--red-subtle); color: var(--red); }
-        .feature-card:nth-child(6) .feature-icon { background: var(--accent-subtle); color: var(--accent); }
 
         .feature-card h3 {
             font-size: 16px;
@@ -392,56 +391,6 @@
         }
 
         .feature-card p {
-            font-size: 14px;
-            color: var(--text-secondary);
-            line-height: 1.7;
-        }
-
-        .why-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-        }
-
-        .why-card {
-            text-align: center;
-            padding: 44px 28px;
-            border-radius: 16px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            transition: all 0.25s;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .why-card:hover {
-            border-color: var(--border-hover);
-            transform: translateY(-2px);
-        }
-
-        .why-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 22px;
-        }
-
-        .why-card:nth-child(1) .why-icon { background: var(--green-subtle); color: var(--green); }
-        .why-card:nth-child(2) .why-icon { background: var(--blue-subtle); color: var(--blue); }
-        .why-card:nth-child(3) .why-icon { background: var(--amber-subtle); color: var(--amber); }
-        .why-card:nth-child(4) .why-icon { background: var(--accent-subtle); color: var(--accent); }
-
-        .why-card h3 {
-            font-size: 17px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: var(--text-primary);
-        }
-
-        .why-card p {
             font-size: 14px;
             color: var(--text-secondary);
             line-height: 1.7;
@@ -517,7 +466,7 @@
 
         .final-cta {
             text-align: center;
-            padding: 140px 32px;
+            padding: 100px 32px;
             background: linear-gradient(135deg, #0B0D10 0%, #0B0D10 60%, #2B1538 100%);
             position: relative;
             overflow: hidden;
@@ -593,19 +542,21 @@
             color: var(--text-tertiary);
         }
 
-        .footer-contact {
-            font-size: 13px;
-            color: var(--text-muted);
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
             margin-top: 12px;
         }
 
-        .footer-contact a {
-            color: var(--text-secondary);
+        .footer-links a {
+            font-size: 13px;
+            color: var(--text-muted);
             text-decoration: none;
             transition: color 0.2s;
         }
 
-        .footer-contact a:hover {
+        .footer-links a:hover {
             color: var(--text-primary);
         }
 
@@ -622,15 +573,14 @@
         .deploy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 880px; margin: 0 auto; }
 
         @media (max-width: 768px) {
-            .hero { padding: 160px 20px 120px; }
+            .hero { padding: 140px 20px 60px; }
             .hero h1 { font-size: 36px; letter-spacing: -1px; }
             .hero-sub { font-size: 16px; }
-            .section { padding: 100px 20px; }
+            .section { padding: 80px 20px; }
             .section-title { font-size: 28px; }
             .steps { grid-template-columns: 1fr; gap: 32px; }
             .steps::before { display: none; }
             .features { grid-template-columns: 1fr; }
-            .why-grid { grid-template-columns: repeat(2, 1fr) !important; }
             .final-cta h2 { font-size: 28px; }
             .nav { padding: 0 16px; }
             .nav-links a:not(.nav-btn) { display: none; }
@@ -645,14 +595,13 @@
         @media (max-width: 480px) {
             .hero h1 { font-size: 28px; }
             .feature-card { padding: 24px; }
-            .why-grid { grid-template-columns: 1fr !important; }
         }
     </style>
 </head>
 <body>
     <nav class="nav">
         <a href="/" class="nav-logo">
-            <span class="logo-icon">⚡</span>
+            <span class="logo-icon">&#9889;</span>
             Snapwire
         </a>
         <div class="nav-links">
@@ -666,6 +615,7 @@
         </div>
     </nav>
 
+    <!-- SECTION 1: Hero -->
     <section class="hero">
         <div class="hero-content">
             <div class="hero-badge animate">
@@ -676,29 +626,34 @@
             <p class="hero-sub animate animate-d2">
                 Your agent just ran the same API call 47 times. That's $200 gone. Snapwire catches it in under 2ms &mdash; and kills the loop before your budget does.
             </p>
-            <p class="animate animate-d2" style="font-size:14px;color:var(--text-tertiary);max-width:600px;margin:12px auto 0;line-height:1.7;">AI agents are software that takes actions on your behalf &mdash; sending emails, running database queries, calling APIs, managing files. Snapwire makes sure they follow your rules.</p>
             <div class="cta-group animate animate-d3">
                 <a href="#get-started" class="cta cta-primary">
                     Get the Fuse <span>&rarr;</span>
                 </a>
                 <a href="/audit" class="cta cta-secondary">Free Security Audit</a>
             </div>
-            <div class="animate animate-d3" style="margin-top:16px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--text-tertiary);">
-                <span style="color:var(--green);">&#x2713;</span> Runs inside any container, sandbox, or cloud runtime
-            </div>
-            <div class="sentinel-counter animate animate-d3" id="sentinel-counter" style="margin-top:24px;display:flex;align-items:center;gap:16px;justify-content:center;flex-wrap:wrap;">
-                <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,107,0,0.08);border:1px solid rgba(255,107,0,0.2);border-radius:10px;">
+            <div class="animate animate-d3" style="margin-top:20px;display:none;align-items:center;gap:16px;justify-content:center;flex-wrap:wrap;" id="hero-social-proof">
+                <div id="sentinel-badge" style="display:none;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,107,0,0.08);border:1px solid rgba(255,107,0,0.2);border-radius:10px;">
                     <span style="font-size:18px;">&#x1F6E1;</span>
                     <span style="font-size:14px;color:var(--text-secondary);"><strong id="sentinel-count" style="color:var(--accent);font-size:16px;">0</strong> / 150 Founding Sentinel Slots Claimed</span>
                 </div>
-                <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(0,245,212,0.06);border:1px solid rgba(0,245,212,0.15);border-radius:10px;">
+                <div id="blocked-badge" style="display:none;align-items:center;gap:8px;padding:8px 16px;background:rgba(0,245,212,0.06);border:1px solid rgba(0,245,212,0.15);border-radius:10px;">
                     <span style="font-size:18px;">&#x26A1;</span>
                     <span style="font-size:14px;color:var(--text-secondary);"><strong id="total-blocked-count" style="color:var(--green);font-size:16px;">0</strong> actions blocked</span>
+                </div>
+                <div id="static-badge-1" style="display:none;align-items:center;gap:8px;padding:8px 16px;background:rgba(0,245,212,0.06);border:1px solid rgba(0,245,212,0.15);border-radius:10px;">
+                    <span style="font-size:14px;color:var(--green);font-weight:600;">&#x2713;</span>
+                    <span style="font-size:14px;color:var(--text-secondary);">Open Source &mdash; Apache 2.0</span>
+                </div>
+                <div id="static-badge-2" style="display:none;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,107,0,0.08);border:1px solid rgba(255,107,0,0.2);border-radius:10px;">
+                    <span style="font-size:14px;color:var(--accent);font-weight:600;">&#x2713;</span>
+                    <span style="font-size:14px;color:var(--text-secondary);">Works with any agent framework</span>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- SECTION 2: Live Kill Feed -->
     <section class="kill-feed-section" style="padding:32px 32px 0;overflow:hidden;">
         <div style="max-width:900px;margin:0 auto;">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
@@ -732,108 +687,43 @@
         </div>
     </section>
 
-    <section id="get-started" style="padding:120px 32px 100px;background:var(--surface);">
-        <p class="section-label">Get Started</p>
-        <h2 class="section-title">Choose your deployment</h2>
-        <p class="section-desc">Run on our cloud or deploy to your own infrastructure. Same schema, easy migration.</p>
+    <!-- SECTION 3: Get Started — Self-Hosted Primary -->
+    <section id="get-started" style="padding:80px 32px 100px;background:var(--surface);">
+        <p class="section-label">Get Started in 60 Seconds</p>
+        <h2 class="section-title">Fork it. Run it. Done.</h2>
+        <p class="section-desc">Full governance engine, 22 security rules, real-time Kill Feed &mdash; running on your own infrastructure in one click.</p>
         <div class="deploy-grid">
-            <div style="background:var(--base);border:1px solid var(--accent-border);border-radius:16px;padding:40px;position:relative;overflow:hidden;box-shadow:0 0 0 1px rgba(255,107,0,0.08),0 8px 32px rgba(0,0,0,0.2);">
-                <div style="position:absolute;top:0;right:0;background:var(--accent);color:white;font-size:11px;font-weight:700;padding:6px 16px;border-radius:0 0 0 12px;text-transform:uppercase;letter-spacing:0.5px;">Recommended</div>
+            <div style="background:var(--base);border:2px solid var(--accent-border);border-radius:16px;padding:40px;position:relative;overflow:hidden;box-shadow:0 0 0 1px rgba(255,107,0,0.08),0 8px 32px rgba(0,0,0,0.2);">
+                <div style="position:absolute;top:0;right:0;background:var(--accent);color:white;font-size:11px;font-weight:700;padding:6px 16px;border-radius:0 0 0 12px;text-transform:uppercase;letter-spacing:0.5px;">Fastest</div>
+                <div style="font-size:28px;margin-bottom:12px;">&#x1F3E0;</div>
+                <h3 style="font-size:22px;font-weight:700;margin-bottom:10px;color:var(--text-primary);">Self-Hosted</h3>
+                <p style="font-size:14px;color:var(--text-secondary);line-height:1.65;margin-bottom:28px;">Fork on Replit and start protecting your agents in under 60 seconds. Full source code, your infrastructure, your data.</p>
+                <ul style="list-style:none;margin-bottom:32px;font-size:13px;color:var(--text-secondary);">
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> One-click fork &mdash; runs instantly</li>
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> 22 security rules pre-loaded</li>
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Full source code (Apache 2.0)</li>
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Your data never leaves your server</li>
+                </ul>
+                <a href="https://replit.com/@MasonJeffreys/Snapwire" target="_blank" style="display:block;text-align:center;background:var(--accent);color:white;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;text-decoration:none;transition:all 0.2s;">Fork on Replit &mdash; Free &rarr;</a>
+            </div>
+            <div style="background:var(--base);border:1px solid var(--border);border-radius:16px;padding:40px;">
                 <div style="font-size:28px;margin-bottom:12px;">&#x2601;</div>
                 <h3 style="font-size:22px;font-weight:700;margin-bottom:10px;color:var(--text-primary);">Cloud</h3>
                 <p style="font-size:14px;color:var(--text-secondary);line-height:1.65;margin-bottom:28px;">Fully managed. Sign up and start protecting your agents in under 2 minutes. We handle infrastructure, updates, and scaling.</p>
                 <ul style="list-style:none;margin-bottom:32px;font-size:13px;color:var(--text-secondary);">
                     <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Instant setup, no servers needed</li>
-                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Automatic updates & scaling</li>
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Automatic updates &amp; scaling</li>
                     <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Free tier available</li>
-                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Dashboard & analytics included</li>
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Dashboard &amp; analytics included</li>
                 </ul>
-                <a href="{{ login_url }}" style="display:block;text-align:center;background:var(--accent);color:white;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;text-decoration:none;transition:all 0.2s;">Sign Up Free &rarr;</a>
-            </div>
-            <div style="background:var(--base);border:1px solid var(--border);border-radius:16px;padding:40px;">
-                <div style="font-size:28px;margin-bottom:12px;">&#x1F3E0;</div>
-                <h3 style="font-size:22px;font-weight:700;margin-bottom:10px;color:var(--text-primary);">Self-Hosted</h3>
-                <p style="font-size:14px;color:var(--text-secondary);line-height:1.65;margin-bottom:28px;">Deploy on your own infrastructure with full control. Same code, same schema. Migrate to Cloud anytime with zero data loss.</p>
-                <ul style="list-style:none;margin-bottom:32px;font-size:13px;color:var(--text-secondary);">
-                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Full source code access</li>
-                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Your infrastructure, your data</li>
-                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Compatible schema for migration</li>
-                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> One-click template deploy</li>
-                </ul>
-                <button onclick="document.getElementById('self-hosted-modal').style.display='flex'" style="display:block;width:100%;text-align:center;background:var(--surface);color:var(--text-secondary);padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;border:1px solid var(--border);cursor:pointer;transition:all 0.2s;">Get Template &rarr;</button>
+                <a href="{{ login_url }}" style="display:block;text-align:center;background:var(--surface);color:var(--text-secondary);padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;text-decoration:none;border:1px solid var(--border);transition:all 0.2s;">Sign Up Free &rarr;</a>
             </div>
         </div>
     </section>
 
-    <div id="self-hosted-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px;max-width:480px;width:90%;position:relative;">
-            <button onclick="document.getElementById('self-hosted-modal').style.display='none'" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-tertiary);">&times;</button>
-            <h3 style="font-size:20px;font-weight:700;margin-bottom:6px;color:var(--text-primary);">Get Your Self-Hosted Template</h3>
-            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:24px;">Tell us a bit about yourself so we can help you get the most out of your deployment.</p>
-            <form id="self-hosted-form" onsubmit="submitSelfHosted(event)">
-                <div style="margin-bottom:14px;">
-                    <label style="display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Name *</label>
-                    <input type="text" id="sh-name" required placeholder="Your name" style="width:100%;padding:10px 14px;border:1px solid var(--border-hover);border-radius:10px;font-size:14px;font-family:inherit;box-sizing:border-box;background:var(--base);color:var(--text-primary);">
-                </div>
-                <div style="margin-bottom:14px;">
-                    <label style="display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Email *</label>
-                    <input type="email" id="sh-email" required placeholder="you@company.com" style="width:100%;padding:10px 14px;border:1px solid var(--border-hover);border-radius:10px;font-size:14px;font-family:inherit;box-sizing:border-box;background:var(--base);color:var(--text-primary);">
-                </div>
-                <div style="margin-bottom:14px;">
-                    <label style="display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Company</label>
-                    <input type="text" id="sh-company" placeholder="Company name (optional)" style="width:100%;padding:10px 14px;border:1px solid var(--border-hover);border-radius:10px;font-size:14px;font-family:inherit;box-sizing:border-box;background:var(--base);color:var(--text-primary);">
-                </div>
-                <div style="margin-bottom:14px;">
-                    <label style="display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Use Case</label>
-                    <textarea id="sh-usecase" rows="2" placeholder="What will you use Snapwire for?" style="width:100%;padding:10px 14px;border:1px solid var(--border-hover);border-radius:10px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;background:var(--base);color:var(--text-primary);"></textarea>
-                </div>
-                <div style="margin-bottom:6px;">
-                    <label style="display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Terms of Service & Privacy Policy *</label>
-                    <div id="sh-tos-box" style="height:160px;overflow-y:auto;border:1px solid var(--border-hover);border-radius:10px;padding:14px;font-size:12px;line-height:1.7;color:var(--text-secondary);background:var(--base);">
-                        <p style="font-weight:700;color:var(--text-primary);margin-bottom:8px;">Part 1: Terms of Service (TOS)</p>
-                        <p style="margin-bottom:6px;"><strong>Effective Date: February 18, 2026</strong></p>
-                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">1. Nature of the Service (Non-Agency)</p>
-                        <p style="margin-bottom:6px;">Snapwire (the "Service") is a Risk-Mitigation and Decision-Support Layer.</p>
-                        <p style="margin-bottom:6px;"><strong>No Delegation of Authority:</strong> You acknowledge that the Service does not act as your legal agent, broker, or fiduciary. By using this tool, you remain the sole legal "Principal" responsible for all actions, financial transactions, and data modifications initiated by your AI agents.</p>
-                        <p style="margin-bottom:6px;"><strong>Informational Only:</strong> The Service's "Deception Audits," "Safety Grades," and "Intent Reasonings" are generated by probabilistic machine learning models. These are opinions and confidence scores, not factual certainties.</p>
-                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">2. User Responsibilities & "Human-in-the-Loop"</p>
-                        <p style="margin-bottom:6px;"><strong>Final Approval:</strong> You agree to review all actions flagged by the Service. Your choice to "Override" or "Approve" a blocked action constitutes an express assumption of all resulting liability.</p>
-                        <p style="margin-bottom:6px;"><strong>Credential Safety:</strong> While the Service provides an "Identity Vault," you are responsible for the security of your master access credentials and the management of keys provided to the system.</p>
-                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">3. Policy Marketplace Disclaimer</p>
-                        <p style="margin-bottom:6px;">Use of "Community Rule Packs" from the Policy Marketplace is at your sole risk. These rules are provided "AS-IS" without verification of their logic by the Service developers.</p>
-                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">4. Limitation of Liability</p>
-                        <p style="margin-bottom:6px;">To the maximum extent permitted by law, the Developers of the Service shall not be liable for any direct, indirect, or consequential damages arising from the use or failure of the Service.</p>
-                        <p style="font-weight:700;color:var(--text-primary);margin:14px 0 8px;">Part 2: Privacy Policy (PP)</p>
-                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">1. Data Minimization & Usage</p>
-                        <p style="margin-bottom:6px;"><strong>The "No-Training" Guarantee:</strong> Your audit logs, private prompts, and injected credentials are never used to train, fine-tune, or improve any AI models.</p>
-                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">2. Zero-Knowledge Identity Vault</p>
-                        <p style="margin-bottom:6px;">Credentials stored in the Identity Vault are encrypted at rest. The Service utilizes "Ephemeral Injection," meaning your keys exist only in memory during execution.</p>
-                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">3. Data Retention & Right to Purge</p>
-                        <p style="margin-bottom:6px;">All Audit Logs are automatically purged after 30 days. You may request a total data wipe at any time through your dashboard.</p>
-                        <p style="font-weight:600;color:var(--text-primary);margin:10px 0 4px;">4. Automated Decision-Making (ADMT) Rights</p>
-                        <p style="margin-bottom:6px;">The Service is configured to require Manual Human Approval for high-risk categories unless you affirmatively create a bypass rule.</p>
-                    </div>
-                    <p id="sh-tos-hint" style="font-size:11px;color:var(--text-tertiary);margin-top:6px;display:flex;align-items:center;gap:4px;">&#x2193; Scroll down to read the full terms before agreeing</p>
-                </div>
-                <div style="margin-bottom:16px;">
-                    <label id="sh-agree-label" style="display:flex;align-items:flex-start;gap:8px;cursor:not-allowed;opacity:0.5;transition:all 0.3s;">
-                        <input type="checkbox" id="sh-agree-check" disabled style="margin-top:2px;width:16px;height:16px;accent-color:#FF6B00;">
-                        <span style="font-size:13px;color:var(--text-primary);line-height:1.4;">I have read and agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong></span>
-                    </label>
-                </div>
-                <div id="sh-error" style="display:none;color:#f87171;font-size:13px;margin-bottom:12px;"></div>
-                <button type="submit" id="sh-submit-btn" disabled style="width:100%;padding:14px;background:var(--border-hover);color:var(--text-tertiary);border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:not-allowed;font-family:inherit;transition:all 0.3s;">Get Template Link &rarr;</button>
-            </form>
-            <div id="sh-success" style="display:none;text-align:center;padding:20px 0;">
-                <div style="font-size:40px;margin-bottom:12px;">&#x1F389;</div>
-                <h4 style="font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">You're all set!</h4>
-                <p style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;">Redirecting you to the template...</p>
-            </div>
-        </div>
-    </div>
-
     <hr class="divider">
 
+    <!-- SECTION 4: How It Works -->
     <section id="how-it-works" class="section">
         <p class="section-label">How It Works</p>
         <h2 class="section-title">Five minutes to your first safety net</h2>
@@ -859,6 +749,7 @@
 
     <hr class="divider">
 
+    <!-- SECTION 5: Core Features -->
     <section id="features" class="section">
         <p class="section-label">Core Features</p>
         <h2 class="section-title">Five safeguards. Every call. Every agent. Day one.</h2>
@@ -895,108 +786,7 @@
 
     <hr class="divider">
 
-    <section id="vibe-to-rule" class="section" style="padding-bottom:80px;">
-        <p class="section-label">Try It Now</p>
-        <h2 class="section-title">Describe a rule. Get the code.</h2>
-        <p class="section-desc">Type a safety rule in plain English. Snapwire generates the enforcement logic instantly.</p>
-        <div style="max-width:720px;margin:0 auto;">
-            <div style="display:flex;gap:10px;margin-bottom:20px;">
-                <input type="text" id="vibe-input" placeholder="Don't let my agent delete files in the /prod folder" style="flex:1;padding:14px 18px;border:1px solid var(--border-hover);border-radius:12px;font-size:15px;font-family:inherit;background:var(--surface);color:var(--text-primary);outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border-hover)'">
-                <button id="vibe-btn" onclick="generateRule()" style="padding:14px 24px;background:var(--accent);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity 0.2s;">Generate</button>
-            </div>
-            <div id="vibe-result" style="display:none;">
-                <div style="position:relative;">
-                    <pre id="vibe-code" style="background:#0d1117;border:1px solid var(--border);border-radius:12px;padding:20px;font-size:13px;line-height:1.6;color:#c9d1d9;overflow-x:auto;font-family:'Fira Code',monospace;white-space:pre-wrap;"></pre>
-                    <button onclick="copyVibeCode()" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#8b949e;padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;">Copy</button>
-                </div>
-                <div style="text-align:center;margin-top:16px;">
-                    <a href="{{ login_url }}" style="display:inline-block;padding:12px 28px;background:var(--accent);color:white;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;">Sign up to save this rule &rarr;</a>
-                </div>
-            </div>
-            <div id="vibe-error" style="display:none;color:#ff4d6a;font-size:14px;text-align:center;margin-top:12px;"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
-                <span style="font-size:12px;color:var(--text-tertiary);">Try:</span>
-                <button class="vibe-example" onclick="document.getElementById('vibe-input').value=this.textContent;generateRule();" style="font-size:12px;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);cursor:pointer;">Block SQL DELETE without WHERE</button>
-                <button class="vibe-example" onclick="document.getElementById('vibe-input').value=this.textContent;generateRule();" style="font-size:12px;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);cursor:pointer;">Never read .env files</button>
-                <button class="vibe-example" onclick="document.getElementById('vibe-input').value=this.textContent;generateRule();" style="font-size:12px;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);cursor:pointer;">Limit HTTP requests to 10 per minute</button>
-            </div>
-        </div>
-    </section>
-
-    <hr class="divider">
-
-    <section class="section" style="padding-bottom:80px;">
-        <p class="section-label">Free Tool</p>
-        <h2 class="section-title">Get a safety score in 30 seconds</h2>
-        <p class="section-desc">Paste your system prompt. Our AI finds security vulnerabilities and gives you an actionable score &mdash; free, no signup required.</p>
-        <div style="max-width:720px;margin:0 auto;">
-            <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;display:flex;gap:28px;align-items:center;flex-wrap:wrap;">
-                <div style="flex:1;min-width:200px;">
-                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-                        <div style="width:56px;height:56px;border-radius:50%;border:3px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--green);">82</div>
-                        <div>
-                            <div style="font-size:15px;font-weight:700;color:var(--text-primary);">Safety Score</div>
-                            <div style="font-size:12px;color:var(--green);">Low Risk</div>
-                        </div>
-                    </div>
-                    <div style="display:flex;flex-direction:column;gap:8px;">
-                        <div style="display:flex;align-items:center;gap:8px;font-size:12px;">
-                            <span style="background:var(--amber-subtle);color:var(--amber);padding:2px 8px;border-radius:4px;font-weight:600;">MEDIUM</span>
-                            <span style="color:var(--text-secondary);">Missing output length limit</span>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:8px;font-size:12px;">
-                            <span style="background:var(--amber-subtle);color:var(--amber);padding:2px 8px;border-radius:4px;font-weight:600;">MEDIUM</span>
-                            <span style="color:var(--text-secondary);">No injection resistance pattern</span>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:8px;font-size:12px;">
-                            <span style="background:var(--red-subtle);color:var(--red);padding:2px 8px;border-radius:4px;font-weight:600;">HIGH</span>
-                            <span style="color:var(--text-secondary);">Broad tool access without scoping</span>
-                        </div>
-                    </div>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:12px;align-items:center;">
-                    <a href="/audit" style="display:inline-block;padding:14px 28px;background:var(--accent);color:white;border-radius:12px;font-size:15px;font-weight:600;text-decoration:none;text-align:center;transition:all 0.2s;white-space:nowrap;">Run Free Audit &rarr;</a>
-                    <span style="font-size:12px;color:var(--text-tertiary);">No signup required</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <hr class="divider">
-
-    <section class="section">
-        <p class="section-label">Go Deeper</p>
-        <h2 class="section-title">Enterprise governance, included free</h2>
-        <p class="section-desc">Write rules in plain English. Test them safely. Enforce them automatically.</p>
-        <div class="why-grid" style="grid-template-columns: repeat(4, 1fr);">
-            <div class="why-card">
-                <div class="why-icon">&#x2696;</div>
-                <h3>Plain-English Rules</h3>
-                <p>Write "never delete production databases" and Snapwire enforces it. No code required. Auto-approve safe actions, escalate risky ones.</p>
-            </div>
-            <div class="why-card">
-                <div class="why-icon">&#x1F504;</div>
-                <h3>Shadow Merge</h3>
-                <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px;font-weight:500;">Risk-Free Rule Testing</p>
-                <p>Test new rules against live traffic without blocking anything. See what would have been caught. Promote to enforcement when you're confident &mdash; zero risk to production.</p>
-            </div>
-            <div class="why-card">
-                <div class="why-icon">&#x1F9E0;</div>
-                <h3>Goal Drift Alerts <span style="font-size:11px;color:var(--warning);font-weight:600;vertical-align:middle;">ADVISORY</span></h3>
-                <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px;font-weight:500;">Behavior Change Warnings</p>
-                <p>Flags when an agent's behavior shifts from its stated goal. Advisory signals for human review &mdash; not automated decisions.</p>
-            </div>
-            <div class="why-card">
-                <div class="why-icon">&#x1F3AF;</div>
-                <h3>Honeypot Tripwires</h3>
-                <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px;font-weight:500;">Decoy Tool Detection</p>
-                <p>Plant decoy tools your agent should never touch. If it tries, you get an instant alert. Catches rogue exploration before damage happens.</p>
-            </div>
-        </div>
-    </section>
-
-    <hr class="divider">
-
+    <!-- SECTION 6: Why Not Just a Sandbox -->
     <section id="why-not-sandbox" class="section">
         <p class="section-label">Why Not Just a Sandbox?</p>
         <h2 class="section-title">Sandboxes protect your machine. Snapwire protects your business.</h2>
@@ -1026,68 +816,45 @@
                 <div style="margin-top:20px;padding:14px 16px;background:var(--accent-subtle);border-radius:10px;font-size:13px;color:var(--accent);">Stops: DROP TABLE, spending loops, credential leaks, policy violations</div>
             </div>
         </div>
-        <div style="text-align:center;margin-bottom:56px;">
+        <div style="text-align:center;">
             <p style="font-size:15px;color:var(--text-secondary);max-width:640px;margin:0 auto;line-height:1.75;">Snapwire runs inside any container, any cloud, any sandbox. The two layers are complementary &mdash; not competing.</p>
         </div>
+    </section>
 
-        <h3 style="text-align:center;font-size:20px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">5 things sandboxes can't stop</h3>
-        <p style="text-align:center;font-size:14px;color:var(--text-tertiary);margin-bottom:36px;">A sandboxed agent can still do all of these. Snapwire catches each one.</p>
-        <div style="max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px;">
-            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;display:flex;gap:16px;align-items:flex-start;">
-                <div style="width:32px;height:32px;background:var(--red-subtle);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">&#x1F4A5;</div>
-                <div>
-                    <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">DROP TABLE inside a DB connection</h4>
-                    <p style="font-size:13px;color:var(--text-secondary);line-height:1.65;">Sandboxes allow database connections &mdash; that's the whole point. An agent can still wipe your database. <span style="color:var(--accent);font-weight:600;">SQL Redline</span> catches destructive queries before they run.</p>
+    <hr class="divider">
+
+    <!-- SECTION 7: Try It — Vibe to Rule -->
+    <section id="vibe-to-rule" class="section" style="padding-bottom:80px;">
+        <p class="section-label">Try It Now</p>
+        <h2 class="section-title">Describe a rule. Get the code.</h2>
+        <p class="section-desc">Type a safety rule in plain English. Snapwire generates the enforcement logic instantly.</p>
+        <div style="max-width:720px;margin:0 auto;">
+            <div style="display:flex;gap:10px;margin-bottom:20px;">
+                <input type="text" id="vibe-input" placeholder="Don't let my agent delete files in the /prod folder" style="flex:1;padding:14px 18px;border:1px solid var(--border-hover);border-radius:12px;font-size:15px;font-family:inherit;background:var(--surface);color:var(--text-primary);outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border-hover)'">
+                <button id="vibe-btn" onclick="generateRule()" style="padding:14px 24px;background:var(--accent);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity 0.2s;">Generate</button>
+            </div>
+            <div id="vibe-result" style="display:none;">
+                <div style="position:relative;">
+                    <pre id="vibe-code" style="background:#0d1117;border:1px solid var(--border);border-radius:12px;padding:20px;font-size:13px;line-height:1.6;color:#c9d1d9;overflow-x:auto;font-family:'Fira Code',monospace;white-space:pre-wrap;"></pre>
+                    <button onclick="copyVibeCode()" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#8b949e;padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;">Copy</button>
+                </div>
+                <div style="text-align:center;margin-top:16px;">
+                    <a href="#get-started" style="display:inline-block;padding:12px 28px;background:var(--accent);color:white;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;">Fork Snapwire to use this rule &rarr;</a>
                 </div>
             </div>
-            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;display:flex;gap:16px;align-items:flex-start;">
-                <div style="width:32px;height:32px;background:var(--amber-subtle);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">&#x1F4B8;</div>
-                <div>
-                    <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">A $200 API spending loop</h4>
-                    <p style="font-size:13px;color:var(--text-secondary);line-height:1.65;">Sandboxes don't meter spend. Your agent loops 47 times inside a perfect sandbox and you pay for all of it. <span style="color:var(--accent);font-weight:600;">Loop Breaker</span> kills repeated tool calls before your bill does.</p>
-                </div>
-            </div>
-            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;display:flex;gap:16px;align-items:flex-start;">
-                <div style="width:32px;height:32px;background:var(--red-subtle);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">&#x1F511;</div>
-                <div>
-                    <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Credential exposure</h4>
-                    <p style="font-size:13px;color:var(--text-secondary);line-height:1.65;">The agent needs real API keys to do its job inside the sandbox. If the agent is compromised, so are your keys. <span style="color:var(--accent);font-weight:600;">Snap-Tokens</span> replace raw keys with revocable proxies.</p>
-                </div>
-            </div>
-            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;display:flex;gap:16px;align-items:flex-start;">
-                <div style="width:32px;height:32px;background:var(--blue-subtle);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">&#x1F310;</div>
-                <div>
-                    <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Data exfiltration via allowed HTTP</h4>
-                    <p style="font-size:13px;color:var(--text-secondary);line-height:1.65;">Sandboxes typically allow outbound HTTP &mdash; the agent needs it. An agent can POST your data to an attacker's webhook. <span style="color:var(--accent);font-weight:600;">Egress Allowlisting</span> restricts calls to approved domains only. <span style="display:inline-block;background:var(--green-subtle);color:var(--green);font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;vertical-align:middle;">NEW</span></p>
-                </div>
-            </div>
-            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;display:flex;gap:16px;align-items:flex-start;">
-                <div style="width:32px;height:32px;background:var(--amber-subtle);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">&#x2696;</div>
-                <div>
-                    <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Business rule violations</h4>
-                    <p style="font-size:13px;color:var(--text-secondary);line-height:1.65;">Sending emails to wrong people, modifying records outside scope, approving transactions above limits. No sandbox can know your business rules. <span style="color:var(--accent);font-weight:600;">Plain-English Rules</span> enforce them automatically.</p>
-                </div>
+            <div id="vibe-error" style="display:none;color:#ff4d6a;font-size:14px;text-align:center;margin-top:12px;"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+                <span style="font-size:12px;color:var(--text-tertiary);">Try:</span>
+                <button class="vibe-example" onclick="document.getElementById('vibe-input').value=this.textContent;generateRule();" style="font-size:12px;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);cursor:pointer;">Block SQL DELETE without WHERE</button>
+                <button class="vibe-example" onclick="document.getElementById('vibe-input').value=this.textContent;generateRule();" style="font-size:12px;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);cursor:pointer;">Never read .env files</button>
+                <button class="vibe-example" onclick="document.getElementById('vibe-input').value=this.textContent;generateRule();" style="font-size:12px;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);cursor:pointer;">Limit HTTP requests to 10 per minute</button>
             </div>
         </div>
     </section>
 
     <hr class="divider">
 
-    <section class="section" style="padding-bottom:80px;">
-        <p class="section-label">Roadmap</p>
-        <h2 class="section-title">Coming March 2026</h2>
-        <p class="section-desc">Actively in development. Ship fast, ship safe.</p>
-        <div class="features" style="grid-template-columns: repeat(1, 1fr); max-width: 440px; margin: 0 auto;">
-            <div class="feature-card" style="border-style:dashed;opacity:0.75;">
-                <div class="feature-icon" style="background:var(--green-subtle);color:var(--green);">&#x1F4C4;</div>
-                <h3>Compliance Export</h3>
-                <p>One-click audit reports for cyber insurance and compliance teams. Full action logs, risk scores, and governance summaries in one PDF.</p>
-            </div>
-        </div>
-    </section>
-
-    <hr class="divider">
-
+    <!-- SECTION 8: FAQ -->
     <section id="faq" class="section faq-section">
         <p class="section-label">FAQ</p>
         <h2 class="section-title">Frequently asked questions</h2>
@@ -1117,17 +884,6 @@
             </div>
             <div class="faq-item">
                 <button class="faq-question" onclick="toggleFaq(this)">
-                    What are constitutional rules?
-                    <span class="faq-arrow">&#x25BC;</span>
-                </button>
-                <div class="faq-answer">
-                    <div class="faq-answer-inner">
-                        Rules you write in plain English for what your agent can and can't do. Examples: "Never delete production databases" or "Block emails to external addresses without approval." Snapwire evaluates every action against them automatically.
-                    </div>
-                </div>
-            </div>
-            <div class="faq-item">
-                <button class="faq-question" onclick="toggleFaq(this)">
                     What happens when an action is blocked?
                     <span class="faq-arrow">&#x25BC;</span>
                 </button>
@@ -1139,12 +895,12 @@
             </div>
             <div class="faq-item">
                 <button class="faq-question" onclick="toggleFaq(this)">
-                    How is Snapwire different from a cloud sandbox or isolated agent runtime?
+                    How is Snapwire different from a cloud sandbox?
                     <span class="faq-arrow">&#x25BC;</span>
                 </button>
                 <div class="faq-answer">
                     <div class="faq-answer-inner">
-                        Sandboxes isolate the agent from your machine &mdash; they prevent it from touching your filesystem or OS processes. Snapwire operates at the tool call level &mdash; it intercepts what the agent actually <em>does</em>, like SQL queries, API calls, and spending, and enforces your business rules before execution. The two layers complement each other: use a sandbox for runtime containment, use Snapwire for behavioral governance. Snapwire runs inside any sandbox, container, or cloud environment.
+                        Sandboxes isolate the agent from your machine &mdash; they prevent it from touching your filesystem or OS processes. Snapwire operates at the tool call level &mdash; it intercepts what the agent actually <em>does</em>, like SQL queries, API calls, and spending, and enforces your business rules before execution. The two layers complement each other.
                     </div>
                 </div>
             </div>
@@ -1159,35 +915,59 @@
                     </div>
                 </div>
             </div>
-            <div class="faq-item">
-                <button class="faq-question" onclick="toggleFaq(this)">
-                    What's the Tool Safety Catalog?
-                    <span class="faq-arrow">&#x25BC;</span>
-                </button>
-                <div class="faq-answer">
-                    <div class="faq-answer-inner">
-                        Every tool your agent uses gets auto-graded from A (safe) to F (dangerous). Block F-rated tools automatically, fast-track A/B tools for auto-approval, or override any grade manually.
-                    </div>
-                </div>
-            </div>
         </div>
     </section>
 
+    <!-- SECTION 9: Contact Us -->
+    <section id="contact" class="section" style="padding-bottom:80px;">
+        <p class="section-label">Contact Us</p>
+        <h2 class="section-title">Questions? Get in touch.</h2>
+        <p class="section-desc">Need help with setup, have a feature request, or want to discuss enterprise deployment? We'd love to hear from you.</p>
+        <div style="max-width:560px;margin:0 auto;">
+            <form id="contact-form" onsubmit="submitContact(event)">
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Name</label>
+                    <input type="text" id="contact-name" required placeholder="Your name" style="width:100%;padding:12px 16px;border:1px solid var(--border-hover);border-radius:10px;font-size:14px;font-family:inherit;box-sizing:border-box;background:var(--surface);color:var(--text-primary);outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border-hover)'">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Email</label>
+                    <input type="email" id="contact-email" required placeholder="you@company.com" style="width:100%;padding:12px 16px;border:1px solid var(--border-hover);border-radius:10px;font-size:14px;font-family:inherit;box-sizing:border-box;background:var(--surface);color:var(--text-primary);outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border-hover)'">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Message</label>
+                    <textarea id="contact-message" required rows="4" placeholder="How can we help?" style="width:100%;padding:12px 16px;border:1px solid var(--border-hover);border-radius:10px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;background:var(--surface);color:var(--text-primary);outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border-hover)'"></textarea>
+                </div>
+                <div id="turnstile-widget" style="margin-bottom:16px;"></div>
+                <div id="contact-error" style="display:none;color:#f87171;font-size:13px;margin-bottom:12px;padding:10px 14px;background:var(--red-subtle);border-radius:8px;"></div>
+                <div id="contact-success" style="display:none;color:var(--green);font-size:14px;margin-bottom:12px;padding:14px;background:var(--green-subtle);border-radius:8px;text-align:center;font-weight:600;"></div>
+                <button type="submit" id="contact-submit-btn" style="width:100%;padding:14px;background:var(--accent);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s;">Send Message &rarr;</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- SECTION 10: Final CTA -->
     <section class="final-cta">
         <h2>Your agents are already running. Start watching what they do.</h2>
         <p>Five-minute setup. See your first spend report today. Catch your first runaway loop before it costs you.</p>
-        <a href="{{ login_url }}" class="cta cta-primary">
+        <a href="#get-started" class="cta cta-primary">
             Get Started Free <span>&rarr;</span>
         </a>
     </section>
 
+    <!-- Footer -->
     <footer class="footer">
         <div class="footer-brand">
-            <span class="logo-sm">⚡</span>
+            <span class="logo-sm">&#9889;</span>
             Snapwire
         </div>
         <p>The Safety Fuse for Your AI Agents</p>
-        <p class="footer-contact">Need something custom for your team? <a href="mailto:hello@snapwire.dev">hello@snapwire.dev</a></p>
+        <div class="footer-links">
+            <a href="/docs">API Docs</a>
+            <a href="/audit">Free Audit</a>
+            <a href="/tos-public">Terms</a>
+            <a href="/privacy-public">Privacy</a>
+            <a href="#contact">Contact</a>
+        </div>
     </footer>
 
     <div style="text-align:center;padding:16px 24px;font-size:11px;color:var(--text-muted);opacity:0.7;border-top:1px solid var(--border);margin-top:0;">
@@ -1210,102 +990,41 @@
             item.classList.toggle('open');
         }
 
-        (function() {
-            const tosBox = document.getElementById('sh-tos-box');
-            const agreeCheck = document.getElementById('sh-agree-check');
-            const agreeLabel = document.getElementById('sh-agree-label');
-            const submitBtn = document.getElementById('sh-submit-btn');
-            const tosHint = document.getElementById('sh-tos-hint');
-            let shTosScrolled = false;
-
-            if (tosBox) {
-                tosBox.addEventListener('scroll', function() {
-                    if (tosBox.scrollTop + tosBox.clientHeight >= tosBox.scrollHeight - 5) {
-                        if (!shTosScrolled) {
-                            shTosScrolled = true;
-                            agreeCheck.disabled = false;
-                            agreeLabel.style.cursor = 'pointer';
-                            agreeLabel.style.opacity = '1';
-                            tosHint.style.display = 'none';
-                        }
-                    }
-                });
-            }
-
-            if (agreeCheck) {
-                agreeCheck.addEventListener('change', function() {
-                    if (agreeCheck.checked) {
-                        submitBtn.disabled = false;
-                        submitBtn.style.background = '#FF6B00';
-                        submitBtn.style.color = 'white';
-                        submitBtn.style.cursor = 'pointer';
-                    } else {
-                        submitBtn.disabled = true;
-                        submitBtn.style.background = '#273140';
-                        submitBtn.style.color = '#8B919A';
-                        submitBtn.style.cursor = 'not-allowed';
-                    }
-                });
-            }
-        })();
-
-        async function submitSelfHosted(e) {
-            e.preventDefault();
-            const errEl = document.getElementById('sh-error');
-            const btn = document.getElementById('sh-submit-btn');
-            const agreeCheck = document.getElementById('sh-agree-check');
-            if (!agreeCheck.checked) {
-                errEl.textContent = 'You must agree to the Terms of Service to continue.';
-                errEl.style.display = 'block';
-                return;
-            }
-            errEl.style.display = 'none';
-            btn.disabled = true;
-            btn.textContent = 'Registering...';
-            try {
-                const res = await fetch('/api/self-hosted/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: document.getElementById('sh-name').value.trim(),
-                        email: document.getElementById('sh-email').value.trim(),
-                        company: document.getElementById('sh-company').value.trim(),
-                        use_case: document.getElementById('sh-usecase').value.trim(),
-                        tos_agreed: true,
-                    })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    document.getElementById('self-hosted-form').style.display = 'none';
-                    document.getElementById('sh-success').style.display = 'block';
-                    setTimeout(() => {
-                        window.open(data.template_url, '_blank');
-                    }, 1500);
-                } else {
-                    errEl.textContent = data.error || 'Registration failed. Please try again.';
-                    errEl.style.display = 'block';
-                    btn.disabled = false;
-                    btn.textContent = 'Get Template Link \u2192';
-                }
-            } catch (err) {
-                errEl.textContent = 'Network error. Please try again.';
-                errEl.style.display = 'block';
-                btn.disabled = false;
-                btn.textContent = 'Get Template Link \u2192';
-            }
-        }
-
         (async function loadPublicStats() {
             try {
                 const res = await fetch('/api/public/stats');
-                if (res.ok) {
-                    const data = await res.json();
-                    const sc = document.getElementById('sentinel-count');
-                    const tb = document.getElementById('total-blocked-count');
-                    if (sc) sc.textContent = data.sentinels_claimed || 0;
-                    if (tb) tb.textContent = (data.total_blocked || 0).toLocaleString();
+                if (!res.ok) return;
+                const data = await res.json();
+                const sentinels = data.sentinels_claimed || 0;
+                const blocked = data.total_blocked || 0;
+                const container = document.getElementById('hero-social-proof');
+
+                if (sentinels > 0) {
+                    document.getElementById('sentinel-count').textContent = sentinels;
+                    document.getElementById('sentinel-badge').style.display = 'flex';
                 }
-            } catch(e) {}
+                if (blocked > 0) {
+                    document.getElementById('total-blocked-count').textContent = blocked.toLocaleString();
+                    document.getElementById('blocked-badge').style.display = 'flex';
+                }
+                if (sentinels === 0 && blocked === 0) {
+                    document.getElementById('static-badge-1').style.display = 'flex';
+                    document.getElementById('static-badge-2').style.display = 'flex';
+                } else {
+                    if (sentinels === 0) {
+                        document.getElementById('static-badge-1').style.display = 'flex';
+                    }
+                    if (blocked === 0) {
+                        document.getElementById('static-badge-2').style.display = 'flex';
+                    }
+                }
+                container.style.display = 'flex';
+            } catch(e) {
+                var container = document.getElementById('hero-social-proof');
+                document.getElementById('static-badge-1').style.display = 'flex';
+                document.getElementById('static-badge-2').style.display = 'flex';
+                container.style.display = 'flex';
+            }
         })();
 
         (async function loadKillFeed() {
@@ -1378,6 +1097,72 @@
         document.getElementById('vibe-input').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') generateRule();
         });
+
+        (function initTurnstile() {
+            var siteKey = '{{ turnstile_site_key }}';
+            if (siteKey && siteKey !== 'None' && siteKey !== '') {
+                var script = document.createElement('script');
+                script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+                script.async = true;
+                script.defer = true;
+                script.onload = function() {
+                    if (window.turnstile) {
+                        window.turnstile.render('#turnstile-widget', {
+                            sitekey: siteKey,
+                            theme: 'dark',
+                            callback: function(token) {
+                                window._turnstileToken = token;
+                            }
+                        });
+                    }
+                };
+                document.head.appendChild(script);
+            }
+        })();
+
+        async function submitContact(e) {
+            e.preventDefault();
+            var errEl = document.getElementById('contact-error');
+            var successEl = document.getElementById('contact-success');
+            var btn = document.getElementById('contact-submit-btn');
+            errEl.style.display = 'none';
+            successEl.style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            var payload = {
+                name: document.getElementById('contact-name').value.trim(),
+                email: document.getElementById('contact-email').value.trim(),
+                message: document.getElementById('contact-message').value.trim(),
+            };
+            if (window._turnstileToken) {
+                payload.cf_turnstile_token = window._turnstileToken;
+            }
+
+            try {
+                var res = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                var data = await res.json();
+                if (res.ok) {
+                    successEl.textContent = data.message || 'Message sent!';
+                    successEl.style.display = 'block';
+                    document.getElementById('contact-form').reset();
+                    if (window.turnstile) window.turnstile.reset();
+                    window._turnstileToken = null;
+                } else {
+                    errEl.textContent = data.error || 'Something went wrong.';
+                    errEl.style.display = 'block';
+                }
+            } catch(err) {
+                errEl.textContent = 'Network error. Please try again.';
+                errEl.style.display = 'block';
+            }
+            btn.disabled = false;
+            btn.textContent = 'Send Message \u2192';
+        }
     </script>
 </body>
 </html>

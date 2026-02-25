@@ -62,3 +62,7 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **ORM**: SQLAlchemy
 -   **Web Framework**: Flask
 -   **WSGI Server**: Gunicorn
+-   **CAPTCHA**: Cloudflare Turnstile (optional, for Contact Us form bot protection)
+
+## Recent Changes
+- **2026-02-25**: Landing Page Conversion Redesign — (1) Section reorder: Deploy section (Cloud vs Self-Hosted) moved to position 3 (right after hero + Kill Feed) from position 8. Self-Hosted is now the visually primary option with "Fastest" badge, orange border, and direct "Fork on Replit" link (no modal gating). Cloud is secondary. (2) Sections removed to shorten page: Free Audit preview, Go Deeper enterprise features, Roadmap. (3) Contact Us form with Cloudflare Turnstile CAPTCHA integration (graceful degradation when keys not set), `POST /api/contact` endpoint with rate limiting (3/hr/IP), `ContactSubmission` model. (4) Hero social proof fix: sentinel counter and actions blocked counter both hidden when zero, replaced with static trust signals ("Open Source — Apache 2.0", "Works with any agent framework"). Counters appear only when there's real data. Container starts hidden to prevent zero-flash. (5) Footer updated with nav links (API Docs, Free Audit, Terms, Privacy, Contact).

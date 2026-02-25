@@ -811,3 +811,13 @@ class PublicAudit(db.Model):
             "converted": self.converted,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
+
+class ContactSubmission(db.Model):
+    __tablename__ = 'contact_submissions'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    email = db.Column(db.String(320), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    ip_address = db.Column(db.String(45), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
