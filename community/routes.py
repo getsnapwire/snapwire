@@ -6,7 +6,7 @@ from flask_login import current_user
 from app import db
 from models import (
     CommunityProfile, UserBadge, CommunityRule, RuleRating,
-    BADGE_DEFINITIONS, TIER_NAMES,
+    BADGE_DEFINITIONS, TIER_NAMES, AuditLogEntry,
 )
 from community.grader import grade_rule_code
 from community.achievements import (
@@ -22,6 +22,54 @@ def _require_auth():
     if not current_user.is_authenticated:
         return jsonify({"error": "Authentication required"}), 401
     return None
+
+
+@community_bp.route("/api/sentinels.json", methods=["GET"])
+def api_sentinels_json():
+    sentinels = get_wall_of_fame()
+    claimed = len(sentinels)
+    sentinel_entries = []
+    for idx, s in enumerate(sentinels, 1):
+        sentinel_entries.append({
+            "slot": idx,
+            "display_name": s.get("display_name", "Anonymous"),
+            "joined_at": s.get("joined_at", ""),
+            "tier": s.get("tier_name", "Fuse Apprentice"),
+        })
+    return jsonify({
+        "version": 1,
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "total_slots": 150,
+        "claimed": claimed,
+        "sentinels": sentinel_entries,
+    })
+
+
+@community_bp.route("/api/sentinel/my-status", methods=["GET"])
+def api_my_sentinel_status():
+    auth_err = _require_auth()
+    if auth_err:
+        return auth_err
+    profile = get_or_create_profile(current_user)
+    slot_number = None
+    if profile.is_founding_sentinel:
+        all_sentinels = CommunityProfile.query.filter_by(is_founding_sentinel=True).order_by(
+            CommunityProfile.joined_at.asc()
+        ).all()
+        for idx, s in enumerate(all_sentinels, 1):
+            if s.user_id == current_user.id:
+                slot_number = idx
+                break
+    total_claimed = CommunityProfile.query.filter_by(is_founding_sentinel=True).count()
+    return jsonify({
+        "is_sentinel": profile.is_founding_sentinel,
+        "slot_number": slot_number,
+        "display_name": profile.display_name,
+        "tier": profile.tier_name(),
+        "total_claimed": total_claimed,
+        "total_slots": 150,
+        "slots_remaining": max(0, 150 - total_claimed),
+    })
 
 
 @community_bp.route("/leaderboard")

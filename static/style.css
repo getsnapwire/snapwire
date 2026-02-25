@@ -1230,6 +1230,142 @@ body {
     color: #374151;
 }
 
+@keyframes nist-gauge-fill {
+    from { stroke-dasharray: 0 100; }
+}
+
+.nist-gauge-container {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    margin: 0 auto;
+    filter: drop-shadow(0 0 12px var(--nist-glow-color, rgba(0, 245, 212, 0.4)));
+}
+
+.nist-gauge-container svg {
+    width: 160px;
+    height: 160px;
+    transform: rotate(-90deg);
+}
+
+.nist-gauge-container .nist-progress-arc {
+    animation: nist-gauge-fill 1.5s ease-out forwards;
+}
+
+.nist-gauge-labels {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+}
+
+.nist-gauge-labels .nist-label-top {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+    font-weight: 600;
+}
+
+.nist-gauge-labels .nist-label-score {
+    font-size: 32px;
+    font-weight: 700;
+    font-family: 'Fira Code', monospace;
+    line-height: 1;
+}
+
+.nist-gauge-labels .nist-label-bottom {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.nist-function-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nist-function-badge.fn-govern {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+}
+
+.nist-function-badge.fn-map {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+}
+
+.nist-function-badge.fn-measure {
+    background: rgba(139, 92, 246, 0.15);
+    color: #a78bfa;
+}
+
+.nist-function-badge.fn-manage {
+    background: rgba(255, 107, 0, 0.15);
+    color: #fb923c;
+}
+
+.nist-category-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 80px 1fr;
+    gap: 0;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    font-size: 13px;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.nist-category-row:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.nist-category-row.fn-border-govern { border-left: 3px solid #60a5fa; }
+.nist-category-row.fn-border-map { border-left: 3px solid #34d399; }
+.nist-category-row.fn-border-measure { border-left: 3px solid #a78bfa; }
+.nist-category-row.fn-border-manage { border-left: 3px solid #fb923c; }
+
+.nist-function-header {
+    display: grid;
+    grid-template-columns: 100px 1fr 80px 1fr;
+    gap: 0;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border);
+}
+
+.nist-share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 1px solid rgba(10, 102, 194, 0.4);
+    background: rgba(10, 102, 194, 0.1);
+    color: #0a66c2;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.nist-share-btn:hover {
+    background: rgba(10, 102, 194, 0.2);
+    border-color: #0a66c2;
+    box-shadow: 0 0 12px rgba(10, 102, 194, 0.2);
+}
+
 .snapwire-footer-disclaimer {
     text-align: center;
     padding: 16px 24px;

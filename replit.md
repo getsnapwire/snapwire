@@ -1,7 +1,7 @@
 # Snapwire
 
 ## Overview
-Snapwire is "The Safety Fuse for Your AI Agents" – an AI-powered security gateway that intercepts AI agent tool calls, audits them against user-defined automation rules using an LLM, and blocks actions that violate these rules. Blocked actions are queued for manual human approval or denial via a web dashboard. The project aims to provide real-time monitoring and control over AI agent operations, focusing on spend monitoring, security, and behavioral governance.
+Snapwire is an AI-powered security gateway designed to intercept, audit, and control AI agent tool calls against user-defined automation rules. Its primary purpose is to act as "The Safety Fuse for Your AI Agents," preventing unauthorized or undesirable actions by AI agents. The project aims to provide real-time monitoring and control over AI operations, focusing on spend monitoring, security, and behavioral governance.
 
 Key capabilities include:
 - **Utility-First Positioning**: Focuses on spend monitoring, loop detection, and credential security.
@@ -62,42 +62,3 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **ORM**: SQLAlchemy
 -   **Web Framework**: Flask
 -   **WSGI Server**: Gunicorn
-
-## Testing
--   Run tests: `python -m pytest tests/ -v`
--   89 tests total: 52 core + 37 attack scenarios
--   Attack scenarios in `tests/scenarios/` cover 6 categories with memorable names (e.g., `sleeper_agent_aws_credential_harvest`, `recursive_token_drain_via_swap`, `dns_tunnel_exfiltration`)
-
-## Dashboard Structure (6 Tabs)
-- **Home** — Overview cards, burn meter, savings counter, tip banner
-- **Activity** — Sub-tabs: Pending (with count badge), Audit Log, Live Stream, Digest
-- **Rules** — Sub-tabs: My Rules, Rule History, Sandbox (test)
-- **Agents** — Sub-tabs: Agents, Analytics
-- **Security** (admin only) — Sub-tabs: Snap-Tokens, Honeypots, Blast Radius, Tool Catalog, Risk Intelligence
-- **Settings** — Sub-tabs: API Keys, Organization, Account, Webhooks (admin), Users (admin), Telemetry (admin)
-- External nav links: Leaderboard, Community Rules
-- Help overlay: "?" button opens slide-in quickstart guide
-
-## Rule Template Packs (8 total)
-safe_browsing, financial_compliance, code_safety, data_protection, universal_starter, sql_redline, egress_allowlist, shell_safety
-
-## Fork Experience (60-Second TTV)
-- **Auto-Login**: Local/self-hosted first run auto-creates admin user + API key on localhost (no signup form). Falls back to setup wizard on public networks.
-- **Pre-Loaded Rules**: New tenants get 22 rules active immediately: universal_starter (6) + sql_redline (6) + shell_safety (8) + 2 limit rules. All in enforce mode.
-- **Try It Now Card**: Dashboard shows a ready-to-paste curl command (with real API key) that triggers a SQL Redline block. Dismissible after first block.
-- **First-Block Celebration**: Toast notification + badge pulse when first action is blocked.
-- **Simplified Tabs**: Local mode shows 3 primary tabs (Status / Kill Feed / Rules) with "More" dropdown for Agents, Security, Settings.
-- **Local Mode Banner**: Reminds user to secure instance with a link to Settings > Account.
-
-## Recent Changes
-- **2026-02-25**: Growth & Retention Features — (1) NIST AI RMF Compliance Report: new `src/nist_mapping.py` mapping 11 NIST subcategories to scenario categories and 8 rule template packs, `GET /api/compliance/nist-report` endpoint generating coverage readiness report (overall score, per-category status, gap recommendations), dashboard panel on Home tab with SVG gauge, category table, and one-click pack install for gaps. (2) Share to X: Twitter Web Intent buttons on first-block celebration toast (with Sentinel slot number from `/api/public/stats`) and Share My Savings card (with savings amount). (3) Weekly Digest Email: `send_weekly_digest_email()` in email service with styled HTML template (metrics, top violations, top agents, savings), `start_weekly_digest_timer()` scheduler sending Mondays at 8 AM UTC for tenants with `email_digest` enabled, one-click digest toggle in Digest panel with state persistence via notification settings API.
-- **2026-02-24**: 60-Second TTV Implementation — Auto-login for local mode (localhost/private network only, with race condition protection). Pre-loaded 22 rules (universal_starter + sql_redline + shell_safety) on first tenant creation. Simplified 3-tab layout for self-hosted (Status/Kill Feed/Rules + More dropdown). Try It Now curl card with real API key. First-block celebration toast. Local mode security banner.
-- **2026-02-24**: Dashboard Consolidation & Polish — Consolidated 22 tabs to 6 grouped tabs (Home, Activity, Rules, Agents, Security, Settings) with sub-tab navigation. Removed welcome banner and getting started checklist (wizard modal is the single onboarding flow). Added tip banner, empty states for all panels, and help overlay. Security fixes: tenant verification on user role/access endpoints, @require_admin on platform endpoints. Shell Safety rule template pack (8 rules: rm -rf, eval/exec, curl|bash, chmod 777, env export, alias override, nohup, redirect to sensitive paths). Telemetry enabled by default with DO_NOT_TRACK env var support. API docs expanded to ~30 endpoints (loop detection, shadow mode, trust rules, snap-tokens, config export/import, blast radius, error reference, rate limits). Dead code cleanup.
-- **2026-02-24**: Competitive Positioning & UX Clarity — "Why Not Just a Sandbox?" section on landing page (two-layer diagram: Isolation vs Governance, with "5 Things Sandboxes Can't Stop" sub-section). Egress Allowlisting MVP accelerated from roadmap to shipped feature (rule template pack with configurable domain allowlist, moved from Roadmap to Core Features with NEW badge). FAQ entry: "How is Snapwire different from a cloud sandbox?" README comparison table expanded with "Agent Sandboxes" column + complementary framing paragraph. "Sandbox-Compatible" trust signal in hero area. "What is an AI Agent?" one-liner below hero for non-technical visitors. Plain-English subtitles on enterprise features (Shadow Merge → "Risk-Free Rule Testing", Goal Drift → "Behavior Change Warnings", Honeypot Tripwires → "Decoy Tool Detection"). Free Safety Audit preview section elevated on landing page with mockup score/vulnerabilities. README Quick Start cleanup: Zero Config callout, API key marked optional, Python 3.11+ requirement, `/health` verification step with example response, troubleshooting section (port conflicts, psycopg2 fallback, no-LLM-key).
-- **2026-02-24**: V1 Launch Package — Landing page copy rewrite (hero: "Stop Your AI Agents Before They Break Something", outcome-focused feature descriptions, shorter FAQ). Live Kill Feed on landing page (anonymized public feed of blocked actions via `/api/public/feed`). Sentinel counter showing X/150 Founding Slots via `/api/public/stats`. Vibe-to-Rule input: type a rule in plain English, get Python enforcement code via LLM (`/api/public/vibe-to-rule`, rate-limited 5/hr/IP, graceful fallback without LLM key). SQL Redline rule template pack (6 rules: DROP TABLE, DELETE/UPDATE without WHERE, GRANT/REVOKE, TRUNCATE, ALTER DROP COLUMN). Community rule grader latency benchmarking (per-scenario timing, 5ms max threshold, auto-reject slow rules). Shadow Merge positioned as enterprise feature on landing page + dashboard tooltip. Public endpoints fully anonymized (no tenant/agent/tool data leakage).
-- **2026-02-23**: Fork experience improvements — Enhanced `/health` endpoint (checks DB, secrets, LLM connectivity, feature status, first-run detection). Setup wizard now has 3 steps: welcome, environment check (hits `/health` to show DB/secrets/LLM status with actionable guidance), account creation with optional "Load starter rules" checkbox. Seed data endpoint (`POST /api/seed-data`) loads 3 security rules + $25/session spend limit. Getting Started checklist banner on dashboard (dismissible, tracks rules/key/token/test progress with progress bar). Updated `.env.example` with Replit-specific notes. README now has "Option 1: Fork on Replit" as fastest Quick Start path.
-- **2026-02-23**: Community Leaderboard & Rules Catalog — 4-tier badge system (Fuse Apprentice → Circuit Breaker → Grid Operator → Sentinel Prime), auto-verified rule submissions via test suite, Wall of Fame (150 Founding Sentinel slots), community rules catalog with ratings/imports, achievement engine with savings milestones. New models: CommunityProfile, UserBadge, CommunityRule, RuleRating. New modules: `community/grader.py` (auto-grader), `community/achievements.py` (badge engine), `community/routes.py` (blueprint). New pages: `/leaderboard`, `/community-rules`.
-- **2026-02-22**: Enterprise positioning — SECURITY.md threat model for Identity Vault (AES-256, HSM roadmap, Cryptographic Agility). README: "How Snapwire Compares" table (vs LiteLLM, Guardrails AI), "Compliance Readiness" section (EU AI Act Articles 9, 11, 12, 14), "Performance" section (Governance Tax framing). Roadmap: HSM Integration Q3, High-Velocity Engine Q3/Q4, Cryptographic Agility. Attack scenarios renamed with real-world agent-failure names.
-- **2026-02-21**: Enhanced Snapwire Audit CLI — Multi-format log support (JSON array, JSONL, nested LangChain/CrewAI/AutoGPT structures with auto-detection). New detections: credential access (22 patterns), data exfiltration signals, velocity spikes. Severity levels, `--json` for CI/CD, exit codes. Sample logs in `examples/`.
-- **2026-02-21**: Launch readiness — Rewrote README.md for GitHub. Attack scenario test suite (22 scenarios, 6 categories). "Total Saved" counter card on dashboard.
-- **2026-02-21**: Legal liability copy refinements — enforce/govern vocabulary. Developer growth layer — `/rules/` directory, `snapwire_audit.py` CLI. Open-source preparation — Apache 2.0 LICENSE, SECURITY.md, CONTRIBUTING.md.

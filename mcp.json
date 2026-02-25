@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "snapwire": {
+      "command": "python",
+      "args": ["mcp_server.py"],
+      "env": {
+        "SNAPWIRE_API_KEY": "af_your_key_here",
+        "SNAPWIRE_URL": "http://localhost:5000"
+      }
+    }
+  }
+}
