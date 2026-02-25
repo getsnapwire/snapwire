@@ -1534,10 +1534,32 @@
 
         <div id="panel-admin" class="panel">
             <div class="test-panel">
-                <h3>User Management</h3>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <h3>User Management</h3>
+                    <button class="btn btn-test" onclick="showCreateUserForm()">+ Add User</button>
+                </div>
                 <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 13px;">
                     Manage user roles and access. You cannot modify your own role or access.
                 </p>
+                <div id="create-user-form" style="display:none;margin-bottom:20px;padding:20px;background:var(--bg-secondary);border-radius:12px;border:1px solid var(--border);">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="form-group" style="margin-bottom:0;"><label>Name</label><input type="text" id="new-user-name" placeholder="Full name"></div>
+                        <div class="form-group" style="margin-bottom:0;"><label>Email</label><input type="email" id="new-user-email" placeholder="user@example.com"></div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+                        <div class="form-group" style="margin-bottom:0;"><label>Password</label><input type="password" id="new-user-password" placeholder="Min 8 characters"></div>
+                        <div class="form-group" style="margin-bottom:0;"><label>Role</label>
+                            <select id="new-user-role" style="width:100%;padding:10px 14px;background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:14px;">
+                                <option value="viewer">Viewer</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:12px;">
+                        <button class="btn btn-approve" onclick="createUser()">Create User</button>
+                        <button class="btn" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);" onclick="document.getElementById('create-user-form').style.display='none'">Cancel</button>
+                    </div>
+                </div>
                 <div class="admin-table-wrap">
                     <table class="admin-table">
                         <thead>
@@ -5991,6 +6013,36 @@ if (result.status === "allowed") {
         }
 
         loadContactSubmissions();
+
+        function showCreateUserForm() {
+            document.getElementById('create-user-form').style.display = 'block';
+        }
+
+        async function createUser() {
+            const name = document.getElementById('new-user-name').value.trim();
+            const email = document.getElementById('new-user-email').value.trim();
+            const password = document.getElementById('new-user-password').value;
+            const role = document.getElementById('new-user-role').value;
+            if (!name || !email || !password) { alert('All fields are required.'); return; }
+            try {
+                const res = await fetch('/api/admin/create-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, role })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('create-user-form').style.display = 'none';
+                    document.getElementById('new-user-name').value = '';
+                    document.getElementById('new-user-email').value = '';
+                    document.getElementById('new-user-password').value = '';
+                    loadAdminUsers();
+                    alert(data.message);
+                } else {
+                    alert(data.error || 'Failed to create user');
+                }
+            } catch(e) { alert('Network error'); }
+        }
 
         function checkFirstVisit() {
             if (!localStorage.getItem('agfw_onboarded')) {

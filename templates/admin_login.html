@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snapwire — Admin Login</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: #0B0D10; color: #F0EEE9; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .card { background: #151A21; border: 1px solid rgba(39,49,64,0.6); border-radius: 16px; padding: 48px 40px; max-width: 440px; width: 100%; }
+        .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+        .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, #FF6B00, #CC5500); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: white; }
+        .subtitle { color: #8B919A; font-size: 14px; margin-bottom: 32px; }
+        .email-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,107,0,0.1); border: 1px solid rgba(255,107,0,0.2); border-radius: 8px; padding: 8px 14px; font-size: 13px; color: #FF6B00; font-weight: 600; margin-bottom: 24px; }
+        label { display: block; font-size: 13px; font-weight: 600; color: #8B919A; margin-bottom: 6px; }
+        input { width: 100%; padding: 12px 14px; background: #0B0D10; border: 1px solid rgba(39,49,64,0.6); border-radius: 8px; color: #F0EEE9; font-size: 14px; margin-bottom: 16px; }
+        input:focus { outline: none; border-color: #FF6B00; }
+        .btn { width: 100%; padding: 14px; background: #FF6B00; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+        .btn:hover { background: #E56000; }
+        .error { background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.3); color: #e74c3c; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+        .back-link { display: block; text-align: center; margin-top: 20px; font-size: 13px; color: #5A6270; text-decoration: none; }
+        .back-link:hover { color: #8B919A; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo"><span class="logo-icon">&#x26A1;</span> Snapwire</div>
+        <p class="subtitle">Admin login</p>
+        <div class="email-badge">&#x1F512; {{ admin_email }}</div>
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+        <form method="POST" action="/admin-agent">
+            <label>Password</label>
+            <input type="password" name="password" required placeholder="Enter your password" autofocus>
+            <button type="submit" class="btn">Sign In</button>
+        </form>
+        <a href="/" class="back-link">&larr; Back to homepage</a>
+    </div>
+</body>
+</html>

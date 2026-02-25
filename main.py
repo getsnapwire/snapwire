@@ -321,6 +321,63 @@ def dashboard():
     return render_template("dashboard.html", user=current_user, is_self_hosted=is_self_hosted, auto_api_key=auto_key)
 
 
+@app.route("/admin-agent", methods=["GET", "POST"])
+def admin_agent():
+    admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
+    if not admin_email:
+        return "ADMIN_EMAIL environment variable not set.", 403
+
+    if current_user.is_authenticated:
+        if (current_user.email or "").lower() == admin_email and current_user.role == 'admin':
+            return redirect("/")
+        return redirect("/")
+
+    existing = User.query.filter_by(email=admin_email).first()
+    if existing:
+        if request.method == "POST":
+            password = request.form.get("password", "")
+            if existing.check_password(password):
+                from datetime import datetime as _dt
+                existing.last_login_at = _dt.now()
+                db.session.commit()
+                login_user(existing)
+                return redirect("/")
+            return render_template("admin_login.html", error="Invalid password", admin_email=admin_email)
+        return render_template("admin_login.html", admin_email=admin_email)
+
+    if request.method == "POST":
+        from src.tenant import ensure_personal_tenant
+        from datetime import datetime as _dt
+        name = (request.form.get("name") or "").strip()
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm_password", "")
+        if not name or not password:
+            return render_template("admin_setup.html", error="All fields are required", admin_email=admin_email)
+        if len(password) < 8:
+            return render_template("admin_setup.html", error="Password must be at least 8 characters", admin_email=admin_email)
+        if password != confirm:
+            return render_template("admin_setup.html", error="Passwords do not match", admin_email=admin_email)
+        user = User(
+            id=str(_uuid_mod.uuid4()),
+            email=admin_email,
+            first_name=name,
+            auth_provider='local',
+            role='admin',
+            last_login_at=_dt.now(),
+            email_verified=True,
+            tos_accepted_at=_dt.now(),
+            onboarding_completed_at=_dt.now(),
+        )
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        ensure_personal_tenant(user)
+        login_user(user)
+        return redirect("/")
+
+    return render_template("admin_setup.html", admin_email=admin_email)
+
+
 @app.route("/tos")
 def tos_page():
     if not current_user.is_authenticated:
@@ -1422,6 +1479,44 @@ def update_user_access(user_id):
     db.session.commit()
     status = "activated" if data["is_active"] else "revoked"
     return jsonify({"status": status, "user_id": user_id})
+
+
+@app.route("/api/admin/create-user", methods=["POST"])
+@require_admin
+def admin_create_user():
+    from src.tenant import ensure_personal_tenant
+    from datetime import datetime as _dt
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip().lower()
+    name = (data.get("name") or "").strip()
+    password = data.get("password", "").strip()
+    role = data.get("role", "viewer").lower()
+
+    if not email or not name or not password:
+        return jsonify({"error": "Name, email, and password are required"}), 400
+    if "@" not in email or "." not in email:
+        return jsonify({"error": "Invalid email address"}), 400
+    if len(password) < 8:
+        return jsonify({"error": "Password must be at least 8 characters"}), 400
+    if role not in ("admin", "viewer"):
+        return jsonify({"error": "Role must be 'admin' or 'viewer'"}), 400
+    if User.query.filter_by(email=email).first():
+        return jsonify({"error": "A user with this email already exists"}), 409
+
+    user = User(
+        id=str(_uuid_mod.uuid4()),
+        email=email,
+        first_name=name,
+        auth_provider='local',
+        role=role,
+        last_login_at=_dt.now(),
+        email_verified=True,
+    )
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+    ensure_personal_tenant(user)
+    return jsonify({"message": f"User {email} created as {role}", "user_id": user.id}), 201
 
 
 @app.route("/api/admin/contact-submissions", methods=["GET"])
