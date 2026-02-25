@@ -25,12 +25,7 @@
         .form-group input:focus, .form-group select:focus { border-color: #FF6B00; box-shadow: 0 0 0 3px rgba(255,107,0,0.15); }
         .btn { width: 100%; padding: 12px; background: #FF6B00; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 8px; }
         .btn:hover { background: #E56000; }
-        .btn-secondary { background: #151A21; color: #8B919A; }
-        .btn-secondary:hover { background: #273140; }
-        .btn-row { display: flex; gap: 12px; margin-top: 16px; }
-        .btn-row .btn { flex: 1; }
         .error { background: #3d1a1a; color: #f85149; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; border: 1px solid #5a2d2d; }
-        .success { background: #1a3d1a; color: #3fb950; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; border: 1px solid #2d5a2d; }
         .hint { font-size: 11px; color: #6e7681; margin-top: 4px; }
         .feature-list { margin: 16px 0; }
         .feature-list li { padding: 6px 0; font-size: 14px; color: #8B919A; display: flex; align-items: center; gap: 8px; list-style: none; }
@@ -40,27 +35,21 @@
         .telemetry-notice h3 { font-size: 13px; color: #F0EEE9; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
         .telemetry-notice p { font-size: 12px; color: #8B919A; line-height: 1.5; margin: 0; }
         .telemetry-notice .opt-out { font-size: 11px; color: #6e7681; margin-top: 8px; }
-        .register-section { margin-top: 16px; }
-        .register-section .form-group input[type="text"],
-        .register-section .form-group input[type="email"] { width: 100%; }
-        #register-status { margin-top: 8px; }
     </style>
 </head>
 <body>
     <div class="card">
         <div class="logo">
-            <div class="shield">⚡</div>
+            <div class="shield">&#x26A1;</div>
             <h1>Snapwire</h1>
         </div>
 
         <div class="steps">
             <div class="step active" id="step-dot-1"></div>
-            <div class="step {% if show_register %}active{% endif %}" id="step-dot-2"></div>
-            <div class="step {% if show_register %}active{% endif %}" id="step-dot-3"></div>
-            <div class="step {% if show_register %}active{% endif %}" id="step-dot-4"></div>
+            <div class="step" id="step-dot-2"></div>
         </div>
 
-        <div class="section {% if not show_register %}active{% endif %}" id="step-1">
+        <div class="section active" id="step-1">
             <div style="text-align:center;"><span class="welcome-badge">Welcome</span></div>
             <h2 style="text-align:center;">Set Up Snapwire</h2>
             <p style="text-align:center;">Create your admin account to get started. This takes about 30 seconds.</p>
@@ -72,12 +61,6 @@
                 <li><span>&#10003;</span> Snap-Tokens so agents never see your real API keys</li>
             </ul>
 
-            <button class="btn" onclick="goToStep(2)">Get Started</button>
-        </div>
-
-        <div class="section" id="step-2">
-            <h2>Environment Check</h2>
-            <p>Checking your configuration...</p>
             <div id="env-checks" style="margin-bottom:16px;"></div>
 
             <div class="telemetry-notice">
@@ -86,10 +69,10 @@
                 <div class="opt-out">Opt out: Set the <code style="background:#273140;padding:2px 6px;border-radius:4px;color:#F0EEE9;">DO_NOT_TRACK=1</code> environment variable, or toggle it off in Settings after setup.</div>
             </div>
 
-            <button class="btn" onclick="goToStep(3)">Continue to Account Setup</button>
+            <button class="btn" onclick="goToStep(2)">Get Started</button>
         </div>
 
-        <div class="section" id="step-3">
+        <div class="section" id="step-2">
             <h2>Create Admin Account</h2>
             <p>This will be the first admin user for your Snapwire instance.</p>
 
@@ -118,43 +101,8 @@
                     </label>
                     <div class="hint">Adds 3 security rules and a $25/session spend limit so you can see Snapwire in action immediately.</div>
                 </div>
-                <button type="button" class="btn" onclick="submitAndRegister()">Create Admin Account</button>
+                <button type="submit" class="btn">Create Admin Account</button>
             </form>
-        </div>
-
-        <div class="section {% if show_register %}active{% endif %}" id="step-4">
-            <h2>Register This Instance</h2>
-            <p>Optionally register your Snapwire instance to receive update notifications and join the community network. This is completely optional.</p>
-
-            <div class="register-section">
-                <div class="form-group">
-                    <label for="reg-name">Name</label>
-                    <input type="text" id="reg-name" placeholder="Jane Smith" value="{{ user.first_name if user else '' }}">
-                </div>
-                <div class="form-group">
-                    <label for="reg-email">Email</label>
-                    <input type="email" id="reg-email" placeholder="you@company.com" value="{{ user.email if user else '' }}">
-                </div>
-                <div class="form-group">
-                    <label for="reg-company">Company (optional)</label>
-                    <input type="text" id="reg-company" placeholder="Acme Corp">
-                </div>
-                <div class="form-group">
-                    <label for="reg-usecase">Use Case (optional)</label>
-                    <input type="text" id="reg-usecase" placeholder="Monitoring AI coding agents">
-                </div>
-                <div class="form-group" style="margin-top:12px;">
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-                        <input type="checkbox" id="reg-tos" style="width:16px;height:16px;accent-color:#FF6B00;">
-                        <span style="font-size:12px;color:#8B919A;">I agree to the <a href="/tos" target="_blank" style="color:#FF6B00;">Terms of Service</a></span>
-                    </label>
-                </div>
-                <div id="register-status"></div>
-                <div class="btn-row">
-                    <button class="btn btn-secondary" onclick="skipRegistration()">Skip</button>
-                    <button class="btn" onclick="registerInstance()">Register</button>
-                </div>
-            </div>
         </div>
     </div>
     <div style="text-align:center;padding:16px 24px;font-size:11px;color:#7d8295;opacity:0.7;border-top:1px solid #2a2f3d;margin-top:32px;">
@@ -167,68 +115,11 @@
             document.querySelectorAll('.step').forEach((dot, i) => {
                 dot.classList.toggle('active', i < n);
             });
-            if (n === 2) runEnvCheck();
-        }
-
-        function submitAndRegister() {
-            const form = document.getElementById('setup-form');
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-            form.submit();
-        }
-
-        function skipRegistration() {
-            window.location.href = '/';
-        }
-
-        async function registerInstance() {
-            const name = document.getElementById('reg-name').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            const company = document.getElementById('reg-company').value.trim();
-            const useCase = document.getElementById('reg-usecase').value.trim();
-            const tosAgreed = document.getElementById('reg-tos').checked;
-            const statusEl = document.getElementById('register-status');
-
-            if (!name || !email) {
-                statusEl.innerHTML = '<div class="error">Name and email are required.</div>';
-                return;
-            }
-            if (!tosAgreed) {
-                statusEl.innerHTML = '<div class="error">Please agree to the Terms of Service.</div>';
-                return;
-            }
-
-            statusEl.innerHTML = '<div style="color:#8B919A;font-size:13px;">Registering...</div>';
-
-            try {
-                const res = await fetch('/api/self-hosted/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: name,
-                        email: email,
-                        company: company,
-                        use_case: useCase,
-                        tos_agreed: tosAgreed,
-                    }),
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    statusEl.innerHTML = '<div class="success">Instance registered successfully!</div>';
-                    setTimeout(() => { window.location.href = '/'; }, 1500);
-                } else {
-                    statusEl.innerHTML = '<div class="error">' + (data.error || 'Registration failed.') + '</div>';
-                }
-            } catch (e) {
-                statusEl.innerHTML = '<div class="error">Could not reach the server. You can register later from Settings.</div>';
-            }
         }
 
         async function runEnvCheck() {
             const container = document.getElementById('env-checks');
-            container.innerHTML = '<div style="color:#8B919A;font-size:13px;">Checking...</div>';
+            container.innerHTML = '<div style="color:#8B919A;font-size:13px;">Checking environment...</div>';
             try {
                 const res = await fetch('/health');
                 const data = await res.json();
@@ -244,7 +135,7 @@
 
                 const llm = secrets.LLM_PROVIDER || '';
                 const llmOk = llm.includes('configured');
-                html += renderCheck(llmOk, 'AI Provider', llmOk ? llm : 'Not configured', llmOk ? null : 'Add ANTHROPIC_API_KEY or OPENAI_API_KEY to your Secrets tab. Without it, only deterministic features (loop detection, schema guard, spend tracking) work. AI-powered rule evaluation will be disabled.');
+                html += renderCheck(llmOk, 'AI Provider', llmOk ? llm : 'Not configured', llmOk ? null : 'Add ANTHROPIC_API_KEY or OPENAI_API_KEY to enable AI-powered rule evaluation. Deterministic features (loop detection, schema guard, spend tracking) work without it.');
 
                 container.innerHTML = html;
             } catch(e) {
@@ -262,6 +153,8 @@
             html += '</div></div>';
             return html;
         }
+
+        runEnvCheck();
     </script>
 </body>
 </html>
