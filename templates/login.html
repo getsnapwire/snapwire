@@ -705,6 +705,13 @@
                     <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Your data never leaves your server</li>
                 </ul>
                 <a href="https://replit.com/@MasonJeffreys/Snapwire" target="_blank" style="display:block;text-align:center;background:var(--accent);color:white;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;text-decoration:none;transition:all 0.2s;">Fork on Replit &mdash; Free &rarr;</a>
+                <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+                    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Or deploy with Docker</p>
+                    <div style="position:relative;background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:12px 44px 12px 14px;font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;font-size:13px;color:#c9d1d9;overflow-x:auto;white-space:nowrap;">
+                        <code>git clone https://github.com/snapwire-ai/snapwire.git && cd snapwire && docker compose up</code>
+                        <button onclick="navigator.clipboard.writeText('git clone https://github.com/snapwire-ai/snapwire.git && cd snapwire && docker compose up');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:#8b949e;padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-family:inherit;">Copy</button>
+                    </div>
+                </div>
             </div>
             <div style="background:var(--base);border:1px solid var(--border);border-radius:16px;padding:40px;">
                 <div style="font-size:28px;margin-bottom:12px;">&#x2601;</div>

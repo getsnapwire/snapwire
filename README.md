@@ -11,6 +11,12 @@
 </p>
 
 <p align="center">
+  <a href="https://replit.com/@MasonJeffreys/Snapwire"><img src="https://img.shields.io/badge/Deploy-Replit-F26207?style=for-the-badge&logo=replit&logoColor=white" alt="Deploy to Replit" /></a>&nbsp;
+  <a href="https://railway.app/new/template?template=https://github.com/snapwire-ai/snapwire"><img src="https://img.shields.io/badge/Deploy-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white" alt="Deploy to Railway" /></a>&nbsp;
+  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Ready" />
+</p>
+
+<p align="center">
   <a href="#quick-start">Quick Start</a> &middot;
   <a href="#how-snapwire-compares">Compare</a> &middot;
   <a href="#audit-cli">Audit CLI</a> &middot;
@@ -20,6 +26,14 @@
   <a href="#self-hosting">Self-Hosting</a> &middot;
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
+
+### One-Line Install
+
+```bash
+git clone https://github.com/snapwire-ai/snapwire.git && cd snapwire && docker compose up
+```
+
+PostgreSQL + Snapwire, running locally in under 60 seconds. Your keys, your data, your infrastructure.
 
 ---
 
