@@ -821,3 +821,13 @@ class ContactSubmission(db.Model):
     message = db.Column(db.Text, nullable=False)
     ip_address = db.Column(db.String(45), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class TenantLLMConfig(db.Model):
+    __tablename__ = 'tenant_llm_configs'
+    id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.String, unique=True, nullable=False, index=True)
+    provider = db.Column(db.String(20), nullable=False, default='anthropic')
+    encrypted_api_key = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

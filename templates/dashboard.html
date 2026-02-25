@@ -823,6 +823,7 @@
         <div id="panel-settings-group" class="panel">
             <div class="sub-tabs">
                 <button class="sub-tab active" data-subtab="keys" data-group="settings-group">API Keys</button>
+                <button class="sub-tab" data-subtab="llm" data-group="settings-group">LLM Provider</button>
                 <button class="sub-tab" data-subtab="org" data-group="settings-group">Organization</button>
                 <button class="sub-tab" data-subtab="account" data-group="settings-group">Account</button>
                 {% if user and user.role == 'admin' %}
@@ -1752,6 +1753,46 @@
             </div>
         </div>
 
+        <div id="panel-llm" class="panel">
+            <div class="test-panel">
+                <h3>LLM Provider</h3>
+                <p style="color:var(--text-secondary);font-size:13px;margin-top:4px;margin-bottom:20px;">AI-powered features (rule evaluation, goal drift detection, tool grading) require an LLM API key. Your key is encrypted at rest and never shared.</p>
+
+                <div id="llm-status" style="margin-bottom:20px;padding:16px;background:var(--bg-secondary);border-radius:12px;border:1px solid var(--border);">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                        <span id="llm-status-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text-muted);"></span>
+                        <span id="llm-status-text" style="font-size:14px;font-weight:600;">Checking...</span>
+                    </div>
+                    <span id="llm-status-detail" style="font-size:12px;color:var(--text-secondary);"></span>
+                </div>
+
+                <div id="llm-form">
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label>Provider</label>
+                        <select id="llm-provider" style="width:100%;padding:10px 14px;background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:14px;">
+                            <option value="anthropic">Anthropic (Claude)</option>
+                            <option value="openai">OpenAI (GPT)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:16px;">
+                        <label>API Key</label>
+                        <input type="password" id="llm-api-key" placeholder="sk-ant-... or sk-..." style="width:100%;padding:10px 14px;background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:14px;font-family:'Fira Code',monospace;">
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-approve" onclick="saveLLMConfig()">Save Key</button>
+                        <button class="btn" id="llm-remove-btn" style="display:none;background:var(--bg-secondary);color:var(--accent-red,#e74c3c);border:1px solid var(--border);" onclick="removeLLMConfig()">Remove Key</button>
+                    </div>
+                </div>
+
+                <div style="margin-top:20px;padding:14px;background:rgba(45,212,168,0.06);border:1px solid rgba(45,212,168,0.15);border-radius:10px;">
+                    <div style="font-size:13px;font-weight:600;color:var(--accent-green);margin-bottom:6px;">What works without a key?</div>
+                    <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;">
+                        Loop detection, spend tracking, schema validation, kill switch, egress control, and honeypot tripwires all work without any LLM key. The key is only needed for AI-powered rule evaluation, goal drift detection, and tool safety grading.
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="panel-org" class="panel">
             <h3 style="margin-bottom:16px;">Organization</h3>
             <div id="org-details" style="display:none;">
@@ -2332,7 +2373,7 @@ def handle_tool_call(tool_call):
             'rules-group': ['rules', 'history', 'test'],
             'agents-group': ['agents', 'analytics'],
             'security': ['vault', 'honeypots', 'blast', 'catalog', 'risk'],
-            'settings-group': ['keys', 'org', 'account', 'settings', 'admin', 'telemetry']
+            'settings-group': ['keys', 'llm', 'org', 'account', 'settings', 'admin', 'telemetry']
         };
 
         let activeSubTabs = {};
@@ -5829,6 +5870,68 @@ if (result.status === "allowed") {
             } catch(e) { console.error('Telemetry toggle error:', e); }
         }
         loadTelemetrySettings();
+
+        async function loadLLMSettings() {
+            try {
+                const res = await fetch('/api/settings/llm');
+                const data = await res.json();
+                const dot = document.getElementById('llm-status-dot');
+                const text = document.getElementById('llm-status-text');
+                const detail = document.getElementById('llm-status-detail');
+                const removeBtn = document.getElementById('llm-remove-btn');
+                const providerSelect = document.getElementById('llm-provider');
+                const keyInput = document.getElementById('llm-api-key');
+
+                if (data.configured) {
+                    dot.style.background = 'var(--accent-green)';
+                    text.textContent = 'Key configured';
+                    const src = data.source === 'tenant' ? 'your saved key' : 'environment variable';
+                    detail.textContent = `Provider: ${data.provider} | Model: ${data.model} | Source: ${src}`;
+                    if (data.source === 'tenant') {
+                        removeBtn.style.display = 'inline-flex';
+                    }
+                } else {
+                    dot.style.background = 'var(--accent-orange, #FF6B00)';
+                    text.textContent = 'No key configured';
+                    detail.textContent = 'Add your API key to enable AI-powered features.';
+                    removeBtn.style.display = 'none';
+                }
+                if (data.provider && providerSelect) {
+                    providerSelect.value = data.provider;
+                }
+                if (keyInput) keyInput.value = '';
+            } catch(e) { console.error('LLM settings error:', e); }
+        }
+
+        async function saveLLMConfig() {
+            const provider = document.getElementById('llm-provider').value;
+            const apiKey = document.getElementById('llm-api-key').value.trim();
+            if (!apiKey) { alert('Please enter an API key.'); return; }
+            try {
+                const res = await fetch('/api/settings/llm', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ provider, api_key: apiKey })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    loadLLMSettings();
+                } else {
+                    alert(data.error || 'Failed to save');
+                }
+            } catch(e) { alert('Network error'); }
+        }
+
+        async function removeLLMConfig() {
+            if (!confirm('Remove your LLM key? AI-powered features will stop working unless an environment key is set.')) return;
+            try {
+                await fetch('/api/settings/llm', { method: 'DELETE' });
+                loadLLMSettings();
+            } catch(e) { alert('Network error'); }
+        }
+
+        loadLLMSettings();
+
         function checkFirstVisit() {
             if (!localStorage.getItem('agfw_onboarded')) {
                 const overlay = document.getElementById('onboarding-overlay');

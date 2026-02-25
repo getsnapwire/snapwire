@@ -346,7 +346,8 @@ def privacy_page():
 
 @app.route("/pricing")
 def pricing_page():
-    return redirect("/")
+    login_url = _get_login_url()
+    return render_template("pricing.html", login_url=login_url)
 
 
 @app.route("/docs")
@@ -3288,6 +3289,60 @@ def toggle_telemetry():
         "do_not_track_env": do_not_track,
         "message": "Telemetry enabled" if config.telemetry_enabled else "Telemetry disabled",
     })
+
+
+@app.route("/api/settings/llm", methods=["GET"])
+@require_login
+def get_llm_settings():
+    from src.tenant import get_current_tenant_id
+    from src.llm_provider import get_provider_info
+    tenant_id = get_current_tenant_id()
+    info = get_provider_info(tenant_id=tenant_id)
+    return jsonify(info)
+
+
+@app.route("/api/settings/llm", methods=["PUT"])
+@require_login
+def save_llm_settings():
+    from src.tenant import get_current_tenant_id
+    from models import TenantLLMConfig
+    from src.llm_encryption import encrypt_api_key
+    tenant_id = get_current_tenant_id()
+    data = request.get_json() or {}
+    provider = data.get("provider", "").lower()
+    api_key = data.get("api_key", "").strip()
+
+    if provider not in ("anthropic", "openai"):
+        return jsonify({"error": "Provider must be 'anthropic' or 'openai'"}), 400
+    if not api_key:
+        return jsonify({"error": "API key is required"}), 400
+
+    config = TenantLLMConfig.query.filter_by(tenant_id=tenant_id).first()
+    if config:
+        config.provider = provider
+        config.encrypted_api_key = encrypt_api_key(api_key)
+    else:
+        config = TenantLLMConfig(
+            tenant_id=tenant_id,
+            provider=provider,
+            encrypted_api_key=encrypt_api_key(api_key),
+        )
+        db.session.add(config)
+    db.session.commit()
+    return jsonify({"message": "LLM provider configured", "provider": provider})
+
+
+@app.route("/api/settings/llm", methods=["DELETE"])
+@require_login
+def delete_llm_settings():
+    from src.tenant import get_current_tenant_id
+    from models import TenantLLMConfig
+    tenant_id = get_current_tenant_id()
+    config = TenantLLMConfig.query.filter_by(tenant_id=tenant_id).first()
+    if config:
+        db.session.delete(config)
+        db.session.commit()
+    return jsonify({"message": "LLM provider configuration removed"})
 
 
 @app.route("/api/telemetry/transparency", methods=["GET"])

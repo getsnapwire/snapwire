@@ -52,53 +52,63 @@
             pointer-events: none;
         }
         .page-hero h1 { font-size: 44px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 18px; color: var(--text-primary); position: relative; }
-        .page-hero p { font-size: 18px; color: var(--text-secondary); max-width: 520px; margin: 0 auto; line-height: 1.7; position: relative; }
+        .page-hero .highlight { color: var(--accent); }
+        .page-hero p { font-size: 18px; color: var(--text-secondary); max-width: 560px; margin: 0 auto; line-height: 1.7; position: relative; }
 
-        .pricing-grid {
-            max-width: 800px; margin: 0 auto; padding: 48px 32px 96px;
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;
+        .plan-section {
+            max-width: 640px; margin: 0 auto; padding: 48px 32px 64px;
         }
 
         .plan-card {
-            background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-            padding: 40px 32px; display: flex; flex-direction: column; position: relative; transition: all 0.25s;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            background: var(--surface); border: 2px solid rgba(255, 107, 0, 0.3); border-radius: 16px;
+            padding: 48px 40px; text-align: center; position: relative;
+            box-shadow: 0 0 0 1px rgba(255, 107, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.2);
         }
-        .plan-card:hover { border-color: var(--border-hover); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); transform: translateY(-2px); }
-        .plan-card.featured { border-color: rgba(255, 107, 0, 0.3); box-shadow: 0 0 0 1px rgba(255, 107, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.2); }
-        .plan-card.featured::before {
-            content: 'Most Popular'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+        .plan-badge {
+            position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
             background: linear-gradient(135deg, #FF6B00, #CC5500); color: white;
-            font-size: 12px; font-weight: 700; padding: 4px 16px; border-radius: 100px;
+            font-size: 13px; font-weight: 700; padding: 6px 20px; border-radius: 100px;
+            letter-spacing: 0.5px;
         }
+        .plan-price { font-size: 56px; font-weight: 800; letter-spacing: -2px; margin-bottom: 4px; color: var(--text-primary); }
+        .plan-subtitle { font-size: 16px; color: var(--text-secondary); margin-bottom: 32px; }
 
-        .plan-name { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: var(--text-primary); }
-        .plan-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 28px; line-height: 1.6; }
-        .plan-price { font-size: 42px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; color: var(--text-primary); }
-        .plan-price span { font-size: 16px; font-weight: 500; color: var(--text-tertiary); }
-        .plan-billing { font-size: 13px; color: var(--text-tertiary); margin-bottom: 32px; }
-
-        .plan-features { list-style: none; flex: 1; margin-bottom: 32px; }
+        .plan-features { list-style: none; text-align: left; margin-bottom: 32px; }
         .plan-features li {
-            font-size: 14px; color: var(--text-secondary); padding: 9px 0; display: flex; align-items: flex-start; gap: 10px;
+            font-size: 14px; color: var(--text-secondary); padding: 10px 0; display: flex; align-items: flex-start; gap: 10px;
             border-bottom: 1px solid var(--border);
         }
         .plan-features li:last-child { border-bottom: none; }
         .plan-features .check { color: var(--green); font-weight: 700; flex-shrink: 0; font-size: 16px; }
 
         .plan-btn {
-            display: block; text-align: center; padding: 14px 24px; border-radius: 12px;
-            font-size: 15px; font-weight: 600; text-decoration: none; transition: all 0.2s;
+            display: block; text-align: center; padding: 16px 32px; border-radius: 12px;
+            font-size: 16px; font-weight: 600; text-decoration: none; transition: all 0.2s;
+            background: var(--accent); color: #fff;
         }
-        .plan-btn-primary { background: var(--accent); color: #fff; }
-        .plan-btn-primary:hover { background: var(--accent-hover); box-shadow: 0 4px 16px rgba(255, 107, 0, 0.25); }
-        .plan-btn-outline { border: 1px solid var(--border-hover); color: var(--text-secondary); background: rgba(11, 13, 16, 0.5); }
-        .plan-btn-outline:hover { border-color: rgba(39, 49, 64, 0.9); background: var(--base); color: var(--text-primary); }
+        .plan-btn:hover { background: var(--accent-hover); box-shadow: 0 4px 16px rgba(255, 107, 0, 0.25); }
 
-        .plan-note {
-            max-width: 680px; margin: 0 auto; text-align: center; padding: 0 32px 96px;
-            font-size: 14px; color: var(--text-tertiary); line-height: 1.7;
+        .byok-section {
+            max-width: 800px; margin: 0 auto; padding: 0 32px 80px;
         }
+        .byok-section h2 {
+            text-align: center; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; color: var(--text-primary);
+        }
+        .byok-section .subtitle {
+            text-align: center; font-size: 15px; color: var(--text-secondary); margin-bottom: 36px; line-height: 1.6;
+        }
+        .byok-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+        }
+        .byok-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px 24px;
+        }
+        .byok-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+        .byok-card h3 .icon { font-size: 18px; }
+        .byok-card p { font-size: 13px; color: var(--text-tertiary); margin-bottom: 14px; line-height: 1.5; }
+        .byok-card ul { list-style: none; }
+        .byok-card ul li { font-size: 13px; color: var(--text-secondary); padding: 5px 0; display: flex; align-items: center; gap: 8px; }
+        .byok-card ul li .check { color: var(--green); font-weight: 700; font-size: 14px; }
 
         .comparison-section {
             max-width: 900px; margin: 0 auto; padding: 0 32px 80px;
@@ -147,15 +157,14 @@
         .footer-brand { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
         .footer-brand .logo-sm { width: 20px; height: 20px; background: linear-gradient(135deg, #FF6B00, #CC5500); border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: white; }
         .footer p { font-size: 13px; color: var(--text-tertiary); }
-        .footer-contact { font-size: 13px; color: var(--text-muted); margin-top: 12px; }
-        .footer-contact a { color: var(--text-secondary); text-decoration: none; transition: color 0.2s; }
-        .footer-contact a:hover { color: var(--text-primary); }
 
         @media (max-width: 768px) {
-            .pricing-grid { grid-template-columns: 1fr; max-width: 440px; }
+            .plan-section { padding: 32px 20px 48px; }
+            .plan-card { padding: 36px 24px; }
             .page-hero h1 { font-size: 32px; }
             .page-hero { padding: 160px 20px 72px; }
             .nav-links a:not(.nav-btn) { display: none; }
+            .byok-grid { grid-template-columns: 1fr; }
             .comparison-section { padding: 0 16px 60px; }
             .comparison-table { font-size: 13px; }
             .comparison-table th, .comparison-table td { padding: 10px 8px; }
@@ -164,7 +173,7 @@
 </head>
 <body>
     <nav class="nav">
-        <a href="/" class="nav-logo"><span class="logo-icon">⚡</span> Snapwire</a>
+        <a href="/" class="nav-logo"><span class="logo-icon">&#x26A1;</span> Snapwire</a>
         <div class="nav-links">
             <a href="/">Home</a>
             <a href="/docs">API Docs</a>
@@ -173,55 +182,72 @@
     </nav>
 
     <section class="page-hero">
-        <h1>Simple, transparent pricing</h1>
-        <p>Start free, scale as your AI agent fleet grows. Every plan includes all safety features.</p>
+        <h1>Free. Forever. <span class="highlight">Bring Your Own Key.</span></h1>
+        <p>Snapwire is free for everyone. AI-powered features use your own LLM API key &mdash; you control the cost.</p>
     </section>
 
-    <div class="pricing-grid">
+    <div class="plan-section">
         <div class="plan-card">
-            <div class="plan-name">Starter</div>
-            <div class="plan-desc">For individuals and hobby projects getting started with AI safety.</div>
-            <div class="plan-price">Free</div>
-            <div class="plan-billing">No credit card required</div>
+            <div class="plan-badge">All Features Included</div>
+            <div class="plan-price">$0</div>
+            <div class="plan-subtitle">No limits. No tiers. No credit card.</div>
             <ul class="plan-features">
-                <li><span class="check">&#x2713;</span> Up to 500 API calls/month</li>
-                <li><span class="check">&#x2713;</span> 5 constitutional rules</li>
-                <li><span class="check">&#x2713;</span> 1 API key</li>
-                <li><span class="check">&#x2713;</span> Tool Safety Catalog</li>
-                <li><span class="check">&#x2713;</span> Blast Radius Governor</li>
-                <li><span class="check">&#x2713;</span> Browser notifications</li>
-                <li><span class="check">&#x2713;</span> Community support</li>
-            </ul>
-            <a href="{{ login_url }}" class="plan-btn plan-btn-outline">Get Started</a>
-        </div>
-
-        <div class="plan-card featured">
-            <div class="plan-name">Pro</div>
-            <div class="plan-desc">For teams running AI agents in production with advanced security needs.</div>
-            <div class="plan-price">$49<span>/mo</span></div>
-            <div class="plan-billing">per workspace, billed monthly</div>
-            <ul class="plan-features">
-                <li><span class="check">&#x2713;</span> Up to 10,000 API calls/month</li>
+                <li><span class="check">&#x2713;</span> Unlimited API calls</li>
                 <li><span class="check">&#x2713;</span> Unlimited rules</li>
-                <li><span class="check">&#x2713;</span> 10 API keys</li>
+                <li><span class="check">&#x2713;</span> Unlimited API keys</li>
+                <li><span class="check">&#x2713;</span> Loop detection (Fuse Breaker)</li>
+                <li><span class="check">&#x2713;</span> Spend tracking (Live Burn Meter)</li>
+                <li><span class="check">&#x2713;</span> Schema validation</li>
+                <li><span class="check">&#x2713;</span> Kill switch (The Snap)</li>
+                <li><span class="check">&#x2713;</span> Snap-Token credential proxy</li>
                 <li><span class="check">&#x2713;</span> Identity Vault</li>
                 <li><span class="check">&#x2713;</span> Honeypot Tripwires</li>
-                <li><span class="check">&#x2713;</span> Deception Detection</li>
-                <li><span class="check">&#x2713;</span> Slack & email alerts</li>
-                <li><span class="check">&#x2713;</span> Organization support (5 members)</li>
-                <li><span class="check">&#x2713;</span> Priority support</li>
+                <li><span class="check">&#x2713;</span> Deception &amp; Goal Drift Detection</li>
+                <li><span class="check">&#x2713;</span> Tool Safety Catalog</li>
+                <li><span class="check">&#x2713;</span> Blast Radius Governor</li>
+                <li><span class="check">&#x2713;</span> Organization &amp; team support</li>
+                <li><span class="check">&#x2713;</span> Slack &amp; email alerts</li>
+                <li><span class="check">&#x2713;</span> Config export / import</li>
             </ul>
-            <a href="{{ login_url }}" class="plan-btn plan-btn-primary">Start Pro Trial</a>
+            <a href="{{ login_url }}" class="plan-btn">Get Started Free</a>
         </div>
     </div>
 
-    <div class="plan-note">
-        All plans include the full Snapwire safety stack: constitutional auditing, real-time monitoring, and the human-in-the-loop approval queue. Higher tiers unlock advanced features and higher usage limits.
+    <div class="byok-section">
+        <h2>What do I need?</h2>
+        <p class="subtitle">Most of Snapwire's value is deterministic &mdash; no LLM required. Add your own API key to unlock AI-powered features.</p>
+        <div class="byok-grid">
+            <div class="byok-card">
+                <h3><span class="icon">&#x26A1;</span> No key needed</h3>
+                <p>These core features work out of the box, free forever:</p>
+                <ul>
+                    <li><span class="check">&#x2713;</span> Loop detection (Fuse Breaker)</li>
+                    <li><span class="check">&#x2713;</span> Spend tracking (Live Burn Meter)</li>
+                    <li><span class="check">&#x2713;</span> JSON schema validation</li>
+                    <li><span class="check">&#x2713;</span> Kill switch (The Snap)</li>
+                    <li><span class="check">&#x2713;</span> Snap-Token credential proxy</li>
+                    <li><span class="check">&#x2713;</span> Egress allowlisting</li>
+                    <li><span class="check">&#x2713;</span> Honeypot Tripwires</li>
+                </ul>
+            </div>
+            <div class="byok-card" style="border-color: var(--accent-border);">
+                <h3><span class="icon">&#x1F9E0;</span> Your API key</h3>
+                <p>Add your Anthropic or OpenAI key in Settings to enable:</p>
+                <ul>
+                    <li><span class="check">&#x2713;</span> AI rule evaluation</li>
+                    <li><span class="check">&#x2713;</span> Goal drift detection</li>
+                    <li><span class="check">&#x2713;</span> Tool safety grading</li>
+                    <li><span class="check">&#x2713;</span> Vibe-to-Rule generation</li>
+                    <li><span class="check">&#x2713;</span> Deception detection</li>
+                </ul>
+                <p style="margin-top:12px; margin-bottom:0; font-size:12px; color:var(--text-muted);">Typical cost: a few cents per evaluation. You pay the LLM provider directly &mdash; Snapwire never touches your bill.</p>
+            </div>
+        </div>
     </div>
 
     <div class="comparison-section">
         <h2>Cloud vs Self-Hosted</h2>
-        <p class="subtitle">Choose the deployment that fits your team</p>
+        <p class="subtitle">Both are free. Choose the deployment that fits your team.</p>
         <table class="comparison-table">
             <thead>
                 <tr>
@@ -232,83 +258,57 @@
             </thead>
             <tbody>
                 <tr>
+                    <td>Price</td>
+                    <td class="check-mark">Free</td>
+                    <td class="check-mark">Free</td>
+                </tr>
+                <tr>
                     <td>Setup</td>
                     <td>Sign up and go</td>
-                    <td>Deploy template</td>
+                    <td>Fork on Replit</td>
                 </tr>
                 <tr>
-                    <td>Constitutional AI Auditing</td>
-                    <td class="check-mark">&#x2713;</td>
-                    <td class="check-mark">&#x2713;</td>
-                </tr>
-                <tr>
-                    <td>Blast Radius Governor</td>
+                    <td>All safety features</td>
                     <td class="check-mark">&#x2713;</td>
                     <td class="check-mark">&#x2713;</td>
                 </tr>
                 <tr>
-                    <td>Identity Vault</td>
-                    <td class="check-mark">&#x2713;</td>
-                    <td class="check-mark">&#x2713;</td>
+                    <td>LLM key</td>
+                    <td>Bring your own</td>
+                    <td>Bring your own</td>
                 </tr>
                 <tr>
-                    <td>Honeypot Tripwires</td>
-                    <td class="check-mark">&#x2713;</td>
-                    <td class="check-mark">&#x2713;</td>
-                </tr>
-                <tr>
-                    <td>Deception Detection</td>
-                    <td class="check-mark">&#x2713;</td>
-                    <td class="check-mark">&#x2713;</td>
-                </tr>
-                <tr>
-                    <td>Tool Safety Catalog</td>
-                    <td class="check-mark">&#x2713;</td>
-                    <td class="check-mark">&#x2713;</td>
-                </tr>
-                <tr>
-                    <td>Multi-Tenant / Orgs</td>
-                    <td class="check-mark">&#x2713;</td>
-                    <td class="check-mark">&#x2713;</td>
-                </tr>
-                <tr>
-                    <td>Managed Hosting</td>
+                    <td>Managed hosting</td>
                     <td class="check-mark">&#x2713;</td>
                     <td class="dash">&mdash;</td>
                 </tr>
                 <tr>
-                    <td>Auto Updates</td>
+                    <td>Auto updates</td>
                     <td class="check-mark">&#x2713;</td>
                     <td class="dash">Manual</td>
                 </tr>
                 <tr>
-                    <td>Full Source Access</td>
+                    <td>Full source access</td>
                     <td class="dash">&mdash;</td>
                     <td class="check-mark">&#x2713;</td>
                 </tr>
                 <tr>
-                    <td>Custom Modifications</td>
+                    <td>Custom modifications</td>
                     <td class="dash">Via API</td>
                     <td class="check-mark">Full control</td>
                 </tr>
                 <tr>
-                    <td>Data Residency</td>
+                    <td>Data residency</td>
                     <td>Cloud</td>
                     <td class="check-mark">Your infra</td>
-                </tr>
-                <tr>
-                    <td>Health Monitoring</td>
-                    <td class="check-mark">Built-in</td>
-                    <td>/health endpoint</td>
                 </tr>
             </tbody>
         </table>
     </div>
 
     <footer class="footer">
-        <div class="footer-brand"><span class="logo-sm">⚡</span> Snapwire</div>
+        <div class="footer-brand"><span class="logo-sm">&#x26A1;</span> Snapwire</div>
         <p>The Safety Fuse for Your AI Agents</p>
-        <p class="footer-contact">Need something custom for your team? Reach out at <a href="mailto:hello@snapwire.dev">hello@snapwire.dev</a></p>
     </footer>
     <div style="text-align:center;padding:16px 24px;font-size:11px;color:var(--text-muted);opacity:0.7;border-top:1px solid var(--border);margin-top:0;">
         Snapwire is a technical monitoring utility. All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator.

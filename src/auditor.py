@@ -67,7 +67,7 @@ Agent Tool Call to Audit:
 
 Analyze this tool call against the constitutional rules and return your assessment as JSON."""
 
-    response_text = chat(SYSTEM_PROMPT, user_message, max_tokens=8192)
+    response_text = chat(SYSTEM_PROMPT, user_message, max_tokens=8192, tenant_id=tenant_id)
 
     result = parse_json_response(response_text)
     if result is None:

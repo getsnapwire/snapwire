@@ -66,12 +66,45 @@ def get_client():
     return _client
 
 
-def chat(system_prompt, user_message, max_tokens=8192, model=None):
-    provider = get_provider()
-    client = get_client()
+def _get_tenant_llm_config(tenant_id):
+    if not tenant_id:
+        return None
+    try:
+        from models import TenantLLMConfig
+        from src.llm_encryption import decrypt_api_key
+        config = TenantLLMConfig.query.filter_by(tenant_id=tenant_id).first()
+        if config:
+            return {
+                "provider": config.provider,
+                "api_key": decrypt_api_key(config.encrypted_api_key),
+            }
+    except Exception as e:
+        logger.warning(f"Failed to load tenant LLM config: {e}")
+    return None
+
+
+def _create_client_for_key(provider, api_key):
+    if provider == "anthropic":
+        from anthropic import Anthropic
+        return Anthropic(api_key=api_key, base_url=_get_anthropic_base_url())
+    elif provider == "openai":
+        from openai import OpenAI
+        return OpenAI(api_key=api_key)
+    raise ValueError(f"Unsupported LLM provider: {provider}")
+
+
+def chat(system_prompt, user_message, max_tokens=8192, model=None, tenant_id=None):
+    tenant_config = _get_tenant_llm_config(tenant_id)
+
+    if tenant_config:
+        provider = tenant_config["provider"]
+        client = _create_client_for_key(provider, tenant_config["api_key"])
+    else:
+        provider = get_provider()
+        client = get_client()
 
     if client is None:
-        raise RuntimeError(f"No API key configured for {provider}. Set {'ANTHROPIC_API_KEY' if provider == 'anthropic' else 'OPENAI_API_KEY'} in your environment variables.")
+        raise RuntimeError(f"No API key configured for {provider}. Set {'ANTHROPIC_API_KEY' if provider == 'anthropic' else 'OPENAI_API_KEY'} in your environment variables, or add your key in Dashboard → Settings → LLM Provider.")
 
     if provider == "anthropic":
         if model is None:
@@ -122,7 +155,16 @@ def parse_json_array_response(response_text):
         return None
 
 
-def get_provider_info():
+def get_provider_info(tenant_id=None):
+    tenant_config = _get_tenant_llm_config(tenant_id)
+    if tenant_config:
+        return {
+            "provider": tenant_config["provider"],
+            "configured": True,
+            "source": "tenant",
+            "model": os.environ.get("LLM_MODEL", "claude-sonnet-4-5" if tenant_config["provider"] == "anthropic" else "gpt-4o"),
+        }
+
     provider = get_provider()
     has_key = False
     if provider == "anthropic":
@@ -132,5 +174,6 @@ def get_provider_info():
     return {
         "provider": provider,
         "configured": has_key,
+        "source": "environment",
         "model": os.environ.get("LLM_MODEL", "claude-sonnet-4-5" if provider == "anthropic" else "gpt-4o"),
     }
