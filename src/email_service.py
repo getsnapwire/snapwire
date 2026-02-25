@@ -296,7 +296,7 @@ def send_weekly_digest_email(tenant_id, digest_data):
     top_agents = digest_data.get("top_agents", {})
     savings = round(blocked * 0.12, 2)
 
-    subject = f"Snapwire Weekly Digest — {total} actions audited, ${savings:.2f} saved"
+    subject = f"Your Weekly Circuit Breaker Report: {blocked} Triggers, ${savings:.2f} Saved"
 
     violation_rows = ""
     for rule, count in list(top_violations.items())[:5]:
@@ -317,7 +317,7 @@ def send_weekly_digest_email(tenant_id, digest_data):
     html_body = f"""
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 640px; margin: 0 auto;">
         <div style="background: #1e293b; color: white; padding: 24px; border-radius: 8px 8px 0 0;">
-            <h2 style="margin: 0 0 4px 0;">Weekly Digest</h2>
+            <h2 style="margin: 0 0 4px 0;">Weekly Circuit Breaker Report</h2>
             <p style="margin:0;opacity:0.8;font-size:14px;">{period}</p>
         </div>
         <div style="background: #f8fafc; padding: 24px; border: 1px solid #e2e8f0;">
@@ -348,7 +348,7 @@ def send_weekly_digest_email(tenant_id, digest_data):
         </div>
         <div style="background:#f1f5f9;padding:16px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;border-top:0;text-align:center;">
             <p style="margin:0 0 8px 0;"><a href="#" style="color:#3b82f6;text-decoration:none;font-weight:600;">View Full Dashboard →</a></p>
-            <p style="margin:0;color:#64748b;font-size:14px;">Snapwire — The Safety Fuse for Your AI Agents</p>
+            <p style="margin:0;color:#64748b;font-size:14px;">Snapwire — The Firewall for AI Agents</p>
         </div>
     </div>
     """
