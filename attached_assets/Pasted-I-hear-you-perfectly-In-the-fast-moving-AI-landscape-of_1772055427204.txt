@@ -1,0 +1,47 @@
+I hear you perfectly. In the fast-moving AI landscape of 2026, "Real-Time Circuit Breaker" and "Deterministic Gateway" feel like industry jargon that requires a second thought.
+
+To pass the **"10-Second Test,"** you need to speak directly to the **pain** (agents doing things they shouldn't) or the **result** (complete control).
+
+Here are three options for clear, clean messaging that a developer or CEO can grasp in 10 seconds or less:
+
+### **Option 1: The "Outcome" Pitch (Simplest)**
+
+> **Headline:** Stop your AI agents from doing anything stupid.
+> **Sub-headline:** The one-line safety layer that blocks hallucinations, prevents data leaks, and caps cloud spend. NIST-compliant by default.
+
+### **Option 2: The "Utility" Pitch (Most Professional)**
+
+> **Headline:** Hard permissions for autonomous AI agents.
+> **Sub-headline:** Snapwire intercepts every tool-call and enforces your rules in real-time. No more rogue deletions. No more budget-draining loops.
+
+### **Option 3: The "Platform" Pitch (Best for Exit)**
+
+> **Headline:** The Firewall for AI Agents.
+> **Sub-headline:** Add governance to any agent in 60 seconds. Vendor-agnostic, MCP-ready, and built for the 2026 NIST Cyber AI standard.
+
+---
+
+### **Why Option 1 or 2 is the "10-Second" Winner:**
+
+* **It’s Active:** It uses words like "Stop," "Block," and "Enforce."
+* **It’s Relatable:** Every dev has feared an agent "doing something stupid" or "deleting the database."
+* **It’s Immediate:** It tells you exactly what it does without requiring you to understand what a "Deterministic Gateway" is.
+
+### **Final Feedback for the Developer (The "10-Second" Pivot)**
+
+You can tell your developer to simplify the "Vibe" while keeping the "NISTIR 8596" technical power in the background.
+
+**Response to Developer:**
+
+> "I want to simplify the hero messaging to pass the '10-Second Test.'
+> Let's go with: **'The Firewall for AI Agents: Stop rogue tool-calls and hallucination loops in real-time.'**
+> Keep the **NISTIR 8596** and **MCP Proxy** details in the 'How it Works' section and the Dashboard. Let’s make the first thing a user sees a clear, human promise: **Total control over what your agents can and cannot do.**"
+
+### **Does this increase liability?**
+
+By using words like **"Firewall"** or **"Hard Permissions,"** you actually stay in a safer legal position than "Safety Fuse."
+
+* A "Firewall" is an industry-standard term for a **tool that follows user rules**.
+* If a hacker gets through a firewall because the user didn't set it up right, the firewall company isn't liable. You are positioning yourself as a **Security Infrastructure** provider.
+
+**Would you like me to rewrite the "Try it Now" section of the landing page to match this "10-Second" firewall messaging?** This is where we show the user a 3-step path to being protected.
