@@ -45,3 +45,8 @@ limiter = Limiter(
 with app.app_context():
     import models  # noqa: F401
     db.create_all()
+    try:
+        db.session.execute(db.text("ALTER TABLE users ADD COLUMN first_block_email_sent BOOLEAN DEFAULT FALSE"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()

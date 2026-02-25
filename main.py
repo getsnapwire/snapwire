@@ -842,6 +842,23 @@ def intercept_tool_call():
         except Exception:
             pass
 
+        try:
+            owner = User.query.get(tenant_id)
+            if owner and not owner.first_block_email_sent:
+                from src.email_service import send_first_block_email
+                top_violation = (audit_result.get("violations") or [{}])[0] if audit_result.get("violations") else {}
+                send_first_block_email(
+                    user_name=owner.first_name or "there",
+                    user_email=owner.email,
+                    tool_name=tool_call.get("tool_name", "unknown"),
+                    rule_name=top_violation.get("rule", "Security Rule"),
+                    dashboard_url=request.url_root.rstrip('/')
+                )
+                owner.first_block_email_sent = True
+                db.session.commit()
+        except Exception:
+            pass
+
         _track_usage(tenant_id)
         return jsonify({
             "status": "blocked",

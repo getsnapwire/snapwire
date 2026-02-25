@@ -33,6 +33,7 @@ class User(UserMixin, db.Model):
     email_verification_sent_at = db.Column(db.DateTime, nullable=True)
     password_reset_token = db.Column(db.String(128), nullable=True)
     password_reset_expires_at = db.Column(db.DateTime, nullable=True)
+    first_block_email_sent = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
         from werkzeug.security import generate_password_hash

@@ -377,6 +377,107 @@ def send_weekly_digest_email(tenant_id, digest_data):
     send_email_async(subject, text_body, html_body)
 
 
+def send_welcome_email(user_name, user_email, dashboard_url=""):
+    subject = "Welcome to Snapwire"
+    text_body = (
+        f"Hi {user_name},\n\n"
+        f"Welcome to Snapwire — The Safety Fuse for Your AI Agents.\n\n"
+        f"Here's how to get started:\n\n"
+        f"1. Create your first API key\n"
+        f"   Go to Settings > API Keys and generate a key to connect your agents.\n\n"
+        f"2. Add a rule\n"
+        f"   Head to Rules and create your first automation rule — or import community rules.\n\n"
+        f"3. Connect your agent\n"
+        f"   Use the API key in your agent's configuration. Check the docs at {dashboard_url}/docs\n\n"
+        f"Tip: Add your own LLM key in Settings > LLM Provider to unlock AI-powered features like "
+        f"rule evaluation and deception detection. Snapwire is free forever — bring your own key.\n\n"
+        f"Dashboard: {dashboard_url}\n"
+        f"API Docs: {dashboard_url}/docs\n\n"
+        f"— The Snapwire Team"
+    )
+    html_body = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #0B0D10; color: #F0EEE9;">
+        <div style="background: linear-gradient(135deg, #FF6B00, #CC5500); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
+            <h1 style="margin: 0; font-size: 28px; color: white;">Welcome to Snapwire</h1>
+            <p style="margin: 8px 0 0; color: rgba(255,255,255,0.85); font-size: 15px;">The Safety Fuse for Your AI Agents</p>
+        </div>
+        <div style="padding: 32px; background: #151A21; border: 1px solid #273140; border-top: none;">
+            <p style="color: #F0EEE9; font-size: 16px; margin: 0 0 24px;">Hi {user_name},</p>
+            <p style="color: #8B919A; font-size: 14px; line-height: 1.6; margin: 0 0 28px;">Your account is ready. Here's how to get Snapwire protecting your AI agents in minutes:</p>
+
+            <div style="margin-bottom: 20px; padding: 16px; background: #0B0D10; border-radius: 10px; border-left: 3px solid #FF6B00;">
+                <p style="margin: 0; font-weight: 600; color: #FF6B00; font-size: 13px;">STEP 1</p>
+                <p style="margin: 4px 0 0; color: #F0EEE9; font-size: 15px; font-weight: 600;">Create your first API key</p>
+                <p style="margin: 4px 0 0; color: #8B919A; font-size: 13px;">Settings &rarr; API Keys &rarr; + New API Key</p>
+            </div>
+            <div style="margin-bottom: 20px; padding: 16px; background: #0B0D10; border-radius: 10px; border-left: 3px solid #FF6B00;">
+                <p style="margin: 0; font-weight: 600; color: #FF6B00; font-size: 13px;">STEP 2</p>
+                <p style="margin: 4px 0 0; color: #F0EEE9; font-size: 15px; font-weight: 600;">Add a rule</p>
+                <p style="margin: 4px 0 0; color: #8B919A; font-size: 13px;">Rules &rarr; + Add Rule, or import community rules</p>
+            </div>
+            <div style="margin-bottom: 28px; padding: 16px; background: #0B0D10; border-radius: 10px; border-left: 3px solid #FF6B00;">
+                <p style="margin: 0; font-weight: 600; color: #FF6B00; font-size: 13px;">STEP 3</p>
+                <p style="margin: 4px 0 0; color: #F0EEE9; font-size: 15px; font-weight: 600;">Connect your agent</p>
+                <p style="margin: 4px 0 0; color: #8B919A; font-size: 13px;">Use your API key in your agent config. See the <a href="{dashboard_url}/docs" style="color: #FF6B00; text-decoration: none;">API docs</a></p>
+            </div>
+
+            <div style="background: rgba(255,107,0,0.08); border: 1px solid rgba(255,107,0,0.2); border-radius: 10px; padding: 16px; margin-bottom: 28px;">
+                <p style="margin: 0; color: #FF6B00; font-size: 13px; font-weight: 600;">BRING YOUR OWN KEY</p>
+                <p style="margin: 6px 0 0; color: #8B919A; font-size: 13px; line-height: 1.5;">Add your Anthropic or OpenAI key in Settings &rarr; LLM Provider to unlock AI-powered rule evaluation, deception detection, and more. Snapwire is free forever.</p>
+            </div>
+
+            <a href="{dashboard_url}" style="display: block; text-align: center; background: #FF6B00; color: white; padding: 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">Go to Dashboard</a>
+        </div>
+        <div style="padding: 16px; text-align: center; background: #0B0D10; border-radius: 0 0 12px 12px; border: 1px solid #273140; border-top: none;">
+            <p style="margin: 0; color: #5A6270; font-size: 12px;">Snapwire — Open Source, Apache 2.0</p>
+        </div>
+    </div>"""
+    send_email(subject, text_body, html_body, to_email=user_email)
+
+
+def send_first_block_email(user_name, user_email, tool_name, rule_name, dashboard_url=""):
+    subject = "Snapwire just protected you"
+    text_body = (
+        f"Hi {user_name},\n\n"
+        f"Snapwire just blocked its first action in your workspace.\n\n"
+        f"Tool: {tool_name}\n"
+        f"Rule: {rule_name}\n\n"
+        f"This is exactly what Snapwire is built for — catching risky AI agent actions "
+        f"before they cause damage.\n\n"
+        f"Review this action in your dashboard: {dashboard_url}\n\n"
+        f"— The Snapwire Team"
+    )
+    html_body = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #0B0D10; color: #F0EEE9;">
+        <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
+            <h1 style="margin: 0; font-size: 24px; color: white;">Snapwire Just Protected You</h1>
+        </div>
+        <div style="padding: 32px; background: #151A21; border: 1px solid #273140; border-top: none;">
+            <p style="color: #F0EEE9; font-size: 16px; margin: 0 0 16px;">Hi {user_name},</p>
+            <p style="color: #8B919A; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">Your first AI agent action was just blocked. This is exactly what Snapwire is built for.</p>
+
+            <div style="background: #0B0D10; border-radius: 10px; padding: 20px; margin-bottom: 24px; border: 1px solid #273140;">
+                <div style="display: flex; margin-bottom: 12px;">
+                    <span style="color: #5A6270; font-size: 13px; width: 60px;">Tool</span>
+                    <span style="color: #F0EEE9; font-size: 14px; font-weight: 600;">{tool_name}</span>
+                </div>
+                <div style="display: flex;">
+                    <span style="color: #5A6270; font-size: 13px; width: 60px;">Rule</span>
+                    <span style="color: #FF6B00; font-size: 14px; font-weight: 600;">{rule_name}</span>
+                </div>
+            </div>
+
+            <p style="color: #8B919A; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">You can review, approve, or permanently block this action from your dashboard.</p>
+
+            <a href="{dashboard_url}" style="display: block; text-align: center; background: #FF6B00; color: white; padding: 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">Review in Dashboard</a>
+        </div>
+        <div style="padding: 16px; text-align: center; background: #0B0D10; border-radius: 0 0 12px 12px; border: 1px solid #273140; border-top: none;">
+            <p style="margin: 0; color: #5A6270; font-size: 12px;">Snapwire — The Safety Fuse for Your AI Agents</p>
+        </div>
+    </div>"""
+    send_email(subject, text_body, html_body, to_email=user_email)
+
+
 def send_digest_email(stats):
     total = stats.get("total", 0)
     allowed = stats.get("allowed", 0)

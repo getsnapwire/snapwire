@@ -143,9 +143,20 @@ if IS_REPLIT:
         user.auth_provider = 'replit'
         user.last_login_at = datetime.now()
         user.role = 'admin'
+        is_new = User.query.get(user.id) is None
         merged_user = db.session.merge(user)
         db.session.commit()
         ensure_personal_tenant(merged_user)
+        if is_new:
+            try:
+                from src.email_service import send_welcome_email
+                send_welcome_email(
+                    user_name=merged_user.first_name or "there",
+                    user_email=merged_user.email,
+                    dashboard_url=request.url_root.rstrip('/')
+                )
+            except Exception:
+                pass
         return merged_user
 
     @oauth_authorized.connect
@@ -301,6 +312,16 @@ else:
                 to=email,
                 subject="Verify your email - Snapwire",
                 body=f"Hi {name},\n\nPlease verify your email by clicking the link below:\n\n{verify_link}\n\nIf you did not create an account, please ignore this email."
+            )
+        except Exception:
+            pass
+
+        try:
+            from src.email_service import send_welcome_email
+            send_welcome_email(
+                user_name=name,
+                user_email=email,
+                dashboard_url=request.url_root.rstrip('/')
             )
         except Exception:
             pass
