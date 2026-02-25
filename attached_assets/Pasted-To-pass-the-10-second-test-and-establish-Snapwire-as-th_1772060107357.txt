@@ -1,0 +1,47 @@
+To pass the "10-second test" and establish Snapwire as the 2026 industry backbone, your deployment matrix is more than just a list of buttons—it is a **Trust Infrastructure**.
+
+The recent **NISTIR 8596 (Cyber AI Profile)** shift from early 2026 mandates that AI agents be treated as "Autonomous Cyber Actors" requiring traceable identities. Your deployment plan directly answers this by providing "Sovereign Hosting" options where the user, not a third-party cloud, owns the keys and the logs.
+
+---
+
+### **The "One-Click" Deployment Matrix Summary**
+
+| **Environment** | **Target Persona** | **Strategic Purpose** | **Key Change for Launch** |
+| --- | --- | --- | --- |
+| **Replit** | **The Fast Prototyper** | 60-second "Aha!" moment. | **NIST Seed Data:** One-click fork pre-loads 22 attack scenarios and 3 starter rules. |
+| **Railway** | **The Solo-Preneur** | Persistent, git-driven cloud hosting. | **railway.toml:** Auto-configures health checks and `gunicorn` for 24/7 governance. |
+| **Docker** | **The Enterprise** | Private, air-gapped VPC compliance. | **One-Line Install:** `docker compose up` command on the landing page for instant local sovereignty. |
+| **Vercel** | **The Frontend Dev** | Low-latency edge security. | **Edge Proxying:** Optimized for "Cursor" and "Claude Code" users needing a local-safe harbor. |
+| **Koyeb / Render** | **The Scale-up** | Managed containers with zero-downtime. | **Blueprint Deploys:** Automatic Git-sync so security rules update whenever the fork is updated. |
+
+---
+
+### **Why this helps you Grow and Exit**
+
+**1. The "Standardization" Play (Growth)**
+By being everywhere, you become the **"Missing Middleware"** of 2026. If a developer uses **OpenClaw** or **Claude Desktop**, they don't have to ask *if* Snapwire works—they see a button for their favorite platform. This creates a viral loop: the more platforms you support, the more "NIST-Compliant" badges appear on GitHub.
+
+**2. The "De-risking" Play (Exit)**
+A $100M+ acquirer like **Palo Alto Networks** or **Wiz** doesn't want to buy a "Replit app." They want to buy a **Portable Protocol**.
+
+* **The Logic:** By proving Snapwire runs equally well on Docker, AWS, and Vercel, you prove that your governance logic is decoupled from the infrastructure. You are selling the **Brain**, not the **Hosting**.
+
+**3. The "Identity" Moat (Backbone)**
+The **NISTIR 8596** compliance gauge in your dashboard is your most powerful asset. Because your "One-Click" deploys include **Identity Attribution** (Parent ID tracking), you are the only tool that allows a CISO to see the "Chain of Command" across their entire cloud.
+
+---
+
+### **Final Liability Review**
+
+Does this "Multi-Cloud" approach increase your liability? **No.**
+
+* **Self-Sovereignty:** By pushing users to host their own instances (Docker/Railway), **they** become the data controllers. You are just the architect of the policy engine.
+* **Standard Defense:** Because you are aligned with **NISTIR 8596**, you are following "Reasonable Security Practices" as defined by the latest 2026 standards. This is your ultimate legal shield.
+
+### **The "10-Second" Final Pitch**
+
+> **"Snapwire: The Firewall for AI Agents. Deploy to any cloud in 60 seconds and stop rogue tool-calls before they hit your bill."**
+
+**The plan is solid. Your developer is ready.**
+
+**Would you like me to draft the "GitHub README Header" that features this new Deployment Matrix?** It's designed to stop a scrolling developer in their tracks and get them to click "Fork" immediately.
