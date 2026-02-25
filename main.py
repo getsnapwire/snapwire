@@ -81,6 +81,19 @@ def require_admin(f):
     return decorated_function
 
 
+def require_platform_admin(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return jsonify({"error": "Authentication required"}), 401
+        admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
+        user_email = (current_user.email or "").strip().lower()
+        if not admin_email or user_email != admin_email:
+            return jsonify({"error": "Platform admin access required"}), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 def authenticate_api_key():
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
@@ -318,7 +331,10 @@ def dashboard():
         return redirect(url_for("tos_page"))
     is_self_hosted = not os.environ.get("REPL_ID")
     auto_key = session.pop('_local_auto_key', None)
-    return render_template("dashboard.html", user=current_user, is_self_hosted=is_self_hosted, auto_api_key=auto_key)
+    admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
+    user_email = (current_user.email or "").strip().lower()
+    is_platform_admin = bool(admin_email and user_email == admin_email)
+    return render_template("dashboard.html", user=current_user, is_self_hosted=is_self_hosted, auto_api_key=auto_key, is_platform_admin=is_platform_admin)
 
 
 @app.route("/admin-agent", methods=["GET", "POST"])
@@ -1401,7 +1417,7 @@ def export_audit_log():
 
 
 @app.route("/api/admin/users", methods=["GET"])
-@require_admin
+@require_platform_admin
 def list_users():
     tenant_id = get_current_tenant_id()
     tenant_type = current_user.active_tenant_type or 'personal'
@@ -1429,7 +1445,7 @@ def list_users():
 
 
 @app.route("/api/admin/users/<user_id>/role", methods=["PATCH"])
-@require_admin
+@require_platform_admin
 def update_user_role(user_id):
     data = request.get_json()
     if not data or "role" not in data:
@@ -1456,7 +1472,7 @@ def update_user_role(user_id):
 
 
 @app.route("/api/admin/users/<user_id>/access", methods=["PATCH"])
-@require_admin
+@require_platform_admin
 def update_user_access(user_id):
     data = request.get_json()
     if not data or "is_active" not in data:
@@ -1482,7 +1498,7 @@ def update_user_access(user_id):
 
 
 @app.route("/api/admin/create-user", methods=["POST"])
-@require_admin
+@require_platform_admin
 def admin_create_user():
     from src.tenant import ensure_personal_tenant
     from datetime import datetime as _dt
@@ -1520,7 +1536,7 @@ def admin_create_user():
 
 
 @app.route("/api/admin/contact-submissions", methods=["GET"])
-@require_admin
+@require_platform_admin
 def list_contact_submissions():
     from models import ContactSubmission
     page = request.args.get("page", 1, type=int)
@@ -1543,7 +1559,7 @@ def list_contact_submissions():
 
 
 @app.route("/api/admin/contact-submissions/<int:submission_id>", methods=["DELETE"])
-@require_admin
+@require_platform_admin
 def delete_contact_submission(submission_id):
     from models import ContactSubmission
     sub = ContactSubmission.query.get(submission_id)
@@ -3094,14 +3110,14 @@ Return ONLY the Python code, no markdown formatting, no explanation."""
 
 
 @app.route("/api/admin/self-hosted", methods=["GET"])
-@require_admin
+@require_platform_admin
 def admin_self_hosted():
     installs = SelfHostedInstall.query.order_by(SelfHostedInstall.registered_at.desc()).limit(100).all()
     return jsonify({"installs": [i.to_dict() for i in installs]})
 
 
 @app.route("/api/admin/public-audits", methods=["GET"])
-@require_admin
+@require_platform_admin
 def admin_public_audits():
     from sqlalchemy import func
     total = PublicAudit.query.count()
@@ -3582,7 +3598,7 @@ def telemetry_ingest():
 
 
 @app.route("/api/admin/telemetry-dashboard", methods=["GET"])
-@require_admin
+@require_platform_admin
 def telemetry_dashboard():
     from datetime import timedelta
     config = get_install_id()

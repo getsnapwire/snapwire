@@ -828,6 +828,8 @@
                 <button class="sub-tab" data-subtab="account" data-group="settings-group">Account</button>
                 {% if user and user.role == 'admin' %}
                 <button class="sub-tab" data-subtab="settings" data-group="settings-group">Webhooks &amp; Notifications</button>
+                {% endif %}
+                {% if is_platform_admin %}
                 <button class="sub-tab" data-subtab="admin" data-group="settings-group">Users</button>
                 <button class="sub-tab" data-subtab="contacts" data-group="settings-group">Contact Inbox</button>
                 <button class="sub-tab" data-subtab="telemetry" data-group="settings-group">Telemetry</button>
@@ -1421,7 +1423,7 @@
         </div>
         {% endif %}
 
-        {% if user and user.role == 'admin' %}
+        {% if is_platform_admin %}
         <div id="panel-telemetry" class="panel">
             <h3 style="margin-bottom:20px;">&#128225; Telemetry Dashboard</h3>
 

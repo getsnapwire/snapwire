@@ -17,7 +17,7 @@ class User(UserMixin, db.Model):
     profile_image_url = db.Column(db.String, nullable=True)
     password_hash = db.Column(db.String, nullable=True)
     auth_provider = db.Column(db.String, default='replit')
-    role = db.Column(db.String, default='viewer', nullable=False)
+    role = db.Column(db.String, default='admin', nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     last_login_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.now)

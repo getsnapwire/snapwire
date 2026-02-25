@@ -2,6 +2,7 @@ import os
 
 os.environ.pop("DATABASE_URL", None)
 os.environ["TESTING"] = "1"
+os.environ["ADMIN_EMAIL"] = "test@example.com"
 
 import pytest
 from app import app as flask_app, db, limiter

@@ -142,10 +142,7 @@ if IS_REPLIT:
         user.profile_image_url = user_claims.get('profile_image_url')
         user.auth_provider = 'replit'
         user.last_login_at = datetime.now()
-        admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
-        user_email = (user.email or "").strip().lower()
-        if admin_email and user_email == admin_email:
-            user.role = 'admin'
+        user.role = 'admin'
         merged_user = db.session.merge(user)
         db.session.commit()
         ensure_personal_tenant(merged_user)
@@ -281,14 +278,12 @@ else:
             return render_template("local_register.html", error="An account with this email already exists")
 
         token = secrets.token_urlsafe(32)
-        admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
-        user_role = 'admin' if (admin_email and email.lower() == admin_email) else 'viewer'
         user = User(
             id=str(uuid.uuid4()),
             email=email,
             first_name=name,
             auth_provider='local',
-            role=user_role,
+            role='admin',
             last_login_at=datetime.now(),
             email_verified=False,
             email_verification_token=token,
