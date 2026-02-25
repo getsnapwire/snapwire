@@ -285,6 +285,98 @@ def send_daily_risk_summary(tenant_id, stats, high_risk_events, shadow_blocks, d
     send_email_async(subject, text_body, html_body)
 
 
+def send_weekly_digest_email(tenant_id, digest_data):
+    total = digest_data.get("total_audited", 0)
+    allowed = digest_data.get("allowed", 0)
+    blocked = digest_data.get("blocked", 0)
+    denied = digest_data.get("denied", 0)
+    approval_rate = digest_data.get("approval_rate", 0)
+    period = digest_data.get("period", "Last 7 days")
+    top_violations = digest_data.get("top_violations", {})
+    top_agents = digest_data.get("top_agents", {})
+    savings = round(blocked * 0.12, 2)
+
+    subject = f"Snapwire Weekly Digest — {total} actions audited, ${savings:.2f} saved"
+
+    violation_rows = ""
+    for rule, count in list(top_violations.items())[:5]:
+        violation_rows += f"""
+        <tr>
+            <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">{rule}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;">{count}</td>
+        </tr>"""
+
+    agent_rows = ""
+    for agent, count in list(top_agents.items())[:5]:
+        agent_rows += f"""
+        <tr>
+            <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">{agent}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;">{count}</td>
+        </tr>"""
+
+    html_body = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 640px; margin: 0 auto;">
+        <div style="background: #1e293b; color: white; padding: 24px; border-radius: 8px 8px 0 0;">
+            <h2 style="margin: 0 0 4px 0;">Weekly Digest</h2>
+            <p style="margin:0;opacity:0.8;font-size:14px;">{period}</p>
+        </div>
+        <div style="background: #f8fafc; padding: 24px; border: 1px solid #e2e8f0;">
+            <div style="display:flex;gap:12px;text-align:center;margin-bottom:24px;">
+                <div style="flex:1;padding:16px;background:white;border-radius:8px;border:1px solid #e2e8f0;">
+                    <div style="font-size:28px;font-weight:700;color:#1e293b;">{total}</div>
+                    <div style="color:#64748b;font-size:12px;">Total Audited</div>
+                </div>
+                <div style="flex:1;padding:16px;background:white;border-radius:8px;border:1px solid #e2e8f0;">
+                    <div style="font-size:28px;font-weight:700;color:#10b981;">{allowed}</div>
+                    <div style="color:#64748b;font-size:12px;">Allowed</div>
+                </div>
+                <div style="flex:1;padding:16px;background:white;border-radius:8px;border:1px solid #e2e8f0;">
+                    <div style="font-size:28px;font-weight:700;color:#ef4444;">{blocked}</div>
+                    <div style="color:#64748b;font-size:12px;">Blocked</div>
+                </div>
+                <div style="flex:1;padding:16px;background:white;border-radius:8px;border:1px solid #e2e8f0;">
+                    <div style="font-size:28px;font-weight:700;color:#8b5cf6;">{approval_rate}%</div>
+                    <div style="color:#64748b;font-size:12px;">Approval Rate</div>
+                </div>
+            </div>
+            <div style="margin-bottom:24px;padding:16px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;text-align:center;">
+                <div style="font-size:24px;font-weight:700;color:#16a34a;">${savings:.2f}</div>
+                <div style="color:#15803d;font-size:13px;">Estimated savings from blocked actions</div>
+            </div>
+            {'<div style="margin-bottom:24px;"><p style="font-weight:600;color:#1e293b;margin:0 0 12px;">Top Violated Rules</p><table style="width:100%;border-collapse:collapse;font-size:13px;background:white;border-radius:6px;border:1px solid #e2e8f0;"><thead><tr style="background:#f1f5f9;"><th style="padding:8px 12px;text-align:left;">Rule</th><th style="padding:8px 12px;text-align:right;">Count</th></tr></thead><tbody>' + violation_rows + '</tbody></table></div>' if violation_rows else ''}
+            {'<div style="margin-bottom:24px;"><p style="font-weight:600;color:#1e293b;margin:0 0 12px;">Most Active Agents</p><table style="width:100%;border-collapse:collapse;font-size:13px;background:white;border-radius:6px;border:1px solid #e2e8f0;"><thead><tr style="background:#f1f5f9;"><th style="padding:8px 12px;text-align:left;">Agent</th><th style="padding:8px 12px;text-align:right;">Actions</th></tr></thead><tbody>' + agent_rows + '</tbody></table></div>' if agent_rows else ''}
+        </div>
+        <div style="background:#f1f5f9;padding:16px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;border-top:0;text-align:center;">
+            <p style="margin:0 0 8px 0;"><a href="#" style="color:#3b82f6;text-decoration:none;font-weight:600;">View Full Dashboard →</a></p>
+            <p style="margin:0;color:#64748b;font-size:14px;">Snapwire — The Safety Fuse for Your AI Agents</p>
+        </div>
+    </div>
+    """
+
+    violation_text = ""
+    if top_violations:
+        violation_text = "\nTop Violated Rules:\n" + "\n".join([f"  - {r}: {c} times" for r, c in list(top_violations.items())[:5]])
+
+    agent_text = ""
+    if top_agents:
+        agent_text = "\nMost Active Agents:\n" + "\n".join([f"  - {a}: {c} actions" for a, c in list(top_agents.items())[:5]])
+
+    text_body = (
+        f"Weekly Digest — {period}\n"
+        f"{'=' * 40}\n"
+        f"Total Audited: {total}\n"
+        f"Allowed: {allowed}\n"
+        f"Blocked: {blocked}\n"
+        f"Denied: {denied}\n"
+        f"Approval Rate: {approval_rate}%\n"
+        f"Estimated Savings: ${savings:.2f}\n"
+        f"{violation_text}\n"
+        f"{agent_text}\n"
+    )
+
+    send_email_async(subject, text_body, html_body)
+
+
 def send_digest_email(stats):
     total = stats.get("total", 0)
     allowed = stats.get("allowed", 0)

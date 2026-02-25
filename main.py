@@ -44,7 +44,7 @@ import src.rate_limiter as rate_limiter_module
 from src.input_sanitizer import sanitize_parameters
 from src.nlp_rule_builder import parse_natural_language_rule, detect_rule_conflicts, test_rule_against_action
 from src.notifications import send_slack_notification, send_notification_to_configured_webhooks
-from src.email_service import send_blocked_action_email, send_critical_risk_email
+from src.email_service import send_blocked_action_email, send_critical_risk_email, send_weekly_digest_email
 from src.tool_catalog import check_tool_catalog, get_catalog, update_tool_status, regrade_tool
 from community.routes import community_bp
 from src.blast_radius import check_blast_radius, get_blast_radius_config, update_blast_radius_config, get_blast_radius_events, clear_lockout, get_active_lockouts
@@ -249,8 +249,36 @@ def start_telemetry_ping_timer():
     t.start()
 
 
+def start_weekly_digest_timer():
+    def run():
+        last_sent = {}
+        while True:
+            time.sleep(3600)
+            try:
+                with app.app_context():
+                    from datetime import timedelta
+                    now = datetime.utcnow()
+                    if now.weekday() == 0 and now.hour == 8:
+                        tenants = db.session.query(NotificationSetting).filter(
+                            NotificationSetting.email_digest == True
+                        ).all()
+                        for notif in tenants:
+                            tid = notif.tenant_id
+                            if last_sent.get(tid) and (now - last_sent[tid]).total_seconds() < 600000:
+                                continue
+                            digest_data = get_weekly_digest(tid)
+                            if digest_data.get("total_audited", 0) > 0:
+                                send_weekly_digest_email(tid, digest_data)
+                                last_sent[tid] = now
+            except Exception:
+                pass
+    t = threading.Thread(target=run, daemon=True)
+    t.start()
+
+
 start_auto_deny_timer()
 start_daily_risk_summary_timer()
+start_weekly_digest_timer()
 start_telemetry_ping_timer()
 
 
@@ -1647,6 +1675,18 @@ def install_template(template_id):
 def weekly_digest():
     tenant_id = get_current_tenant_id()
     return jsonify(get_weekly_digest(tenant_id=tenant_id))
+
+
+@app.route("/api/compliance/nist-report", methods=["GET"])
+@require_login
+def nist_compliance_report():
+    tenant_id = get_current_tenant_id()
+    rules = ConstitutionRule.query.filter_by(tenant_id=tenant_id).all()
+    installed_rule_names = {r.rule_name for r in rules}
+    from src.nist_mapping import generate_compliance_report
+    report = generate_compliance_report(installed_rule_names)
+    report["generated_at"] = datetime.utcnow().isoformat() + "Z"
+    return jsonify(report)
 
 
 @app.route("/api/rate-limits", methods=["GET"])

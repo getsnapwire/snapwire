@@ -875,7 +875,10 @@
                     <div style="font-size:11px;color:var(--accent-green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Total Savings</div>
                     <div id="ov-savings" style="font-size:36px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-green);">$0.00</div>
                     <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">from blocked loops &amp; violations</div>
-                    <button onclick="shareSavings()" style="margin-top:8px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:var(--accent-green);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;">Share My Savings</button>
+                    <div style="display:flex;gap:6px;margin-top:8px;justify-content:center;flex-wrap:wrap;">
+                        <button onclick="shareSavings()" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:var(--accent-green);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;">Share My Savings</button>
+                        <button onclick="shareSavingsToX()" style="background:rgba(29,155,240,0.15);border:1px solid rgba(29,155,240,0.4);color:#1d9bf0;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;">&#120143; Share on X</button>
+                    </div>
                 </div>
                 <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
                     <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Fuse Breaker</div>
@@ -981,6 +984,25 @@
                 <h4 style="font-size:14px;margin-bottom:12px;">Recent Activity</h4>
                 <div id="ov-recent-list" style="display:flex;flex-direction:column;gap:6px;"></div>
                 <div id="ov-recent-empty" style="text-align:center;padding:24px;color:var(--text-secondary);font-size:13px;">No activity yet. Connect an agent to get started.</div>
+            </div>
+
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-top:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <div>
+                        <h4 style="font-size:14px;margin:0;">NIST AI RMF Compliance</h4>
+                        <p style="font-size:12px;color:var(--text-secondary);margin:4px 0 0;">Coverage readiness based on installed rule packs</p>
+                    </div>
+                    <button onclick="fetchNistReport()" class="btn" style="padding:8px 16px;font-size:12px;background:var(--accent-blue);color:white;border:none;border-radius:6px;cursor:pointer;">Generate Report</button>
+                </div>
+                <div id="nist-report-content">
+                    <div style="text-align:center;padding:30px;color:var(--text-secondary);font-size:13px;">
+                        <div style="font-size:32px;margin-bottom:8px;">&#128203;</div>
+                        Click "Generate Report" to see your NIST AI RMF compliance coverage.
+                    </div>
+                </div>
+                <div id="nist-disclaimer" style="display:none;margin-top:16px;padding:12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-secondary);line-height:1.5;">
+                    This report is informational and does not constitute a formal NIST AI RMF audit or certification. It reflects coverage based on installed Snapwire rule packs only.
+                </div>
             </div>
         </div>
 
@@ -1600,6 +1622,18 @@
                 <div id="digest-empty" class="empty-state" style="display:none;">
                     <div class="empty-state-icon">&#128231;</div>
                     <div class="empty-state-msg">Your first weekly digest will appear after 7 days of activity.</div>
+                </div>
+                <div id="digest-email-cta" style="margin-top:20px;padding:16px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.2);border-radius:10px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+                        <div>
+                            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:4px;">Get weekly governance summaries in your inbox</div>
+                            <div id="digest-email-status" style="font-size:12px;color:var(--text-secondary);">Enable digest emails to receive a Monday 8 AM UTC summary of your firewall activity.</div>
+                        </div>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0;">
+                            <input type="checkbox" id="digest-toggle" onchange="toggleDigestEmail(this.checked)" style="width:18px;height:18px;accent-color:var(--accent-blue);cursor:pointer;">
+                            <span style="font-size:13px;font-weight:600;color:var(--accent-blue);">Email Digest</span>
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2280,6 +2314,7 @@ def handle_tool_call(tool_call):
             if (name === 'risk') loadRiskIntelligence();
             if (name === 'analytics') loadAnalytics(7);
             if (name === 'telemetry') loadAdminTab();
+            if (name === 'digest') { fetchDigest(); loadDigestEmailState(); }
         }
 
         document.querySelectorAll('.tab[data-tab]').forEach(tab => {
@@ -2408,20 +2443,33 @@ def handle_tool_call(tool_call):
             }
             _prevPendingCount = count;
         }
-        function showFirstBlockCelebration() {
+        async function showFirstBlockCelebration() {
             const card = document.getElementById('try-it-card');
             if (card) card.style.display = 'none';
             localStorage.setItem('snapwire_tryit_dismissed', '1');
             const badge = document.getElementById('pending-badge');
             if (badge) badge.classList.add('pulse-celebrate');
+            let slotNum = '';
+            try {
+                const statsRes = await fetch('/api/public/stats');
+                const statsData = await statsRes.json();
+                slotNum = (statsData.sentinels_claimed || 0) + 1;
+            } catch(e) { slotNum = '?'; }
             const toast = document.createElement('div');
             toast.className = 'first-block-toast';
-            toast.innerHTML = '<span style="font-size:20px;">&#127881;</span><div><strong>Your first block!</strong><br><span style="font-size:13px;color:var(--text-secondary);">Snapwire caught a dangerous SQL command. Check the Kill Feed.</span></div>';
+            toast.innerHTML = '<span style="font-size:20px;">&#127881;</span>' +
+                '<div style="flex:1;"><strong>Your first block!</strong><br><span style="font-size:13px;color:var(--text-secondary);">Snapwire caught a dangerous SQL command. Check the Kill Feed.</span></div>' +
+                '<button onclick="event.stopPropagation();shareFirstBlockToX(' + slotNum + ');" style="background:rgba(29,155,240,0.15);border:1px solid rgba(29,155,240,0.4);color:#1d9bf0;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;">&#120143; Share on X</button>';
             toast.style.cursor = 'pointer';
             toast.onclick = function() { navigateTo('pending'); toast.remove(); };
             document.body.appendChild(toast);
             setTimeout(() => toast.classList.add('show'), 50);
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 8000);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 12000);
+        }
+        function shareFirstBlockToX(slotNum) {
+            const text = 'Just secured my AI agents with @snapwire_dev. Sentinel Slot #' + slotNum + ' claimed! \u{1F6E1}\uFE0F ' + window.location.origin;
+            const url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text);
+            window.open(url, '_blank', 'noopener,noreferrer,width=600,height=400');
         }
         {% endif %}
 
@@ -3677,6 +3725,122 @@ def handle_tool_call(tool_call):
             } catch (e) { container.innerHTML = '<div style="color:var(--accent-red);padding:20px;">Error loading digest: ' + e.message + '</div>'; }
         }
 
+        async function loadDigestEmailState() {
+            try {
+                const res = await fetch('/api/notifications/settings');
+                const data = await res.json();
+                const toggle = document.getElementById('digest-toggle');
+                if (toggle) toggle.checked = !!data.email_digest;
+                if (data.email_digest) {
+                    const status = document.getElementById('digest-email-status');
+                    if (status) status.textContent = 'Weekly digest is enabled. Sent every Monday at 8 AM UTC.';
+                }
+            } catch(e) {}
+        }
+
+        async function toggleDigestEmail(enabled) {
+            const status = document.getElementById('digest-email-status');
+            try {
+                const res = await fetch('/api/notifications/settings', {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email_digest: enabled})
+                });
+                if (res.ok) {
+                    if (enabled) {
+                        status.textContent = 'Weekly digest is enabled. Sent every Monday at 8 AM UTC.';
+                        showToast('Weekly digest email enabled', 'success');
+                    } else {
+                        status.textContent = 'Enable digest emails to receive a Monday 8 AM UTC summary of your firewall activity.';
+                        showToast('Weekly digest email disabled', 'success');
+                    }
+                } else {
+                    document.getElementById('digest-toggle').checked = !enabled;
+                    showToast('Failed to update digest setting', 'error');
+                }
+            } catch (e) {
+                document.getElementById('digest-toggle').checked = !enabled;
+                showToast('Error updating setting: ' + e.message, 'error');
+            }
+        }
+
+        async function fetchNistReport() {
+            const container = document.getElementById('nist-report-content');
+            container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);"><span class="loading"></span> Generating compliance report...</div>';
+            try {
+                const res = await fetch('/api/compliance/nist-report');
+                const r = await res.json();
+                const statusColor = s => s === 'covered' ? 'var(--accent-green)' : s === 'partial' ? 'var(--accent-yellow)' : 'var(--accent-red)';
+                const statusLabel = s => s === 'covered' ? 'Covered' : s === 'partial' ? 'Partial' : 'Gap';
+                const scoreColor = r.overall_score >= 70 ? 'var(--accent-green)' : r.overall_score >= 40 ? 'var(--accent-yellow)' : 'var(--accent-red)';
+                container.innerHTML = `
+                    <div style="display:grid;grid-template-columns:140px 1fr;gap:20px;margin-bottom:20px;">
+                        <div style="text-align:center;">
+                            <div style="position:relative;width:110px;height:110px;margin:0 auto;">
+                                <svg viewBox="0 0 36 36" style="width:110px;height:110px;transform:rotate(-90deg);">
+                                    <circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3"/>
+                                    <circle cx="18" cy="18" r="15.5" fill="none" stroke="${scoreColor}" stroke-width="3" stroke-dasharray="${r.overall_score} ${100 - r.overall_score}" stroke-linecap="round"/>
+                                </svg>
+                                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:28px;font-weight:700;color:${scoreColor};font-family:'Fira Code',monospace;">${r.overall_score}%</div>
+                            </div>
+                            <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Readiness Score</div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-content:center;">
+                            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:14px;text-align:center;">
+                                <div style="font-size:22px;font-weight:700;color:var(--accent-green);">${r.covered}</div>
+                                <div style="font-size:11px;color:var(--text-secondary);">Covered</div>
+                            </div>
+                            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:14px;text-align:center;">
+                                <div style="font-size:22px;font-weight:700;color:var(--accent-yellow);">${r.partial}</div>
+                                <div style="font-size:11px;color:var(--text-secondary);">Partial</div>
+                            </div>
+                            <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:14px;text-align:center;">
+                                <div style="font-size:22px;font-weight:700;color:var(--accent-red);">${r.gaps}</div>
+                                <div style="font-size:11px;color:var(--text-secondary);">Gaps</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+                        <div style="display:grid;grid-template-columns:100px 1fr 80px 1fr;gap:0;padding:10px 14px;background:rgba(255,255,255,0.03);font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">
+                            <div>ID</div><div>Category</div><div>Status</div><div>Coverage</div>
+                        </div>
+                        ${r.categories.map(c => `
+                            <div style="display:grid;grid-template-columns:100px 1fr 80px 1fr;gap:0;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.03);font-size:13px;align-items:center;">
+                                <div style="font-family:'Fira Code',monospace;font-size:11px;color:var(--accent-blue);">${c.id}</div>
+                                <div>
+                                    <div style="color:var(--text-primary);">${c.name}</div>
+                                    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${c.description.substring(0, 80)}${c.description.length > 80 ? '...' : ''}</div>
+                                </div>
+                                <div><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:${statusColor(c.status)}22;color:${statusColor(c.status)};">${statusLabel(c.status)}</span></div>
+                                <div style="font-size:12px;">
+                                    ${c.covering_packs.length > 0 ? c.covering_packs.map(p => '<span style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px;font-size:11px;margin-right:4px;">' + p + '</span>').join('') : ''}
+                                    ${c.recommendation ? '<button onclick="installNistPack(\'' + c.recommendation.pack_id + '\')" style="background:var(--accent-blue);color:white;border:none;padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer;margin-top:4px;">Install ' + c.recommendation.pack_name + '</button>' : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                document.getElementById('nist-disclaimer').style.display = 'block';
+            } catch (e) {
+                container.innerHTML = '<div style="color:var(--accent-red);padding:20px;">Error generating report: ' + e.message + '</div>';
+            }
+        }
+
+        async function installNistPack(packId) {
+            try {
+                const res = await fetch('/api/templates/' + packId + '/install', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message || 'Pack installed successfully', 'success');
+                    fetchNistReport();
+                } else {
+                    showToast(data.error || 'Failed to install pack', 'error');
+                }
+            } catch (e) {
+                showToast('Error installing pack: ' + e.message, 'error');
+            }
+        }
+
         async function fetchTemplates() {
             try {
                 const res = await fetch('/api/templates');
@@ -4654,6 +4818,13 @@ def handle_tool_call(tool_call):
                 a.click();
                 URL.revokeObjectURL(url);
             });
+        }
+        function shareSavingsToX() {
+            const savings = document.getElementById('ov-savings').textContent;
+            const loops = document.getElementById('ov-loops').textContent;
+            const text = 'My AI agents saved me ' + savings + ' and caught ' + loops + ' dangerous loops with @snapwire_dev \u{1F6E1}\uFE0F ' + window.location.origin;
+            const url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text);
+            window.open(url, '_blank', 'noopener,noreferrer,width=600,height=400');
         }
 
         // === RISK INTELLIGENCE ===
