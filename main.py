@@ -1424,6 +1424,41 @@ def update_user_access(user_id):
     return jsonify({"status": status, "user_id": user_id})
 
 
+@app.route("/api/admin/contact-submissions", methods=["GET"])
+@require_admin
+def list_contact_submissions():
+    from models import ContactSubmission
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 50, type=int)
+    submissions = ContactSubmission.query.order_by(ContactSubmission.created_at.desc()).limit(per_page).offset((page - 1) * per_page).all()
+    total = ContactSubmission.query.count()
+    return jsonify({
+        "submissions": [{
+            "id": s.id,
+            "name": s.name,
+            "email": s.email,
+            "message": s.message,
+            "ip_address": s.ip_address,
+            "created_at": s.created_at.isoformat() if s.created_at else None,
+        } for s in submissions],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+    })
+
+
+@app.route("/api/admin/contact-submissions/<int:submission_id>", methods=["DELETE"])
+@require_admin
+def delete_contact_submission(submission_id):
+    from models import ContactSubmission
+    sub = ContactSubmission.query.get(submission_id)
+    if not sub:
+        return jsonify({"error": "Not found"}), 404
+    db.session.delete(sub)
+    db.session.commit()
+    return jsonify({"message": "Deleted"})
+
+
 @app.route("/api/api-keys", methods=["GET"])
 @require_login
 def list_api_keys():
@@ -2725,6 +2760,23 @@ def contact_submit():
     )
     db.session.add(submission)
     db.session.commit()
+
+    contact_email = os.environ.get("CONTACT_FORWARD_EMAIL")
+    if contact_email:
+        try:
+            from src.email_service import send_email
+            text_body = f"New contact form submission:\n\nName: {name}\nEmail: {email}\n\nMessage:\n{message}\n\nIP: {ip}\nTime: {now.isoformat()}"
+            html_body = f"""<div style="font-family:sans-serif;max-width:600px;">
+                <h2 style="color:#FF6B00;">New Contact Submission</h2>
+                <p><strong>Name:</strong> {name}</p>
+                <p><strong>Email:</strong> <a href="mailto:{email}">{email}</a></p>
+                <p><strong>Message:</strong></p>
+                <div style="background:#f5f5f5;padding:16px;border-radius:8px;white-space:pre-wrap;">{message}</div>
+                <p style="color:#888;font-size:12px;margin-top:16px;">IP: {ip} | {now.strftime('%Y-%m-%d %H:%M UTC')}</p>
+            </div>"""
+            send_email(f"[Snapwire] Contact from {name}", text_body, html_body, to_email=contact_email)
+        except Exception as e:
+            logging.warning(f"Failed to forward contact email: {e}")
 
     return jsonify({"status": "sent", "message": "Thank you! We'll get back to you soon."})
 

@@ -829,6 +829,7 @@
                 {% if user and user.role == 'admin' %}
                 <button class="sub-tab" data-subtab="settings" data-group="settings-group">Webhooks &amp; Notifications</button>
                 <button class="sub-tab" data-subtab="admin" data-group="settings-group">Users</button>
+                <button class="sub-tab" data-subtab="contacts" data-group="settings-group">Contact Inbox</button>
                 <button class="sub-tab" data-subtab="telemetry" data-group="settings-group">Telemetry</button>
                 {% endif %}
             </div>
@@ -1503,6 +1504,30 @@
                             <span style="font-size:10px;color:var(--text-secondary);margin-top:6px;">—</span>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-contacts" class="panel">
+            <div class="test-panel">
+                <h3>Contact Inbox</h3>
+                <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Submissions from the landing page contact form.</p>
+                <div id="contacts-count" style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;"></div>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Message</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="contacts-body">
+                            <tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:24px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -2373,7 +2398,7 @@ def handle_tool_call(tool_call):
             'rules-group': ['rules', 'history', 'test'],
             'agents-group': ['agents', 'analytics'],
             'security': ['vault', 'honeypots', 'blast', 'catalog', 'risk'],
-            'settings-group': ['keys', 'llm', 'org', 'account', 'settings', 'admin', 'telemetry']
+            'settings-group': ['keys', 'llm', 'org', 'account', 'settings', 'admin', 'contacts', 'telemetry']
         };
 
         let activeSubTabs = {};
@@ -5931,6 +5956,41 @@ if (result.status === "allowed") {
         }
 
         loadLLMSettings();
+
+        async function loadContactSubmissions() {
+            try {
+                const res = await fetch('/api/admin/contact-submissions');
+                if (!res.ok) return;
+                const data = await res.json();
+                const tbody = document.getElementById('contacts-body');
+                const countEl = document.getElementById('contacts-count');
+                if (!tbody) return;
+                countEl.textContent = `${data.total} submission${data.total !== 1 ? 's' : ''} total`;
+                if (!data.submissions.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:24px;">No contact submissions yet.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.submissions.map(s => `
+                    <tr>
+                        <td style="white-space:nowrap;font-size:12px;">${new Date(s.created_at).toLocaleDateString()} ${new Date(s.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</td>
+                        <td>${s.name}</td>
+                        <td><a href="mailto:${s.email}" style="color:var(--accent-blue);text-decoration:none;">${s.email}</a></td>
+                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${s.message.replace(/"/g,'&quot;')}">${s.message}</td>
+                        <td><button class="btn" style="background:transparent;color:var(--text-secondary);border:1px solid var(--border);font-size:11px;padding:4px 10px;" onclick="deleteContactSubmission(${s.id})">Delete</button></td>
+                    </tr>
+                `).join('');
+            } catch(e) { console.error('Contact submissions error:', e); }
+        }
+
+        async function deleteContactSubmission(id) {
+            if (!confirm('Delete this submission?')) return;
+            try {
+                await fetch(`/api/admin/contact-submissions/${id}`, { method: 'DELETE' });
+                loadContactSubmissions();
+            } catch(e) { alert('Failed to delete'); }
+        }
+
+        loadContactSubmissions();
 
         function checkFirstVisit() {
             if (!localStorage.getItem('agfw_onboarded')) {
