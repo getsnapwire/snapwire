@@ -45,8 +45,16 @@ limiter = Limiter(
 with app.app_context():
     import models  # noqa: F401
     db.create_all()
-    try:
-        db.session.execute(db.text("ALTER TABLE users ADD COLUMN first_block_email_sent BOOLEAN DEFAULT FALSE"))
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
+    migrations = [
+        "ALTER TABLE users ADD COLUMN first_block_email_sent BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE audit_log ADD COLUMN parent_agent_id VARCHAR",
+        "ALTER TABLE audit_log ADD COLUMN content_hash VARCHAR(64)",
+        "ALTER TABLE pending_actions ADD COLUMN parent_agent_id VARCHAR",
+        "ALTER TABLE proxy_tokens ADD COLUMN expires_at TIMESTAMP",
+    ]
+    for sql in migrations:
+        try:
+            db.session.execute(db.text(sql))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()

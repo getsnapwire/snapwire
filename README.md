@@ -22,7 +22,7 @@
   <a href="#audit-cli">Audit CLI</a> &middot;
   <a href="#custom-rules">Custom Rules</a> &middot;
   <a href="#api">API</a> &middot;
-  <a href="#compliance-readiness">Compliance</a> &middot;
+  <a href="#compliance--nistir-8596-alignment">Compliance</a> &middot;
   <a href="#self-hosting">Self-Hosting</a> &middot;
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
@@ -368,7 +368,28 @@ Add this to your README to show your agents are governed:
 
 ---
 
-## Compliance Readiness
+## Compliance & NISTIR 8596 Alignment
+
+### NISTIR 8596 (Cyber AI Profile)
+
+Snapwire is a **Deterministic Policy Enforcement Point (PEP)**. Unlike probabilistic AI-safety layers, Snapwire's core operates on hard-coded, user-defined rules. By deploying Snapwire, you implement an **NISTIR 8596 (Cyber AI Profile)** aligned governance layer, specifically addressing the **Protect (PR)** and **Detect (DE)** functions of the 2026 NIST Cybersecurity Framework.
+
+| NISTIR 8596 Function | Snapwire Implementation |
+|---|---|
+| **Protect (PR)** — Policy Enforcement | Deterministic rule engine, Schema Validation Guard, Blast Radius Governor, Snap-Token credential masking |
+| **Detect (DE)** — Anomaly Identification | Fuse Breaker loop detection, Thinking Token Sentinel, Deception & Goal Drift Detector, Honeypot Tripwires |
+| **Govern (GV)** — Risk Management | Constitutional rules with human oversight, Snap-Card Review Queue, Trust Rules with 24h TTL |
+| **Identity Attribution** | Agent ID + Parent Agent ID tracking for full chain-of-command traceability across multi-agent systems |
+| **Forensic Readiness** | SHA-256 content-hashed audit log entries, immutable decision records, exportable via API and Audit CLI |
+
+**Liability & Sovereignty:**
+- **User-Defined Logic:** Snapwire executes policies provided by the User. The User retains full responsibility for the standard of care and configuration of specific rules.
+- **As-Is Utility:** This software is provided under the **Apache 2.0 License**. It is a tool for forensic readiness and deterministic interception, not a guarantee of AI performance.
+- **Data Sovereignty:** Snapwire is self-hosted. The User acts as the Data Controller. Snapwire never accesses, stores, or transmits your API keys or tool-call data to third parties.
+
+> *Implementing Snapwire helps organizations demonstrate "Reasonable Cybersecurity Practices" under the 2026 Cyber AI Profile, providing a defensible audit trail in the event of an autonomous agent failure.*
+
+### EU AI Act
 
 Snapwire provides **Conformity-Ready Infrastructure** for organizations operating under the EU AI Act (2026) and similar regulatory frameworks.
 

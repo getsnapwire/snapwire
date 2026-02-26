@@ -34,7 +34,7 @@ def unsubscribe_sse(q):
             _sse_queues.remove(q)
 
 
-def add_pending_action(tool_call, audit_result, webhook_url=None, agent_id=None, api_key_id=None, tenant_id=None):
+def add_pending_action(tool_call, audit_result, webhook_url=None, agent_id=None, api_key_id=None, tenant_id=None, parent_agent_id=None):
     from app import db
     from models import PendingAction
 
@@ -52,6 +52,7 @@ def add_pending_action(tool_call, audit_result, webhook_url=None, agent_id=None,
         analysis=audit_result.get("analysis", ""),
         agent_id=agent_id or "unknown",
         api_key_id=api_key_id,
+        parent_agent_id=parent_agent_id,
         webhook_url=webhook_url,
     )
     db.session.add(action)
@@ -111,8 +112,10 @@ def resolve_action(action_id, decision, resolved_by="user", tenant_id=None):
         analysis=action.analysis,
         agent_id=action.agent_id,
         api_key_id=action.api_key_id,
+        parent_agent_id=getattr(action, 'parent_agent_id', None),
         created_at=action.created_at,
     )
+    log_entry.content_hash = _compute_content_hash(log_entry)
     db.session.add(log_entry)
 
     violations = []
@@ -180,7 +183,23 @@ def get_action(action_id, tenant_id=None):
     return None
 
 
-def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None, tenant_id=None):
+def _compute_content_hash(entry):
+    import hashlib
+    parts = [
+        entry.tool_name or "",
+        entry.tool_params or "",
+        entry.intent or "",
+        entry.status or "",
+        str(entry.risk_score or 0),
+        entry.agent_id or "",
+        entry.tenant_id or "",
+        entry.created_at.isoformat() if entry.created_at else "",
+    ]
+    raw = "|".join(parts)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None, tenant_id=None, parent_agent_id=None):
     from app import db
     from models import AuditLogEntry
 
@@ -210,7 +229,9 @@ def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None, 
         chain_of_thought=cot_detail,
         agent_id=agent_id or "unknown",
         api_key_id=api_key_id,
+        parent_agent_id=parent_agent_id,
     )
+    entry.content_hash = _compute_content_hash(entry)
     db.session.add(entry)
     db.session.commit()
 
@@ -386,8 +407,10 @@ def bulk_resolve(action_ids, decision, resolved_by="user", tenant_id=None):
                 analysis=action.analysis,
                 agent_id=action.agent_id,
                 api_key_id=action.api_key_id,
+                parent_agent_id=getattr(action, 'parent_agent_id', None),
                 created_at=action.created_at,
             )
+            log_entry.content_hash = _compute_content_hash(log_entry)
             db.session.add(log_entry)
             results.append(action_id)
 
@@ -485,8 +508,10 @@ def auto_deny_expired(timeout_minutes=30):
             analysis=action.analysis,
             agent_id=action.agent_id,
             api_key_id=action.api_key_id,
+            parent_agent_id=getattr(action, 'parent_agent_id', None),
             created_at=action.created_at,
         )
+        log_entry.content_hash = _compute_content_hash(log_entry)
         db.session.add(log_entry)
         expired_ids.append(action.id)
 

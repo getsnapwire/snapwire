@@ -85,9 +85,10 @@ def get_vault_credentials(tool_name, tenant_id):
     }
 
 
-def generate_proxy_token(tenant_id, vault_entry_id, label=None):
+def generate_proxy_token(tenant_id, vault_entry_id, label=None, expires_in_minutes=None):
     from app import db
     from models import VaultEntry, ProxyToken
+    from datetime import timedelta
 
     entry = VaultEntry.query.filter_by(id=vault_entry_id, tenant_id=tenant_id).first()
     if not entry:
@@ -95,11 +96,16 @@ def generate_proxy_token(tenant_id, vault_entry_id, label=None):
 
     token = "snap_" + secrets_module.token_hex(24)
 
+    expires_at = None
+    if expires_in_minutes and int(expires_in_minutes) > 0:
+        expires_at = datetime.utcnow() + timedelta(minutes=int(expires_in_minutes))
+
     proxy = ProxyToken(
         tenant_id=tenant_id,
         token=token,
         vault_entry_id=vault_entry_id,
         label=label or f"Token for {entry.tool_name}",
+        expires_at=expires_at,
     )
     db.session.add(proxy)
     db.session.commit()
@@ -115,6 +121,12 @@ def resolve_proxy_token(token_value):
 
     proxy = ProxyToken.query.filter_by(token=token_value, is_active=True).first()
     if not proxy:
+        return None
+
+    if proxy.is_expired():
+        proxy.is_active = False
+        proxy.revoked_at = datetime.utcnow()
+        db.session.commit()
         return None
 
     entry = VaultEntry.query.get(proxy.vault_entry_id)

@@ -88,6 +88,8 @@ class AuditLogEntry(db.Model):
     chain_of_thought = db.Column(db.Text, nullable=True)
     agent_id = db.Column(db.String, default='unknown')
     api_key_id = db.Column(db.String, nullable=True)
+    parent_agent_id = db.Column(db.String, nullable=True, index=True)
+    content_hash = db.Column(db.String(64), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -128,6 +130,8 @@ class AuditLogEntry(db.Model):
             "status": self.status,
             "agent_id": self.agent_id,
             "api_key_id": self.api_key_id,
+            "parent_agent_id": self.parent_agent_id,
+            "content_hash": self.content_hash,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
@@ -146,6 +150,7 @@ class PendingAction(db.Model):
     analysis = db.Column(db.Text, nullable=True)
     agent_id = db.Column(db.String, default='unknown')
     api_key_id = db.Column(db.String, nullable=True)
+    parent_agent_id = db.Column(db.String, nullable=True, index=True)
     webhook_url = db.Column(db.String, nullable=True)
     resolved_at = db.Column(db.DateTime, nullable=True)
     resolved_by = db.Column(db.String, nullable=True)
@@ -182,6 +187,7 @@ class PendingAction(db.Model):
             "status": self.status,
             "agent_id": self.agent_id,
             "api_key_id": self.api_key_id,
+            "parent_agent_id": getattr(self, 'parent_agent_id', None),
             "webhook_url": self.webhook_url,
             "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
             "resolved_by": self.resolved_by,
@@ -586,6 +592,12 @@ class ProxyToken(db.Model):
     use_count = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     revoked_at = db.Column(db.DateTime, nullable=True)
+    expires_at = db.Column(db.DateTime, nullable=True)
+
+    def is_expired(self):
+        if self.expires_at and self.expires_at < datetime.utcnow():
+            return True
+        return False
 
     def to_dict(self):
         return {
@@ -598,6 +610,7 @@ class ProxyToken(db.Model):
             "use_count": self.use_count,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "revoked_at": self.revoked_at.isoformat() if self.revoked_at else None,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
         }
 
 

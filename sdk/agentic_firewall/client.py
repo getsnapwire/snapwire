@@ -39,6 +39,7 @@ class AgenticFirewall:
         tool_name: str,
         parameters: Optional[Dict[str, Any]] = None,
         agent_id: str = "default",
+        parent_agent_id: Optional[str] = None,
         intent: str = "",
         context: str = "",
         inner_monologue: str = "",
@@ -49,6 +50,8 @@ class AgenticFirewall:
             "parameters": parameters or {},
             "agent_id": agent_id,
         }
+        if parent_agent_id:
+            payload["parent_agent_id"] = parent_agent_id
         if intent:
             payload["intent"] = intent
         if context:
