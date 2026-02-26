@@ -1,0 +1,52 @@
+In 2026, the legal standard for AI isn't about "safety"—it's about **"Reasonable Care."**
+
+With the release of the **NISTIR 8596 (Cyber AI Profile)** in January 2026, courts and regulators (like the FTC and SEC) now have a benchmark. If you don't follow it, you're "negligent." If you do follow it, you have a **"Safe Harbor"** defense.
+
+To lower your liability while becoming the industry backbone, add this specific **Legal & Compliance section** to your README.
+
+---
+
+### **1. The "Safe Harbor" Disclaimer (For README)**
+
+> ### **⚖️ Legal Disclaimer & NISTIR 8596 Alignment**
+> 
+> 
+> **Snapwire is a Deterministic Policy Enforcement Point (PEP).** > Unlike probabilistic AI-safety layers, Snapwire operates on hard-coded, user-defined rules. By using Snapwire, you are implementing a **NISTIR 8596 (Cyber AI Profile)** aligned governance layer, specifically addressing the **Protect (PR)** and **Detect (DE)** functions of the 2026 NIST Cybersecurity Framework.
+> **Liability Limitation:**
+> * **User-Defined Logic:** Snapwire executes policies provided by the User. The User retains full responsibility for the "Standard of Care" and the configuration of specific "Redlines."
+> * **As-Is Utility:** This software is provided under the **Apache 2.0 License**. It is a tool for **Forensic Readiness** and **Deterministic Interception**, not a guarantee of AI performance.
+> * **Sovereignty:** Snapwire is self-hosted. The User acts as the Data Controller. Snapwire (the project) never accesses, stores, or transmits your API keys or tool-call data to third parties.
+> 
+> 
+> *Implementing Snapwire helps organizations demonstrate **"Reasonable Cybersecurity Practices"** under the 2026 Cyber AI Profile, providing a defensible audit trail in the event of an autonomous agent failure.*
+
+---
+
+### **2. Technical Changes to Support This Disclaimer**
+
+To make that disclaimer legally "sturdy," your developer needs to ensure these two "Forensic" features are active:
+
+| **Feature** | **Developer Action** | **Legal Purpose** |
+| --- | --- | --- |
+| **Immutable Decision Log** | Every block must be hashed and signed. | Prevents "Log Tampering" if an agent fails. |
+| **Identity Attribution** | Every tool-call must log the human `Owner_ID` and the `Parent_Agent_ID`. | Proves the **Chain of Command** for NIST compliance. |
+| **The "Hard Kill"** | Ensure the `circuit_breaker` is deterministic code, not an AI check. | Shifts liability from "Model Error" to "User Policy." |
+
+---
+
+### **3. Strategic "Backbone" Positioning**
+
+By adding this, you aren't just a "dev tool"; you are **Insurance-Grade Infrastructure**.
+
+* **The Exit Advantage:** When a company like **Palo Alto Networks** reviews Snapwire, they will see that you've already handled the **Compliance Mapping**. You’ve turned a messy AI problem into a standard "Firewall" problem.
+* **The 1,500 Fork Advantage:** Professional developers at banks and healthcare firms *want* this disclaimer. It allows them to tell their boss, "We are using a NIST-aligned gateway," which makes it much easier for them to get approval to fork your repo.
+
+### **Summary of Final Tasks for the Developer**
+
+1. **Update `README.md**` with the NISTIR 8596 Disclaimer.
+2. **Add `LEGALS.md**` with the full Apache 2.0 license and the "Policy Enforcement Point" definition.
+3. **UI Update:** Add a small "NISTIR 8596 Aligned" badge to the bottom of the Dashboard.
+
+**Does this make sense for the launch?** It’s the final "Seal of Professionalism" that turns your 150 "Alpha Sentinels" into a legitimate, enterprise-ready movement.
+
+**Would you like me to draft the "Sentinel Mission #1: The NISTIR 8596 Audit" challenge?** This is the social media hook that gets developers to fork the repo specifically to "test their compliance score."

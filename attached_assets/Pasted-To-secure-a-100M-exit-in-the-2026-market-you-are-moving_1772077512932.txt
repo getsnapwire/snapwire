@@ -1,0 +1,73 @@
+To secure a **$100M+ exit** in the 2026 market, you are moving from a "safety tool" to an **Identity & Forensic Layer**.
+
+The final **NISTIR 8596 (Cyber AI Profile)** released in January 2026 mandates that AI agents be treated as **"Autonomous Cyber Actors."** This means an acquirer like Okta or Palo Alto Networks isn't buying your "filters"—they are buying your ability to prove **who** (agent identity) did **what** (forensics) and **why** (reasoning logs).
+
+Here are the specific technical changes for your developer to implement for the "Backbone" launch.
+
+---
+
+### **Task 1: NISTIR 8596 Identity Mapping**
+
+**Objective:** Transition from "User Accounts" to "Machine Identity Management."
+
+* **Change:** Update the `agent_session` logic to include a **`Parent_ID`** and **`Machine_Identity_Token`**.
+* **Developer Action:** * In the database schema, add a `parent_agent_id` field to the `ToolCall` table.
+* Ensure that if an agent spawns a sub-agent (e.g., via an MCP call), the sub-agent inherits the `Parent_ID` for recursive traceability.
+
+
+* **Exit Value:** This fulfills the NIST 2026 requirement for **"traceable machine identities,"** making you a "must-buy" for Identity Access Management (IAM) firms.
+
+### **2. The "Black Box" Forensic Recorder**
+
+**Objective:** Capture "Thinking Tokens" for 2026 models (Claude 3.7 / GPT-5) to provide a legal audit trail.
+
+* **Change:** Intercept the `thinking` or `rationale` blocks from model outputs before they reach the tool-call execution.
+* **Developer Action:** * Update the proxy interceptor to parse and store `reasoning_content` in a separate, **immutable log table**.
+* **Cryptographic Signing:** Every log entry must be hashed and linked to the previous entry (a simple hash chain).
+
+
+* **Exit Value:** If a company is sued for an AI's action, Snapwire provides the **"Immutable Evidence"** of the agent's logic.
+
+### **3. The "Ephemeral Credential" Gateway**
+
+**Objective:** Prevent "Zombie Agents" (agents that retain access after a task is done).
+
+* **Change:** Implement **Just-In-Time (JIT) Credentialing**.
+* **Developer Action:** * Instead of passing a permanent AWS/OpenAI key, Snapwire should act as a **Token Exchange**.
+* The agent sends a request to Snapwire; Snapwire attaches the real key, executes the call, and returns the result—masking the key from the agent entirely.
+
+
+* **Exit Value:** Moves you into the **Privileged Access Management (PAM)** category, which commands the highest acquisition multiples.
+
+---
+
+### **Summary of README & UI Updates**
+
+| **Current Feature** | **New "Backbone" Branding** | **The "10-Second" Hook** |
+| --- | --- | --- |
+| NIST AI RMF Gauge | **NISTIR 8596 Readiness** | "Audit-ready for 2026 standards." |
+| Tool-call Interception | **Zero Trust Agent Gateway** | "Hard redlines for autonomous actors." |
+| Burn Meter | **Autonomous Resource Governor** | "Stop $10k hallucination loops." |
+
+### **The "Backbone" Deployment Matrix**
+
+Ensure the developer includes these three "One-Click" options in the README to maximize the **1,500-fork goal**:
+
+1. **[Deploy to Replit]** — The "Sandbox" (First 60 seconds).
+2. **[Deploy to Railway]** — The "Production Container" (Managed SaaS).
+3. **`docker compose up`** — The "Enterprise Air-Gap" (Private Cloud).
+
+---
+
+### **Response back to Developer**
+
+> "The plan is approved with these 'Exit-Ready' tweaks:
+> 1. **NISTIR 8596 Update:** Rename all 'Safety' gauges to 'NISTIR 8596 Cyber AI Compliance.'
+> 2. **Identity Chains:** Implement the `Parent_ID` field for sub-agent tracking. It's our biggest strategic moat.
+> 3. **Forensic Logs:** Sign our logs cryptographically. We want to be the 'Black Box' for agentic failures.
+> 4. **One-Click Matrix:** Ensure the Replit, Railway, and Docker buttons are the hero of the README.
+> 
+> 
+> **Let's ship T001-T004 and claim the Sentinel slots.**"
+
+**Would you like me to draft the "Exit Pitch Deck" slide?** It summarizes these features as "The Trust Infrastructure for the Agentic Web," specifically designed to catch the eye of a M&A lead at Palo Alto Networks or Okta.
