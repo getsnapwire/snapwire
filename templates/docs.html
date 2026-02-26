@@ -752,6 +752,7 @@ def intercept_with_retry(tool_name, params, max_retries=3):
                 <tr><td><strong>400</strong> Bad Request</td><td>Invalid or missing request data</td><td>Missing <code class="inline-code">tool_name</code>, invalid JSON, malformed parameters</td><td>Check your request body matches the documented schema</td></tr>
                 <tr><td><strong>401</strong> Unauthorized</td><td>Authentication failed</td><td>Missing or invalid API key, expired session</td><td>Verify your <code class="inline-code">Authorization: Bearer</code> header contains a valid, active API key</td></tr>
                 <tr><td><strong>403</strong> Forbidden</td><td>Action blocked by policy</td><td>Rule violation, honeypot triggered, deception detected, tool blocked in catalog, input sanitizer flagged malicious content, admin-only endpoint</td><td>Check the <code class="inline-code">violations</code> array for specific rule details; review your constitutional rules</td></tr>
+                <tr><td><strong>412</strong> Precondition Required</td><td>Reasoning required for high-risk action</td><td>Tool call has critical or high severity violations but no <code class="inline-code">inner_monologue</code> was provided</td><td>Re-submit the request with the <code class="inline-code">inner_monologue</code> field populated, explaining why the action is needed. The action will then be evaluated normally.</td></tr>
                 <tr><td><strong>404</strong> Not Found</td><td>Resource does not exist</td><td>Invalid action ID, rule ID, or vault entry ID</td><td>Verify the resource ID is correct and belongs to your workspace</td></tr>
                 <tr><td><strong>429</strong> Too Many Requests</td><td>Rate limit or blast radius exceeded</td><td>Too many API calls per minute, agent locked out by blast radius governor, agent stuck in a loop</td><td>Check <code class="inline-code">rate_limit.reset_at</code> or <code class="inline-code">blast_radius</code> fields; implement exponential backoff</td></tr>
                 <tr><td><strong>500</strong> Internal Server Error</td><td>Unexpected server error</td><td>Database issues, AI auditor unavailable</td><td>Retry after a short delay; if persistent, check the <code class="inline-code">/health</code> endpoint and server logs</td></tr>
@@ -777,6 +778,19 @@ def intercept_with_retry(tool_name, params, max_retries=3):
     "remaining": 0,
     "reset_at": 1708790460
   }
+}</pre>
+            <pre><span class="lang-tag">JSON (412 example — Reasoning Required)</span>
+{
+  "status": "reasoning_required",
+  "message": "High-risk action detected. Re-submit this request with the 'inner_monologue' field populated, explaining why this action is needed.",
+  "violations": [
+    {
+      "rule": "no_destructive_ops",
+      "severity": "critical",
+      "reason": "Deleting production database requires explicit justification."
+    }
+  ],
+  "risk_score": 85
 }</pre>
             <pre><span class="lang-tag">JSON (401 example)</span>
 {

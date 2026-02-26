@@ -519,6 +519,7 @@ class TenantSettings(db.Model):
     shadow_mode_changed_at = db.Column(db.DateTime, nullable=True)
     shadow_mode_changed_by = db.Column(db.String, nullable=True)
     auto_install_starter_rules = db.Column(db.Boolean, default=True)
+    reasoning_enforcement = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 

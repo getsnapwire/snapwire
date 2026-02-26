@@ -921,6 +921,34 @@ def intercept_tool_call():
                 return _wrap_mcp_response(resp, 200, mcp_id)
             return jsonify(resp)
 
+        violations = audit_result.get("violations", [])
+        has_high_severity = any(v.get("severity") in ("critical", "high") for v in violations)
+        has_inner_monologue = bool(data.get("inner_monologue", "").strip()) if isinstance(data.get("inner_monologue"), str) else bool(data.get("inner_monologue"))
+
+        if has_high_severity and not has_inner_monologue:
+            reasoning_enforcement = True
+            if tenant_id:
+                try:
+                    ts = TenantSettings.query.filter_by(tenant_id=tenant_id).first()
+                    if ts and hasattr(ts, 'reasoning_enforcement') and ts.reasoning_enforcement is False:
+                        reasoning_enforcement = False
+                except Exception:
+                    pass
+
+            if reasoning_enforcement:
+                log_action(tool_call, audit_result, "reasoning-requested", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id)
+                _track_usage(tenant_id)
+                resp = {
+                    "status": "reasoning_required",
+                    "message": "High-risk action detected. Re-submit this request with the 'inner_monologue' field populated, explaining why this action is needed.",
+                    "violations": violations,
+                    "risk_score": audit_result.get("risk_score", 0),
+                    **response_extra,
+                }
+                if mcp_request:
+                    return _wrap_mcp_response(resp, 412, mcp_id)
+                return jsonify(resp), 412
+
         action_id = add_pending_action(tool_call, audit_result, webhook_url=webhook_url, agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id)
 
         try:
@@ -2070,6 +2098,24 @@ def nist_compliance_report():
     report = generate_compliance_report(installed_rule_names)
     report["generated_at"] = datetime.utcnow().isoformat() + "Z"
     return jsonify(report)
+
+
+@app.route("/api/compliance/nist-report/pdf", methods=["GET"])
+@require_login
+def nist_compliance_report_pdf():
+    tenant_id = get_current_tenant_id()
+    try:
+        from src.compliance_report import generate_compliance_pdf
+        pdf_bytes = generate_compliance_pdf(tenant_id)
+        from flask import Response
+        filename = f"snapwire-nistir8596-report-{datetime.utcnow().strftime('%Y-%m-%d')}.pdf"
+        return Response(
+            pdf_bytes,
+            mimetype="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+    except Exception as e:
+        return jsonify({"error": f"Failed to generate PDF report: {str(e)}"}), 500
 
 
 @app.route("/api/rate-limits", methods=["GET"])
@@ -3649,10 +3695,39 @@ def toggle_shadow_mode():
 def get_settings():
     tenant_id = get_current_tenant_id()
     settings = get_tenant_settings(tenant_id)
+    reasoning = getattr(settings, 'reasoning_enforcement', True)
     return jsonify({
         "shadow_mode": settings.shadow_mode,
         "shadow_mode_changed_at": settings.shadow_mode_changed_at.isoformat() if settings.shadow_mode_changed_at else None,
         "auto_install_starter_rules": settings.auto_install_starter_rules,
+        "reasoning_enforcement": reasoning if reasoning is not None else True,
+    })
+
+
+@app.route("/api/settings/reasoning-enforcement", methods=["GET"])
+@require_login
+def get_reasoning_enforcement():
+    tenant_id = get_current_tenant_id()
+    settings = get_tenant_settings(tenant_id)
+    enabled = getattr(settings, 'reasoning_enforcement', True)
+    return jsonify({"reasoning_enforcement": enabled if enabled is not None else True})
+
+
+@app.route("/api/settings/reasoning-enforcement", methods=["PATCH"])
+@require_admin
+def toggle_reasoning_enforcement():
+    tenant_id = get_current_tenant_id()
+    data = request.get_json() or {}
+    settings = get_tenant_settings(tenant_id)
+    if "enabled" in data:
+        settings.reasoning_enforcement = bool(data["enabled"])
+    else:
+        current = getattr(settings, 'reasoning_enforcement', True)
+        settings.reasoning_enforcement = not (current if current is not None else True)
+    db.session.commit()
+    return jsonify({
+        "reasoning_enforcement": settings.reasoning_enforcement,
+        "message": "Reasoning enforcement enabled" if settings.reasoning_enforcement else "Reasoning enforcement disabled",
     })
 
 

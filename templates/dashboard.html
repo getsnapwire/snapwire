@@ -1036,7 +1036,10 @@
                         <h4 style="font-size:14px;margin:0;">NISTIR 8596 (Cyber AI Profile) Readiness</h4>
                         <p style="font-size:12px;color:var(--text-secondary);margin:4px 0 0;">CSF 2.0 Govern · Protect · Detect alignment based on installed rule packs</p>
                     </div>
-                    <button onclick="fetchNistReport()" class="btn" style="padding:8px 16px;font-size:12px;background:var(--accent-blue);color:white;border:none;border-radius:6px;cursor:pointer;">Generate Report</button>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="fetchNistReport()" class="btn" style="padding:8px 16px;font-size:12px;background:var(--accent-blue);color:white;border:none;border-radius:6px;cursor:pointer;">Generate Report</button>
+                        <a href="/api/compliance/nist-report/pdf" download class="btn" style="padding:8px 16px;font-size:12px;background:var(--accent);color:white;border:none;border-radius:6px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">&#128196; Download PDF</a>
+                    </div>
                 </div>
                 <div id="nist-report-content">
                     <div style="text-align:center;padding:30px;color:var(--text-secondary);font-size:13px;">
@@ -1272,6 +1275,16 @@
                             <tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:24px;">Loading rate limits...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <div class="test-panel" style="margin-bottom:24px;">
+                <h3>&#128737; Reasoning Enforcement</h3>
+                <p style="color:var(--text-secondary);margin-bottom:16px;font-size:13px;">When enabled, high-risk tool calls (critical/high severity) without an <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:12px;">inner_monologue</code> receive a <strong>412 Precondition Required</strong> response, requiring the agent to explain its reasoning before proceeding.</p>
+                <div style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg-secondary);border-radius:10px;border:1px solid var(--border);">
+                    <label style="font-size:14px;font-weight:600;color:var(--text-primary);white-space:nowrap;">Require Reasoning for High-Risk Actions:</label>
+                    <input type="checkbox" id="reasoning-enforcement-toggle" checked onchange="toggleReasoningEnforcement(this.checked)" style="accent-color:var(--accent);width:18px;height:18px;cursor:pointer;">
+                    <span id="reasoning-enforcement-status" style="font-size:13px;color:var(--accent-green);">Enabled</span>
                 </div>
             </div>
 
@@ -5907,6 +5920,41 @@ if (result.status === "allowed") {
             } catch(e) { console.error('Failed to toggle shadow mode', e); }
         }
         loadShadowMode();
+
+        async function loadReasoningEnforcement() {
+            try {
+                const res = await fetch('/api/settings/reasoning-enforcement');
+                if (res.ok) {
+                    const data = await res.json();
+                    const toggle = document.getElementById('reasoning-enforcement-toggle');
+                    const status = document.getElementById('reasoning-enforcement-status');
+                    if (toggle) toggle.checked = data.reasoning_enforcement;
+                    if (status) {
+                        status.textContent = data.reasoning_enforcement ? 'Enabled' : 'Disabled';
+                        status.style.color = data.reasoning_enforcement ? 'var(--accent-green)' : 'var(--text-secondary)';
+                    }
+                }
+            } catch(e) { console.error('Failed to load reasoning enforcement', e); }
+        }
+        async function toggleReasoningEnforcement(enabled) {
+            try {
+                const res = await fetch('/api/settings/reasoning-enforcement', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled })
+                });
+                const data = await res.json();
+                const status = document.getElementById('reasoning-enforcement-status');
+                if (status) {
+                    status.textContent = data.reasoning_enforcement ? 'Enabled' : 'Disabled';
+                    status.style.color = data.reasoning_enforcement ? 'var(--accent-green)' : 'var(--text-secondary)';
+                }
+                showToast(data.message, 'success');
+            } catch(e) {
+                showToast('Failed to toggle reasoning enforcement', 'error');
+            }
+        }
+        loadReasoningEnforcement();
 
         setTimeout(checkOnboarding, 500);
 

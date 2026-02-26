@@ -66,14 +66,30 @@ class AgenticFirewall:
             json=payload,
             timeout=self.timeout,
         )
+
+        if resp.status_code == 412:
+            data = resp.json()
+            return FirewallResponse(
+                allowed=False,
+                blocked=True,
+                decision="reasoning_required",
+                risk_score=data.get("risk_score", 0),
+                violations=data.get("violations", []),
+                analysis=data.get("message", "Reasoning required for high-risk action"),
+                audit_log_id=None,
+                raw=data,
+            )
+
         resp.raise_for_status()
         data = resp.json()
 
-        audit = data.get("audit_result", {})
+        audit = data.get("audit", data.get("audit_result", {}))
+        status = data.get("status", "")
+        is_allowed = status in ("allowed", "auto-approved", "trust-approved")
         return FirewallResponse(
-            allowed=audit.get("allowed", True),
-            blocked=not audit.get("allowed", True),
-            decision="allowed" if audit.get("allowed", True) else "blocked",
+            allowed=is_allowed,
+            blocked=not is_allowed,
+            decision=status or ("allowed" if is_allowed else "blocked"),
             risk_score=audit.get("risk_score", 0),
             violations=audit.get("violations", []),
             analysis=audit.get("analysis", ""),

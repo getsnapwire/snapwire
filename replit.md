@@ -52,4 +52,8 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **ORM**: SQLAlchemy
 -   **Web Framework**: Flask
 -   **WSGI Server**: Gunicorn
--   **CAPTCHA**: Cloudflare Turnstile (optional, for Contact Us form bot protection)
+-   **PDF Generation**: fpdf2
+
+## Change Log (Recent)
+- **2026-02-26**: Reasoning Enforcement — (1) When high-risk tool calls (critical/high severity violations) are submitted without `inner_monologue`, Snapwire returns `412 Precondition Required` with `status: "reasoning_required"`, requiring the agent to re-submit with reasoning. (2) `reasoning_enforcement` column added to `TenantSettings` (default: enabled). (3) Dashboard Settings → Webhooks & Notifications tab: toggle to enable/disable reasoning enforcement. (4) API endpoints: `GET/PATCH /api/settings/reasoning-enforcement`. (5) SDK handles 412 response gracefully, returning `decision: "reasoning_required"`. (6) API docs updated with 412 status code and example response.
+- **2026-02-26**: NISTIR 8596 Compliance Report (PDF) — (1) `src/compliance_report.py` generates branded PDF reports using fpdf2: compliance score, NIST category breakdown table, audit activity summary, identity attribution summary, weekly digest, disclaimer. (2) `GET /api/compliance/nist-report/pdf` endpoint returns downloadable PDF. (3) Dashboard NIST section: "Download PDF" button next to "Generate Report".
