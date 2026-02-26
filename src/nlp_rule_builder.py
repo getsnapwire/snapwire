@@ -21,7 +21,7 @@ def is_rate_limit_error(exception):
     retry=retry_if_exception(is_rate_limit_error),
     reraise=True,
 )
-def parse_natural_language_rule(description: str) -> dict:
+def parse_natural_language_rule(description: str, tenant_id=None) -> dict:
     system_prompt = """You are an expert at converting natural language security rules into structured constitutional rules.
 
 Given a plain English description of a rule, you must return a valid JSON object with these fields:
@@ -50,7 +50,7 @@ Guidelines:
 
 Return the rule as valid JSON with the required fields."""
 
-    response_text = chat(system_prompt, user_message, max_tokens=8192)
+    response_text = chat(system_prompt, user_message, max_tokens=8192, tenant_id=tenant_id)
 
     result = parse_json_response(response_text)
     if result is None:
@@ -77,7 +77,7 @@ Return the rule as valid JSON with the required fields."""
     retry=retry_if_exception(is_rate_limit_error),
     reraise=True,
 )
-def detect_rule_conflicts(new_rule: dict, existing_rules: dict) -> list:
+def detect_rule_conflicts(new_rule: dict, existing_rules: dict, tenant_id=None) -> list:
     system_prompt = """You are an expert at analyzing security rule conflicts.
 
 Given a new rule and existing rules, identify any conflicts where:
@@ -118,7 +118,7 @@ EXISTING RULES:
 
 Return a JSON array of any conflicts found."""
 
-    response_text = chat(system_prompt, user_message, max_tokens=8192)
+    response_text = chat(system_prompt, user_message, max_tokens=8192, tenant_id=tenant_id)
 
     result = parse_json_array_response(response_text)
     if result is None:
@@ -145,7 +145,7 @@ Return a JSON array of any conflicts found."""
     retry=retry_if_exception(is_rate_limit_error),
     reraise=True,
 )
-def test_rule_against_action(rule: dict, tool_call: dict) -> dict:
+def test_rule_against_action(rule: dict, tool_call: dict, tenant_id=None) -> dict:
     system_prompt = """You are an expert at evaluating whether a security rule would block an agent action.
 
 Given a constitutional rule and a tool call, determine if the rule would cause the tool call to be blocked.
@@ -182,7 +182,7 @@ Would this rule block the following action:
 
 Return a JSON assessment with would_block, reason, and confidence (0-100)."""
 
-    response_text = chat(system_prompt, user_message, max_tokens=8192)
+    response_text = chat(system_prompt, user_message, max_tokens=8192, tenant_id=tenant_id)
 
     result = parse_json_response(response_text)
     if result is None:

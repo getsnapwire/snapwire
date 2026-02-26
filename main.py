@@ -717,9 +717,9 @@ def intercept_tool_call():
 
     inner_monologue = data.get("inner_monologue")
     deception_result = None
-    if inner_monologue:
+    if inner_monologue and tenant_id:
         try:
-            deception_result = analyze_deception(tool_call, inner_monologue)
+            deception_result = analyze_deception(tool_call, inner_monologue, tenant_id=tenant_id)
             if deception_result and deception_result.get("deceptive") and deception_result.get("confidence", 0) >= 70:
                 log_action(
                     tool_call,
@@ -774,6 +774,22 @@ def intercept_tool_call():
 
     try:
         audit_result = audit_tool_call(tool_call, tenant_id=tenant_id)
+    except RuntimeError as e:
+        error_msg = str(e)
+        if "No API key configured" in error_msg:
+            audit_result = {
+                "allowed": True,
+                "violations": [],
+                "risk_score": 0,
+                "analysis": "AI auditor skipped — no LLM key configured. Deterministic rules still applied. Add your API key in Settings → LLM Provider to enable AI-powered rule evaluation.",
+            }
+        else:
+            audit_result = {
+                "allowed": False,
+                "violations": [{"rule": "fail_block", "severity": "critical", "reason": "AI auditor unavailable - blocking for safety (fail-block default)"}],
+                "risk_score": 90,
+                "analysis": f"The AI auditor could not be reached. For safety, this action is blocked until the auditor is available. Error: {error_msg}",
+            }
     except Exception as e:
         audit_result = {
             "allowed": False,
@@ -1366,9 +1382,12 @@ def parse_rule_nlp():
     if not data or "description" not in data:
         return jsonify({"error": "Must provide 'description' (plain English rule)"}), 400
 
+    tenant_id = get_current_tenant_id()
     try:
-        result = parse_natural_language_rule(data["description"])
+        result = parse_natural_language_rule(data["description"], tenant_id=tenant_id)
         return jsonify({"rule": result})
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": f"Failed to parse rule: {str(e)}"}), 500
 
@@ -1383,8 +1402,10 @@ def check_conflicts():
 
     existing_rules = load_constitution(tenant_id).get("rules", {})
     try:
-        conflicts = detect_rule_conflicts(data["rule"], existing_rules)
+        conflicts = detect_rule_conflicts(data["rule"], existing_rules, tenant_id=tenant_id)
         return jsonify({"conflicts": conflicts, "has_conflicts": len(conflicts) > 0})
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": f"Conflict check failed: {str(e)}"}), 500
 
@@ -2563,7 +2584,10 @@ def regrade_catalog_tool(tool_id):
     entry = ToolCatalog.query.filter_by(id=tool_id, tenant_id=tenant_id).first()
     if not entry:
         return jsonify({"error": "Tool not found"}), 404
-    result = regrade_tool(tool_id)
+    try:
+        result = regrade_tool(tool_id, tenant_id=tenant_id)
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 400
     return jsonify({"tool": result})
 
 
@@ -3118,8 +3142,8 @@ def public_audit_api():
         PublicAudit.ip_address == ip,
         PublicAudit.created_at >= one_hour_ago
     ).count()
-    if recent_count >= 10:
-        return jsonify({"error": "Rate limit exceeded. Please try again later (max 10 audits per hour)."}), 429
+    if recent_count >= 3:
+        return jsonify({"error": "Rate limit exceeded. Please try again later (max 3 audits per hour)."}), 429
 
     data = request.get_json() or {}
     prompt = (data.get("prompt") or "").strip()

@@ -22,7 +22,7 @@ Return JSON:
 Return only valid JSON."""
 
 
-def analyze_deception(tool_call, inner_monologue):
+def analyze_deception(tool_call, inner_monologue, tenant_id=None):
     if not inner_monologue:
         return None
 
@@ -38,7 +38,7 @@ Agent's Actual Action:
 
 Compare the inner monologue to the actual action. Is there any deception or goal drift?"""
 
-    response_text = chat(DECEPTION_PROMPT, user_message, max_tokens=1024)
+    response_text = chat(DECEPTION_PROMPT, user_message, max_tokens=1024, tenant_id=tenant_id)
 
     result = parse_json_response(response_text)
     if result is None:

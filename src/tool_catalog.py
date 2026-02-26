@@ -49,7 +49,7 @@ def check_tool_catalog(tool_name, params, tenant_id):
     db.session.commit()
 
     try:
-        grade_result = grade_tool(tool_name, params)
+        grade_result = grade_tool(tool_name, params, tenant_id=tenant_id)
         entry.safety_grade = grade_result.get("grade", "U")
         entry.safety_analysis = json.dumps(grade_result)
         entry.description = grade_result.get("analysis", "")
@@ -65,13 +65,14 @@ def check_tool_catalog(tool_name, params, tenant_id):
     return {"allowed": None, "reason": "new_tool_pending_review", "entry": entry.to_dict()}
 
 
-def grade_tool(tool_name, params=None):
+def grade_tool(tool_name, params=None, tenant_id=None):
     params_str = json.dumps(params, indent=2) if params else "No parameters provided"
 
     response_text = chat(
         GRADING_PROMPT,
         f"Tool Name: {tool_name}\nParameters: {params_str}\n\nGrade this tool's safety.",
         max_tokens=1024,
+        tenant_id=tenant_id,
     )
 
     result = parse_json_response(response_text)
@@ -104,7 +105,7 @@ def update_tool_status(tool_id, status, safety_grade=None, reviewed_by=None):
     return entry.to_dict()
 
 
-def regrade_tool(tool_id):
+def regrade_tool(tool_id, tenant_id=None):
     from app import db
     from models import ToolCatalog
 
@@ -112,7 +113,7 @@ def regrade_tool(tool_id):
     if not entry:
         return None
     try:
-        result = grade_tool(entry.tool_name)
+        result = grade_tool(entry.tool_name, tenant_id=tenant_id)
         entry.safety_grade = result.get("grade", "U")
         entry.safety_analysis = json.dumps(result)
         entry.description = result.get("analysis", "")

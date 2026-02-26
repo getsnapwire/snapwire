@@ -99,6 +99,8 @@ def chat(system_prompt, user_message, max_tokens=8192, model=None, tenant_id=Non
     if tenant_config:
         provider = tenant_config["provider"]
         client = _create_client_for_key(provider, tenant_config["api_key"])
+    elif tenant_id is not None:
+        raise RuntimeError("No API key configured. Add your Anthropic or OpenAI key in Settings → LLM Provider to enable AI-powered features.")
     else:
         provider = get_provider()
         client = get_client()
