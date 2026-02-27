@@ -814,6 +814,7 @@
                 <button class="sub-tab active" data-subtab="vault" data-group="security">Snap-Tokens</button>
                 <button class="sub-tab" data-subtab="honeypots" data-group="security">Honeypots</button>
                 <button class="sub-tab" data-subtab="blast" data-group="security">Blast Radius</button>
+                <button class="sub-tab" data-subtab="holdwindow" data-group="security">Hold Window</button>
                 <button class="sub-tab" data-subtab="catalog" data-group="security">Tool Catalog</button>
                 <button class="sub-tab" data-subtab="risk" data-group="security">Risk Intelligence</button>
             </div>
@@ -2302,6 +2303,44 @@ def handle_tool_call(tool_call):
         </div>
     </div>
 
+    <div id="panel-holdwindow" class="panel">
+        <h3 style="margin-bottom:16px;">Deterministic Hold Window</h3>
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">When enabled, high-risk tool calls that would normally be allowed (risk score &ge; 70) are held for a configurable delay before auto-releasing. This gives you a window to cancel dangerous actions before they execute.</p>
+
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
+            <h4 style="margin-bottom:14px;font-size:14px;">Settings</h4>
+            <div style="margin-bottom:16px;">
+                <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:8px;">Hold Window Duration: <strong id="hw-value-label" style="color:var(--text-primary);">0s (disabled)</strong></label>
+                <input type="range" id="hw-seconds" min="0" max="60" value="0" step="1" oninput="updateHoldWindowLabel()" style="width:100%;accent-color:var(--accent-purple);">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);margin-top:4px;">
+                    <span>0 (off)</span>
+                    <span>15s</span>
+                    <span>30s</span>
+                    <span>45s</span>
+                    <span>60s</span>
+                </div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:8px;">Set to 0 to disable. When &gt; 0, allowed actions with risk score &ge; 70 will be held for this many seconds before auto-releasing.</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:14px;">
+                <button onclick="saveHoldWindow()" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13px;">Save Settings</button>
+                <span id="hw-save-status" style="font-size:12px;color:var(--text-secondary);"></span>
+            </div>
+        </div>
+
+        <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:14px 18px;display:flex;align-items:flex-start;gap:10px;">
+            <span style="font-size:16px;">&#x23F3;</span>
+            <div>
+                <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">How it works</div>
+                <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">
+                    1. An allowed tool call with risk &ge; 70 is placed in a <strong>"held"</strong> state instead of executing immediately.<br>
+                    2. The API returns HTTP 202 with the action ID and hold duration.<br>
+                    3. Cancel via <code>DELETE /api/actions/{'{id}'}</code> during the hold window.<br>
+                    4. If not cancelled, the action auto-releases after the hold period expires.
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="panel-risk" class="panel">
         <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px;">
             <span style="font-size:16px;">&#x26A0;</span>
@@ -2533,6 +2572,7 @@ def handle_tool_call(tool_call):
             if (name === 'vault') loadVault();
             if (name === 'honeypots') loadHoneypots();
             if (name === 'blast') loadBlastRadius();
+            if (name === 'holdwindow') loadHoldWindow();
             if (name === 'risk') loadRiskIntelligence();
             if (name === 'analytics') loadAnalytics(7);
             if (name === 'telemetry') loadAdminTab();
@@ -5562,6 +5602,29 @@ def handle_tool_call(tool_call):
             };
             await fetch('/api/blast-radius/config', {method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
             loadBlastRadius();
+        }
+        async function loadHoldWindow() {
+            try {
+                const resp = await fetch('/api/settings/hold-window');
+                const data = await resp.json();
+                const seconds = data.hold_window_seconds || 0;
+                document.getElementById('hw-seconds').value = seconds;
+                updateHoldWindowLabel();
+            } catch(e) { console.error('Failed to load hold window', e); }
+        }
+        function updateHoldWindowLabel() {
+            const val = parseInt(document.getElementById('hw-seconds').value);
+            const label = document.getElementById('hw-value-label');
+            label.textContent = val === 0 ? '0s (disabled)' : val + 's';
+        }
+        async function saveHoldWindow() {
+            const seconds = parseInt(document.getElementById('hw-seconds').value);
+            const resp = await fetch('/api/settings/hold-window', {method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({hold_window_seconds:seconds})});
+            const data = await resp.json();
+            const status = document.getElementById('hw-save-status');
+            status.textContent = data.message || 'Saved';
+            status.style.color = 'var(--accent-green)';
+            setTimeout(() => { status.textContent = ''; }, 3000);
         }
         async function unlockAgent(agentId) {
             await fetch(`/api/blast-radius/clear/${agentId}`, {method:'POST'});

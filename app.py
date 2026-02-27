@@ -52,6 +52,8 @@ with app.app_context():
         "ALTER TABLE pending_actions ADD COLUMN parent_agent_id VARCHAR",
         "ALTER TABLE proxy_tokens ADD COLUMN expires_at TIMESTAMP",
         "ALTER TABLE tenant_settings ADD COLUMN reasoning_enforcement BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE pending_actions ADD COLUMN hold_expires_at TIMESTAMP",
+        "ALTER TABLE tenant_settings ADD COLUMN hold_window_seconds INTEGER DEFAULT 0",
     ]
     for sql in migrations:
         try:

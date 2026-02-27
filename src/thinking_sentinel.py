@@ -1,5 +1,90 @@
+import time
+
 THINKING_TOKEN_THRESHOLD = 50_000
 COST_PER_THINKING_TOKEN = 0.00001
+
+LATENCY_ABSOLUTE_THRESHOLD_MS = 30_000
+LATENCY_MULTIPLIER = 3.0
+LATENCY_ROLLING_WINDOW = 20
+LATENCY_TTL_SECONDS = 3600
+
+_latency_store = {}
+
+
+def check_latency_anomaly(elapsed_ms, agent_id="unknown", tenant_id=None):
+    now = time.time()
+    key = f"{tenant_id or 'none'}:{agent_id}"
+
+    if key not in _latency_store:
+        _latency_store[key] = {"samples": [], "last_update": now}
+
+    entry = _latency_store[key]
+
+    if now - entry["last_update"] > LATENCY_TTL_SECONDS:
+        entry["samples"] = []
+
+    entry["last_update"] = now
+
+    samples = entry["samples"]
+    rolling_avg = sum(samples) / len(samples) if samples else None
+
+    triggered = False
+    reason = ""
+
+    if elapsed_ms > LATENCY_ABSOLUTE_THRESHOLD_MS:
+        triggered = True
+        reason = f"Request took {elapsed_ms:.0f}ms, exceeding absolute threshold of {LATENCY_ABSOLUTE_THRESHOLD_MS}ms."
+    elif rolling_avg and elapsed_ms > LATENCY_MULTIPLIER * rolling_avg:
+        triggered = True
+        reason = (
+            f"Request took {elapsed_ms:.0f}ms, exceeding {LATENCY_MULTIPLIER}x "
+            f"rolling average of {rolling_avg:.0f}ms."
+        )
+
+    samples.append(elapsed_ms)
+    if len(samples) > LATENCY_ROLLING_WINDOW:
+        entry["samples"] = samples[-LATENCY_ROLLING_WINDOW:]
+
+    if not triggered:
+        return None
+
+    warning = {
+        "triggered": True,
+        "severity": "warning",
+        "elapsed_ms": round(elapsed_ms, 1),
+        "rolling_avg_ms": round(rolling_avg, 1) if rolling_avg else None,
+        "absolute_threshold_ms": LATENCY_ABSOLUTE_THRESHOLD_MS,
+        "message": reason,
+    }
+
+    _record_latency_event(tenant_id, agent_id, elapsed_ms, rolling_avg, reason)
+
+    return warning
+
+
+def _record_latency_event(tenant_id, agent_id, elapsed_ms, rolling_avg, reason):
+    try:
+        from app import db
+        from models import AuditLogEntry
+        import json
+        entry = AuditLogEntry(
+            tenant_id=tenant_id,
+            tool_name="__thinking_sentinel_latency__",
+            tool_params=json.dumps({"elapsed_ms": round(elapsed_ms, 1), "rolling_avg_ms": round(rolling_avg, 1) if rolling_avg else None}),
+            status="thinking-sentinel-latency",
+            risk_score=35,
+            agent_id=agent_id,
+            analysis=reason,
+            violations_json=json.dumps([{
+                "rule": "latency_anomaly",
+                "severity": "warning",
+                "reason": reason,
+            }]),
+        )
+        db.session.add(entry)
+        db.session.commit()
+    except Exception:
+        pass
 
 
 def check_thinking_tokens(usage, agent_id="unknown", tenant_id=None):

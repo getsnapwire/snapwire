@@ -152,6 +152,7 @@ class PendingAction(db.Model):
     api_key_id = db.Column(db.String, nullable=True)
     parent_agent_id = db.Column(db.String, nullable=True, index=True)
     webhook_url = db.Column(db.String, nullable=True)
+    hold_expires_at = db.Column(db.DateTime, nullable=True)
     resolved_at = db.Column(db.DateTime, nullable=True)
     resolved_by = db.Column(db.String, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -189,6 +190,7 @@ class PendingAction(db.Model):
             "api_key_id": self.api_key_id,
             "parent_agent_id": getattr(self, 'parent_agent_id', None),
             "webhook_url": self.webhook_url,
+            "hold_expires_at": self.hold_expires_at.isoformat() if self.hold_expires_at else None,
             "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
             "resolved_by": self.resolved_by,
             "created_at": self.created_at.isoformat() if self.created_at else None,
@@ -520,6 +522,7 @@ class TenantSettings(db.Model):
     shadow_mode_changed_by = db.Column(db.String, nullable=True)
     auto_install_starter_rules = db.Column(db.Boolean, default=True)
     reasoning_enforcement = db.Column(db.Boolean, default=True, nullable=False)
+    hold_window_seconds = db.Column(db.Integer, default=0, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 

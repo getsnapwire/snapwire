@@ -241,6 +241,35 @@ class TestTelemetry:
         assert "network" in data
 
 
+class TestLatencyAnomaly:
+    def test_absolute_threshold_triggers_warning(self):
+        from src.thinking_sentinel import check_latency_anomaly, _latency_store
+        _latency_store.clear()
+        result = check_latency_anomaly(35000, agent_id="latency-test", tenant_id="t-lat")
+        assert result is not None
+        assert result["triggered"] is True
+        assert result["elapsed_ms"] == 35000
+        assert "absolute threshold" in result["message"]
+
+    def test_rolling_average_triggers_warning(self):
+        from src.thinking_sentinel import check_latency_anomaly, _latency_store
+        _latency_store.clear()
+        for _ in range(5):
+            check_latency_anomaly(100, agent_id="avg-test", tenant_id="t-avg")
+        result = check_latency_anomaly(500, agent_id="avg-test", tenant_id="t-avg")
+        assert result is not None
+        assert result["triggered"] is True
+        assert "rolling average" in result["message"]
+
+    def test_normal_latency_no_warning(self):
+        from src.thinking_sentinel import check_latency_anomaly, _latency_store
+        _latency_store.clear()
+        for _ in range(5):
+            check_latency_anomaly(100, agent_id="norm-test", tenant_id="t-norm")
+        result = check_latency_anomaly(110, agent_id="norm-test", tenant_id="t-norm")
+        assert result is None
+
+
 class TestOverview:
     def test_overview_requires_auth(self, client):
         resp = client.get("/api/overview")

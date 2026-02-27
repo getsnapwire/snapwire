@@ -24,6 +24,7 @@ from src.constitution import (
 from src.auditor import audit_tool_call
 from src.action_queue import (
     add_pending_action,
+    add_held_action,
     resolve_action,
     get_pending_actions,
     get_action,
@@ -55,7 +56,7 @@ from src.deception import analyze_deception
 from src.loop_detector import check_for_loop, get_loop_events, get_loop_stats
 from src.schema_guard import validate_tool_params, get_schema_stats
 from src.risk_index import calculate_risk_score, record_risk_signal, get_risk_signals, get_tool_risk_summary
-from src.thinking_sentinel import check_thinking_tokens, get_sentinel_stats
+from src.thinking_sentinel import check_thinking_tokens, check_latency_anomaly, get_sentinel_stats
 from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings, LoopDetectorEvent, SchemaViolationEvent, ProxyToken, RiskSignal
 
 
@@ -571,6 +572,19 @@ def safety_page():
     )
 
 
+@app.route("/safety/pdf")
+def safety_pdf():
+    from src.safety_pdf import generate_safety_pdf
+    pdf_bytes = generate_safety_pdf()
+    return Response(
+        pdf_bytes,
+        mimetype="application/pdf",
+        headers={
+            "Content-Disposition": 'attachment; filename="snapwire-safety-disclosure.pdf"'
+        },
+    )
+
+
 @app.route("/badge/nist-grade")
 def nist_grade_badge():
     from src.nist_mapping import generate_compliance_report, score_to_grade
@@ -648,6 +662,7 @@ def _wrap_mcp_response(response_data, status_code, mcp_id):
 
 @app.route("/api/intercept", methods=["POST"])
 def intercept_tool_call():
+    _intercept_start_time = time.time()
     data = request.get_json()
     if not data:
         return jsonify({"error": "No JSON payload provided"}), 400
@@ -966,6 +981,11 @@ def intercept_tool_call():
     if sentinel_warning:
         response_extra["thinking_sentinel_warning"] = sentinel_warning
 
+    _intercept_elapsed_ms = (time.time() - _intercept_start_time) * 1000
+    latency_warning = check_latency_anomaly(_intercept_elapsed_ms, agent_id=agent_id, tenant_id=tenant_id)
+    if latency_warning:
+        response_extra["latency_anomaly_warning"] = latency_warning
+
     if shadow_active:
         response_extra["shadow_mode"] = True
 
@@ -993,6 +1013,35 @@ def intercept_tool_call():
         return jsonify(resp)
 
     if audit_result.get("allowed", False):
+        risk_score = audit_result.get("risk_score", 0)
+        hold_window = 0
+        if risk_score >= 70 and tenant_id:
+            try:
+                ts = TenantSettings.query.filter_by(tenant_id=tenant_id).first()
+                if ts and getattr(ts, 'hold_window_seconds', 0) and ts.hold_window_seconds > 0:
+                    hold_window = ts.hold_window_seconds
+            except Exception:
+                pass
+
+        if hold_window > 0:
+            action_id = add_held_action(
+                tool_call, audit_result, hold_window,
+                webhook_url=webhook_url, agent_id=agent_id, api_key_id=api_key_id,
+                tenant_id=tenant_id, parent_agent_id=parent_agent_id,
+            )
+            _track_usage(tenant_id)
+            resp = {
+                "status": "held",
+                "hold_seconds": hold_window,
+                "action_id": action_id,
+                "message": f"High-risk action held for {hold_window}s. Cancel via DELETE /api/actions/{action_id} or it will auto-release.",
+                "audit": audit_result,
+                **response_extra,
+            }
+            if mcp_request:
+                return _wrap_mcp_response(resp, 202, mcp_id)
+            return jsonify(resp), 202
+
         log_action(tool_call, audit_result, "allowed", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata)
         _track_usage(tenant_id)
         if data.get("proxy_token"):
@@ -1228,6 +1277,18 @@ def edit_and_release(action_id):
         return jsonify({"error": "Failed to release action"}), 500
 
     return jsonify({"status": "released", "action": result, "message": "Action released with modified parameters."})
+
+
+@app.route("/api/actions/<action_id>", methods=["DELETE"])
+def cancel_action(action_id):
+    api_key = authenticate_api_key()
+    if not api_key and not current_user.is_authenticated:
+        return jsonify({"error": "Authentication required"}), 401
+    tenant_id = api_key.tenant_id if api_key else get_current_tenant_id()
+    result = resolve_action(action_id, "denied", resolved_by="cancelled", tenant_id=tenant_id)
+    if not result:
+        return jsonify({"error": "Action not found or already resolved"}), 404
+    return jsonify({"status": "cancelled", "action": result, "message": "Held action cancelled."})
 
 
 @app.route("/api/actions/<action_id>/trust", methods=["POST"])
@@ -3919,6 +3980,34 @@ def get_settings():
         "shadow_mode_changed_at": settings.shadow_mode_changed_at.isoformat() if settings.shadow_mode_changed_at else None,
         "auto_install_starter_rules": settings.auto_install_starter_rules,
         "reasoning_enforcement": reasoning if reasoning is not None else True,
+        "hold_window_seconds": getattr(settings, 'hold_window_seconds', 0) or 0,
+    })
+
+
+@app.route("/api/settings/hold-window", methods=["GET"])
+@require_login
+def get_hold_window():
+    tenant_id = get_current_tenant_id()
+    settings = get_tenant_settings(tenant_id)
+    return jsonify({"hold_window_seconds": getattr(settings, 'hold_window_seconds', 0) or 0})
+
+
+@app.route("/api/settings/hold-window", methods=["PATCH"])
+@require_admin
+def update_hold_window():
+    tenant_id = get_current_tenant_id()
+    data = request.get_json() or {}
+    settings = get_tenant_settings(tenant_id)
+    seconds = int(data.get("hold_window_seconds", 0))
+    if seconds < 0:
+        seconds = 0
+    if seconds > 60:
+        seconds = 60
+    settings.hold_window_seconds = seconds
+    db.session.commit()
+    return jsonify({
+        "hold_window_seconds": settings.hold_window_seconds,
+        "message": f"Hold window set to {seconds}s" if seconds > 0 else "Hold window disabled",
     })
 
 

@@ -67,6 +67,56 @@ def add_pending_action(tool_call, audit_result, webhook_url=None, agent_id=None,
     return action_id
 
 
+def add_held_action(tool_call, audit_result, hold_window_seconds, webhook_url=None, agent_id=None, api_key_id=None, tenant_id=None, parent_agent_id=None):
+    from app import db
+    from models import PendingAction
+
+    action_id = str(uuid.uuid4())[:8]
+    hold_expires_at = datetime.utcnow() + timedelta(seconds=hold_window_seconds)
+    action = PendingAction(
+        id=action_id,
+        tenant_id=tenant_id,
+        tool_name=tool_call.get("tool_name", "unknown"),
+        tool_params=json.dumps(tool_call.get("parameters", {})),
+        intent=tool_call.get("intent", ""),
+        context=tool_call.get("context", ""),
+        status="held",
+        risk_score=audit_result.get("risk_score", 0),
+        violations_json=json.dumps(audit_result.get("violations", [])),
+        analysis=audit_result.get("analysis", ""),
+        agent_id=agent_id or "unknown",
+        api_key_id=api_key_id,
+        parent_agent_id=parent_agent_id,
+        webhook_url=webhook_url,
+        hold_expires_at=hold_expires_at,
+    )
+    db.session.add(action)
+    db.session.commit()
+
+    _publish_event("action_held", {
+        "id": action_id,
+        "tool_name": tool_call.get("tool_name", "unknown"),
+        "agent_id": agent_id or "unknown",
+        "risk_score": audit_result.get("risk_score", 0),
+        "hold_seconds": hold_window_seconds,
+    })
+
+    try:
+        from src.slack_notifier import send_hold_alert
+        send_hold_alert(
+            action_id=action_id,
+            tool_name=tool_call.get("tool_name", "unknown"),
+            agent_id=agent_id or "unknown",
+            risk_score=audit_result.get("risk_score", 0),
+            hold_seconds=hold_window_seconds,
+            tenant_id=tenant_id,
+        )
+    except Exception:
+        pass
+
+    return action_id
+
+
 def _send_webhook(webhook_url, action_dict):
     def _do_send():
         try:
@@ -88,7 +138,10 @@ def resolve_action(action_id, decision, resolved_by="user", tenant_id=None):
     from app import db
     from models import PendingAction, AuditLogEntry, AutoApproveCount
 
-    query = PendingAction.query.filter_by(id=action_id, status="pending")
+    query = PendingAction.query.filter(
+        PendingAction.id == action_id,
+        PendingAction.status.in_(["pending", "held"])
+    )
     if tenant_id:
         query = query.filter_by(tenant_id=tenant_id)
     action = query.first()
@@ -159,7 +212,7 @@ def resolve_action(action_id, decision, resolved_by="user", tenant_id=None):
 
 def get_pending_actions(tenant_id=None):
     from models import PendingAction
-    query = PendingAction.query.filter_by(status="pending")
+    query = PendingAction.query.filter(PendingAction.status.in_(["pending", "held"]))
     if tenant_id:
         query = query.filter_by(tenant_id=tenant_id)
     actions = query.order_by(PendingAction.created_at.desc()).all()
@@ -295,7 +348,7 @@ def get_stats(tenant_id=None):
     from sqlalchemy import func
 
     log_query = AuditLogEntry.query
-    pending_query = PendingAction.query.filter_by(status="pending")
+    pending_query = PendingAction.query.filter(PendingAction.status.in_(["pending", "held"]))
     if tenant_id:
         log_query = log_query.filter_by(tenant_id=tenant_id)
         pending_query = pending_query.filter_by(tenant_id=tenant_id)
@@ -335,7 +388,7 @@ def get_stats(tenant_id=None):
                 pass
 
     recent_log_query = AuditLogEntry.query
-    recent_pending_query = PendingAction.query.filter_by(status="pending")
+    recent_pending_query = PendingAction.query.filter(PendingAction.status.in_(["pending", "held"]))
     if tenant_id:
         recent_log_query = recent_log_query.filter_by(tenant_id=tenant_id)
         recent_pending_query = recent_pending_query.filter_by(tenant_id=tenant_id)
@@ -388,7 +441,7 @@ def bulk_resolve(action_ids, decision, resolved_by="user", tenant_id=None):
     webhooks_to_send = []
 
     for action_id in action_ids:
-        query = PendingAction.query.filter_by(id=action_id, status="pending")
+        query = PendingAction.query.filter(PendingAction.id == action_id, PendingAction.status.in_(["pending", "held"]))
         if tenant_id:
             query = query.filter_by(tenant_id=tenant_id)
         action = query.first()
@@ -445,7 +498,7 @@ def get_agent_sessions(tenant_id=None):
         if len(sessions[aid]["actions"]) < 20:
             sessions[aid]["actions"].append(entry.to_dict())
 
-    pending_query = PendingAction.query.filter_by(status="pending")
+    pending_query = PendingAction.query.filter(PendingAction.status.in_(["pending", "held"]))
     if tenant_id:
         pending_query = pending_query.filter_by(tenant_id=tenant_id)
     pending = pending_query.order_by(PendingAction.created_at.desc()).all()
@@ -521,13 +574,57 @@ def auto_deny_expired(timeout_minutes=30):
         if action.webhook_url:
             webhooks_to_send.append((action.webhook_url, action.to_dict()))
 
-    if expired_actions:
+    now = datetime.utcnow()
+    held_actions = PendingAction.query.filter(
+        PendingAction.status == "held",
+        PendingAction.hold_expires_at != None,
+        PendingAction.hold_expires_at <= now,
+    ).all()
+
+    released_ids = []
+    for action in held_actions:
+        action.status = "approved"
+        action.resolved_at = now
+        action.resolved_by = "auto-hold-release"
+
+        log_entry = AuditLogEntry(
+            id=action.id,
+            tenant_id=action.tenant_id,
+            tool_name=action.tool_name,
+            tool_params=action.tool_params,
+            intent=action.intent,
+            context=action.context,
+            status="approved",
+            risk_score=action.risk_score,
+            violations_json=action.violations_json,
+            analysis=action.analysis,
+            agent_id=action.agent_id,
+            api_key_id=action.api_key_id,
+            parent_agent_id=getattr(action, 'parent_agent_id', None),
+            created_at=action.created_at,
+        )
+        log_entry.content_hash = _compute_content_hash(log_entry)
+        db.session.add(log_entry)
+        released_ids.append(action.id)
+
+        if action.webhook_url:
+            webhooks_to_send.append((action.webhook_url, action.to_dict()))
+
+        _publish_event("action_resolved", {
+            "id": action.id,
+            "status": "approved",
+            "tool_name": action.tool_name,
+            "agent_id": action.agent_id,
+            "auto_released": True,
+        })
+
+    if expired_actions or held_actions:
         db.session.commit()
 
     for url, action_data in webhooks_to_send:
         _send_webhook(url, action_data)
 
-    return expired_ids
+    return expired_ids + released_ids
 
 
 def get_weekly_digest(tenant_id=None):
