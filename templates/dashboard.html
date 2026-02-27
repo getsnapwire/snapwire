@@ -1038,7 +1038,7 @@
                     </div>
                     <div style="display:flex;gap:8px;">
                         <button onclick="fetchNistReport()" class="btn" style="padding:8px 16px;font-size:12px;background:var(--accent-blue);color:white;border:none;border-radius:6px;cursor:pointer;">Generate Report</button>
-                        <a href="/api/compliance/nist-report/pdf" download class="btn" style="padding:8px 16px;font-size:12px;background:var(--accent);color:white;border:none;border-radius:6px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">&#128196; Download PDF</a>
+                        <a href="/api/compliance/nist-report/pdf" download class="btn" style="padding:8px 16px;font-size:12px;background:var(--accent);color:white;border:none;border-radius:6px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">&#128196; Download NIST Audit Report</a>
                     </div>
                 </div>
                 <div id="nist-report-content">
@@ -1049,6 +1049,22 @@
                 </div>
                 <div id="nist-disclaimer" style="display:none;margin-top:16px;padding:12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-secondary);line-height:1.5;">
                     This report is informational and does not constitute a formal NISTIR 8596 audit or certification. It reflects CSF 2.0 alignment based on installed Snapwire rule packs only.
+                </div>
+            </div>
+
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-top:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <div>
+                        <h4 style="font-size:14px;margin:0;">Forensic Lineage Map</h4>
+                        <p style="font-size:12px;color:var(--text-secondary);margin:4px 0 0;">Agent chain-of-command visualization &mdash; NISTIR 8596 Identity Attribution</p>
+                    </div>
+                    <button onclick="fetchLineageMap()" class="btn" style="padding:8px 16px;font-size:12px;background:var(--accent-blue);color:white;border:none;border-radius:6px;cursor:pointer;">Load Lineage</button>
+                </div>
+                <div id="lineage-map-content">
+                    <div style="text-align:center;padding:30px;color:var(--text-secondary);font-size:13px;">
+                        <div style="font-size:32px;margin-bottom:8px;">&#128279;</div>
+                        Click "Load Lineage" to visualize your agent chain-of-command.
+                    </div>
                 </div>
             </div>
         </div>
@@ -3028,9 +3044,10 @@ def handle_tool_call(tool_call):
                             entry.status === 'denied' ? 'log-denied' : 'log-blocked';
                         const detail = entry.audit_result?.analysis || entry.tool_call?.intent || '-';
                         const time = entry.created_at ? new Date(entry.created_at).toLocaleTimeString() : '-';
+                        const chainIcon = entry.parent_agent_id ? '<span title="Agent Lineage (NIST-Compliant): ' + entry.parent_agent_id + '" style="cursor:help;margin-left:4px;font-size:11px;opacity:0.7;">&#128279;</span>' : '';
                         return `
                             <div class="log-entry">
-                                <div><span class="log-status ${statusClass}">${entry.status}</span></div>
+                                <div><span class="log-status ${statusClass}">${entry.status}</span>${chainIcon}</div>
                                 <div style="font-family:monospace;font-size:13px;">${entry.tool_call?.tool_name || '-'}</div>
                                 <div style="font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${detail}</div>
                                 <div style="font-size:12px;color:var(--text-secondary);">${time}</div>
@@ -4109,6 +4126,160 @@ def handle_tool_call(tool_call):
                 document.getElementById('nist-disclaimer').style.display = 'block';
             } catch (e) {
                 container.innerHTML = '<div style="color:var(--accent-red);padding:20px;">Error generating report: ' + e.message + '</div>';
+            }
+        }
+
+        async function fetchLineageMap() {
+            const container = document.getElementById('lineage-map-content');
+            container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);"><span class="loading"></span> Loading lineage data...</div>';
+            try {
+                const res = await fetch('/api/audit-log/lineage?days=30');
+                const data = await res.json();
+                const nodes = data.nodes || [];
+                const edges = data.edges || [];
+                const summary = data.summary || {};
+
+                if (nodes.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align:center;padding:40px;">
+                            <div style="font-size:48px;margin-bottom:12px;opacity:0.5;">&#128279;</div>
+                            <h4 style="color:var(--text-primary);margin:0 0 8px;">No Lineage Data Yet</h4>
+                            <p style="color:var(--text-secondary);font-size:13px;max-width:400px;margin:0 auto 16px;">
+                                Send tool calls with the <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:12px;">parent_agent_id</code> field to build your agent chain-of-command tree.
+                            </p>
+                            <p style="color:var(--text-secondary);font-size:12px;">
+                                Or run <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:11px;">python seed_demo.py</code> to populate demo data.
+                            </p>
+                        </div>`;
+                    return;
+                }
+
+                const statusColor = s => {
+                    if (s === 'allowed' || s === 'approved' || s === 'auto-approved' || s === 'trust-approved') return '#10b981';
+                    if (s === 'blocked' || s === 'denied' || s === 'blocked-deception') return '#ef4444';
+                    if (s === 'reasoning-requested') return '#f97316';
+                    if (s === 'pending' || s === 'shadow-blocked') return '#eab308';
+                    return '#6b7280';
+                };
+                const statusLabel = s => {
+                    if (s === 'allowed' || s === 'approved' || s === 'auto-approved' || s === 'trust-approved') return 'Allowed';
+                    if (s === 'blocked' || s === 'denied' || s === 'blocked-deception') return 'Blocked';
+                    if (s === 'reasoning-requested') return 'Halt';
+                    if (s === 'pending' || s === 'shadow-blocked') return 'Pending';
+                    return s;
+                };
+
+                const rootNodes = nodes.filter(n => n.parent === null);
+                const childMap = {};
+                nodes.forEach(n => {
+                    if (n.parent) {
+                        if (!childMap[n.parent]) childMap[n.parent] = [];
+                        childMap[n.parent].push(n);
+                    }
+                });
+
+                const nodeMap = {};
+                nodes.forEach(n => { nodeMap[n.id] = n; });
+
+                const allParents = new Set(nodes.filter(n => n.parent).map(n => n.parent));
+                allParents.forEach(pid => {
+                    if (!nodeMap[pid]) {
+                        const virtualNode = { id: pid, type: 'root', parent: null, action_count: 0, statuses: {}, primary_status: 'allowed', risk_avg: 0, has_integrity_hash: false, tools: [] };
+                        rootNodes.push(virtualNode);
+                        nodeMap[pid] = virtualNode;
+                    }
+                });
+
+                function renderNode(node, depth) {
+                    const color = statusColor(node.primary_status);
+                    const label = statusLabel(node.primary_status);
+                    const riskColor = node.risk_avg >= 70 ? '#ef4444' : node.risk_avg >= 40 ? '#eab308' : '#10b981';
+                    const hashIcon = node.has_integrity_hash ? '<span title="Content hash integrity verified" style="margin-left:4px;font-size:10px;">&#128274;</span>' : '';
+                    const isRoot = node.parent === null;
+                    const iconChar = isRoot ? '&#128100;' : '&#129302;';
+                    const displayName = node.id.replace('demo-', '');
+
+                    const toolChips = (node.tools || []).slice(0, 4).map(t =>
+                        `<span style="display:inline-block;padding:1px 6px;margin:1px 2px;background:rgba(255,255,255,0.06);border-radius:4px;font-size:10px;color:var(--text-secondary);font-family:'Fira Code',monospace;">${t}</span>`
+                    ).join('');
+                    const moreTools = (node.tools || []).length > 4 ? `<span style="font-size:10px;color:var(--text-secondary);">+${node.tools.length - 4} more</span>` : '';
+
+                    const statusBreakdown = Object.entries(node.statuses || {}).map(([s, c]) =>
+                        `<span style="color:${statusColor(s)};font-size:10px;font-weight:600;">${c}</span><span style="font-size:10px;color:var(--text-secondary);margin-right:6px;"> ${statusLabel(s)}</span>`
+                    ).join('');
+
+                    const children = childMap[node.id] || [];
+                    const childrenHtml = children.length > 0 ? `
+                        <div style="margin-left:32px;border-left:2px solid rgba(255,255,255,0.08);padding-left:0;">
+                            ${children.map(c => renderNode(c, depth + 1)).join('')}
+                        </div>` : '';
+
+                    return `
+                        <div style="position:relative;margin-bottom:4px;">
+                            <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:${depth === 0 ? 'rgba(255,140,0,0.04)' : 'rgba(255,255,255,0.02)'};border:1px solid ${depth === 0 ? 'rgba(255,140,0,0.15)' : 'var(--border)'};border-radius:10px;margin:4px 0;">
+                                <div style="flex-shrink:0;width:36px;height:36px;border-radius:8px;background:${color}15;border:1px solid ${color}30;display:flex;align-items:center;justify-content:center;font-size:18px;">
+                                    ${iconChar}
+                                </div>
+                                <div style="flex:1;min-width:0;">
+                                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                        <span style="font-weight:600;font-size:13px;color:var(--text-primary);font-family:'Fira Code',monospace;">${displayName}</span>
+                                        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background:${color}22;color:${color};text-transform:uppercase;">${label}</span>
+                                        ${hashIcon}
+                                        ${isRoot ? '<span style="font-size:10px;padding:2px 6px;background:rgba(255,140,0,0.12);color:var(--accent);border-radius:4px;font-weight:600;">ROOT</span>' : ''}
+                                    </div>
+                                    <div style="display:flex;align-items:center;gap:12px;margin-top:4px;flex-wrap:wrap;">
+                                        <span style="font-size:11px;color:var(--text-secondary);">${node.action_count} action${node.action_count !== 1 ? 's' : ''}</span>
+                                        <span style="font-size:11px;">Risk: <span style="color:${riskColor};font-weight:600;">${node.risk_avg}</span></span>
+                                        ${statusBreakdown}
+                                    </div>
+                                    ${toolChips || moreTools ? '<div style="margin-top:4px;">' + toolChips + moreTools + '</div>' : ''}
+                                </div>
+                                ${children.length > 0 ? '<div style="font-size:10px;color:var(--text-secondary);white-space:nowrap;">' + children.length + ' sub-agent' + (children.length > 1 ? 's' : '') + '</div>' : ''}
+                            </div>
+                            ${childrenHtml}
+                        </div>`;
+                }
+
+                const summaryHtml = `
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+                        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+                            <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${summary.total_agents || 0}</div>
+                            <div style="font-size:11px;color:var(--text-secondary);">Agents</div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+                            <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${summary.total_actions || 0}</div>
+                            <div style="font-size:11px;color:var(--text-secondary);">Actions</div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+                            <div style="font-size:20px;font-weight:700;color:var(--accent);">${summary.chains_with_parent || 0}</div>
+                            <div style="font-size:11px;color:var(--text-secondary);">Linked Agents</div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+                            <div style="font-size:20px;font-weight:700;color:var(--accent-blue);">${summary.period_days || 7}d</div>
+                            <div style="font-size:11px;color:var(--text-secondary);">Window</div>
+                        </div>
+                    </div>`;
+
+                const treeHtml = rootNodes.map(n => renderNode(n, 0)).join('');
+
+                container.innerHTML = summaryHtml + `
+                    <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:rgba(0,0,0,0.15);">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+                            <span style="font-size:14px;">&#128100;</span>
+                            <span style="font-size:12px;font-weight:600;color:var(--text-primary);">Human Principal</span>
+                            <span style="font-size:11px;color:var(--text-secondary);margin-left:auto;">Chain of Command</span>
+                        </div>
+                        ${treeHtml}
+                    </div>
+                    <div style="display:flex;gap:16px;margin-top:12px;justify-content:center;">
+                        <span style="font-size:11px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block;"></span> Allowed</span>
+                        <span style="font-size:11px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;"></span> Blocked</span>
+                        <span style="font-size:11px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:#f97316;display:inline-block;"></span> Halt</span>
+                        <span style="font-size:11px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:#eab308;display:inline-block;"></span> Pending</span>
+                        <span style="font-size:11px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;">&#128274; Hash Verified</span>
+                    </div>`;
+            } catch (e) {
+                container.innerHTML = '<div style="color:var(--accent-red);padding:20px;">Error loading lineage: ' + e.message + '</div>';
             }
         }
 

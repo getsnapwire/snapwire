@@ -2088,6 +2088,87 @@ def weekly_digest():
     return jsonify(get_weekly_digest(tenant_id=tenant_id))
 
 
+@app.route("/api/audit-log/lineage", methods=["GET"])
+@require_login
+def audit_log_lineage():
+    tenant_id = get_current_tenant_id()
+    days = request.args.get("days", 7, type=int)
+    days = min(max(days, 1), 90)
+    since = datetime.utcnow() - timedelta(days=days)
+
+    query = AuditLogEntry.query.filter(AuditLogEntry.created_at >= since)
+    if tenant_id:
+        query = query.filter(
+            (AuditLogEntry.tenant_id == tenant_id) | (AuditLogEntry.tenant_id.is_(None))
+        )
+    else:
+        query = query.filter(AuditLogEntry.tenant_id.is_(None))
+    entries = query.order_by(AuditLogEntry.created_at.asc()).limit(500).all()
+
+    agent_data = {}
+    edges = {}
+
+    for e in entries:
+        aid = e.agent_id or "unknown"
+        if aid not in agent_data:
+            agent_data[aid] = {
+                "id": aid,
+                "parents": set(),
+                "action_count": 0,
+                "statuses": {},
+                "risk_total": 0,
+                "has_hash": False,
+                "tools": set(),
+            }
+
+        agent_data[aid]["action_count"] += 1
+        agent_data[aid]["risk_total"] += (e.risk_score or 0)
+        s = e.status or "unknown"
+        agent_data[aid]["statuses"][s] = agent_data[aid]["statuses"].get(s, 0) + 1
+        if e.content_hash:
+            agent_data[aid]["has_hash"] = True
+        if e.tool_name:
+            agent_data[aid]["tools"].add(e.tool_name)
+        if e.parent_agent_id:
+            agent_data[aid]["parents"].add(e.parent_agent_id)
+
+        if e.parent_agent_id:
+            edge_key = f"{e.parent_agent_id}|{aid}"
+            if edge_key not in edges:
+                edges[edge_key] = {"from": e.parent_agent_id, "to": aid, "action_count": 0}
+            edges[edge_key]["action_count"] += 1
+
+    nodes = []
+    for aid, data in agent_data.items():
+        primary_parent = sorted(data["parents"])[0] if data["parents"] else None
+        is_root = primary_parent is None
+        primary_status = max(data["statuses"], key=data["statuses"].get) if data["statuses"] else "unknown"
+        nodes.append({
+            "id": aid,
+            "type": "root" if is_root else "agent",
+            "parent": primary_parent,
+            "action_count": data["action_count"],
+            "statuses": data["statuses"],
+            "primary_status": primary_status,
+            "risk_avg": round(data["risk_total"] / data["action_count"]) if data["action_count"] > 0 else 0,
+            "has_integrity_hash": data["has_hash"],
+            "tools": sorted(data["tools"]),
+        })
+
+    chains_with_parent = sum(1 for n in nodes if n["parent"] is not None)
+
+    return jsonify({
+        "nodes": nodes,
+        "edges": list(edges.values()),
+        "summary": {
+            "total_agents": len(nodes),
+            "total_actions": sum(n["action_count"] for n in nodes),
+            "chains_with_parent": chains_with_parent,
+            "period_days": days,
+        },
+    })
+
+
 @app.route("/api/compliance/nist-report", methods=["GET"])
 @require_login
 def nist_compliance_report():
