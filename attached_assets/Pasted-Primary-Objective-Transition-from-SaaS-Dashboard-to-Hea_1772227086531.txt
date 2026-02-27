@@ -1,0 +1,75 @@
+Primary Objective: Transition from "SaaS Dashboard" to "Headless Governance Infrastructure" to meet NIST IR 8596 and Colorado SB24-205 compliance standards.
+
+Part 1: The "Institutional" Stealth & UX Layer
+Objective: Project scale while maintaining lean operations and hiding early-stage metrics.
+
+T001: Vibe-Summary UI (Priority 1)
+
+Description: Use the existing Claude 3.5/3.7 integration to generate a 3-sentence plain-English summary for every intercepted tool call.
+
+Logic: Answer: (1) What is being intercepted? (2) Why is it risky? (3) Which NIST control does it map to?
+
+UI: Display the summary prominently on Snap-Cards; hide raw JSON behind a "View Code" toggle.
+
+T002: Stealth Mode Toggle
+
+Description: Add an is_stealth_mode flag (default: ON).
+
+Behavior: Hide the Leaderboard, Founding Sentinels, and Community Pages from public view. Keep background tracking active for a "Big Bang" reveal at 150 contributors.
+
+T003: "Community Validation" Rebrand
+
+Description: Global copy update. Change "Total Forks" to "Community Security Validations" and "Users" to "Protected Agents."
+
+Part 2: The "Compliance Factory" (NIST & Colorado SB24-205)
+Objective: Provide "Affirmative Defense" evidence for enterprise legal departments.
+
+T004: A2A (Agent-to-Agent) Identity Tracing
+
+Logic: Update X-Snapwire-Trace and the AuditLogEntry model to support recursive tracing.
+
+Visual: Map the "Chain of Command" (e.g., Manager Agent -> Execution Agent -> Tool Call) to satisfy NIST RESPOND-1.1.
+
+T005: Consequentiality Tagging
+
+Logic: Add an is_consequential boolean to ToolProfile.
+
+UI: Allow users to tag "High-Stakes" tools (Financial, HR, PII access).
+
+Compliance: This generates the specific documentation required by the Colorado SB24-205 "Substantial Factor" standard.
+
+T006: The "Sentinel Pause" (Hold Window)
+
+Logic: Ensure the 0-60s hold window is active for all tool calls with a Risk Score > 70.
+
+Integration: Trigger Task T007 (Slack "View Summary") during this window.
+
+Part 3: Headless Expansion & Scaling
+Objective: Scale to 1,000 protocols with 0 manual labor and enable "One-Line Integration."
+
+T007: Headless API Docs (/docs/compliance)
+
+Description: Expose the internal policy engine via a public FastAPI Swagger page.
+
+Goal: Allow enterprise clients to manage rules via GitHub/CI-CD instead of the dashboard.
+
+T008: Dynamic Chaos Ingestor
+
+Logic: Update scripts/batch_ingestor.py to pull from the official MCP Registry.
+
+Automation: For every new schema, ask Claude to generate 3 custom "Chaos Exploits" (prompt injections) to test the tool live. Use the "Self-Heal" loop (3 retries) for failures.
+
+T009: Deployer Compliance Portal
+
+Description: Build /compliance-portal with a "Pre-filled Impact Assessment." * Output: Package the Safety PDF + SHA-256 Audit Logs + Slack Triage History into a single "Audit Bundle" ZIP.
+
+Execution Instructions for Developers
+Restart Application: Clear current port conflicts and run all pending migrations.
+
+Order of Operations: * Phase 1: T001, T002, T003 (UX/Branding)
+
+Phase 2: T004, T005, T006 (Compliance Logic)
+
+Phase 3: T007, T008, T009 (Scaling/API)
+
+Strict Guardrail: All Claude calls for the "Chaos Gauntlet" must have a hard cost cap of 50 calls per batch run.
