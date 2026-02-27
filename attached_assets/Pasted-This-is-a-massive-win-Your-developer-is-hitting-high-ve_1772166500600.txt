@@ -1,0 +1,46 @@
+This is a massive win. Your developer is hitting high-velocity milestones that usually take weeks. Having the **"URL Swap"** and **"Streaming Snoop"** working by February 26th puts you in a position of power for the March 5th launch.
+
+Regarding the developer's question: **Do not let them spend today on Ruff or Black.** While important, you can automate that in 20 minutes with a pre-commit hook later.
+
+Instead, have them focus on the **"Contributor's First Day"** assets. In 2026, the biggest threat to an open-source project is **"README Fatigue."** If a developer forks your repo and doesn't see "Green Tests" or a "Clear Mission" in 30 seconds, they leave.
+
+### **What the Developer should do TODAY (The "Fork-Ready" Polish)**
+
+To ensure the first 25–50 developers actually *stay* after they fork, your developer needs to ship these three "Social Infrastructure" items:
+
+1. **The `CONTRIBUTING.md` Skeleton:**
+* This is more important than linting right now. It needs to say: *"To add a new protocol: 1. Create `sentinel/detectors/your_protocol.py`, 2. Register it in `detector.py`, 3. Run `pytest`."* * **The 2026 Twist:** Include a section on **"AI-Generated PRs."** Explicitly state that you welcome AI-assisted code but require a "Human-in-the-Loop" summary of the security implications.
+
+
+2. **The "Sentinel-Sample" Agent:**
+* Add a tiny, 10-line `examples/basic_agent.py` that uses the `OPENAI_BASE_URL` environment variable.
+* **Why?** When the first 25 developers fork, they need a "Target" to point the proxy at immediately to see it work.
+
+
+3. **The GitHub "Issue Templates":**
+* Create a template for **"New Protocol Support."** * When you reach out to those first 25 devs, you can say: *"I've already created an issue for 'Anthropic Tool Use'—just claim it and follow the template."* This reduces the cognitive load to near zero.
+
+
+
+---
+
+### **The "Contributor's First Day" Onboarding Guide (Draft)**
+
+*This is what you will send to the first 25–50 people you onboard via Upwork or Discord.*
+
+> **Welcome, Sentinel.**
+> You are holding the keys to the first deterministic security layer for AI agents. Here is your 15-minute mission:
+> 1. **Fork & Clone:** `git clone https://github.com/your-org/snapwire-sentinel`
+> 2. **Spin Up:** `docker-compose up -d` (The Proxy is now live on `:8080`).
+> 3. **The URL Swap:** Run `python examples/basic_agent.py`. You will see the proxy intercepting and logging tool-calls in your terminal.
+> 4. **The NIST Check:** Run `python -m sentinel --export-nist`. Open `compliance.md` and see where we still need protocol coverage.
+> 5. **Claim a Protocol:** Go to the GitHub Issues and pick a protocol (MCP, Google agent-link, etc.) to implement.
+> 
+> 
+> **Your Reward:** The first 50 merged PRs receive the **Metal Sentinel NFC Card** and a permanent spot in the March 9th NIST RFI filing.
+
+### **The "Unicorn" Next Step**
+
+Since the technical core is "Done," have the developer focus on **T005 (Landing Page & Dashboard snippets)**.
+
+**Ask the developer:** *"Can you ensure the 'Copy-Paste' code snippets for the URL Swap are front-and-center in the dashboard?"* This makes the onboarding experience feel like a premium product, not just a repo. **Would you like me to draft the "OpenClaw Safety Patch" announcement** for you to drop in their Discord once the developer confirms the `examples/` folder is live?
