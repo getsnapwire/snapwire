@@ -103,10 +103,12 @@ class SentinelProxy:
         else:
             decision = {"status": "pass-through"}
 
+        has_tool_calls = bool(detected)
+
         if decision["status"] == "pass-through" or (
             self.mode == "observe" and decision["status"] != "error"
         ):
-            return await self._forward_request(request, body_bytes, trace_id, inject_headers=(self.mode == "audit"))
+            return await self._forward_request(request, body_bytes, trace_id, inject_headers=has_tool_calls)
 
         if self.mode == "audit":
             return await self._forward_request(request, body_bytes, trace_id, inject_headers=True)
@@ -122,7 +124,7 @@ class SentinelProxy:
 
             return await self._forward_request(request, body_bytes, trace_id, inject_headers=True)
 
-        return await self._forward_request(request, body_bytes, trace_id, inject_headers=False)
+        return await self._forward_request(request, body_bytes, trace_id, inject_headers=has_tool_calls)
 
     async def _check_snapwire(self, detected: list, trace_id: str, path: str) -> dict:
         if not self._session:

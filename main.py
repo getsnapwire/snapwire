@@ -588,10 +588,10 @@ def nist_grade_badge():
     grade_colors = {"A": "#4c1", "B": "#dfb317", "C": "#fe7d37", "D": "#e05d44"}
     color = grade_colors.get(grade, "#e05d44")
 
-    label = "Snapwire"
-    value = f"NIST Grade {grade}"
-    label_width = 70
-    value_width = 110
+    label = "NIST-Aligned"
+    value = "March 2026"
+    label_width = 90
+    value_width = 90
     total_width = label_width + value_width
 
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{total_width}" height="20" role="img" aria-label="{label}: {value}">
