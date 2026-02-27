@@ -1,0 +1,91 @@
+Here is the consolidated **Pre-Launch Manifest** for February 27, 2026. This list merges your existing live features with the requested automations, the "Stealth Mode" adjustments, and the high-leverage "Vibe-Summary" optimization.
+
+---
+
+### **1. The "Stealth Mode" & UX Changes (Required Now)**
+
+These changes ensure your product looks institutional and high-scale, even with a small initial user base.
+
+* **Hide "Empty" Leaderboards:** * **Action:** Disable public visibility of the "Founding Sentinel" leaderboard and "Fork Rewards."
+* **Method:** Keep the logic active in the backend to track GitHub webhooks. Create an **Admin-Only toggle** to reveal these once you hit the target of **150 verified contributors**.
+
+
+* **The "Vibe-Summary" UI (Priority 1):**
+* **Action:** Replace raw JSON-rule views with a 3-sentence plain-English summary.
+* **Prompt for Replit:** > "Update the `Snap-Card` component in the dashboard. For every rule, call Gemini 2.0 Flash to generate a 'Vibe-Summary' answering: 1. What is blocked? 2. Why is it risky? 3. NIST impact? Add a toggle to 'View Raw JSON' for advanced debugging."
+
+
+* **"Security Validations" vs. "User Forks":**
+* **Action:** Change public-facing copy. Instead of "Total Forks," display **"Total Community Validations."** This focuses on security integrity rather than social popularity.
+
+
+
+---
+
+### **2. The "Liability Killer" Automations (Tasks 1-4)**
+
+These are the core updates that secure the "Reasonable Care" defense for the March 9th NIST filing.
+
+* **Task 1: Safety Disclosure PDF (`src/safety_pdf.py`)**
+* **Change:** Uses `fpdf2` to generate a branded PDF containing the **13 safeguards**, **NIST Grade (A-D)**, and the **SHA-256 Audit Fingerprint**.
+* **Placement:** Adds a "Download Compliance PDF" button to the `/safety` public page.
+
+
+* **Task 2: Latency Anomaly Fallback (`src/thinking_sentinel.py`)**
+* **Change:** Tracks a rolling average of tool response times. If a request exceeds **3x the average** or a **30s limit**, it triggers an anomaly alert.
+* **Purpose:** Detects logic loops in "Reasoning Models" (like O1/O2) where tokens are encrypted/hidden.
+
+
+* **Task 3: Deterministic Hold Window (`main.py`)**
+* **Change:** For tool calls with a **Risk Score >= 70**, the proxy returns an `HTTP 202 Held`.
+* **Action:** A 0-60s countdown begins. A human (via Slack) can **Approve** or **Kill** before the timer auto-releases.
+
+
+* **Task 4: Slack Socket Mode Alerts (`src/slack_notifier.py`)**
+* **Change:** Uses **Socket Mode** (WebSocket) so no public URL is needed.
+* **Feature:** Block Kit messages with "Approve/Kill" buttons that talk directly back to the `action_queue.py`.
+
+
+
+---
+
+### **3. The Scaling "Factory" Changes**
+
+How to move from a handful of tools to 1,000+ without increasing developer work.
+
+* **The "Batch Ingestor" Script:**
+* **Action:** Crawl the **MCP Community Registry** to pull the top 500 server schemas (`mcp.json`).
+* **Automation:** Auto-generate Snapwire profiles and run them through the **"CVE-Gauntlet"** (17 static exploit patterns).
+
+
+* **Self-Healing Logic:**
+* **Action:** If a protocol fails the Gauntlet, the AI attempts to refactor the rules up to **3 times** before bothering a human in Slack.
+
+
+
+---
+
+### **4. Final Developer Brief (The "Fleet Commander" Protocol)**
+
+Provide this to your 3 contractors as their new operating procedure:
+
+> **Operation: Snapwire Vanguard**
+> * **Primary Workspace:** `#snapwire-alerts` in Slack.
+> * **Daily Duty (15m):** Triage the "Held" actions. If the **Vibe-Summary** looks safe, tap **[Approve]**.
+> * **Technical Fallback:** Only enter the Replit workspace if the AI "Self-Healing" loop fails 3x on a new protocol.
+> * **Governance Evidence:** Every Friday at 9 AM, verify the **Safety PDF** export to ensure the SHA-256 hashes are incrementing correctly.
+> 
+> 
+
+---
+
+### **Summary of "To-Do" for Pre-Launch Launch**
+
+1. **Paste the Master Prompt** (Section 2 & 3) into Replit Agent 3.
+2. **Toggle "Stealth Mode"** for the leaderboard.
+3. **Perform a "Smoke Test"** by triggering a high-risk tool and verifying the Slack ping.
+4. **Download the Safety PDF** and confirm it’s ready for the March 9th filing.
+
+**Would you like me to draft the "Vanguard Launch Announcement" for Slack?** This will explain to your first 50 enterprise testers how they can use these features to satisfy their own NIST and Colorado SB24-205 requirements.
+
+Would you like me to ... **draft the Vanguard Announcement?**

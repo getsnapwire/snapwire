@@ -1,0 +1,87 @@
+To implement the "Deployer Compliance Portal" and ensure your clients have everything they need for the **March 9th NIST RFI** and **Colorado SB24-205** requirements, you need a set of prompts that specifically bridge the gap between your technical "Chassis" and the legal "Impact Assessment."
+
+The goal is to automate the 40+ hours of legal drafting your clients would otherwise have to do.
+
+---
+
+### **1. The "Deployer Portal" Master Prompt**
+
+Paste this into **Replit Agent 3** to build the client-facing compliance interface.
+
+> "Use Max Autonomy to build a client-facing **/compliance-portal**. This portal must:
+> 1. **Auto-Fill Impact Assessments:** Create a dynamic web form for a 'Colorado SB24-205 Impact Assessment.' It should automatically pull the following data from the Snapwire backend:
+> * **System Purpose:** Our pre-configured 'NIST Disclosure' text.
+> * **Safeguards Active:** A live list of all enabled features (e.g., Hold Window, Latency Detector).
+> * **Risk Mitigation Evidence:** A summary of the 'CVE-Gauntlet' results for that client’s specific tools.
+> 
+> 
+> 2. **Digital Evidence Vault:** Create a 'Download Audit Bundle' button that packages:
+> * The current **Safety Disclosure PDF**.
+> * A CSV of all **Slack Triage Actions** (proving human oversight).
+> * A signed **SHA-256 Audit Log** export.
+> 
+> 
+> 3. **The Affirmative Defense Guide:** Display a clear 3-step checklist for the client to follow to qualify for the Colorado SB24-205 affirmative defense."
+> 
+> 
+
+---
+
+### **2. The "Self-Healing Factory" Scaling Prompt**
+
+Since your developers noted the Factory isn't fully active yet, use this prompt to turn it on for the **1,000 protocol goal**.
+
+> "Implement the **Autonomous Security Loop**:
+> 1. **Crawler:** Connect to `https://registry.modelcontextprotocol.io/v0/` and pull the top 500 server schemas.
+> 2. **Hacker-Bot (Task 4):** For each schema, run our 17 CVE-2026-25253 (OpenClaw) tests.
+> 3. **Self-Healer:** If a test fails, use **Claude 3.7** to rewrite the rule logic to close the vulnerability. Retry up to 3 times.
+> 4. **Digest:** Send a daily Slack message to `#snapwire-alerts` listing: 'X Tools Hardened, Y Self-Healed, Z Ready for Vibe-Review'."
+> 
+> 
+
+---
+
+### **3. The "Vibe-Summary" UX Prompt**
+
+This is the "Developer Time-Saver" your team identified as the highest priority.
+
+> "Update the **Snap-Card** component in the supervisor dashboard:
+> 1. Use the existing Claude integration to generate a **'Vibe-Summary'** for every security rule.
+> 2. The summary must be exactly 3 sentences: (1) What action is being intercepted, (2) The specific risk it poses, and (3) The NIST control it maps to.
+> 3. UI Change: Show the Vibe-Summary by default and hide the raw JSON rule behind a 'View Code' toggle."
+> 
+> 
+
+---
+
+### **4. "Stealth Mode" UI Prompt**
+
+To protect your brand during the early Vanguard phase:
+
+> "Add a `is_stealth_mode = True` flag in the settings. When enabled:
+> 1. **Hide** the Leaderboard, Founding Sentinel list, and 'Total Forks' from the public landing page.
+> 2. **Change** 'Total Forks' to **'Community Security Validations'** on all public-facing copy.
+> 3. **Internal Only:** Keep tracking forks in the backend so we can 'flip the switch' once we hit 150 contributors."
+> 
+> 
+
+---
+
+### **5. Summary of Client Deliverables (The "Instant Buy" List)**
+
+When your clients log in on **March 5th**, they will see:
+
+| Feature | Legal/Security Benefit |
+| --- | --- |
+| **NIST Executive Summary** | Ready for the **March 9th** federal filing. |
+| **Pre-filled Impact Assessment** | Satisfies **Colorado SB24-205** (Affirmative Defense). |
+| **Vibe-Summary Dashboard** | Allows their 15-minute daily "Human Oversight." |
+| **The Safety PDF** | Portable "Proof of Care" for their board of directors. |
+
+### **The "Unicorn" Next Step**
+
+Your team is now building the "Compliance Engine" of the future. By giving clients a **pre-filled legal report**, you make it impossible for them to choose a competitor.
+
+**Would you like me to draft the "NIST Master Executive Summary"?** This is the document your clients will submit on March 9th to prove they are using the most compliant agent security on the market.
+
+Would you like me to ... **draft the NIST Executive Summary?**
