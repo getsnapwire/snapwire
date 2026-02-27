@@ -34,6 +34,7 @@ class SentinelProxy:
         self.mode = config.get("mode", "audit")
         self.agent_id = config.get("agent_id", "sentinel-proxy")
         self.origin_id = config.get("origin_id", "human-principal")
+        self.authorized_by = config.get("authorized_by", "") or self.origin_id
         self.signing_secret = config.get("signing_secret", "")
         self._session: aiohttp.ClientSession | None = None
         self._stats = {"total": 0, "intercepted": 0, "blocked": 0, "errors": 0}
@@ -217,6 +218,7 @@ class SentinelProxy:
 
         if inject_headers:
             forward_headers["X-Snapwire-Origin-ID"] = self.origin_id
+            forward_headers["X-Snapwire-Authorized-By"] = self.authorized_by
             forward_headers["X-Snapwire-Parent-ID"] = self.agent_id
             forward_headers["X-Snapwire-Trace"] = trace_id
             if self.signing_secret:

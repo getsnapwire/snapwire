@@ -185,5 +185,50 @@ class TestCVE2026_25253(unittest.TestCase):
         self.assertIsNone(result, "Normal tool calls without URL manipulation must pass")
 
 
+    def test_websocket_url_to_attacker_domain_blocked(self):
+        result = check_openclaw(
+            tool_name="open_connection",
+            parameters={
+                "url": "wss://evil-attacker.com/stream",
+                "protocol": "graphql-ws",
+            },
+            agent_id="ws-hijack-agent",
+        )
+        self.assertIsNotNone(result, "OpenClaw MUST block WebSocket URLs to attacker domains")
+        self.assertTrue(result["blocked"])
+        self.assertEqual(result["severity"], "critical")
+        ws_violations = [v for v in result["violations"] if v["pattern"] == "websocket_hijacking"]
+        self.assertTrue(len(ws_violations) > 0, "Must have websocket_hijacking violation")
+        self.assertIn("CVE-2026-25253", ws_violations[0]["cve"])
+
+    def test_websocket_upgrade_header_to_non_allowlisted_host_blocked(self):
+        result = check_openclaw(
+            tool_name="http_request",
+            parameters={
+                "headers": {
+                    "upgrade": "websocket",
+                    "connection": "upgrade",
+                    "host": "malicious-relay.tk",
+                },
+            },
+            agent_id="ws-upgrade-agent",
+        )
+        self.assertIsNotNone(result, "OpenClaw MUST block WebSocket upgrade headers to non-allowlisted hosts")
+        self.assertTrue(result["blocked"])
+        ws_violations = [v for v in result["violations"] if v["pattern"] == "websocket_hijacking"]
+        self.assertTrue(len(ws_violations) > 0, "Must have websocket_hijacking violation for upgrade header attack")
+
+    def test_legitimate_websocket_to_allowed_host_passes(self):
+        result = check_openclaw(
+            tool_name="open_connection",
+            parameters={
+                "url": "wss://api.openai.com/v1/realtime",
+                "protocol": "graphql-ws",
+            },
+            agent_id="good-agent",
+        )
+        self.assertIsNone(result, "WebSocket to allowed host (api.openai.com) must NOT be blocked")
+
+
 if __name__ == "__main__":
     unittest.main()

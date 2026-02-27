@@ -102,6 +102,17 @@ RULE_PACK_NIST_MAP = {
 }
 
 
+def score_to_grade(score: int) -> str:
+    if score >= 80:
+        return "A"
+    elif score >= 60:
+        return "B"
+    elif score >= 40:
+        return "C"
+    else:
+        return "D"
+
+
 PACK_RECOMMENDATIONS = {
     "GOVERN-1.1": "universal_starter",
     "GOVERN-1.2": "data_protection",
@@ -185,6 +196,7 @@ def generate_compliance_report(installed_rule_names):
 
     return {
         "overall_score": score,
+        "grade": score_to_grade(score),
         "total_categories": total,
         "covered": covered_count,
         "partial": partial_count,

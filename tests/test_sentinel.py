@@ -280,6 +280,34 @@ class TestSignature(unittest.TestCase):
         self.assertEqual(proxy.signing_secret, "")
 
 
+class TestAuthorizedByHeader(unittest.TestCase):
+    def test_proxy_has_authorized_by_default(self):
+        from sentinel.proxy import SentinelProxy
+        proxy = SentinelProxy({"origin_id": "alice@corp.com"})
+        self.assertEqual(proxy.authorized_by, "alice@corp.com")
+
+    def test_proxy_authorized_by_explicit(self):
+        from sentinel.proxy import SentinelProxy
+        proxy = SentinelProxy({"origin_id": "alice@corp.com", "authorized_by": "bob@corp.com"})
+        self.assertEqual(proxy.authorized_by, "bob@corp.com")
+
+    def test_config_includes_authorized_by(self):
+        import os
+        os.environ["SENTINEL_AUTHORIZED_BY"] = "cto@acme.com"
+        from importlib import reload
+        import sentinel.__main__ as sm
+        reload(sm)
+        config = sm.get_config()
+        self.assertEqual(config["authorized_by"], "cto@acme.com")
+        os.environ.pop("SENTINEL_AUTHORIZED_BY", None)
+
+    def test_header_injected_in_forward_headers(self):
+        from sentinel.proxy import SentinelProxy
+        proxy = SentinelProxy({"origin_id": "human-principal", "authorized_by": "admin@company.com"})
+        self.assertEqual(proxy.authorized_by, "admin@company.com")
+        self.assertEqual(proxy.origin_id, "human-principal")
+
+
 class TestSentinelConfig(unittest.TestCase):
     def test_get_config_defaults(self):
         import os

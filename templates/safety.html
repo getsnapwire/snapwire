@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snapwire — Public Safety Disclosure</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --white: #ffffff;
+            --base: #0B0D10;
+            --surface: #151A21;
+            --border: rgba(39, 49, 64, 0.6);
+            --border-hover: rgba(39, 49, 64, 0.8);
+            --text-primary: #F0EEE9;
+            --text-secondary: #8B919A;
+            --text-tertiary: #5A6270;
+            --text-muted: #3D4654;
+            --accent: #FF6B00;
+            --accent-hover: #E56000;
+            --accent-subtle: rgba(255, 107, 0, 0.08);
+            --accent-border: rgba(255, 107, 0, 0.15);
+            --green: #00F5D4;
+            --green-subtle: rgba(0, 245, 212, 0.1);
+            --red: #f87171;
+            --red-subtle: rgba(248, 113, 113, 0.1);
+            --amber: #FFD66B;
+            --amber-subtle: rgba(255, 214, 107, 0.1);
+            --blue: #40E0FF;
+            --blue-subtle: rgba(64, 224, 255, 0.1);
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--base);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+        }
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            background: rgba(11, 13, 16, 0.92);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px; height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .nav-logo {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 17px; font-weight: 700; color: var(--text-primary); text-decoration: none;
+        }
+        .nav-logo .logo-icon {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, #FF6B00, #CC5500);
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-size: 16px; color: white;
+        }
+        .nav-links { display: flex; align-items: center; gap: 32px; }
+        .nav-links a { font-size: 14px; font-weight: 500; color: var(--text-tertiary); text-decoration: none; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--text-primary); }
+        .nav-btn {
+            padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600;
+            text-decoration: none; color: #fff; background: var(--accent); transition: all 0.2s;
+        }
+        .nav-btn:hover { background: var(--accent-hover); }
+
+        .page-header {
+            padding: 120px 32px 48px;
+            text-align: center;
+            background: linear-gradient(135deg, #0B0D10 0%, #0B0D10 60%, #2B1538 100%);
+            position: relative; overflow: hidden;
+        }
+        .page-header::before {
+            content: '';
+            position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(255, 107, 0, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .page-header h1 {
+            font-size: 42px; font-weight: 800; letter-spacing: -1.5px;
+            margin-bottom: 16px; position: relative; z-index: 1;
+        }
+        .page-header h1 span {
+            background: linear-gradient(135deg, #FF6B00, #FF8C42);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .page-header p {
+            font-size: 17px; color: var(--text-secondary); max-width: 600px;
+            margin: 0 auto; line-height: 1.7; position: relative; z-index: 1;
+        }
+
+        .content { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+
+        .stats-bar {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 48px;
+        }
+        .stat-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+            padding: 24px; text-align: center;
+        }
+        .stat-card .stat-value {
+            font-size: 32px; font-weight: 800; margin-bottom: 6px;
+        }
+        .stat-card .stat-label {
+            font-size: 13px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .stat-card.green .stat-value { color: var(--green); }
+        .stat-card.amber .stat-value { color: var(--amber); }
+        .stat-card.blue .stat-value { color: var(--blue); }
+
+        .section-block {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+            padding: 32px; margin-bottom: 24px;
+        }
+        .section-block h2 {
+            font-size: 20px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+        }
+        .section-block h2 .icon {
+            width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px;
+        }
+        .section-block p, .section-block li {
+            font-size: 15px; color: var(--text-secondary); line-height: 1.75;
+        }
+        .section-block ul { list-style: none; padding: 0; }
+        .section-block li { padding: 6px 0; padding-left: 20px; position: relative; }
+        .section-block li::before { content: '\2713'; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+
+        .compliance-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;
+        }
+        .compliance-item {
+            background: var(--base); border: 1px solid var(--border); border-radius: 10px;
+            padding: 16px; display: flex; align-items: center; gap: 12px;
+        }
+        .compliance-item .badge {
+            padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: nowrap;
+        }
+        .compliance-item .badge.green { background: var(--green-subtle); color: var(--green); }
+        .compliance-item .badge.amber { background: var(--amber-subtle); color: var(--amber); }
+        .compliance-item .badge.blue { background: var(--blue-subtle); color: var(--blue); }
+        .compliance-item span:last-child { font-size: 14px; color: var(--text-secondary); }
+
+        .badge-embed {
+            background: var(--base); border: 1px solid var(--border); border-radius: 10px;
+            padding: 16px; margin-top: 16px; font-family: 'Fira Code', monospace; font-size: 13px;
+            color: var(--text-secondary); word-break: break-all; overflow-x: auto;
+        }
+
+        .footer {
+            border-top: 1px solid var(--border); padding: 40px 32px; text-align: center; background: var(--base);
+        }
+        .footer-brand {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;
+        }
+        .footer-brand .logo-sm {
+            width: 20px; height: 20px;
+            background: linear-gradient(135deg, #FF6B00, #CC5500);
+            border-radius: 5px; display: inline-flex; align-items: center; justify-content: center;
+            font-size: 11px; color: white;
+        }
+        .footer p { font-size: 13px; color: var(--text-tertiary); }
+        .footer-links { display: flex; gap: 24px; justify-content: center; margin-top: 12px; }
+        .footer-links a { font-size: 13px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+        .footer-links a:hover { color: var(--text-primary); }
+
+        @media (max-width: 768px) {
+            .page-header { padding: 100px 20px 32px; }
+            .page-header h1 { font-size: 28px; }
+            .content { padding: 32px 20px 60px; }
+            .stats-bar { grid-template-columns: 1fr; }
+            .compliance-grid { grid-template-columns: 1fr; }
+            .nav { padding: 0 16px; }
+            .nav-links a:not(.nav-btn) { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-logo">
+            <span class="logo-icon">&#9889;</span>
+            Snapwire
+        </a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/docs">API Docs</a>
+            <a href="{{ login_url }}" class="nav-btn">Sign In</a>
+        </div>
+    </nav>
+
+    <div class="page-header">
+        <h1>Public <span>Safety Disclosure</span></h1>
+        <p>Snapwire is committed to transparent, accountable AI governance. This page discloses our intended use, safeguards, and compliance posture.</p>
+    </div>
+
+    <div class="content">
+        <div class="stats-bar">
+            <div class="stat-card green">
+                <div class="stat-value">{{ nist_grade }}</div>
+                <div class="stat-label">NIST Grade</div>
+            </div>
+            <div class="stat-card amber">
+                <div class="stat-value">{{ nist_score }}%</div>
+                <div class="stat-label">NIST Coverage Score</div>
+            </div>
+            <div class="stat-card blue">
+                <div class="stat-value">{{ active_safeguards }}</div>
+                <div class="stat-label">Active Safeguards</div>
+            </div>
+        </div>
+
+        <div class="section-block">
+            <h2><span class="icon" style="background:var(--accent-subtle);color:var(--accent);">&#x1F3AF;</span> Intended Use &amp; Boundaries</h2>
+            <p>Snapwire is a <strong>high-risk governance layer</strong> designed to sit between AI agents and their tool-call targets. It functions as a deterministic security gateway (reverse proxy) that intercepts, evaluates, and enforces policy on every tool call an autonomous agent makes.</p>
+            <ul>
+                <li>Real-time interception and policy enforcement for AI agent tool calls</li>
+                <li>Human-in-the-loop review queue for high-risk or ambiguous actions</li>
+                <li>Constitutional rule engine with severity-based blocking and monitoring</li>
+                <li>Immutable forensic audit trail of all agent decisions and delegations</li>
+            </ul>
+            <p style="margin-top:12px;">Snapwire does <strong>not</strong> generate, modify, or assume responsibility for the underlying intent or output of the AI model. It operates as a passive security intermediary.</p>
+        </div>
+
+        <div class="section-block">
+            <h2><span class="icon" style="background:var(--red-subtle);color:var(--red);">&#x26A0;</span> Foreseeable Misuse &amp; Mitigation</h2>
+            <p>Snapwire proactively defends against known attack vectors targeting agentic AI systems:</p>
+            <ul>
+                <li><strong>CVE-2026-25253 (OpenClaw):</strong> BASE_URL redirect, credential exfiltration, domain spoofing, WebSocket hijacking, and environment variable injection are all detected and blocked by the OpenClaw safeguard engine</li>
+                <li><strong>Hallucination loops:</strong> The Fuse Breaker (Loop Detector) identifies and kills repetitive tool-call patterns before they drain budgets</li>
+                <li><strong>Prompt injection via tool parameters:</strong> Input sanitization strips injection attempts from agent-supplied parameters</li>
+                <li><strong>Credential theft:</strong> The Identity Vault ensures agents never see raw secrets; Snap-Tokens are used as proxies</li>
+                <li><strong>Unauthorized escalation:</strong> Blast Radius controls and Honeypot tripwires detect and contain rogue agent behavior</li>
+            </ul>
+        </div>
+
+        <div class="section-block">
+            <h2><span class="icon" style="background:var(--blue-subtle);color:var(--blue);">&#x1F464;</span> Human Accountability Statement</h2>
+            <p>Every action processed through Snapwire carries a chain of human accountability:</p>
+            <ul>
+                <li>The <code style="background:var(--base);padding:2px 8px;border-radius:4px;font-size:13px;color:var(--accent);">X-Snapwire-Authorized-By</code> header is injected into every proxied request, creating an immutable record of which human operator authorized the agent's deployment</li>
+                <li>The <code style="background:var(--base);padding:2px 8px;border-radius:4px;font-size:13px;color:var(--accent);">X-Snapwire-Origin-ID</code> header traces every request back to its originating Snapwire instance</li>
+                <li>All blocked, approved, and pending decisions are logged with timestamps, agent IDs, and operator context in the forensic audit trail</li>
+                <li>The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator</li>
+            </ul>
+        </div>
+
+        <div class="section-block">
+            <h2><span class="icon" style="background:var(--amber-subtle);color:var(--amber);">&#x2696;</span> Algorithmic Discrimination Protections</h2>
+            <p>Snapwire includes safeguards against algorithmic discrimination and bias in AI agent behavior:</p>
+            <ul>
+                <li><strong>Constitutional Auditor:</strong> Every tool call is evaluated against a configurable set of constitutional rules that can encode equity, fairness, and anti-discrimination policies</li>
+                <li><strong>Equity-aware rule templates:</strong> Pre-built rule packs include data protection rules designed to prevent PII leakage and discriminatory data handling</li>
+                <li><strong>Shadow Mode:</strong> New rules can be tested in observation mode before enforcement, preventing unintended discriminatory blocking patterns</li>
+                <li><strong>Community Rules:</strong> Open, peer-reviewed rule contributions ensure diverse perspectives in governance policy</li>
+                <li><strong>Deception Detection:</strong> Heuristic analysis identifies when agents attempt to circumvent safety rules through obfuscation or misdirection</li>
+            </ul>
+        </div>
+
+        <div class="section-block">
+            <h2><span class="icon" style="background:var(--green-subtle);color:var(--green);">&#x2705;</span> Compliance Standards</h2>
+            <p>Snapwire aligns with the following regulatory and standards frameworks:</p>
+            <div class="compliance-grid">
+                <div class="compliance-item">
+                    <span class="badge green">NIST</span>
+                    <span>NIST IR 8596 &mdash; AI Agent Security Profile (CSF 2.0)</span>
+                </div>
+                <div class="compliance-item">
+                    <span class="badge amber">CO</span>
+                    <span>Colorado SB24-205 &mdash; AI Consumer Protections</span>
+                </div>
+                <div class="compliance-item">
+                    <span class="badge blue">SG</span>
+                    <span>Singapore Model Governance Framework v1.1</span>
+                </div>
+                <div class="compliance-item">
+                    <span class="badge green">OWASP</span>
+                    <span>OWASP Top 10 for LLM Applications</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-block">
+            <h2><span class="icon" style="background:var(--green-subtle);color:var(--green);">&#x1F4CA;</span> Current NIST Grade</h2>
+            <p>Based on installed rule packs and their mapping to NIST IR 8596 categories:</p>
+            <div style="display:flex;align-items:center;gap:20px;margin-top:16px;">
+                <div style="width:80px;height:80px;border-radius:16px;background:var(--green-subtle);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:800;color:var(--green);">{{ nist_grade }}</div>
+                <div>
+                    <div style="font-size:16px;font-weight:600;margin-bottom:4px;">{{ nist_score }}% Coverage</div>
+                    <div style="font-size:14px;color:var(--text-secondary);">{{ nist_covered }} covered &middot; {{ nist_partial }} partial &middot; {{ nist_gaps }} gaps &middot; {{ nist_total }} total categories</div>
+                </div>
+            </div>
+            <div class="badge-embed" style="margin-top:20px;">
+                <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px;">Embed this badge in your README:</div>
+                <code>![NIST Grade]({{ base_url }}/badge/nist-grade)</code>
+            </div>
+        </div>
+
+        <div class="section-block">
+            <h2><span class="icon" style="background:var(--blue-subtle);color:var(--blue);">&#x1F6E1;</span> Active Safeguards</h2>
+            <p>This instance currently has <strong>{{ active_safeguards }}</strong> active safeguards protecting AI agent operations:</p>
+            <ul>
+                {% for safeguard in safeguard_list %}
+                <li>{{ safeguard }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-brand">
+            <span class="logo-sm">&#9889;</span>
+            Snapwire
+        </div>
+        <p>The Firewall for AI Agents</p>
+        <div class="footer-links">
+            <a href="/docs">API Docs</a>
+            <a href="/tos">Terms</a>
+            <a href="/privacy">Privacy</a>
+            <a href="/safety">Safety Disclosure</a>
+        </div>
+    </footer>
+
+    <div style="text-align:center;padding:16px 24px;font-size:11px;color:var(--text-muted);opacity:0.7;border-top:1px solid var(--border);margin-top:0;line-height:1.6;">
+        <p style="margin:0;">Snapwire is a technical monitoring utility. All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator. This disclosure is informational and does not constitute legal advice or formal certification.</p>
+    </div>
+</body>
+</html>

@@ -26,6 +26,14 @@ CREDENTIAL_KEYWORD_PATTERN = re.compile(
 )
 
 URL_EXTRACT_PATTERN = re.compile(r"https?://[^\s\"',\)]+")
+WS_URL_EXTRACT_PATTERN = re.compile(r"wss?://[^\s\"',\)]+")
+
+WEBSOCKET_UPGRADE_KEYS = re.compile(
+    r"(?i)^(upgrade|connection)$"
+)
+WEBSOCKET_UPGRADE_VALUES = re.compile(
+    r"(?i)(websocket|upgrade)"
+)
 
 SPOOFING_PATTERNS = [
     re.compile(r"(?i)https?://(api[\.\-]openai[^\.a-z]|openai[^\.a-z]|api[\.\-]anthropic[^\.a-z]|anthropic[^\.a-z]|claude[\.\-]api|gpt[\.\-]api|api[\.\-]claude|openai[\.\-]proxy)"),
@@ -65,6 +73,18 @@ def _is_host_allowed(url_str: str) -> bool:
 
 def _extract_urls(text: str) -> List[str]:
     return URL_EXTRACT_PATTERN.findall(text)
+
+
+def _extract_ws_urls(text: str) -> List[str]:
+    return WS_URL_EXTRACT_PATTERN.findall(text)
+
+
+def _is_ws_host_allowed(url_str: str) -> bool:
+    try:
+        normalized = re.sub(r"^wss?://", "http://", url_str)
+        return _is_host_allowed(normalized)
+    except Exception:
+        return False
 
 
 def _check_domain_spoofing(url_str: str) -> Optional[dict]:
@@ -209,6 +229,52 @@ def check_openclaw(
                 "matched": config_match.group(0)[:200],
             })
 
+    for key, value in flat_pairs:
+        ws_urls = _extract_ws_urls(value)
+        for ws_url in ws_urls:
+            if not _is_ws_host_allowed(ws_url):
+                violations.append({
+                    "pattern": "websocket_hijacking",
+                    "severity": "critical",
+                    "description": "Cross-Site WebSocket Hijacking — WebSocket URL targets unauthorized origin",
+                    "cve": "CVE-2026-25253",
+                    "matched": f"{key}={ws_url}"[:200],
+                })
+
+    ws_upgrade_detected = False
+    ws_target_host = None
+    for key, value in flat_pairs:
+        key_leaf = key.rsplit(".", 1)[-1] if "." in key else key
+        if WEBSOCKET_UPGRADE_KEYS.match(key_leaf) and WEBSOCKET_UPGRADE_VALUES.search(value):
+            ws_upgrade_detected = True
+        if key_leaf.lower() in ("host", "origin") and isinstance(value, str):
+            ws_target_host = value
+
+    if ws_upgrade_detected and ws_target_host:
+        test_url = ws_target_host if "://" in ws_target_host else f"http://{ws_target_host}"
+        if not _is_host_allowed(test_url):
+            violations.append({
+                "pattern": "websocket_hijacking",
+                "severity": "critical",
+                "description": "Cross-Site WebSocket Hijacking — WebSocket upgrade header targets non-allowlisted host",
+                "cve": "CVE-2026-25253",
+                "matched": f"upgrade:websocket -> {ws_target_host}"[:200],
+            })
+
+    all_ws_urls = _extract_ws_urls(all_text)
+    for ws_url in all_ws_urls:
+        if not _is_ws_host_allowed(ws_url) and not any(
+            v["pattern"] == "websocket_hijacking" and ws_url in v.get("matched", "")
+            for v in violations
+        ):
+            violations.append({
+                "pattern": "websocket_hijacking",
+                "severity": "critical",
+                "description": "Cross-Site WebSocket Hijacking — WebSocket URL to unauthorized endpoint detected",
+                "cve": "CVE-2026-25253",
+                "matched": ws_url[:200],
+            })
+
     if not violations:
         return None
 
@@ -237,7 +303,7 @@ def check_openclaw(
 def get_openclaw_stats(tenant_id: Optional[int] = None) -> Dict[str, Any]:
     return {
         "safeguard": "openclaw",
-        "patterns_active": 6,
+        "patterns_active": 7,
         "cve_coverage": ["CVE-2026-25253"],
         "categories": [
             "base_url_override",
@@ -246,5 +312,6 @@ def get_openclaw_stats(tenant_id: Optional[int] = None) -> Dict[str, Any]:
             "env_var_injection",
             "suspicious_tld",
             "config_override",
+            "websocket_hijacking",
         ],
     }

@@ -520,6 +520,107 @@ def docs_page():
     return render_template("docs.html", login_url=_get_login_url(), base_url=base_url)
 
 
+@app.route("/safety")
+def safety_page():
+    from src.nist_mapping import generate_compliance_report
+    from models import ConstitutionRule
+
+    base_url = request.url_root.rstrip("/")
+
+    rule_names = set()
+    try:
+        rules = ConstitutionRule.query.all()
+        rule_names = {r.rule_name for r in rules}
+    except Exception:
+        pass
+
+    report = generate_compliance_report(rule_names)
+    score = report.get("overall_score", 0)
+    grade = report.get("grade", "D")
+
+    active_safeguards = len(rule_names)
+
+    safeguard_list = [
+        "Constitutional Rule Engine",
+        "OpenClaw CVE-2026-25253 Safeguard",
+        "Loop Detector (Fuse Breaker)",
+        "Input Sanitizer",
+        "Blast Radius Controls",
+        "Honeypot Tripwires",
+        "Identity Vault (Snap-Tokens)",
+        "Tool Safety Catalog",
+        "Deception Detector",
+        "Schema Guard",
+        "Risk Index Scoring",
+        "Thinking Token Sentinel",
+        "Rate Limiter",
+    ]
+
+    return render_template(
+        "safety.html",
+        login_url=_get_login_url(),
+        base_url=base_url,
+        nist_grade=grade,
+        nist_score=score,
+        nist_covered=report.get("covered", 0),
+        nist_partial=report.get("partial", 0),
+        nist_gaps=report.get("gaps", 0),
+        nist_total=report.get("total_categories", 0),
+        active_safeguards=active_safeguards,
+        safeguard_list=safeguard_list,
+    )
+
+
+@app.route("/badge/nist-grade")
+def nist_grade_badge():
+    from src.nist_mapping import generate_compliance_report, score_to_grade
+    try:
+        installed_rule_names = set()
+        rules = ConstitutionRule.query.all()
+        for r in rules:
+            installed_rule_names.add(r.rule_name)
+        report = generate_compliance_report(installed_rule_names)
+        score = report.get("overall_score", 0)
+    except Exception:
+        score = 0
+
+    grade = score_to_grade(score)
+    grade_colors = {"A": "#4c1", "B": "#dfb317", "C": "#fe7d37", "D": "#e05d44"}
+    color = grade_colors.get(grade, "#e05d44")
+
+    label = "Snapwire"
+    value = f"NIST Grade {grade}"
+    label_width = 70
+    value_width = 110
+    total_width = label_width + value_width
+
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{total_width}" height="20" role="img" aria-label="{label}: {value}">
+  <title>{label}: {value}</title>
+  <linearGradient id="s" x2="0" y2="100%">
+    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+    <stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
+  <clipPath id="r">
+    <rect width="{total_width}" height="20" rx="3" fill="#fff"/>
+  </clipPath>
+  <g clip-path="url(#r)">
+    <rect width="{label_width}" height="20" fill="#555"/>
+    <rect x="{label_width}" width="{value_width}" height="20" fill="{color}"/>
+    <rect width="{total_width}" height="20" fill="url(#s)"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
+    <text aria-hidden="true" x="{label_width * 5}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="{(label_width - 10) * 10}">{label}</text>
+    <text x="{label_width * 5}" y="140" transform="scale(.1)" fill="#fff" textLength="{(label_width - 10) * 10}">{label}</text>
+    <text aria-hidden="true" x="{(label_width + total_width) * 5}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="{(value_width - 10) * 10}">{value}</text>
+    <text x="{(label_width + total_width) * 5}" y="140" transform="scale(.1)" fill="#fff" textLength="{(value_width - 10) * 10}">{value}</text>
+  </g>
+</svg>'''
+
+    response = Response(svg, mimetype="image/svg+xml")
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    return response
+
+
 def _wrap_mcp_response(response_data, status_code, mcp_id):
     if status_code >= 400:
         error_code = -32603

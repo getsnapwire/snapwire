@@ -153,6 +153,16 @@ python -m pytest tests/ -v
 | Tool Catalog | `src/tool_catalog.py` | AI-powered tool safety grading |
 | Intercept API | `main.py` | Main gateway endpoint |
 
+## NIST Grade Badge
+
+Show your compliance status by embedding the NIST Grade badge in your README:
+
+```markdown
+![NIST Grade](https://your-instance.com/badge/nist-grade)
+```
+
+The badge dynamically reflects your current NIST IR 8596 alignment score based on installed rule packs. Grades range from A (≥80%) to D (<40%).
+
 ## Code of Conduct
 
 Be respectful, constructive, and focused on making AI agents safer. We're building critical safety infrastructure — treat contributions accordingly.

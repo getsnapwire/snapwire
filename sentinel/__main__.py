@@ -35,6 +35,7 @@ def get_config() -> dict:
         "agent_id": os.environ.get("SENTINEL_AGENT_ID", "sentinel-proxy"),
         "origin_id": os.environ.get("SENTINEL_ORIGIN_ID", "human-principal"),
         "signing_secret": os.environ.get("SNAPWIRE_SIGNING_SECRET", ""),
+        "authorized_by": os.environ.get("SENTINEL_AUTHORIZED_BY", ""),
     }
 
 
@@ -53,6 +54,8 @@ def print_banner(config: dict):
     print(f"  Snapwire:   {config['snapwire_url']}")
     print(f"  Agent ID:   {config['agent_id']}")
     print(f"  Origin ID:  {config['origin_id']}")
+    authorized_by = config.get("authorized_by") or config["origin_id"]
+    print(f"  Auth'd By:  {authorized_by}")
     print(f"  Signature:  {'HMAC-SHA256 active' if config.get('signing_secret') else 'disabled (set SNAPWIRE_SIGNING_SECRET)'}")
     print()
     print("  Quick Start:")
