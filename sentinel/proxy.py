@@ -20,6 +20,8 @@ from sentinel.detector import detect_tool_calls
 
 logger = logging.getLogger("sentinel")
 
+MAX_BODY_SIZE = 10 * 1024 * 1024
+
 
 class SentinelProxy:
     def __init__(self, config: dict):
@@ -57,8 +59,20 @@ class SentinelProxy:
         self._stats["total"] += 1
         trace_id = str(uuid.uuid4())[:12]
 
+        content_length = request.content_length
+        if content_length is not None and content_length > MAX_BODY_SIZE:
+            return web.json_response(
+                {"error": {"message": f"Request body too large ({content_length} bytes). Maximum is {MAX_BODY_SIZE} bytes.", "type": "payload_too_large"}},
+                status=413,
+            )
+
         try:
-            body_bytes = await request.read()
+            body_bytes = await request.content.read(MAX_BODY_SIZE + 1)
+            if len(body_bytes) > MAX_BODY_SIZE:
+                return web.json_response(
+                    {"error": {"message": f"Request body too large. Maximum is {MAX_BODY_SIZE} bytes.", "type": "payload_too_large"}},
+                    status=413,
+                )
         except Exception:
             body_bytes = b""
 

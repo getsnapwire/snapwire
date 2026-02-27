@@ -227,6 +227,18 @@ class TestProtocolRegistry(unittest.TestCase):
             self.assertIsInstance(result, list)
 
 
+class TestProxyHardening(unittest.TestCase):
+    def test_max_body_size_exists(self):
+        from sentinel.proxy import MAX_BODY_SIZE
+        self.assertIsInstance(MAX_BODY_SIZE, int)
+        self.assertEqual(MAX_BODY_SIZE, 10 * 1024 * 1024)
+
+    def test_max_body_size_reasonable(self):
+        from sentinel.proxy import MAX_BODY_SIZE
+        self.assertGreaterEqual(MAX_BODY_SIZE, 1 * 1024 * 1024)
+        self.assertLessEqual(MAX_BODY_SIZE, 100 * 1024 * 1024)
+
+
 class TestSentinelConfig(unittest.TestCase):
     def test_get_config_defaults(self):
         import os
