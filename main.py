@@ -712,6 +712,16 @@ def intercept_tool_call():
     webhook_url = data.get("webhook_url")
     api_key_id = api_key.id if api_key else None
 
+    sentinel_metadata = None
+    raw_metadata = data.get("metadata", {})
+    if data.get("source") == "sentinel-proxy" and raw_metadata:
+        sentinel_metadata = {
+            "trace_id": raw_metadata.get("trace_id", ""),
+            "authorized_by": raw_metadata.get("authorized_by", ""),
+            "hmac_active": raw_metadata.get("hmac_active", False),
+            "protocol": raw_metadata.get("protocol", ""),
+        }
+
     required_fields = ["tool_name"]
     for field in required_fields:
         if field not in data:
@@ -732,6 +742,7 @@ def intercept_tool_call():
             agent_id=agent_id,
             api_key_id=api_key_id,
             tenant_id=tenant_id,
+            sentinel_metadata=sentinel_metadata,
         )
         resp = {
             "status": "blocked",
@@ -749,6 +760,7 @@ def intercept_tool_call():
             {"allowed": False, "violations": [{"rule": "openclaw_safeguard", "severity": openclaw_result["severity"], "reason": openclaw_result["message"]}], "risk_score": 95, "analysis": openclaw_result["message"]},
             "blocked-openclaw",
             agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id,
+            sentinel_metadata=sentinel_metadata,
         )
         resp = {
             "status": "blocked",
@@ -770,6 +782,7 @@ def intercept_tool_call():
             {"allowed": False, "violations": [{"rule": "honeypot_tripwire", "severity": "critical", "reason": honeypot_result["alert_message"]}], "risk_score": 100, "analysis": honeypot_result["alert_message"]},
             "blocked-honeypot",
             agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id,
+            sentinel_metadata=sentinel_metadata,
         )
         resp = {
             "status": "blocked",
@@ -793,6 +806,7 @@ def intercept_tool_call():
             {"allowed": False, "violations": [{"rule": "blast_radius", "severity": "high", "reason": blast_check["message"]}], "risk_score": 80, "analysis": blast_check["message"]},
             "blocked-blast-radius",
             agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id,
+            sentinel_metadata=sentinel_metadata,
         )
         try:
             notif = NotificationSetting.query.filter_by(tenant_id=tenant_id).first()
@@ -819,6 +833,7 @@ def intercept_tool_call():
             {"allowed": False, "violations": [{"rule": "tool_catalog", "severity": "high", "reason": f"Tool '{data['tool_name']}' is blocked in the tool catalog."}], "risk_score": 70, "analysis": f"Tool blocked by catalog: {catalog_result.get('reason')}"},
             "blocked-catalog",
             agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id,
+            sentinel_metadata=sentinel_metadata,
         )
         resp = {
             "status": "blocked",
@@ -847,6 +862,7 @@ def intercept_tool_call():
                     {"allowed": False, "violations": [{"rule": "deception_detector", "severity": "critical", "reason": deception_result.get("analysis", "Deceptive intent detected")}], "risk_score": 90, "analysis": deception_result.get("analysis", "")},
                     "blocked-deception",
                     agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id,
+                    sentinel_metadata=sentinel_metadata,
                 )
                 resp = {
                     "status": "blocked",
@@ -866,6 +882,7 @@ def intercept_tool_call():
             {"allowed": False, "violations": [{"rule": "loop_detector", "severity": "critical", "reason": loop_result["message"]}], "risk_score": 85, "analysis": loop_result["message"]},
             "blocked-loop",
             agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id,
+            sentinel_metadata=sentinel_metadata,
         )
         resp = {
             "status": "blocked",
@@ -953,7 +970,7 @@ def intercept_tool_call():
         response_extra["shadow_mode"] = True
 
     if shadow_active and not audit_result.get("allowed", False):
-        log_action(tool_call, audit_result, "shadow-blocked", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id)
+        log_action(tool_call, audit_result, "shadow-blocked", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata)
         _track_usage(tenant_id)
         if data.get("proxy_token"):
             proxy_creds = resolve_proxy_token(data["proxy_token"])
@@ -976,7 +993,7 @@ def intercept_tool_call():
         return jsonify(resp)
 
     if audit_result.get("allowed", False):
-        log_action(tool_call, audit_result, "allowed", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id)
+        log_action(tool_call, audit_result, "allowed", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata)
         _track_usage(tenant_id)
         if data.get("proxy_token"):
             proxy_creds = resolve_proxy_token(data["proxy_token"])
@@ -1000,7 +1017,7 @@ def intercept_tool_call():
             tenant_id=tenant_id, agent_id=agent_id, tool_name=data["tool_name"], is_active=True
         ).first()
         if trust_match and not trust_match.is_expired():
-            log_action(tool_call, audit_result, "trust-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id)
+            log_action(tool_call, audit_result, "trust-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata)
             _track_usage(tenant_id)
             if data.get("proxy_token"):
                 proxy_creds = resolve_proxy_token(data["proxy_token"])
@@ -1021,7 +1038,7 @@ def intercept_tool_call():
             return jsonify(resp)
 
         if check_auto_approve(tool_call, audit_result, agent_id, tenant_id=tenant_id):
-            log_action(tool_call, audit_result, "auto-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id)
+            log_action(tool_call, audit_result, "auto-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata)
             _track_usage(tenant_id)
             if data.get("proxy_token"):
                 proxy_creds = resolve_proxy_token(data["proxy_token"])
@@ -1056,7 +1073,7 @@ def intercept_tool_call():
                     pass
 
             if reasoning_enforcement:
-                log_action(tool_call, audit_result, "reasoning-requested", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id)
+                log_action(tool_call, audit_result, "reasoning-requested", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata)
                 _track_usage(tenant_id)
                 resp = {
                     "status": "reasoning_required",

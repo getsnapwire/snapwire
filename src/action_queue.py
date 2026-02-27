@@ -199,7 +199,7 @@ def _compute_content_hash(entry):
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
-def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None, tenant_id=None, parent_agent_id=None):
+def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None, tenant_id=None, parent_agent_id=None, sentinel_metadata=None):
     from app import db
     from models import AuditLogEntry
 
@@ -207,13 +207,16 @@ def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None, 
     chain_of_thought = audit_result.get("analysis", "")
     violations = audit_result.get("violations", [])
     shadow_violations = audit_result.get("shadow_violations", [])
-    cot_detail = json.dumps({
+    cot_data = {
         "analysis": chain_of_thought,
         "violations": violations,
         "shadow_violations": shadow_violations,
         "risk_score": audit_result.get("risk_score", 0),
         "allowed": audit_result.get("allowed", False),
-    })
+    }
+    if sentinel_metadata:
+        cot_data["sentinel"] = sentinel_metadata
+    cot_detail = json.dumps(cot_data)
 
     entry = AuditLogEntry(
         id=entry_id,

@@ -117,6 +117,39 @@ class TestInterceptAPI:
         })
         assert resp.status_code in (401, 403)
 
+    def test_sentinel_metadata_stored_in_audit_log(self, app, auth_client):
+        client, user_id = auth_client
+        resp = client.post("/api/intercept", json={
+            "tool_name": "read_file",
+            "parameters": {"path": "/etc/passwd"},
+            "agent_id": "sentinel-test-agent",
+            "parent_agent_id": "human-operator",
+            "source": "sentinel-proxy",
+            "metadata": {
+                "protocol": "openai",
+                "confidence": 0.95,
+                "trace_id": "tr-abc123",
+                "proxy_path": "/v1/chat/completions",
+                "authorized_by": "ops-team@example.com",
+                "hmac_active": True,
+            },
+        })
+        assert resp.status_code in (200, 403, 412, 429)
+
+        from models import AuditLogEntry
+        with app.app_context():
+            entry = AuditLogEntry.query.filter_by(
+                agent_id="sentinel-test-agent"
+            ).order_by(AuditLogEntry.created_at.desc()).first()
+            assert entry is not None
+            cot = json.loads(entry.chain_of_thought)
+            assert "sentinel" in cot
+            sentinel = cot["sentinel"]
+            assert sentinel["trace_id"] == "tr-abc123"
+            assert sentinel["authorized_by"] == "ops-team@example.com"
+            assert sentinel["hmac_active"] is True
+            assert sentinel["protocol"] == "openai"
+
 
 class TestRulesCRUD:
     def test_get_constitution(self, auth_client):

@@ -140,6 +140,8 @@ class SentinelProxy:
                     "confidence": tool_call.confidence,
                     "trace_id": trace_id,
                     "proxy_path": path,
+                    "authorized_by": self.authorized_by,
+                    "hmac_active": bool(self.signing_secret),
                 },
             }
 

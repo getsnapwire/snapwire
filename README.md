@@ -37,6 +37,29 @@ PostgreSQL + Snapwire, running locally in under 60 seconds. Your keys, your data
 
 ---
 
+## Joint Federal Filing: NIST March 9th RFI
+
+NIST is drafting federal guidelines for autonomous AI agent security under the **Consortium for the Advancement of AI Safety and Interoperability (CAISI)** initiative. The public comment period for **Docket NIST-2025-0035** (AI Agent Security RFI) closes **March 9, 2026**.
+
+We are submitting a joint technical response based on the Sentinel Proxy architecture — an independent governance layer that provides cryptographically signed, non-repudiable audit trails for AI agent tool calls, aligned with **NISTIR 8596** (Cyber AI Profile).
+
+**How to participate:**
+
+1. **Fork** this repository and run `python -m pytest tests/ -v` to verify all tests pass
+2. **Contribute** a new [Protocol Detector](CONTRIBUTING.md#contributing-a-sentinel-protocol-detector-3-steps) or [Deterministic Safeguard](CONTRIBUTING.md#deterministic-safeguards) to extend coverage
+3. **Run** `python -m sentinel --export-nist` to generate your NIST compliance mapping and verify your grade
+4. **Submit** your comment to [regulations.gov/docket/NIST-2025-0035](https://www.regulations.gov/docket/NIST-2025-0035) referencing the Sentinel Proxy architecture as a technical implementation of the Non-Repudiation and Identity Attribution requirements
+
+**Core technical argument:** Traditional guardrails live inside the model or app — if the agent is hijacked (see [CVE-2026-25253](tests/cve_2026_25253_repro.py)), it can bypass internal checks. An independent governance proxy operating at the network layer, with HMAC-signed logs (`X-Snapwire-Signature`) and named human accountability (`X-Snapwire-Authorized-By`), provides the forensic trail that NIST IR 8596 requires for traceability.
+
+**Embed your NIST grade:**
+
+```markdown
+![NIST Grade](https://your-instance.com/badge/nist-grade)
+```
+
+---
+
 ## What Snapwire Does
 
 Snapwire sits between your AI agents and the tools they call. Before any agent can send an email, modify a file, call an API, or take any action, Snapwire intercepts the call, checks it against your rules, and either approves it automatically or holds it for your review.
