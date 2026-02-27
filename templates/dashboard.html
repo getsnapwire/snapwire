@@ -619,6 +619,14 @@
         <button class="btn btn-sm" onclick="showCreateOrgModal()" style="margin-left:auto;font-size:12px;padding:4px 12px;background:var(--accent-purple);border:none;color:#fff;border-radius:6px;cursor:pointer;">+ New Organization</button>
     </div>
 
+    {% if substantial_mod_alert %}
+    <div id="substantial-mod-alert" style="background:rgba(255,107,0,0.1);border:1px solid rgba(255,107,0,0.3);border-radius:0;padding:12px 32px;display:flex;align-items:center;gap:12px;font-size:13px;">
+        <span style="font-size:18px;">&#x26A0;</span>
+        <span style="flex:1;color:var(--text-primary);line-height:1.5;"><strong>Substantial modification detected.</strong> 10+ tools added since your last Impact Assessment. Please <a href="/compliance-portal#bundle" style="color:#FF6B00;font-weight:600;">regenerate your Impact Assessment</a> to maintain your Affirmative Defense.</span>
+        <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:18px;padding:0 4px;">&times;</button>
+    </div>
+    {% endif %}
+
     <div id="shadow-mode-banner" style="display:none;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(245,158,11,0.08));border-bottom:1px solid rgba(251,191,36,0.3);padding:10px 32px;align-items:center;gap:12px;font-size:13px;cursor:pointer;" onclick="toggleShadowModeFromBanner()">
         <div style="display:flex;align-items:center;gap:10px;flex:1;">
             <span style="font-size:18px;">&#128065;</span>

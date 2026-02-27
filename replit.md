@@ -60,6 +60,9 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **Consequentiality Tagging**: `ToolCatalog.is_consequential` (default False). `PATCH /api/catalog/<id>/consequential` endpoint. Dashboard "Tag Stakes" toggle with HIGH-STAKES visual indicator. Safety PDF Section 9 lists consequential tools for Colorado SB24-205. Compliance Portal shows consequential count.
 -   **Headless Compliance API Docs**: `/docs/compliance` interactive Swagger-like API reference. `/api/compliance/openapi.json` returns OpenAPI 3.0.3 spec covering 9 governance endpoints. Links from `/docs` and compliance portal.
 -   **Dynamic Chaos Ingestor**: `scripts/batch_ingestor.py` upgraded with `generate_chaos_exploits()` — Claude generates 3 per-tool attack scenarios (parameter injection, privilege escalation, data exfiltration). `--no-chaos` flag for static-only mode. Counts against 50-call LLM cost cap.
+-   **Legal Counsel Acknowledgment Gate**: Compliance portal download buttons (Audit Bundle, Safety PDF) disabled until user checks "I have reviewed with qualified legal counsel" checkbox. Each download logs `compliance_counsel_acknowledgment` to audit log with user ID and timestamp.
+-   **Substantial Modification Trigger**: `TenantSettings.last_assessment_at` tracks when last audit bundle was downloaded. Dashboard shows alert banner when 10+ tools added since last assessment, linking to compliance portal. Downloading audit bundle resets the counter.
+-   **Homepage Rewrite**: Plain-language hero ("AI Agents act on your behalf. We make sure they don't go rogue."), Plug/Watch/Control "How It Works", NISTIR 8596 badge, Shared Responsibility Matrix table, compliance feature card, updated nav/footer links (Compliance, Governance-as-Code), 60-second messaging throughout.
 
 ## External Dependencies
 -   **Database**: PostgreSQL, SQLite

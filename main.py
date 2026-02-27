@@ -360,7 +360,22 @@ def dashboard():
     admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
     user_email = (current_user.email or "").strip().lower()
     is_platform_admin = bool(admin_email and user_email == admin_email)
-    return render_template("dashboard.html", user=current_user, is_self_hosted=is_self_hosted, auto_api_key=auto_key, is_platform_admin=is_platform_admin)
+
+    substantial_mod_alert = False
+    try:
+        tid = get_current_tenant_id()
+        if tid:
+            settings = TenantSettings.query.filter_by(tenant_id=tid).first()
+            if settings and settings.last_assessment_at:
+                new_tools = ToolCatalog.query.filter_by(tenant_id=tid).filter(
+                    ToolCatalog.created_at > settings.last_assessment_at
+                ).count()
+                if new_tools >= 10:
+                    substantial_mod_alert = True
+    except Exception:
+        pass
+
+    return render_template("dashboard.html", user=current_user, is_self_hosted=is_self_hosted, auto_api_key=auto_key, is_platform_admin=is_platform_admin, substantial_mod_alert=substantial_mod_alert)
 
 
 @app.route("/admin-agent", methods=["GET", "POST"])
@@ -806,6 +821,14 @@ def compliance_audit_bundle():
         except Exception as e:
             zf.writestr("audit-log-error.txt", f"Failed to export: {str(e)}")
 
+    try:
+        settings = TenantSettings.query.filter_by(tenant_id=tenant_id).first() if tenant_id else None
+        if settings:
+            settings.last_assessment_at = datetime.utcnow()
+            db.session.commit()
+    except Exception:
+        db.session.rollback()
+
     zip_buffer.seek(0)
     now = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     return Response(
@@ -815,6 +838,36 @@ def compliance_audit_bundle():
             "Content-Disposition": f'attachment; filename="snapwire-audit-bundle-{now}.zip"'
         },
     )
+
+
+@app.route("/api/compliance/counsel-ack", methods=["POST"])
+@require_login
+def compliance_counsel_ack():
+    tenant_id = get_current_tenant_id()
+    user_id = current_user.id if current_user.is_authenticated else "unknown"
+    data = request.get_json(silent=True) or {}
+    download_url = data.get("download_url", "unknown")
+
+    try:
+        entry = AuditLogEntry(
+            tool_name="compliance_download",
+            agent_id=str(user_id),
+            status="allowed",
+            risk_score=0,
+            violations_json=json.dumps(["compliance_counsel_acknowledgment"]),
+            chain_of_thought=json.dumps({
+                "action": "counsel_acknowledgment",
+                "download_url": download_url,
+                "acknowledged_at": datetime.utcnow().isoformat() + "Z",
+            }),
+            tenant_id=tenant_id,
+        )
+        db.session.add(entry)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    return jsonify({"status": "acknowledged"})
 
 
 @app.route("/badge/nist-grade")

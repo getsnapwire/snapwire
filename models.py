@@ -530,6 +530,7 @@ class TenantSettings(db.Model):
     reasoning_enforcement = db.Column(db.Boolean, default=True, nullable=False)
     hold_window_seconds = db.Column(db.Integer, default=0, nullable=False)
     is_stealth_mode = db.Column(db.Boolean, default=True, nullable=False)
+    last_assessment_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 

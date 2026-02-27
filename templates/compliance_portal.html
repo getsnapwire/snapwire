@@ -260,11 +260,18 @@
             <h2><span class="icon">&#x1F4E6;</span> Download Audit Bundle</h2>
             <p class="subtitle">Generate a cryptographically signed compliance package for regulatory filings, insurance underwriters, or internal governance reviews.</p>
 
+            <div style="padding:14px 16px;margin-bottom:16px;background:rgba(255,214,107,0.06);border:1px solid rgba(255,214,107,0.2);border-radius:10px;">
+                <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;color:var(--text-secondary);line-height:1.5;">
+                    <input type="checkbox" id="counsel-ack" onchange="toggleDownloads()" style="margin-top:3px;accent-color:#FF6B00;width:16px;height:16px;flex-shrink:0;">
+                    <span>I have reviewed these AI-generated summaries with qualified legal counsel. I understand that Snapwire's compliance reports are informational tools and do not constitute legal advice or formal certification.</span>
+                </label>
+            </div>
+
             <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
-                <a href="/api/compliance/audit-bundle" class="btn-primary">
+                <a href="#" onclick="return downloadWithAck('/api/compliance/audit-bundle')" class="btn-primary compliance-dl" style="opacity:0.5;pointer-events:none;">
                     &#x1F4E5; Download Audit Bundle (.zip)
                 </a>
-                <a href="/safety/pdf" class="btn-secondary">
+                <a href="#" onclick="return downloadWithAck('/safety/pdf')" class="btn-secondary compliance-dl" style="opacity:0.5;pointer-events:none;">
                     &#x1F4C4; Safety Disclosure PDF
                 </a>
                 <a href="/safety/vanguard-guide.pdf" class="btn-secondary">
@@ -336,7 +343,7 @@
                     <h4>Download Audit Bundle Before Filing Deadline</h4>
                     <p>Generate and archive a timestamped audit bundle containing your Safety Disclosure PDF, resolved action logs (proving human oversight via Slack triage), and SHA-256 signed audit exports.</p>
                     <div style="margin-top:10px;">
-                        <a href="/api/compliance/audit-bundle" class="btn-primary" style="padding:8px 16px;font-size:13px;">
+                        <a href="#" onclick="return downloadWithAck('/api/compliance/audit-bundle')" class="btn-primary compliance-dl" style="padding:8px 16px;font-size:13px;opacity:0.5;pointer-events:none;">
                             &#x1F4E5; Download Now
                         </a>
                     </div>
@@ -364,6 +371,28 @@
                 if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         });
+
+        function toggleDownloads() {
+            var checked = document.getElementById('counsel-ack').checked;
+            document.querySelectorAll('.compliance-dl').forEach(function(el) {
+                el.style.opacity = checked ? '1' : '0.5';
+                el.style.pointerEvents = checked ? 'auto' : 'none';
+            });
+        }
+
+        function downloadWithAck(url) {
+            if (!document.getElementById('counsel-ack').checked) {
+                alert('Please acknowledge that you have reviewed these summaries with qualified legal counsel before downloading.');
+                return false;
+            }
+            fetch('/api/compliance/counsel-ack', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({download_url: url})
+            }).catch(function() {});
+            window.location.href = url;
+            return false;
+        }
     </script>
 </body>
 </html>
