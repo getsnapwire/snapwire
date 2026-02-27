@@ -344,6 +344,7 @@ class ToolCatalog(db.Model):
     call_count = db.Column(db.Integer, default=0)
     schema_json = db.Column(db.Text, nullable=True)
     schema_enforcement = db.Column(db.String(10), default='flexible')
+    is_consequential = db.Column(db.Boolean, default=False)
     __table_args__ = (UniqueConstraint('tenant_id', 'tool_name', name='uq_tenant_tool'),)
 
     def to_dict(self):
@@ -367,6 +368,7 @@ class ToolCatalog(db.Model):
             "call_count": self.call_count,
             "schema": schema_parsed,
             "schema_enforcement": self.schema_enforcement,
+            "is_consequential": self.is_consequential or False,
         }
 
 

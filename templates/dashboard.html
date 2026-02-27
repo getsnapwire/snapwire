@@ -1096,10 +1096,10 @@
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-top:20px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                     <div>
-                        <h4 style="font-size:14px;margin:0;">Forensic Lineage Map</h4>
-                        <p style="font-size:12px;color:var(--text-secondary);margin:4px 0 0;">Agent chain-of-command visualization &mdash; NISTIR 8596 Identity Attribution</p>
+                        <h4 style="font-size:14px;margin:0;display:flex;align-items:center;gap:8px;">Chain of Command <span style="font-size:10px;padding:2px 6px;background:rgba(0,245,212,0.12);color:var(--accent);border-radius:4px;font-weight:600;">NIST RESPOND-1.1</span></h4>
+                        <p style="font-size:12px;color:var(--text-secondary);margin:4px 0 0;">A2A identity tracing &mdash; recursive agent delegation map for NISTIR 8596 compliance</p>
                     </div>
-                    <button onclick="fetchLineageMap()" class="btn" style="padding:8px 16px;font-size:12px;background:var(--accent-blue);color:white;border:none;border-radius:6px;cursor:pointer;">Load Lineage</button>
+                    <button onclick="fetchLineageMap()" class="btn" style="padding:8px 16px;font-size:12px;background:var(--accent-blue);color:white;border:none;border-radius:6px;cursor:pointer;">Load Chain</button>
                 </div>
                 <div id="lineage-map-content">
                     <div style="text-align:center;padding:30px;color:var(--text-secondary);font-size:13px;">
@@ -4380,9 +4380,32 @@ def handle_tool_call(tool_call):
                             ${children.map(c => renderNode(c, depth + 1)).join('')}
                         </div>` : '';
 
+                    const nodeUid = 'trace-' + node.id.replace(/[^a-zA-Z0-9]/g, '_');
+                    const traceIds = (node.trace_ids || []).join(', ') || 'None';
+                    const originIds = (node.origin_ids || []).join(', ') || 'None';
+                    const authorizedBy = (node.authorized_by || []).join(', ') || 'None';
+                    const hashCount = node.hash_count || 0;
+                    const hasTraceData = (node.trace_ids && node.trace_ids.length) || (node.origin_ids && node.origin_ids.length) || (node.authorized_by && node.authorized_by.length);
+                    const traceDetailHtml = `
+                        <div id="${nodeUid}" style="display:none;margin-top:8px;padding:10px 12px;background:rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.06);border-radius:8px;font-size:11px;font-family:'Fira Code',monospace;">
+                            <div style="margin-bottom:6px;font-weight:600;color:var(--accent);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;">Trace Headers</div>
+                            <div style="display:grid;grid-template-columns:120px 1fr;gap:4px 8px;">
+                                <span style="color:var(--text-secondary);">Origin-ID:</span>
+                                <span style="color:${originIds !== 'None' ? '#10b981' : 'var(--text-secondary)'};word-break:break-all;">${originIds}</span>
+                                <span style="color:var(--text-secondary);">Parent-ID:</span>
+                                <span style="color:var(--text-primary);word-break:break-all;">${node.parent || 'None (root)'}</span>
+                                <span style="color:var(--text-secondary);">Trace-ID:</span>
+                                <span style="color:var(--accent-blue);word-break:break-all;">${traceIds}</span>
+                                <span style="color:var(--text-secondary);">Authorized-By:</span>
+                                <span style="color:${authorizedBy !== 'None' ? '#10b981' : '#ef4444'};word-break:break-all;">${authorizedBy}</span>
+                                <span style="color:var(--text-secondary);">Hash Coverage:</span>
+                                <span style="color:var(--text-primary);">${hashCount}/${node.action_count} actions verified</span>
+                            </div>
+                        </div>`;
+
                     return `
                         <div style="position:relative;margin-bottom:4px;">
-                            <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:${depth === 0 ? 'rgba(255,140,0,0.04)' : 'rgba(255,255,255,0.02)'};border:1px solid ${depth === 0 ? 'rgba(255,140,0,0.15)' : 'var(--border)'};border-radius:10px;margin:4px 0;">
+                            <div onclick="var el=document.getElementById('${nodeUid}');if(el)el.style.display=el.style.display==='none'?'block':'none';" style="cursor:pointer;display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:${depth === 0 ? 'rgba(255,140,0,0.04)' : 'rgba(255,255,255,0.02)'};border:1px solid ${depth === 0 ? 'rgba(255,140,0,0.15)' : 'var(--border)'};border-radius:10px;margin:4px 0;transition:background 0.15s;">
                                 <div style="flex-shrink:0;width:36px;height:36px;border-radius:8px;background:${color}15;border:1px solid ${color}30;display:flex;align-items:center;justify-content:center;font-size:18px;">
                                     ${iconChar}
                                 </div>
@@ -4392,6 +4415,7 @@ def handle_tool_call(tool_call):
                                         <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background:${color}22;color:${color};text-transform:uppercase;">${label}</span>
                                         ${hashIcon}
                                         ${isRoot ? '<span style="font-size:10px;padding:2px 6px;background:rgba(255,140,0,0.12);color:var(--accent);border-radius:4px;font-weight:600;">ROOT</span>' : ''}
+                                        ${hasTraceData ? '<span style="font-size:9px;padding:2px 5px;background:rgba(0,245,212,0.1);color:var(--accent);border-radius:3px;">TRACED</span>' : ''}
                                     </div>
                                     <div style="display:flex;align-items:center;gap:12px;margin-top:4px;flex-wrap:wrap;">
                                         <span style="font-size:11px;color:var(--text-secondary);">${node.action_count} action${node.action_count !== 1 ? 's' : ''}</span>
@@ -4399,6 +4423,7 @@ def handle_tool_call(tool_call):
                                         ${statusBreakdown}
                                     </div>
                                     ${toolChips || moreTools ? '<div style="margin-top:4px;">' + toolChips + moreTools + '</div>' : ''}
+                                    ${traceDetailHtml}
                                 </div>
                                 ${children.length > 0 ? '<div style="font-size:10px;color:var(--text-secondary);white-space:nowrap;">' + children.length + ' sub-agent' + (children.length > 1 ? 's' : '') + '</div>' : ''}
                             </div>
@@ -4406,23 +4431,35 @@ def handle_tool_call(tool_call):
                         </div>`;
                 }
 
+                const hashPct = summary.integrity_hash_pct || 0;
+                const hashColor = hashPct >= 80 ? '#10b981' : hashPct >= 40 ? '#eab308' : '#ef4444';
                 const summaryHtml = `
-                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;">
                         <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
                             <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${summary.total_agents || 0}</div>
-                            <div style="font-size:11px;color:var(--text-secondary);">Agents</div>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
-                            <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${summary.total_actions || 0}</div>
-                            <div style="font-size:11px;color:var(--text-secondary);">Actions</div>
+                            <div style="font-size:11px;color:var(--text-secondary);">Agents Traced</div>
                         </div>
                         <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
                             <div style="font-size:20px;font-weight:700;color:var(--accent);">${summary.chains_with_parent || 0}</div>
-                            <div style="font-size:11px;color:var(--text-secondary);">Linked Agents</div>
+                            <div style="font-size:11px;color:var(--text-secondary);">Delegated Chains</div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+                            <div style="font-size:20px;font-weight:700;color:var(--accent-blue);">${summary.total_actions || 0}</div>
+                            <div style="font-size:11px;color:var(--text-secondary);">Total Actions</div>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+                        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+                            <div style="font-size:20px;font-weight:700;color:#10b981;">${summary.human_origin_chains || 0}</div>
+                            <div style="font-size:11px;color:var(--text-secondary);">Human-Origin Verified</div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+                            <div style="font-size:20px;font-weight:700;color:${hashColor};">${hashPct}%</div>
+                            <div style="font-size:11px;color:var(--text-secondary);">Integrity Hash Coverage</div>
                         </div>
                         <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
                             <div style="font-size:20px;font-weight:700;color:var(--accent-blue);">${summary.period_days || 7}d</div>
-                            <div style="font-size:11px;color:var(--text-secondary);">Window</div>
+                            <div style="font-size:11px;color:var(--text-secondary);">Analysis Window</div>
                         </div>
                     </div>`;
 
@@ -5263,14 +5300,21 @@ def handle_tool_call(tool_call):
                 empty.style.display = 'none';
                 const gradeColors = {A:'var(--accent-green)',B:'#6fcf97',C:'var(--accent-yellow)',D:'var(--accent-red)',F:'#ff4444',U:'var(--text-secondary)'};
                 list.innerHTML = data.catalog.map(t => `
-                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:14px;">
-                        <div style="width:36px;height:36px;border-radius:8px;background:${gradeColors[t.safety_grade]||'var(--bg-secondary)'};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;">${t.safety_grade}</div>
+                    <div style="background:var(--bg-card);border:1px solid ${t.is_consequential ? 'rgba(239,68,68,0.4)' : 'var(--border)'};border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:14px;">
+                        <div style="width:36px;height:36px;border-radius:8px;background:${gradeColors[t.safety_grade]||'var(--bg-secondary)'};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;position:relative;">
+                            ${t.safety_grade}
+                            ${t.is_consequential ? '<span style="position:absolute;top:-4px;right:-4px;font-size:12px;" title="High-Stakes (Consequential)">&#x1F6E1;</span>' : ''}
+                        </div>
                         <div style="flex:1;">
-                            <div style="font-weight:600;font-size:14px;font-family:'Fira Code',monospace;">${t.tool_name}</div>
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <span style="font-weight:600;font-size:14px;font-family:'Fira Code',monospace;">${t.tool_name}</span>
+                                ${t.is_consequential ? '<span style="font-size:10px;padding:2px 6px;background:rgba(239,68,68,0.15);color:#ef4444;border-radius:4px;font-weight:600;">HIGH-STAKES</span>' : ''}
+                            </div>
                             <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Status: <span style="color:${t.status==='approved'?'var(--accent-green)':t.status==='blocked'?'var(--accent-red)':'var(--accent-yellow)'}">${t.status}</span> | Calls: ${t.call_count} | First seen: ${t.first_seen ? new Date(t.first_seen).toLocaleDateString() : 'N/A'}</div>
                             ${t.description ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${t.description}</div>` : ''}
                         </div>
-                        <div style="display:flex;gap:6px;">
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                            <button onclick="toggleConsequential(${t.id})" style="background:${t.is_consequential ? 'rgba(239,68,68,0.15)' : 'var(--bg-secondary)'};border:1px solid ${t.is_consequential ? 'rgba(239,68,68,0.4)' : 'var(--border)'};color:${t.is_consequential ? '#ef4444' : 'var(--text-secondary)'};padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;" title="${t.is_consequential ? 'Remove High-Stakes tag' : 'Tag as High-Stakes (Consequential)'}">${t.is_consequential ? '&#x1F6E1; High-Stakes' : '&#x1F6E1; Tag Stakes'}</button>
                             <button onclick="updateCatalogTool(${t.id},'approved')" style="background:var(--accent-green);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;" title="Approve">Approve</button>
                             <button onclick="updateCatalogTool(${t.id},'blocked')" style="background:var(--accent-red);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;" title="Block">Block</button>
                             <button onclick="regradeCatalogTool(${t.id})" style="background:var(--accent-blue);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;" title="Re-grade with AI">Re-grade</button>
@@ -5286,6 +5330,10 @@ def handle_tool_call(tool_call):
         }
         async function regradeCatalogTool(id) {
             await fetch(`/api/catalog/${id}/regrade`, {method:'POST'});
+            loadCatalog();
+        }
+        async function toggleConsequential(id) {
+            await fetch(`/api/catalog/${id}/consequential`, {method:'PATCH'});
             loadCatalog();
         }
         async function deleteCatalogTool(id) {

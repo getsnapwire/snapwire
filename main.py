@@ -694,6 +694,15 @@ def compliance_portal():
     except Exception:
         pass
 
+    consequential_count = 0
+    try:
+        cq = ToolCatalog.query.filter_by(is_consequential=True)
+        if tenant_id:
+            cq = cq.filter_by(tenant_id=tenant_id)
+        consequential_count = cq.count()
+    except Exception:
+        pass
+
     return render_template(
         "compliance_portal.html",
         nist_grade=report.get("grade", "D"),
@@ -710,6 +719,7 @@ def compliance_portal():
         audit_fingerprint=audit_fingerprint,
         active_rules=len(rule_names),
         hold_window_seconds=hold_window_seconds,
+        consequential_count=consequential_count,
     )
 
 
@@ -2583,7 +2593,11 @@ def audit_log_lineage():
                 "statuses": {},
                 "risk_total": 0,
                 "has_hash": False,
+                "hash_count": 0,
                 "tools": set(),
+                "trace_ids": set(),
+                "origin_ids": set(),
+                "authorized_by": set(),
             }
 
         agent_data[aid]["action_count"] += 1
@@ -2592,10 +2606,24 @@ def audit_log_lineage():
         agent_data[aid]["statuses"][s] = agent_data[aid]["statuses"].get(s, 0) + 1
         if e.content_hash:
             agent_data[aid]["has_hash"] = True
+            agent_data[aid]["hash_count"] += 1
         if e.tool_name:
             agent_data[aid]["tools"].add(e.tool_name)
         if e.parent_agent_id:
             agent_data[aid]["parents"].add(e.parent_agent_id)
+
+        if e.chain_of_thought:
+            try:
+                cot = json.loads(e.chain_of_thought) if isinstance(e.chain_of_thought, str) else e.chain_of_thought
+                sentinel_meta = cot.get("sentinel_metadata", {}) if isinstance(cot, dict) else {}
+                if sentinel_meta.get("trace_id"):
+                    agent_data[aid]["trace_ids"].add(sentinel_meta["trace_id"])
+                if sentinel_meta.get("origin_id"):
+                    agent_data[aid]["origin_ids"].add(sentinel_meta["origin_id"])
+                if sentinel_meta.get("authorized_by"):
+                    agent_data[aid]["authorized_by"].add(sentinel_meta["authorized_by"])
+            except Exception:
+                pass
 
         if e.parent_agent_id:
             edge_key = f"{e.parent_agent_id}|{aid}"
@@ -2604,10 +2632,17 @@ def audit_log_lineage():
             edges[edge_key]["action_count"] += 1
 
     nodes = []
+    total_hash_coverage = 0
+    total_actions_all = 0
+    human_origin_count = 0
     for aid, data in agent_data.items():
         primary_parent = sorted(data["parents"])[0] if data["parents"] else None
         is_root = primary_parent is None
         primary_status = max(data["statuses"], key=data["statuses"].get) if data["statuses"] else "unknown"
+        total_hash_coverage += data["hash_count"]
+        total_actions_all += data["action_count"]
+        if data["origin_ids"] or data["authorized_by"]:
+            human_origin_count += 1
         nodes.append({
             "id": aid,
             "type": "root" if is_root else "agent",
@@ -2617,10 +2652,15 @@ def audit_log_lineage():
             "primary_status": primary_status,
             "risk_avg": round(data["risk_total"] / data["action_count"]) if data["action_count"] > 0 else 0,
             "has_integrity_hash": data["has_hash"],
+            "hash_count": data["hash_count"],
             "tools": sorted(data["tools"]),
+            "trace_ids": sorted(data["trace_ids"])[:5],
+            "origin_ids": sorted(data["origin_ids"]),
+            "authorized_by": sorted(data["authorized_by"]),
         })
 
     chains_with_parent = sum(1 for n in nodes if n["parent"] is not None)
+    hash_pct = round((total_hash_coverage / total_actions_all * 100)) if total_actions_all > 0 else 0
 
     return jsonify({
         "nodes": nodes,
@@ -2630,6 +2670,8 @@ def audit_log_lineage():
             "total_actions": sum(n["action_count"] for n in nodes),
             "chains_with_parent": chains_with_parent,
             "period_days": days,
+            "human_origin_chains": human_origin_count,
+            "integrity_hash_pct": hash_pct,
         },
     })
 
@@ -3198,6 +3240,18 @@ def regrade_catalog_tool(tool_id):
     except RuntimeError as e:
         return jsonify({"error": str(e)}), 400
     return jsonify({"tool": result})
+
+
+@app.route("/api/catalog/<int:tool_id>/consequential", methods=["PATCH"])
+@require_admin
+def toggle_consequential(tool_id):
+    tenant_id = get_current_tenant_id()
+    entry = ToolCatalog.query.filter_by(id=tool_id, tenant_id=tenant_id).first()
+    if not entry:
+        return jsonify({"error": "Tool not found"}), 404
+    entry.is_consequential = not (entry.is_consequential or False)
+    db.session.commit()
+    return jsonify({"tool": entry.to_dict(), "message": f"Tool marked as {'consequential' if entry.is_consequential else 'non-consequential'}"})
 
 
 @app.route("/api/catalog/<int:tool_id>", methods=["DELETE"])
@@ -4649,6 +4703,310 @@ def telemetry_dashboard():
         },
         "recent_pings": [p.to_dict() for p in recent],
     })
+
+
+@app.route("/docs/compliance")
+def docs_compliance_page():
+    return render_template("docs_compliance.html")
+
+
+@app.route("/api/compliance/openapi.json")
+def compliance_openapi_spec():
+    base_url = request.url_root.rstrip("/")
+    spec = {
+        "openapi": "3.0.3",
+        "info": {
+            "title": "Snapwire Headless Compliance API",
+            "description": "Manage governance rules, run compliance checks, and pull audit bundles via API. Designed for CI/CD pipelines, GitHub Actions, and enterprise governance automation.",
+            "version": "1.0.0",
+            "contact": {"name": "Snapwire", "url": base_url}
+        },
+        "servers": [{"url": base_url, "description": "Current instance"}],
+        "security": [{"BearerAuth": []}],
+        "components": {
+            "securitySchemes": {
+                "BearerAuth": {
+                    "type": "http",
+                    "scheme": "bearer",
+                    "description": "API key with af_ prefix"
+                }
+            },
+            "schemas": {
+                "InterceptRequest": {
+                    "type": "object",
+                    "required": ["tool_name"],
+                    "properties": {
+                        "tool_name": {"type": "string", "description": "Name of the tool being called"},
+                        "parameters": {"type": "object", "description": "Parameters passed to the tool"},
+                        "intent": {"type": "string", "description": "Why the agent wants to call this tool"},
+                        "context": {"type": "string", "description": "Additional task context"},
+                        "agent_id": {"type": "string", "description": "Identifier for the calling agent"},
+                        "parent_agent_id": {"type": "string", "description": "Parent agent ID for A2A chain tracing"},
+                        "inner_monologue": {"type": "string", "description": "Agent's internal reasoning"},
+                        "webhook_url": {"type": "string", "description": "Callback URL for async resolution"},
+                        "usage": {
+                            "type": "object",
+                            "properties": {
+                                "thinking_tokens": {"type": "integer"},
+                                "input_tokens": {"type": "integer"},
+                                "output_tokens": {"type": "integer"}
+                            }
+                        }
+                    }
+                },
+                "InterceptResponse": {
+                    "type": "object",
+                    "properties": {
+                        "status": {"type": "string", "enum": ["allowed", "pending", "blocked", "shadow-blocked"]},
+                        "action_id": {"type": "string"},
+                        "risk_score": {"type": "integer"},
+                        "analysis": {"type": "string"},
+                        "violations": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "rule": {"type": "string"},
+                                    "severity": {"type": "string"},
+                                    "reason": {"type": "string"}
+                                }
+                            }
+                        },
+                        "message": {"type": "string"}
+                    }
+                },
+                "ConstitutionRule": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "integer"},
+                        "rule_name": {"type": "string"},
+                        "value": {"type": "string"},
+                        "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+                        "mode": {"type": "string", "enum": ["enforce", "monitor"]},
+                        "created_at": {"type": "string", "format": "date-time"}
+                    }
+                },
+                "CreateRuleRequest": {
+                    "type": "object",
+                    "required": ["rule_name", "value"],
+                    "properties": {
+                        "rule_name": {"type": "string"},
+                        "value": {"type": "string"},
+                        "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+                        "mode": {"type": "string", "enum": ["enforce", "monitor"]}
+                    }
+                },
+                "CatalogTool": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "integer"},
+                        "tool_name": {"type": "string"},
+                        "grade": {"type": "string"},
+                        "status": {"type": "string"},
+                        "cve_count": {"type": "integer"},
+                        "first_seen": {"type": "string", "format": "date-time"},
+                        "last_seen": {"type": "string", "format": "date-time"}
+                    }
+                },
+                "PendingAction": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string"},
+                        "tool_name": {"type": "string"},
+                        "agent_id": {"type": "string"},
+                        "risk_score": {"type": "integer"},
+                        "violations": {"type": "array", "items": {"type": "string"}},
+                        "created_at": {"type": "string", "format": "date-time"},
+                        "status": {"type": "string"}
+                    }
+                },
+                "ResolveRequest": {
+                    "type": "object",
+                    "required": ["decision"],
+                    "properties": {
+                        "decision": {"type": "string", "enum": ["approve", "deny"]}
+                    }
+                }
+            }
+        },
+        "paths": {
+            "/api/intercept": {
+                "post": {
+                    "summary": "Intercept Tool Call",
+                    "description": "Evaluate a tool call against policy rules before execution. Returns allow, block, or pending decision.",
+                    "operationId": "interceptToolCall",
+                    "tags": ["Policy Engine"],
+                    "requestBody": {
+                        "required": True,
+                        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/InterceptRequest"}}}
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Decision returned",
+                            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/InterceptResponse"}}}
+                        },
+                        "401": {"description": "Missing or invalid API key"},
+                        "429": {"description": "Rate limit exceeded"}
+                    }
+                }
+            },
+            "/api/compliance/nist-report": {
+                "get": {
+                    "summary": "NIST Compliance Report",
+                    "description": "Generate a JSON report mapping active rules to NIST CSF 2.0 categories with coverage score and gap analysis.",
+                    "operationId": "getNistReport",
+                    "tags": ["Compliance"],
+                    "responses": {
+                        "200": {
+                            "description": "Compliance report",
+                            "content": {"application/json": {"schema": {"type": "object"}}}
+                        },
+                        "401": {"description": "Authentication required"}
+                    }
+                }
+            },
+            "/api/compliance/nist-report/pdf": {
+                "get": {
+                    "summary": "NIST Report PDF",
+                    "description": "Download a formatted PDF compliance report aligned to NIST IR 8596 Agentic AI guidelines.",
+                    "operationId": "getNistReportPdf",
+                    "tags": ["Compliance"],
+                    "responses": {
+                        "200": {
+                            "description": "PDF report",
+                            "content": {"application/pdf": {"schema": {"type": "string", "format": "binary"}}}
+                        },
+                        "401": {"description": "Authentication required"}
+                    }
+                }
+            },
+            "/api/compliance/audit-bundle": {
+                "get": {
+                    "summary": "Download Audit Bundle",
+                    "description": "Generate a cryptographically signed ZIP archive with Safety Disclosure PDF, resolved actions CSV, and SHA-256 hashed audit log.",
+                    "operationId": "getAuditBundle",
+                    "tags": ["Compliance"],
+                    "responses": {
+                        "200": {
+                            "description": "ZIP archive",
+                            "content": {"application/zip": {"schema": {"type": "string", "format": "binary"}}}
+                        },
+                        "401": {"description": "Authentication required"}
+                    }
+                }
+            },
+            "/api/catalog": {
+                "get": {
+                    "summary": "List Tool Catalog",
+                    "description": "Returns all known tools with safety grades (A-F), approval status, and CVE exposure.",
+                    "operationId": "listCatalog",
+                    "tags": ["Tool Catalog"],
+                    "responses": {
+                        "200": {
+                            "description": "Tool catalog",
+                            "content": {"application/json": {"schema": {"type": "object", "properties": {"catalog": {"type": "array", "items": {"$ref": "#/components/schemas/CatalogTool"}}}}}}
+                        },
+                        "401": {"description": "Authentication required"}
+                    }
+                }
+            },
+            "/api/catalog/{id}/status": {
+                "patch": {
+                    "summary": "Update Tool Status",
+                    "description": "Change the approval status of a cataloged tool. Banned tools are blocked by the intercept endpoint.",
+                    "operationId": "updateToolStatus",
+                    "tags": ["Tool Catalog"],
+                    "parameters": [{"name": "id", "in": "path", "required": True, "schema": {"type": "integer"}}],
+                    "requestBody": {
+                        "required": True,
+                        "content": {"application/json": {"schema": {"type": "object", "required": ["status"], "properties": {"status": {"type": "string", "enum": ["approved", "banned", "pending_review"]}}}}}
+                    },
+                    "responses": {
+                        "200": {"description": "Status updated"},
+                        "401": {"description": "Authentication required"},
+                        "404": {"description": "Tool not found"}
+                    }
+                }
+            },
+            "/api/catalog/{id}/consequential": {
+                "patch": {
+                    "summary": "Toggle Consequentiality Tag",
+                    "description": "Toggle the high-stakes (consequential) tag on a cataloged tool for Colorado SB24-205 compliance. Consequential tools are listed in the Safety PDF and Compliance Portal.",
+                    "operationId": "toggleConsequential",
+                    "tags": ["Tool Catalog"],
+                    "parameters": [{"name": "id", "in": "path", "required": True, "schema": {"type": "integer"}}],
+                    "responses": {
+                        "200": {"description": "Consequentiality tag toggled", "content": {"application/json": {"schema": {"type": "object", "properties": {"id": {"type": "integer"}, "tool_name": {"type": "string"}, "is_consequential": {"type": "boolean"}}}}}},
+                        "401": {"description": "Authentication required"},
+                        "404": {"description": "Tool not found"}
+                    }
+                }
+            },
+            "/api/constitution": {
+                "get": {
+                    "summary": "List Constitution Rules",
+                    "description": "Returns all active constitutional rules for the current workspace.",
+                    "operationId": "getConstitution",
+                    "tags": ["Policy Engine"],
+                    "responses": {
+                        "200": {
+                            "description": "Rules list",
+                            "content": {"application/json": {"schema": {"type": "object", "properties": {"rules": {"type": "array", "items": {"$ref": "#/components/schemas/ConstitutionRule"}}}}}}
+                        },
+                        "401": {"description": "Authentication required"}
+                    }
+                },
+                "post": {
+                    "summary": "Create Constitution Rule",
+                    "description": "Add a new governance rule. Rules are evaluated against every intercepted tool call.",
+                    "operationId": "createConstitutionRule",
+                    "tags": ["Policy Engine"],
+                    "requestBody": {
+                        "required": True,
+                        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CreateRuleRequest"}}}
+                    },
+                    "responses": {
+                        "200": {"description": "Rule created"},
+                        "401": {"description": "Authentication required"}
+                    }
+                }
+            },
+            "/api/actions/pending": {
+                "get": {
+                    "summary": "Get Pending Actions",
+                    "description": "Returns all tool call actions currently held for human review.",
+                    "operationId": "getPendingActions",
+                    "tags": ["Review Queue"],
+                    "responses": {
+                        "200": {
+                            "description": "Pending actions list",
+                            "content": {"application/json": {"schema": {"type": "object", "properties": {"actions": {"type": "array", "items": {"$ref": "#/components/schemas/PendingAction"}}}}}}
+                        },
+                        "401": {"description": "Authentication required"}
+                    }
+                }
+            },
+            "/api/actions/{id}/resolve": {
+                "post": {
+                    "summary": "Resolve Action",
+                    "description": "Approve or deny a pending action programmatically.",
+                    "operationId": "resolveAction",
+                    "tags": ["Review Queue"],
+                    "parameters": [{"name": "id", "in": "path", "required": True, "schema": {"type": "string"}}],
+                    "requestBody": {
+                        "required": True,
+                        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ResolveRequest"}}}
+                    },
+                    "responses": {
+                        "200": {"description": "Action resolved"},
+                        "401": {"description": "Authentication required"},
+                        "404": {"description": "Action not found"}
+                    }
+                }
+            }
+        }
+    }
+    return jsonify(spec)
 
 
 if __name__ == "__main__":

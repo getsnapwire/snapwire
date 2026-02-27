@@ -56,6 +56,10 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **Batch Ingestor**: `scripts/batch_ingestor.py` processes JSON files of MCP tool schemas through the CVE gauntlet with auto-heal, dry-run, and cost caps.
 -   **Vanguard User Guide PDF**: `/safety/vanguard-guide.pdf` — branded PDF covering Hold Window, Slack Alerts, Weekly Digest, and Safety PDF features.
 -   **NIST RESPOND-1.1 Tagging**: Slack Kill actions auto-tagged with RESPOND-1.1 in audit log violations for active human incident response governance.
+-   **A2A Chain of Command**: Enhanced Forensic Lineage Map with NIST RESPOND-1.1 badge, trace detail click-through (Origin-ID, Parent-ID, Trace-ID, Authorized-By), compliance summary panel (human-origin verified, integrity hash coverage %), and "TRACED" badges per node.
+-   **Consequentiality Tagging**: `ToolCatalog.is_consequential` (default False). `PATCH /api/catalog/<id>/consequential` endpoint. Dashboard "Tag Stakes" toggle with HIGH-STAKES visual indicator. Safety PDF Section 9 lists consequential tools for Colorado SB24-205. Compliance Portal shows consequential count.
+-   **Headless Compliance API Docs**: `/docs/compliance` interactive Swagger-like API reference. `/api/compliance/openapi.json` returns OpenAPI 3.0.3 spec covering 9 governance endpoints. Links from `/docs` and compliance portal.
+-   **Dynamic Chaos Ingestor**: `scripts/batch_ingestor.py` upgraded with `generate_chaos_exploits()` — Claude generates 3 per-tool attack scenarios (parameter injection, privilege escalation, data exfiltration). `--no-chaos` flag for static-only mode. Counts against 50-call LLM cost cap.
 
 ## External Dependencies
 -   **Database**: PostgreSQL, SQLite

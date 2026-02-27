@@ -57,6 +57,7 @@ with app.app_context():
         "ALTER TABLE audit_log ADD COLUMN vibe_summary TEXT",
         "ALTER TABLE pending_actions ADD COLUMN vibe_summary TEXT",
         "ALTER TABLE tenant_settings ADD COLUMN is_stealth_mode BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE tool_catalog ADD COLUMN is_consequential BOOLEAN DEFAULT FALSE",
     ]
     for sql in migrations:
         try:

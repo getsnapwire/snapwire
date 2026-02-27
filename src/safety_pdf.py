@@ -252,9 +252,45 @@ def generate_safety_pdf():
         pdf.cell(0, 5, f"{i}. {safeguard}", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(6)
 
+    consequential_tools = []
+    try:
+        from models import ToolCatalog
+        from src.auth import get_current_tenant_id
+        ct_tid = get_current_tenant_id()
+        ct_q = ToolCatalog.query.filter_by(is_consequential=True)
+        if ct_tid:
+            ct_q = ct_q.filter_by(tenant_id=ct_tid)
+        consequential_tools = ct_q.all()
+    except Exception:
+        pass
+
     pdf.set_text_color(40, 40, 50)
     pdf.set_font("Helvetica", "B", 16)
-    pdf.cell(0, 10, "9. Audit Log Fingerprint", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 10, "9. High-Stakes Tools (Consequentiality Tagging)", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(60, 60, 70)
+    if consequential_tools:
+        pdf.cell(0, 6, f"{len(consequential_tools)} tool(s) tagged as high-stakes (consequential) per Colorado SB24-205:", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(2)
+        for i, tool in enumerate(consequential_tools, 1):
+            grade = tool.safety_grade or "U"
+            status = tool.status or "unknown"
+            pdf.cell(5, 5, "")
+            pdf.cell(0, 5, f"{i}. {tool.tool_name} (Grade: {grade}, Status: {status})", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(2)
+        pdf.set_font("Helvetica", "I", 9)
+        pdf.set_text_color(120, 120, 130)
+        pdf.cell(0, 5, "These tools have been identified as having potential for substantial impact on consumers", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 5, "and are subject to enhanced governance controls per SB24-205 Section 6-1-1702.", new_x="LMARGIN", new_y="NEXT")
+    else:
+        pdf.cell(0, 6, "No tools have been tagged as high-stakes (consequential). Use the Tool Catalog", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 6, "dashboard to identify and tag tools with potential for substantial consumer impact.", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(6)
+
+    pdf.set_text_color(40, 40, 50)
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "10. Audit Log Fingerprint", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(2)
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(60, 60, 70)

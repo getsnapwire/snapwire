@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snapwire — Headless Compliance API</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --white: #ffffff; --gray-50: #0B0D10; --gray-100: #151A21; --gray-200: #273140;
+            --gray-300: #3D4654; --gray-400: #5A6270; --gray-500: #8B919A; --gray-600: #C0BDB8;
+            --gray-700: #D0CDC8; --gray-800: #E0DDD8; --gray-900: #F0EEE9;
+            --orange-50: rgba(255,107,0,0.08); --orange-500: #FF6B00; --orange-600: #E56000;
+            --green-500: #00F5D4;
+        }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #0B0D10; color: var(--gray-900); -webkit-font-smoothing: antialiased; }
+
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            background: rgba(11,13,16,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--gray-200); padding: 0 32px; height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; color: var(--gray-900); text-decoration: none; }
+        .nav-logo .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #FF6B00, #CC5500); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; }
+        .nav-links { display: flex; align-items: center; gap: 32px; }
+        .nav-links a { font-size: 14px; font-weight: 500; color: var(--gray-500); text-decoration: none; }
+        .nav-links a:hover { color: var(--gray-900); }
+        .nav-btn { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; color: #fff; background: #FF6B00; }
+        .nav-btn:hover { background: #E56000; }
+
+        .docs-layout { padding-top: 64px; display: flex; min-height: 100vh; }
+
+        .docs-sidebar {
+            width: 260px; border-right: 1px solid var(--gray-200); padding: 32px 24px;
+            position: sticky; top: 64px; height: calc(100vh - 64px); overflow-y: auto; flex-shrink: 0;
+            background: #0B0D10;
+        }
+        .docs-sidebar h3 {
+            font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--gray-400); margin-bottom: 12px; margin-top: 24px;
+        }
+        .docs-sidebar h3:first-child { margin-top: 0; }
+        .docs-sidebar a {
+            display: block; font-size: 14px; color: var(--gray-500); text-decoration: none;
+            padding: 6px 12px; border-radius: 6px; margin-bottom: 2px; transition: all 0.15s;
+        }
+        .docs-sidebar a:hover { background: var(--gray-100); color: var(--gray-900); }
+        .docs-sidebar a.active { background: var(--orange-50); color: #FF6B00; font-weight: 600; }
+
+        .docs-content { flex: 1; padding: 40px 48px; max-width: 900px; }
+        .docs-content h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; color: var(--gray-900); }
+        .docs-content .lead { font-size: 17px; color: var(--gray-500); line-height: 1.7; margin-bottom: 40px; }
+        .docs-content h2 { font-size: 22px; font-weight: 700; margin-top: 48px; margin-bottom: 16px; padding-top: 24px; border-top: 1px solid var(--gray-200); color: var(--gray-900); }
+        .docs-content h2:first-of-type { margin-top: 0; border-top: none; padding-top: 0; }
+        .docs-content h3 { font-size: 17px; font-weight: 700; margin-top: 32px; margin-bottom: 12px; color: var(--gray-900); }
+        .docs-content p { font-size: 15px; color: var(--gray-500); line-height: 1.75; margin-bottom: 16px; }
+
+        .endpoint-section {
+            background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 12px;
+            margin-bottom: 24px; overflow: hidden;
+        }
+        .endpoint-header {
+            display: flex; align-items: center; gap: 12px; padding: 16px 20px; cursor: pointer;
+            user-select: none; transition: background 0.15s;
+        }
+        .endpoint-header:hover { background: rgba(255,255,255,0.02); }
+        .endpoint-method {
+            display: inline-block; padding: 4px 10px; border-radius: 5px; font-size: 12px;
+            font-weight: 700; font-family: 'Fira Code', monospace; min-width: 60px; text-align: center;
+        }
+        .method-post { background: rgba(255,107,0,0.15); color: #FF6B00; }
+        .method-get { background: rgba(0,245,212,0.15); color: var(--green-500); }
+        .method-patch { background: rgba(255,214,107,0.15); color: #FFD66B; }
+        .method-delete { background: rgba(248,81,73,0.15); color: #f85149; }
+        .endpoint-path { font-family: 'Fira Code', monospace; font-size: 14px; font-weight: 600; color: var(--gray-900); flex: 1; }
+        .endpoint-summary { font-size: 13px; color: var(--gray-500); }
+        .endpoint-toggle { color: var(--gray-400); font-size: 18px; transition: transform 0.2s; }
+        .endpoint-section.open .endpoint-toggle { transform: rotate(90deg); }
+        .endpoint-body { display: none; padding: 0 20px 20px; border-top: 1px solid var(--gray-200); }
+        .endpoint-section.open .endpoint-body { display: block; }
+
+        .auth-badge {
+            display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px;
+            border-radius: 20px; font-size: 11px; font-weight: 600;
+            background: rgba(255,107,0,0.1); color: #FF6B00; margin-left: auto;
+        }
+        .auth-badge.api-key { background: rgba(0,245,212,0.1); color: var(--green-500); }
+
+        pre {
+            background: #0B0D10; color: #e2e8f0; border-radius: 10px;
+            padding: 16px 20px; margin: 12px 0; overflow-x: auto; font-size: 13px;
+            line-height: 1.6; font-family: 'Fira Code', monospace; position: relative;
+            border: 1px solid var(--gray-200);
+        }
+        pre .lang-tag {
+            position: absolute; top: 8px; right: 12px; font-size: 11px;
+            color: var(--gray-400); font-family: 'Inter', sans-serif; font-weight: 600;
+        }
+        code { font-family: 'Fira Code', monospace; }
+        .inline-code {
+            background: var(--gray-100); padding: 2px 7px; border-radius: 5px;
+            font-size: 13px; color: var(--gray-800); border: 1px solid var(--gray-200);
+        }
+
+        .param-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+        .param-table th { text-align: left; padding: 10px 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--gray-200); font-weight: 600; color: var(--gray-600); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .param-table td { padding: 10px 12px; border: 1px solid var(--gray-200); color: var(--gray-500); }
+        .param-table .type { font-family: 'Fira Code', monospace; font-size: 12px; color: #FF6B00; }
+        .param-table .required { font-size: 11px; font-weight: 700; color: #f85149; }
+
+        .response-label { font-size: 12px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 4px; }
+        .desc-text { font-size: 14px; color: var(--gray-500); line-height: 1.6; margin: 12px 0; }
+
+        .spec-banner {
+            background: linear-gradient(135deg, rgba(255,107,0,0.08), rgba(0,245,212,0.05));
+            border: 1px solid rgba(255,107,0,0.15); border-radius: 12px;
+            padding: 20px 24px; margin-bottom: 32px; display: flex; align-items: center; gap: 16px;
+        }
+        .spec-banner-icon { font-size: 32px; }
+        .spec-banner-text h3 { font-size: 15px; margin-bottom: 4px; color: var(--gray-900); }
+        .spec-banner-text p { font-size: 13px; color: var(--gray-500); margin: 0; }
+        .spec-banner-text a { color: #FF6B00; text-decoration: none; font-weight: 600; }
+        .spec-banner-text a:hover { text-decoration: underline; }
+
+        .footer { border-top: 1px solid var(--gray-200); padding: 32px; text-align: center; background: #0B0D10; }
+        .footer p { font-size: 13px; color: var(--gray-400); }
+
+        @media (max-width: 768px) {
+            .docs-sidebar { display: none; }
+            .docs-content { padding: 24px 20px; }
+            .nav-links a:not(.nav-btn) { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-logo"><span class="logo-icon">&#9889;</span> Snapwire</a>
+        <div class="nav-links">
+            <a href="/">Dashboard</a>
+            <a href="/docs">API Docs</a>
+            <a href="/compliance-portal">Compliance</a>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <h3>Overview</h3>
+            <a href="#overview" class="active">Introduction</a>
+            <a href="#authentication">Authentication</a>
+            <a href="#openapi-spec">OpenAPI Spec</a>
+            <h3>Policy Engine</h3>
+            <a href="#ep-intercept">POST /api/intercept</a>
+            <a href="#ep-constitution-get">GET /api/constitution</a>
+            <a href="#ep-constitution-post">POST /api/constitution</a>
+            <h3>Compliance</h3>
+            <a href="#ep-nist-report">GET /nist-report</a>
+            <a href="#ep-nist-pdf">GET /nist-report/pdf</a>
+            <a href="#ep-audit-bundle">GET /audit-bundle</a>
+            <h3>Tool Catalog</h3>
+            <a href="#ep-catalog-get">GET /api/catalog</a>
+            <a href="#ep-catalog-status">PATCH /catalog/status</a>
+            <h3>Review Queue</h3>
+            <a href="#ep-actions-pending">GET /actions/pending</a>
+            <a href="#ep-actions-resolve">POST /actions/resolve</a>
+        </aside>
+
+        <main class="docs-content">
+            <h1 id="overview">Headless Compliance API</h1>
+            <p class="lead">Manage rules, run compliance checks, and pull audit bundles via API &mdash; no dashboard required. Designed for CI/CD pipelines, GitHub Actions, and enterprise governance automation.</p>
+
+            <div class="spec-banner">
+                <div class="spec-banner-icon">&#128220;</div>
+                <div class="spec-banner-text">
+                    <h3>OpenAPI 3.0 Specification</h3>
+                    <p>Download the machine-readable spec for code generation, Postman import, or CI validation: <a href="/api/compliance/openapi.json" target="_blank">/api/compliance/openapi.json</a></p>
+                </div>
+            </div>
+
+            <h2 id="authentication">Authentication</h2>
+            <p>All endpoints require a Bearer token via the <code class="inline-code">Authorization</code> header. Generate API keys from the Snapwire dashboard.</p>
+            <pre><span class="lang-tag">HTTP</span>
+Authorization: Bearer af_your_api_key_here</pre>
+            <p>Some endpoints (marked with <span class="auth-badge">&#128274; Admin</span>) require admin-level access. Standard API key endpoints are marked with <span class="auth-badge api-key">&#128273; API Key</span>.</p>
+
+            <h2 id="openapi-spec">OpenAPI Spec Download</h2>
+            <p>The full OpenAPI 3.0 JSON specification is available at <code class="inline-code">/api/compliance/openapi.json</code>. Use it to auto-generate client SDKs, import into Postman, or validate requests in CI pipelines.</p>
+            <pre><span class="lang-tag">bash</span>
+curl -s https://your-instance.com/api/compliance/openapi.json | python -m json.tool</pre>
+
+            <h2 id="ep-intercept">Intercept Tool Call</h2>
+            <div class="endpoint-section open">
+                <div class="endpoint-header" onclick="this.parentElement.classList.toggle('open')">
+                    <span class="endpoint-method method-post">POST</span>
+                    <span class="endpoint-path">/api/intercept</span>
+                    <span class="endpoint-summary">Evaluate a tool call against policy rules</span>
+                    <span class="auth-badge api-key">&#128273; API Key</span>
+                    <span class="endpoint-toggle">&#9654;</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc-text">The primary governance endpoint. Send every AI agent tool call here before execution. Snapwire evaluates it against constitutional rules, safety catalog, blast radius limits, and returns a decision.</p>
+                    <div class="response-label">Request Body</div>
+                    <table class="param-table">
+                        <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                        <tr><td>tool_name <span class="required">REQUIRED</span></td><td class="type">string</td><td>Name of the tool being called</td></tr>
+                        <tr><td>parameters</td><td class="type">object</td><td>Parameters passed to the tool</td></tr>
+                        <tr><td>intent</td><td class="type">string</td><td>Why the agent wants to call this tool</td></tr>
+                        <tr><td>context</td><td class="type">string</td><td>Additional task context</td></tr>
+                        <tr><td>agent_id</td><td class="type">string</td><td>Identifier for the calling agent</td></tr>
+                        <tr><td>parent_agent_id</td><td class="type">string</td><td>Parent agent ID for A2A chain tracing</td></tr>
+                        <tr><td>inner_monologue</td><td class="type">string</td><td>Agent's internal reasoning</td></tr>
+                        <tr><td>webhook_url</td><td class="type">string</td><td>Callback URL for async resolution</td></tr>
+                    </table>
+                    <div class="response-label">Response (200 - Allowed)</div>
+                    <pre><span class="lang-tag">JSON</span>
+{
+  "status": "allowed",
+  "action_id": "a1b2c3d4",
+  "risk_score": 15,
+  "analysis": "Action is within policy bounds."
+}</pre>
+                    <div class="response-label">Response (200 - Blocked)</div>
+                    <pre><span class="lang-tag">JSON</span>
+{
+  "status": "pending",
+  "action_id": "e5f6g7h8",
+  "risk_score": 78,
+  "violations": [
+    {
+      "rule": "no_external_emails",
+      "severity": "high",
+      "reason": "Sending email to external address requires approval."
+    }
+  ],
+  "message": "Action held for human review."
+}</pre>
+                </div>
+            </div>
+
+            <h2 id="ep-constitution-get">Get Constitution Rules</h2>
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="this.parentElement.classList.toggle('open')">
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/api/constitution</span>
+                    <span class="endpoint-summary">List all active governance rules</span>
+                    <span class="auth-badge">&#128274; Admin</span>
+                    <span class="endpoint-toggle">&#9654;</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc-text">Returns all constitutional rules for the current workspace. Rules define what agents can and cannot do, and map to NIST CSF 2.0 categories.</p>
+                    <div class="response-label">Response (200)</div>
+                    <pre><span class="lang-tag">JSON</span>
+{
+  "rules": [
+    {
+      "id": 1,
+      "rule_name": "no_external_emails",
+      "value": "Block all outbound emails to non-corporate domains",
+      "severity": "high",
+      "mode": "enforce",
+      "created_at": "2026-01-15T10:00:00Z"
+    }
+  ]
+}</pre>
+                </div>
+            </div>
+
+            <h2 id="ep-constitution-post">Create Constitution Rule</h2>
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="this.parentElement.classList.toggle('open')">
+                    <span class="endpoint-method method-post">POST</span>
+                    <span class="endpoint-path">/api/constitution</span>
+                    <span class="endpoint-summary">Add a new governance rule</span>
+                    <span class="auth-badge">&#128274; Admin</span>
+                    <span class="endpoint-toggle">&#9654;</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc-text">Create a new constitutional rule. Rules are evaluated against every intercepted tool call. Supports plain-English rule definitions.</p>
+                    <div class="response-label">Request Body</div>
+                    <table class="param-table">
+                        <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                        <tr><td>rule_name <span class="required">REQUIRED</span></td><td class="type">string</td><td>Unique identifier for the rule</td></tr>
+                        <tr><td>value <span class="required">REQUIRED</span></td><td class="type">string</td><td>The rule text in plain English</td></tr>
+                        <tr><td>severity</td><td class="type">string</td><td>"low", "medium", "high", or "critical"</td></tr>
+                        <tr><td>mode</td><td class="type">string</td><td>"enforce" (block violations) or "monitor" (log only)</td></tr>
+                    </table>
+                    <div class="response-label">Response (200)</div>
+                    <pre><span class="lang-tag">JSON</span>
+{
+  "status": "added",
+  "rule_name": "no_external_emails",
+  "message": "Rule created successfully"
+}</pre>
+                </div>
+            </div>
+
+            <h2 id="ep-nist-report">NIST Compliance Report</h2>
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="this.parentElement.classList.toggle('open')">
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/api/compliance/nist-report</span>
+                    <span class="endpoint-summary">Generate NIST CSF 2.0 coverage report</span>
+                    <span class="auth-badge">&#128274; Admin</span>
+                    <span class="endpoint-toggle">&#9654;</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc-text">Returns a JSON report mapping your active rules to NIST CSF 2.0 categories. Includes coverage score, grade, and gap analysis. Use this to auto-populate compliance questionnaires.</p>
+                    <div class="response-label">Response (200)</div>
+                    <pre><span class="lang-tag">JSON</span>
+{
+  "score": 78,
+  "grade": "B",
+  "covered": 8,
+  "partial": 3,
+  "gaps": 2,
+  "total_categories": 13,
+  "categories": [
+    {
+      "id": "GOVERN",
+      "name": "Governance",
+      "status": "covered",
+      "mapped_rules": ["budget_cap", "domain_allowlist"]
+    }
+  ],
+  "generated_at": "2026-02-24T10:00:00Z"
+}</pre>
+                </div>
+            </div>
+
+            <h2 id="ep-nist-pdf">NIST Report PDF</h2>
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="this.parentElement.classList.toggle('open')">
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/api/compliance/nist-report/pdf</span>
+                    <span class="endpoint-summary">Download NIST IR 8596 PDF report</span>
+                    <span class="auth-badge">&#128274; Admin</span>
+                    <span class="endpoint-toggle">&#9654;</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc-text">Downloads a formatted PDF compliance report aligned to NIST IR 8596 Agentic AI guidelines. Includes coverage breakdown, risk metrics, and safeguard inventory. Suitable for regulatory submissions.</p>
+                    <div class="response-label">Response</div>
+                    <p class="desc-text">Returns <code class="inline-code">application/pdf</code> with filename <code class="inline-code">snapwire-nistir8596-report-YYYY-MM-DD.pdf</code></p>
+                </div>
+            </div>
+
+            <h2 id="ep-audit-bundle">Audit Bundle</h2>
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="this.parentElement.classList.toggle('open')">
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/api/compliance/audit-bundle</span>
+                    <span class="endpoint-summary">Download signed compliance package</span>
+                    <span class="auth-badge">&#128274; Admin</span>
+                    <span class="endpoint-toggle">&#9654;</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc-text">Generates a cryptographically signed ZIP archive containing the Safety Disclosure PDF, resolved actions CSV (human oversight proof), and SHA-256 hashed audit log JSON. Use for regulatory filings, insurance underwriters, or internal governance reviews.</p>
+                    <div class="response-label">Response</div>
+                    <p class="desc-text">Returns <code class="inline-code">application/zip</code> containing:</p>
+                    <table class="param-table">
+                        <tr><th>File</th><th>Description</th></tr>
+                        <tr><td>safety_disclosure.pdf</td><td>NIST grade, safeguards, coverage breakdown</td></tr>
+                        <tr><td>resolved_actions.csv</td><td>All resolved actions with resolved_by field</td></tr>
+                        <tr><td>audit_log.json</td><td>SHA-256 content hashes for tamper detection</td></tr>
+                        <tr><td>manifest.json</td><td>Bundle metadata and integrity checksums</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <h2 id="ep-catalog-get">Tool Safety Catalog</h2>
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="this.parentElement.classList.toggle('open')">
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/api/catalog</span>
+                    <span class="endpoint-summary">List all tools with safety grades</span>
+                    <span class="auth-badge">&#128274; Admin</span>
+                    <span class="endpoint-toggle">&#9654;</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc-text">Returns the full tool safety catalog showing all known tools, their safety grades (A&ndash;F), approval status, CVE exposure, and review history. Use to audit which tools your agents have access to.</p>
+                    <div class="response-label">Response (200)</div>
+                    <pre><span class="lang-tag">JSON</span>
+{
+  "catalog": [
+    {
+      "id": 1,
+      "tool_name": "send_email",
+      "grade": "B",
+      "status": "approved",
+      "cve_count": 0,
+      "first_seen": "2026-02-20T08:00:00Z",
+      "last_seen": "2026-02-24T12:00:00Z"
+    }
+  ]
+}</pre>
+                </div>
+            </div>
+
+            <h2 id="ep-catalog-status">Update Tool Status</h2>
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="this.parentElement.classList.toggle('open')">
+                    <span class="endpoint-method method-patch">PATCH</span>
+                    <span class="endpoint-path">/api/catalog/{id}/status</span>
+                    <span class="endpoint-summary">Approve, ban, or reset a tool</span>
+                    <span class="auth-badge">&#128274; Admin</span>
+                    <span class="endpoint-toggle">&#9654;</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc-text">Change the approval status of a cataloged tool. Banned tools are automatically blocked by the intercept endpoint. Use in CI/CD to enforce tool allowlists.</p>
+                    <div class="response-label">Request Body</div>
+                    <table class="param-table">
+                        <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                        <tr><td>status <span class="required">REQUIRED</span></td><td class="type">string</td><td>"approved", "banned", or "pending_review"</td></tr>
+                    </table>
+                    <div class="response-label">Response (200)</div>
+                    <pre><span class="lang-tag">JSON</span>
+{
+  "status": "updated",
+  "tool_id": 1,
+  "new_status": "banned"
+}</pre>
+                </div>
+            </div>
+
+            <h2 id="ep-actions-pending">Get Pending Actions</h2>
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="this.parentElement.classList.toggle('open')">
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/api/actions/pending</span>
+                    <span class="endpoint-summary">List actions awaiting human review</span>
+                    <span class="auth-badge">&#128274; Admin</span>
+                    <span class="endpoint-toggle">&#9654;</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc-text">Returns all tool call actions currently held for human review. Integrate with your ticketing system or Slack bot to build custom approval workflows.</p>
+                    <div class="response-label">Response (200)</div>
+                    <pre><span class="lang-tag">JSON</span>
+{
+  "actions": [
+    {
+      "id": "a1b2c3d4",
+      "tool_name": "delete_database",
+      "agent_id": "data-cleanup-agent",
+      "risk_score": 92,
+      "violations": ["no_destructive_ops"],
+      "created_at": "2026-02-24T10:30:00Z",
+      "status": "pending"
+    }
+  ]
+}</pre>
+                </div>
+            </div>
+
+            <h2 id="ep-actions-resolve">Resolve Action</h2>
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="this.parentElement.classList.toggle('open')">
+                    <span class="endpoint-method method-post">POST</span>
+                    <span class="endpoint-path">/api/actions/{id}/resolve</span>
+                    <span class="endpoint-summary">Approve or deny a pending action</span>
+                    <span class="auth-badge">&#128274; Admin</span>
+                    <span class="endpoint-toggle">&#9654;</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc-text">Programmatically approve or deny a pending action. Use in automated governance pipelines where approval logic is handled by a separate system (e.g., PagerDuty, Jira, or a custom approval bot).</p>
+                    <div class="response-label">Request Body</div>
+                    <table class="param-table">
+                        <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                        <tr><td>decision <span class="required">REQUIRED</span></td><td class="type">string</td><td>"approve" or "deny"</td></tr>
+                    </table>
+                    <div class="response-label">Response (200)</div>
+                    <pre><span class="lang-tag">JSON</span>
+{
+  "status": "resolved",
+  "action_id": "a1b2c3d4",
+  "decision": "approve",
+  "resolved_by": "api"
+}</pre>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>Snapwire Headless Compliance API &middot; <a href="/docs" style="color:var(--green-500);text-decoration:none;">Full API Docs</a> &middot; <a href="/compliance-portal" style="color:var(--green-500);text-decoration:none;">Compliance Portal</a> &middot; <a href="/safety" style="color:var(--green-500);text-decoration:none;">Safety Disclosure</a></p>
+    </footer>
+    <div style="text-align:center;padding:16px 24px;font-size:11px;color:#7d8295;opacity:0.7;border-top:1px solid #2a2f3d;margin-top:32px;">
+        Snapwire is a technical monitoring utility. All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator.
+    </div>
+
+    <script>
+        document.querySelectorAll('.docs-sidebar a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                document.querySelectorAll('.docs-sidebar a').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

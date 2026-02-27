@@ -5,13 +5,15 @@ Snapwire Batch Ingestor — Bulk MCP Tool Schema Ingestion
 Accepts a JSON file of MCP tool schemas and processes them through:
 1. ToolCatalog registration with safety grading
 2. OpenClaw CVE-2026-25253 attack pattern gauntlet (17 patterns)
-3. Optional auto-heal retries via LLM (up to 3 attempts)
-4. Hard cost cap: max 50 LLM calls per run
+3. Dynamic Chaos Exploits — Claude-generated per-tool attack scenarios
+4. Optional auto-heal retries via LLM (up to 3 attempts)
+5. Hard cost cap: max 50 LLM calls per run
 
 Usage:
     python scripts/batch_ingestor.py --file tools.json
     python scripts/batch_ingestor.py --file tools.json --dry-run
     python scripts/batch_ingestor.py --file tools.json --no-heal
+    python scripts/batch_ingestor.py --file tools.json --no-chaos
     python scripts/batch_ingestor.py --source https://registry.example.com/tools.json
 """
 
@@ -96,6 +98,102 @@ def load_tools_from_url(url):
     except Exception as e:
         logger.error(f"Error loading tools from URL: {e}")
         return None
+
+
+CHAOS_EXPLOIT_PROMPT = """You are an elite AI security researcher performing adversarial testing on an MCP (Model Context Protocol) tool.
+
+Your task: Generate exactly 3 realistic attack scenarios specifically tailored to this tool's capabilities, description, and parameters.
+
+Focus on these attack categories:
+1. Parameter injection — craft malicious parameter values that exploit this specific tool's input fields
+2. Privilege escalation — abuse this tool's capabilities to gain unauthorized access or elevate permissions
+3. Data exfiltration — use this tool's outputs or side-effects to leak sensitive data to external endpoints
+
+For each exploit, produce a JSON object with:
+- "name": short snake_case identifier (e.g., "file_read_path_traversal")
+- "tool_name": the actual tool name being tested
+- "parameters": a dict of parameter values that constitute the attack payload
+- "category": one of "parameter_injection", "privilege_escalation", "data_exfiltration"
+- "description": one-line explanation of the attack vector
+
+Return a JSON array of exactly 3 exploit objects. Return only valid JSON."""
+
+
+def generate_chaos_exploits(tool_name, description, parameters, llm_tracker):
+    if not llm_tracker.can_call():
+        logger.warning("LLM cost cap reached — skipping chaos exploit generation")
+        return []
+
+    params_str = json.dumps(parameters, indent=2) if parameters else "No parameters defined"
+
+    user_msg = (
+        f"Tool Name: {tool_name}\n"
+        f"Description: {description or 'No description provided'}\n"
+        f"Parameters: {params_str}\n\n"
+        f"Generate 3 custom attack scenarios targeting this specific tool."
+    )
+
+    try:
+        from src.llm_provider import chat, parse_json_array_response
+        llm_tracker.increment()
+        response = chat(
+            CHAOS_EXPLOIT_PROMPT,
+            user_msg,
+            max_tokens=2048,
+        )
+        exploits = parse_json_array_response(response)
+        if exploits and isinstance(exploits, list):
+            valid = []
+            for ex in exploits[:3]:
+                if isinstance(ex, dict) and ex.get("tool_name") and ex.get("parameters"):
+                    valid.append(ex)
+            return valid
+    except Exception as e:
+        logger.warning(f"Chaos exploit generation failed for {tool_name}: {e}")
+
+    return []
+
+
+def run_chaos_exploits(tool_schema, exploits):
+    from src.safeguard_openclaw import check_openclaw
+
+    results = []
+    caught = 0
+    missed = 0
+
+    for exploit in exploits:
+        result = check_openclaw(
+            tool_name=exploit.get("tool_name", tool_schema.get("name", "unknown")),
+            parameters=exploit.get("parameters", {}),
+            agent_id="batch-ingestor-chaos-test",
+        )
+        exploit_name = exploit.get("name", "unnamed_exploit")
+        category = exploit.get("category", "unknown")
+        if result and result.get("blocked"):
+            caught += 1
+            results.append({
+                "exploit": exploit_name,
+                "category": category,
+                "status": "caught",
+                "severity": result.get("severity", "unknown"),
+                "description": exploit.get("description", ""),
+            })
+        else:
+            missed += 1
+            results.append({
+                "exploit": exploit_name,
+                "category": category,
+                "status": "missed",
+                "severity": "unknown",
+                "description": exploit.get("description", ""),
+            })
+
+    return {
+        "total": len(exploits),
+        "caught": caught,
+        "missed": missed,
+        "results": results,
+    }
 
 
 def run_cve_gauntlet(tool_schema):
@@ -265,7 +363,7 @@ def add_to_catalog(tool_schema, gauntlet_results, llm_tracker, dry_run=False):
         }
 
 
-def process_tools(tools, dry_run=False, no_heal=False):
+def process_tools(tools, dry_run=False, no_heal=False, no_chaos=False):
     llm_tracker = LLMCallTracker(MAX_LLM_CALLS)
 
     summary = {
@@ -275,6 +373,11 @@ def process_tools(tools, dry_run=False, no_heal=False):
         "failed": 0,
         "pending_review": 0,
         "llm_calls_used": 0,
+        "static_patterns_tested": 0,
+        "dynamic_exploits_generated": 0,
+        "dynamic_exploits_caught": 0,
+        "dynamic_exploits_missed": 0,
+        "tools_failed_dynamic_chaos": [],
         "results": [],
     }
 
@@ -289,7 +392,22 @@ def process_tools(tools, dry_run=False, no_heal=False):
             continue
 
         gauntlet_results = run_cve_gauntlet(tool_schema)
+        summary["static_patterns_tested"] += gauntlet_results["total_patterns"]
         logger.info(f"  CVE Gauntlet: {gauntlet_results['passed']}/{gauntlet_results['total_patterns']} patterns blocked")
+
+        chaos_results = None
+        if not no_chaos:
+            description = tool_schema.get("description", "")
+            parameters = tool_schema.get("parameters", {})
+            exploits = generate_chaos_exploits(tool_name, description, parameters, llm_tracker)
+            if exploits:
+                chaos_results = run_chaos_exploits(tool_schema, exploits)
+                summary["dynamic_exploits_generated"] += chaos_results["total"]
+                summary["dynamic_exploits_caught"] += chaos_results["caught"]
+                summary["dynamic_exploits_missed"] += chaos_results["missed"]
+                logger.info(f"  Chaos Exploits: {chaos_results['caught']}/{chaos_results['total']} caught")
+                if chaos_results["missed"] > 0:
+                    summary["tools_failed_dynamic_chaos"].append(tool_name)
 
         healed = False
         if gauntlet_results["failed"] > 0 and not no_heal:
@@ -319,6 +437,9 @@ def process_tools(tools, dry_run=False, no_heal=False):
             summary["healed"] += 1
             catalog_result["healed"] = True
 
+        if chaos_results:
+            catalog_result["chaos_exploits"] = chaos_results
+
         if catalog_result.get("status") == "error":
             summary["failed"] += 1
         elif catalog_result.get("status") == "pending_review":
@@ -345,10 +466,17 @@ def print_summary(summary, dry_run=False):
     print(f"  Pending manual review:    {summary['pending_review']}")
     print(f"  LLM calls used:           {summary['llm_calls_used']}/{MAX_LLM_CALLS}")
     print(f"{'='*60}")
+    print(f"  Static patterns tested:   {summary.get('static_patterns_tested', 0)}")
+    print(f"  Dynamic exploits generated:{summary.get('dynamic_exploits_generated', 0)}")
+    print(f"  Dynamic exploits caught:  {summary.get('dynamic_exploits_caught', 0)}")
+    print(f"  Dynamic exploits missed:  {summary.get('dynamic_exploits_missed', 0)}")
+    if summary.get("tools_failed_dynamic_chaos"):
+        print(f"  Tools failed dynamic chaos: {', '.join(summary['tools_failed_dynamic_chaos'])}")
+    print(f"{'='*60}")
 
     if summary["results"]:
-        print(f"\n  {'Tool Name':<30} {'Grade':<6} {'Status':<18} {'CVE Pass':<10}")
-        print(f"  {'-'*30} {'-'*6} {'-'*18} {'-'*10}")
+        print(f"\n  {'Tool Name':<30} {'Grade':<6} {'Status':<18} {'CVE Pass':<10} {'Chaos':<10}")
+        print(f"  {'-'*30} {'-'*6} {'-'*18} {'-'*10} {'-'*10}")
         for r in summary["results"]:
             name = r.get("tool_name", "?")[:29]
             grade = r.get("grade", "?")
@@ -356,7 +484,13 @@ def print_summary(summary, dry_run=False):
             if r.get("healed"):
                 status += " (healed)"
             cve = f"{r.get('cve_passed', '?')}/{r.get('cve_passed', 0) + r.get('cve_failed', 0)}"
-            print(f"  {name:<30} {grade:<6} {status:<18} {cve:<10}")
+            chaos = ""
+            if r.get("chaos_exploits"):
+                ce = r["chaos_exploits"]
+                chaos = f"{ce['caught']}/{ce['total']}"
+            else:
+                chaos = "—"
+            print(f"  {name:<30} {grade:<6} {status:<18} {cve:<10} {chaos:<10}")
 
     print()
 
@@ -367,6 +501,7 @@ def main():
     parser.add_argument("--source", type=str, help="URL to fetch tool schemas from")
     parser.add_argument("--dry-run", action="store_true", help="Preview without DB writes")
     parser.add_argument("--no-heal", action="store_true", help="Disable auto-heal retries")
+    parser.add_argument("--no-chaos", action="store_true", help="Skip dynamic chaos exploit generation (use only static patterns)")
     parser.add_argument("--output", type=str, help="Write results JSON to file")
 
     args = parser.parse_args()
@@ -400,12 +535,12 @@ def main():
         try:
             from app import app
             with app.app_context():
-                summary = process_tools(tools, dry_run=False, no_heal=args.no_heal)
+                summary = process_tools(tools, dry_run=False, no_heal=args.no_heal, no_chaos=args.no_chaos)
         except ImportError:
             logger.warning("Flask app not available — falling back to dry-run mode")
-            summary = process_tools(tools, dry_run=True, no_heal=args.no_heal)
+            summary = process_tools(tools, dry_run=True, no_heal=args.no_heal, no_chaos=args.no_chaos)
     else:
-        summary = process_tools(tools, dry_run=True, no_heal=args.no_heal)
+        summary = process_tools(tools, dry_run=True, no_heal=args.no_heal, no_chaos=args.no_chaos)
 
     print_summary(summary, dry_run=args.dry_run)
 
