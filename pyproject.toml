@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Snapwire — The Firewall for AI Agents"
 requires-python = ">=3.11"
 dependencies = [
+    "aiohttp>=3.13.3",
     "anthropic>=0.79.0",
     "flask>=3.1.2",
     "flask-dance>=7.1.0",

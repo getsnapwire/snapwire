@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
 
   db:
-    image: postgres:16-alpine
+    image: postgres:16.2-alpine
     environment:
       - POSTGRES_USER=firewall
       - POSTGRES_PASSWORD=firewall
@@ -33,6 +33,24 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  sentinel:
+    build:
+      context: .
+      dockerfile: sentinel/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SENTINEL_PORT=8080
+      - SENTINEL_MODE=audit
+      - SNAPWIRE_URL=http://app:5000
+      - UPSTREAM_URL=https://api.openai.com
+      - SNAPWIRE_API_KEY=
+      - SENTINEL_AGENT_ID=sentinel-proxy
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   pgdata:

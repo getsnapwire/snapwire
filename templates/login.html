@@ -808,6 +808,17 @@
                 <h3>MCP-Compatible</h3>
                 <p>Native JSON-RPC 2.0 support. Send standard MCP <code>tools/call</code> requests directly &mdash; Snapwire auto-detects the format. Works with Cursor, Replit, Claude, and any MCP-compliant agent.</p>
             </div>
+            <div class="feature-card" style="position:relative;grid-column:span 2;">
+                <span style="position:absolute;top:12px;right:12px;background:#10b981;color:white;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:0.5px;">SENTINEL</span>
+                <div class="feature-icon" style="background:rgba(16,185,129,0.08);color:#10b981;">&#x1F6E1;</div>
+                <h3>Zero-Code Agent Firewall</h3>
+                <p>Point your agent's traffic at Snapwire's Sentinel Proxy. No SDK. No code changes. Just swap your API base URL. 60 seconds to full governance.</p>
+                <div style="margin-top:12px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;font-family:'Fira Code',monospace;font-size:12px;color:var(--text-secondary);line-height:1.6;">
+                    <span style="color:var(--text-tertiary);"># One line. Full governance.</span><br>
+                    OPENAI_BASE_URL=http://localhost:8080/v1 python my_agent.py
+                </div>
+                <p style="font-size:12px;color:var(--text-tertiary);margin-top:8px;">Supports OpenAI, Anthropic, MCP, A2A, and any JSON-RPC protocol. Three modes: Observe (silent audit), Audit (trace + log), Enforce (block + fail-closed).</p>
+            </div>
         </div>
     </section>
 
@@ -997,8 +1008,10 @@
         </div>
     </footer>
 
-    <div style="text-align:center;padding:16px 24px;font-size:11px;color:var(--text-muted);opacity:0.7;border-top:1px solid var(--border);margin-top:0;">
-        Snapwire is a technical monitoring utility. All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator.
+    <div style="text-align:center;padding:16px 24px;font-size:11px;color:var(--text-muted);opacity:0.7;border-top:1px solid var(--border);margin-top:0;line-height:1.6;">
+        <p style="margin:0 0 8px;">Snapwire is a technical monitoring utility. All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator.</p>
+        <p style="margin:0 0 8px;"><strong>Reasonable Care Disclosure:</strong> Snapwire's Sentinel Sidecar is a Deterministic Security Gateway designed to provide continuous monitoring and algorithmic guardrails for autonomous agents. By utilizing Snapwire, the Deployer implements a "Reasonable Care" framework to prevent foreseeable algorithmic harm. Snapwire serves as a technical control-plane for compliance with NIST AI Agent Standards.</p>
+        <p style="margin:0;"><strong>Infrastructure Intermediary:</strong> Snapwire operates as a Passive Security Intermediary (Reverse Proxy). It does not generate, modify, or assume responsibility for the underlying intent or output of the AI Model. Snapwire's liability is limited to the integrity of the gateway's execution of user-defined rules. Forensic logs serve as the Immutable Forensic Record of intent and delegation.</p>
     </div>
 
     <script>

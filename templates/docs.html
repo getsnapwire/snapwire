@@ -151,6 +151,7 @@
             <h3>Governance</h3>
             <a href="#mcp-compat">MCP Compatibility</a>
             <a href="#thinking-sentinel">Thinking Token Sentinel</a>
+            <a href="#sentinel-proxy">Sentinel Proxy</a>
             <h3>SDKs</h3>
             <a href="#sdk-python">Python</a>
             <a href="#sdk-node">Node.js</a>
@@ -884,6 +885,70 @@ def intercept_with_retry(tool_name, params, max_retries=3):
   }
 }</pre>
             <p><strong>Note:</strong> The Thinking Token Sentinel is a heuristic cost-management tool based on token-to-action ratios. It is not a guarantee of model accuracy or behavior.</p>
+
+            <h2 id="sentinel-proxy">Sentinel Proxy</h2>
+            <p>The Sentinel Proxy is a <strong>transparent reverse proxy</strong> that intercepts LLM API traffic and routes it through Snapwire's governance pipeline. No SDK integration or code changes required &mdash; just swap your API base URL.</p>
+
+            <h3>Quick Start</h3>
+            <pre><span class="lang-tag">Shell</span>
+# Docker (recommended — starts Snapwire + Sentinel + PostgreSQL):
+docker-compose up
+
+# Standalone:
+python -m sentinel
+
+# Point your agent at the proxy:
+OPENAI_BASE_URL=http://localhost:8080/v1 python my_agent.py</pre>
+
+            <h3>Supported Protocols</h3>
+            <p>The Sentinel Proxy automatically detects tool-call patterns across multiple protocols:</p>
+            <table>
+                <tr><th>Protocol</th><th>Detection Pattern</th><th>Confidence</th></tr>
+                <tr><td>OpenAI</td><td><code class="inline-code">tools</code> array, <code class="inline-code">tool_choice</code>, <code class="inline-code">tool_calls</code> in messages</td><td>0.90-0.95</td></tr>
+                <tr><td>Anthropic</td><td><code class="inline-code">tool_use</code> content blocks, <code class="inline-code">tools</code> definitions</td><td>0.90-0.95</td></tr>
+                <tr><td>MCP (JSON-RPC)</td><td><code class="inline-code">jsonrpc: "2.0"</code> + <code class="inline-code">method: "tools/call"</code></td><td>1.00</td></tr>
+                <tr><td>A2A (Agent-to-Agent)</td><td><code class="inline-code">tasks/send</code>, <code class="inline-code">delegate_task</code></td><td>0.85</td></tr>
+                <tr><td>Generic JSON-RPC</td><td>Any <code class="inline-code">method</code> + <code class="inline-code">params</code> pattern</td><td>0.50-0.80</td></tr>
+            </table>
+
+            <h3>Operational Modes</h3>
+            <table>
+                <tr><th>Mode</th><th>Logging</th><th>Headers</th><th>Blocking</th><th>Fail Behavior</th></tr>
+                <tr><td><code class="inline-code">observe</code></td><td>Yes (non-blocking)</td><td>No</td><td>No</td><td>N/A (zero latency impact)</td></tr>
+                <tr><td><code class="inline-code">audit</code></td><td>Yes</td><td>Yes</td><td>No</td><td>Pass through</td></tr>
+                <tr><td><code class="inline-code">enforce</code></td><td>Yes</td><td>Yes</td><td>Yes</td><td><strong>Fail-closed</strong> (block if Snapwire unreachable)</td></tr>
+            </table>
+
+            <h3>Identity Headers</h3>
+            <p>In <code class="inline-code">audit</code> and <code class="inline-code">enforce</code> modes, the proxy injects NIST-compliant identity headers:</p>
+            <table>
+                <tr><th>Header</th><th>Purpose</th><th>NIST Alignment</th></tr>
+                <tr><td><code class="inline-code">X-Snapwire-Origin-ID</code></td><td>Root human/principal identity</td><td>Multimodal Identity Lineage (RFI 2a.iii)</td></tr>
+                <tr><td><code class="inline-code">X-Snapwire-Parent-ID</code></td><td>Immediate caller in delegation chain</td><td>Delegation Trace (NISTIR 8596)</td></tr>
+                <tr><td><code class="inline-code">X-Snapwire-Trace</code></td><td>Unique per-request trace ID</td><td>Forensic Non-Repudiation</td></tr>
+            </table>
+
+            <h3>Configuration</h3>
+            <table>
+                <tr><th>Environment Variable</th><th>Default</th><th>Description</th></tr>
+                <tr><td><code class="inline-code">SENTINEL_PORT</code></td><td>8080</td><td>Port the proxy listens on</td></tr>
+                <tr><td><code class="inline-code">SENTINEL_MODE</code></td><td>audit</td><td>Operational mode: observe, audit, enforce</td></tr>
+                <tr><td><code class="inline-code">UPSTREAM_URL</code></td><td>https://api.openai.com</td><td>Real LLM API endpoint</td></tr>
+                <tr><td><code class="inline-code">SNAPWIRE_URL</code></td><td>http://localhost:5000</td><td>Snapwire governance server URL</td></tr>
+                <tr><td><code class="inline-code">SNAPWIRE_API_KEY</code></td><td>(empty)</td><td>API key for Snapwire authentication</td></tr>
+                <tr><td><code class="inline-code">SENTINEL_AGENT_ID</code></td><td>sentinel-proxy</td><td>Default agent ID for lineage tracking</td></tr>
+                <tr><td><code class="inline-code">SENTINEL_ORIGIN_ID</code></td><td>human-principal</td><td>Root identity for NIST lineage chain</td></tr>
+            </table>
+
+            <h3>NIST Compliance Export</h3>
+            <pre><span class="lang-tag">Shell</span>
+# Generate NIST compliance mapping report:
+python -m sentinel --export-nist
+
+# Output: snapwire-nist-mapping.md
+# Includes: compliance scorecard (A/B/C grade), NIST RFI mapping,
+# CSF 2.0 category coverage, active rules summary, legal framework</pre>
+            <p>The export maps your current configuration to NIST RFI requirements (Docket NIST-2025-0035) and includes a compliance grade based on your operational mode.</p>
 
             <h2 id="sdk-python">Python SDK</h2>
             <p>A minimal Python wrapper for quick integration:</p>
