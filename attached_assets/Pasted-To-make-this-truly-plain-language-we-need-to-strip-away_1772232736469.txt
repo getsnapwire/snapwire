@@ -1,0 +1,76 @@
+To make this truly "plain language," we need to strip away the "AI-Safety-Speak" and describe Snapwire like a physical security system for a building.
+
+In 2026, the best homepages follow the **"What / How / Proof"** model. Here is how to restructure your pages so a developer understands the tech in 10 seconds, and a CEO understands the value in 20.
+
+---
+
+### **1. The Homepage: "The Front Gate"**
+
+The goal is to explain that Snapwire is a **traffic controller** for AI.
+
+#### **The Hero (Headline)**
+
+> **"AI Agents act on your behalf. We make sure they don't go rogue."**
+> *Sub-headline:* "Snapwire is a secure bridge between your AI and your data. It stops logic loops, prevents unauthorized spending, and creates the legal paperwork you need—all with one line of code."
+
+#### **The "Plain English" Benefits**
+
+* **"See everything your AI does."** (Instead of *Observability*)
+* **"Get a text before it spends money."** (Instead of *Human-in-the-loop*)
+* **"Automatic legal protection."** (Instead of *NIST/SB24-205 Compliance*)
+* **"Fix security holes instantly."** (Instead of *Self-healing protocols*)
+
+---
+
+### **2. The "How it Works" Page: "The Plumbing"**
+
+Developers hate magic. They want to see the "wires." Use a simple 3-step visualization.
+
+| **Step** | **Plain Language Description** | **Technical Reality (for Devs)** |
+| --- | --- | --- |
+| **1. Plug In** | Add our proxy URL to your agent's config. | Set `HTTPS_PROXY` to our Sentinel. |
+| **2. Watch** | We "read" every tool call your agent tries to make. | We intercept JSON-RPC 2.0 traffic. |
+| **3. Control** | We pause risky moves and ask for your "thumbs up" in Slack. | We trigger a Hold-Window based on Risk Score. |
+
+---
+
+### **3. The "Compliance" Page: "The Shield"**
+
+This page is for the **Legal/Risk** visitors. They don't care about "proxies"; they care about **fines**.
+
+* **The "Big Problem":** "In 2026, if your AI makes a biased decision, you could be fined $20,000 per instance."
+* **The Snapwire Solution:** "We automate your 'Reasonable Care' defense. Every action is logged, hashed, and summarized into a PDF that proves you were in control."
+* **Plain English Feature:** **"The 3-Sentence Summary."** (Instead of *Vibe-Summary*). Explain that Claude translates "computer code" into "human English" so anyone can audit the AI.
+
+---
+
+### **4. Other Key Page Changes**
+
+#### **A. The "Tool Catalog" Page**
+
+* **Change:** Rename "Tool Catalog" to **"The Safe-List."**
+* **Description:** "A list of 1,000+ apps your AI is allowed to use. We've already tested them for security holes so you don't have to."
+
+#### **B. The "Pricing" Page**
+
+* **Change:** Keep it ultra-simple.
+* **Copy:** "Free for Builders. You pay for your own AI usage (BYOK). We just provide the vault."
+
+---
+
+### **5. Summary: The "Plain Language" Checklist**
+
+| **Current Term** | **Plain Language Swap** |
+| --- | --- |
+| **Agentic Chain of Custody** | **"The Paper Trail"** |
+| **Sentinel Proxy** | **"The Security Bridge"** |
+| **Deterministic Hold Window** | **"The 30-Second Pause"** |
+| **Consequentiality Tag** | **"High-Stakes Flag"** |
+
+### **The "Unicorn" Next Step**
+
+By simplifying the language, you make the product feel **inevitable** rather than **complex**. This clarity is what drives a **$150M+ acquisition**—you are selling a solution, not a project.
+
+**Would you like me to draft the "Plain Language Feature Guide"?** This is a one-page "cheat sheet" you can put on the homepage that translates all 49 features into sentences a 5th grader (or a busy CEO) can understand.
+
+Would you like me to ... **draft the Plain Language Guide?**
