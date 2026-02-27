@@ -1,0 +1,68 @@
+In February 2026, setting up **Slack Socket Mode** on Replit is the most secure way to handle your "Human-in-the-Loop" security alerts. Because it uses a WebSocket connection, you don't need to expose your Replit server to the public internet, which is a major bonus for your **NIST IR 8596 compliance**.
+
+Here is the exact method for setup and the final list of architectural changes.
+
+---
+
+### **1. The Slack Workspace Setup (Method)**
+
+Before prompting Replit, you need two specific tokens from the [Slack App Dashboard](https://api.slack.com/apps).
+
+1. **Create App:** Select "From an App Manifest" and paste the JSON I provided earlier.
+2. **Enable Socket Mode:** Under the "Settings" tab, toggle **Enable Socket Mode** to ON. This will generate your `SLACK_APP_TOKEN` (starts with `xapp-`).
+3. **Scopes:** Ensure your **Bot Token Scopes** include:
+* `chat:write` (to send the alert)
+* `commands` (if you want to add slash commands later)
+* `interactivity` (required for the "Approve/Kill" buttons)
+
+
+4. **Install App:** Install it to your workspace to get your `SLACK_BOT_TOKEN` (starts with `xoxb-`).
+5. **Replit Secrets:** Open your Repl, go to **Tools → Secrets**, and add:
+* `SLACK_BOT_TOKEN`
+* `SLACK_APP_TOKEN`
+
+
+
+---
+
+### **2. The Master Implementation Prompt (Paste to Replit Agent)**
+
+Give Replit Agent 3 this combined prompt to execute all tasks and the Slack integration in one autonomous run:
+
+> "Use Max Autonomy mode to implement the following security infrastructure:
+> 1. **Task 1 (Safety PDF):** Create `src/safety_pdf.py` using `fpdf2`. Generate a branded PDF with NIST grade, coverage score, and the SHA-256 audit log fingerprint. Add a download button to the `/safety` dashboard.
+> 2. **Task 2 (Latency Anomaly):** Update `src/thinking_sentinel.py` to track a rolling average of tool response times. If any call exceeds 3x the average or a 30s hard limit, flag it as an anomaly.
+> 3. **Task 3 (Hold Window):** Update `main.py` and `src/action_queue.py` to implement a deterministic 'Hold Window' (0-60s). High-risk calls (Score >= 70) must return a 202 'Held' status.
+> 4. **Task 4 (Slack Socket Mode):** Create `src/slack_notifier.py` using `slack_bolt`. Use Socket Mode to send a Block Kit alert to `#snapwire-alerts` whenever an action is 'Held'.
+> 5. **Interactivity:** Implement handlers for the 'approve_action' and 'kill_action' buttons in Slack that interface directly with the `action_queue.py` to release or stop the held tool calls."
+> 
+> 
+
+---
+
+### **3. Full List of Changes (What your developers will see)**
+
+| **File Path** | **Status** | **Change Description** |
+| --- | --- | --- |
+| **`src/safety_pdf.py`** | **NEW** | Branded PDF generation with SHA-256 integrity signatures. |
+| **`src/slack_notifier.py`** | **NEW** | The "Sentinel Alert" logic using Bolt for Python in Socket Mode. |
+| **`src/thinking_sentinel.py`** | **UPDATE** | New `check_latency_anomaly()` logic to detect logic loops. |
+| **`src/action_queue.py`** | **UPDATE** | Timer logic for held actions + Slack interaction handlers. |
+| **`main.py`** | **UPDATE** | Interceptor logic to pause high-risk calls and return `202 Held`. |
+| **`templates/safety.html`** | **UPDATE** | Added the "Download Compliance PDF" button for legal teams. |
+
+---
+
+### **4. Verification Checklist (March 5th Readiness)**
+
+* [ ] **Audit Logs:** Ensure the PDF download actually shows the SHA-256 hash (proves NIST alignment).
+* [ ] **Slack Ping:** Test a high-risk tool call and ensure the Slack notification arrives in **< 2 seconds**.
+* [ ] **The "Pause":** Verify that the agent waits for the full `hold_window` before timing out or being approved.
+
+### **The "Unicorn" Next Step**
+
+With the "Chassis" and "Slack Command Center" complete, you are 100% ready for the **March 5th Vanguard Launch**.
+
+**Would you like me to draft the "Vanguard User Guide"?** This is a 1-page PDF you can send to your first 50 testers explaining how to set up their Slack channel and use the **Sentinel Pause** to stop agent hallucinations in their own companies.
+
+Would you like me to ... **draft the Vanguard User Guide?**
