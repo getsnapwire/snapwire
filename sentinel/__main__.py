@@ -34,6 +34,7 @@ def get_config() -> dict:
         "mode": os.environ.get("SENTINEL_MODE", "audit"),
         "agent_id": os.environ.get("SENTINEL_AGENT_ID", "sentinel-proxy"),
         "origin_id": os.environ.get("SENTINEL_ORIGIN_ID", "human-principal"),
+        "signing_secret": os.environ.get("SNAPWIRE_SIGNING_SECRET", ""),
     }
 
 
@@ -52,6 +53,7 @@ def print_banner(config: dict):
     print(f"  Snapwire:   {config['snapwire_url']}")
     print(f"  Agent ID:   {config['agent_id']}")
     print(f"  Origin ID:  {config['origin_id']}")
+    print(f"  Signature:  {'HMAC-SHA256 active' if config.get('signing_secret') else 'disabled (set SNAPWIRE_SIGNING_SECRET)'}")
     print()
     print("  Quick Start:")
     print(f"    OPENAI_BASE_URL=http://localhost:{config['port']}/v1 python my_agent.py")

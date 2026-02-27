@@ -46,6 +46,7 @@ services:
       - SNAPWIRE_URL=http://app:5000
       - UPSTREAM_URL=https://api.openai.com
       - SNAPWIRE_API_KEY=
+      - SNAPWIRE_SIGNING_SECRET=
       - SENTINEL_AGENT_ID=sentinel-proxy
     depends_on:
       app:

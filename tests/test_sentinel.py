@@ -239,6 +239,47 @@ class TestProxyHardening(unittest.TestCase):
         self.assertLessEqual(MAX_BODY_SIZE, 100 * 1024 * 1024)
 
 
+class TestSignature(unittest.TestCase):
+    def test_hmac_signature_generation(self):
+        import hashlib
+        import hmac as hmac_mod
+
+        secret = "test-secret-key"
+        trace_id = "abc123"
+        timestamp = "1709000000"
+        path = "/v1/chat/completions"
+
+        sig_payload = f"{trace_id}.{timestamp}.{path}"
+        expected = hmac_mod.new(
+            secret.encode(),
+            sig_payload.encode(),
+            hashlib.sha256,
+        ).hexdigest()
+
+        self.assertEqual(len(expected), 64)
+        self.assertTrue(all(c in "0123456789abcdef" for c in expected))
+
+    def test_config_includes_signing_secret(self):
+        import os
+        os.environ["SNAPWIRE_SIGNING_SECRET"] = "my-secret"
+        from importlib import reload
+        import sentinel.__main__ as sm
+        reload(sm)
+        config = sm.get_config()
+        self.assertEqual(config["signing_secret"], "my-secret")
+        os.environ.pop("SNAPWIRE_SIGNING_SECRET", None)
+
+    def test_proxy_loads_signing_secret(self):
+        from sentinel.proxy import SentinelProxy
+        proxy = SentinelProxy({"signing_secret": "test123"})
+        self.assertEqual(proxy.signing_secret, "test123")
+
+    def test_proxy_no_signing_secret_default(self):
+        from sentinel.proxy import SentinelProxy
+        proxy = SentinelProxy({})
+        self.assertEqual(proxy.signing_secret, "")
+
+
 class TestSentinelConfig(unittest.TestCase):
     def test_get_config_defaults(self):
         import os

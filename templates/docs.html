@@ -926,7 +926,10 @@ OPENAI_BASE_URL=http://localhost:8080/v1 python my_agent.py</pre>
                 <tr><td><code class="inline-code">X-Snapwire-Origin-ID</code></td><td>Root human/principal identity</td><td>Multimodal Identity Lineage (RFI 2a.iii)</td></tr>
                 <tr><td><code class="inline-code">X-Snapwire-Parent-ID</code></td><td>Immediate caller in delegation chain</td><td>Delegation Trace (NISTIR 8596)</td></tr>
                 <tr><td><code class="inline-code">X-Snapwire-Trace</code></td><td>Unique per-request trace ID</td><td>Forensic Non-Repudiation</td></tr>
+                <tr><td><code class="inline-code">X-Snapwire-Signature</code></td><td>HMAC-SHA256 proof of governance</td><td>Cryptographic Non-Repudiation</td></tr>
+                <tr><td><code class="inline-code">X-Snapwire-Timestamp</code></td><td>Unix timestamp for replay protection</td><td>Temporal Binding</td></tr>
             </table>
+            <p>The <code class="inline-code">X-Snapwire-Signature</code> header is an HMAC-SHA256 digest of <code class="inline-code">trace_id.timestamp.request_path</code>, signed with your <code class="inline-code">SNAPWIRE_SIGNING_SECRET</code>. Downstream services can verify this signature to cryptographically prove the request passed through Snapwire governance.</p>
 
             <h3>Configuration</h3>
             <table>
@@ -938,6 +941,7 @@ OPENAI_BASE_URL=http://localhost:8080/v1 python my_agent.py</pre>
                 <tr><td><code class="inline-code">SNAPWIRE_API_KEY</code></td><td>(empty)</td><td>API key for Snapwire authentication</td></tr>
                 <tr><td><code class="inline-code">SENTINEL_AGENT_ID</code></td><td>sentinel-proxy</td><td>Default agent ID for lineage tracking</td></tr>
                 <tr><td><code class="inline-code">SENTINEL_ORIGIN_ID</code></td><td>human-principal</td><td>Root identity for NIST lineage chain</td></tr>
+                <tr><td><code class="inline-code">SNAPWIRE_SIGNING_SECRET</code></td><td>(empty)</td><td>HMAC-SHA256 secret for X-Snapwire-Signature header</td></tr>
             </table>
 
             <h3>NIST Compliance Export</h3>

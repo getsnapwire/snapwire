@@ -8,6 +8,8 @@ Three operational modes:
 """
 
 import asyncio
+import hashlib
+import hmac
 import json
 import logging
 import time
@@ -32,6 +34,7 @@ class SentinelProxy:
         self.mode = config.get("mode", "audit")
         self.agent_id = config.get("agent_id", "sentinel-proxy")
         self.origin_id = config.get("origin_id", "human-principal")
+        self.signing_secret = config.get("signing_secret", "")
         self._session: aiohttp.ClientSession | None = None
         self._stats = {"total": 0, "intercepted": 0, "blocked": 0, "errors": 0}
 
@@ -216,6 +219,16 @@ class SentinelProxy:
             forward_headers["X-Snapwire-Origin-ID"] = self.origin_id
             forward_headers["X-Snapwire-Parent-ID"] = self.agent_id
             forward_headers["X-Snapwire-Trace"] = trace_id
+            if self.signing_secret:
+                ts = str(int(time.time()))
+                sig_payload = f"{trace_id}.{ts}.{request.path}"
+                signature = hmac.new(
+                    self.signing_secret.encode(),
+                    sig_payload.encode(),
+                    hashlib.sha256,
+                ).hexdigest()
+                forward_headers["X-Snapwire-Signature"] = signature
+                forward_headers["X-Snapwire-Timestamp"] = ts
 
         try:
             async with self._session.request(

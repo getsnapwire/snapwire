@@ -42,6 +42,7 @@ from src.rule_templates import get_templates, get_template
 from src.rate_limiter import check_rate_limit, get_rate_limit_info, RATE_LIMIT_PER_MINUTE
 import src.rate_limiter as rate_limiter_module
 from src.input_sanitizer import sanitize_parameters
+from src.safeguard_openclaw import check_openclaw
 from src.nlp_rule_builder import parse_natural_language_rule, detect_rule_conflicts, test_rule_against_action
 from src.notifications import send_slack_notification, send_notification_to_configured_webhooks
 from src.email_service import send_blocked_action_email, send_critical_risk_email, send_weekly_digest_email
@@ -635,6 +636,24 @@ def intercept_tool_call():
             "status": "blocked",
             "message": "Tool call blocked: potentially malicious input detected.",
             "threats": threats,
+        }
+        if mcp_request:
+            return _wrap_mcp_response(resp, 403, mcp_id)
+        return jsonify(resp), 403
+
+    openclaw_result = check_openclaw(data["tool_name"], params, agent_id=agent_id, tenant_id=tenant_id)
+    if openclaw_result:
+        log_action(
+            {"tool_name": data["tool_name"], "parameters": params, "intent": data.get("intent", ""), "context": data.get("context", "")},
+            {"allowed": False, "violations": [{"rule": "openclaw_safeguard", "severity": openclaw_result["severity"], "reason": openclaw_result["message"]}], "risk_score": 95, "analysis": openclaw_result["message"]},
+            "blocked-openclaw",
+            agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id,
+        )
+        resp = {
+            "status": "blocked",
+            "message": openclaw_result["message"],
+            "safeguard": "openclaw",
+            "violations": openclaw_result["violations"],
         }
         if mcp_request:
             return _wrap_mcp_response(resp, 403, mcp_id)
