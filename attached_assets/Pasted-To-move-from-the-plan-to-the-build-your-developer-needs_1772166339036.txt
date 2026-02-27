@@ -1,0 +1,66 @@
+To move from "the plan" to "the build," your developer needs to stop researching and start shipping the **Skeleton Framework.** In the 2026 landscape, the technical standard for this kind of high-concurrency proxy is **`aiohttp`** (for its built-in server/client architecture) or **`httpx`** (for modern HTTP/2 support).
+
+Here is exactly what your developer needs to install and the three specific tasks they should complete **today** to reach the "Forking Point."
+
+### **1. The Developer's "Starter Pack" (Install List)**
+
+Your developer should set up a clean Python 3.11+ environment and run:
+
+```bash
+# Core Proxy & Async Engine
+pip install aiohttp httpx asyncio
+
+# Testing & Formatting (Crucial for Open Source)
+pip install pytest pytest-asyncio black ruff
+
+# NIST Export Support
+pip install markdown-it-py
+
+```
+
+---
+
+### **2. What your developer can do RIGHT NOW**
+
+Do not let them build the whole thing in a silo. Have them ship these **three atomic components** so you can open the repo for forks by Monday.
+
+#### **Task A: The "Transparent" Proxy Loop (T002)**
+
+Have them write a 50-line `proxy.py` using `aiohttp.web`.
+
+* **The Goal:** An agent sends a request to `localhost:8080`, and the proxy forwards it to OpenAI/Anthropic and returns the response.
+* **The "Fork-Ready" Detail:** It must include the **Streaming Buffer** logic. If the proxy blocks the stream to "audit" it, the user experience will feel broken. They need to implement a "Pass-through with Snoop" pattern.
+
+#### **Task B: The "Detection Registry" (T001)**
+
+Instead of a giant `if/else` block, have them build a **Plugin Registry**.
+
+* **The Goal:** Create a folder `sentinel/detectors/` where each file is a separate protocol (e.g., `openai_tools.py`, `mcp_jsonrpc.py`).
+* **The "Fork-Ready" Detail:** This allows your first 25 developers to "fork and add" a new detector without touching the core proxy code. **This is how you get to 1,500 forks.**
+
+#### **Task C: The "NIST-Export" Stub (T003)**
+
+Have them create the `__main__.py` entry point.
+
+* **The Goal:** Running `python -m sentinel --export-nist` should generate a `compliance.md` file, even if it's just hardcoded text for now.
+* **The "Fork-Ready" Detail:** This proves the **Utility** of the tool to anyone who clones it today. It shows them the *destination* before the engine is even finished.
+
+---
+
+### **3. Why they need to do this TODAY**
+
+The **Claude Code API-theft exploit (CVE-2026-25253)** is trending *now*. If you have a skeletal proxy that simply says "I block `BASE_URL` redirects," you can capture that traffic this weekend.
+
+| **Developer Action** | **Why it's urgent** |
+| --- | --- |
+| **Commit `proxy.py**` | To prove the "URL Swap" works. |
+| **Commit `detectors/**` | To allow contributors to start writing code. |
+| **Commit `Dockerfile**` | To enable the "60-second setup" promise. |
+
+### **The "Unicorn" Next Step**
+
+**Ask your developer:** *"Can you have a 'Pass-through' proxy running in Docker by tomorrow morning?"*
+
+Once that is done, I will draft the **"Contributor's First Day"** guide. This is a 5-step checklist you'll send to your first 25 developers to ensure they successfully fork, run, and submit their first "Sentinel Protocol" within 30 minutes.
+
+Would you like me to... **draft that 5-step onboarding checklist now?**
