@@ -283,3 +283,215 @@ def generate_safety_pdf():
     pdf.cell(0, 4, f"Snapwire  |  The Firewall for AI Agents  |  Report generated {now.strftime('%Y-%m-%d %H:%M UTC')}", align="C")
 
     return bytes(pdf.output())
+
+
+def generate_vanguard_guide_pdf():
+    now = datetime.utcnow()
+
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=20)
+    pdf.add_page()
+
+    pdf.set_fill_color(20, 20, 30)
+    pdf.rect(0, 0, 210, 50, 'F')
+    pdf.set_text_color(255, 140, 0)
+    pdf.set_font("Helvetica", "B", 24)
+    pdf.set_y(12)
+    pdf.cell(0, 10, "SNAPWIRE", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 11)
+    pdf.set_text_color(200, 200, 210)
+    pdf.cell(0, 6, "Vanguard User Guide", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(150, 150, 160)
+    pdf.cell(0, 6, f"Generated: {now.strftime('%B %d, %Y at %H:%M UTC')}", align="C", new_x="LMARGIN", new_y="NEXT")
+
+    pdf.set_y(58)
+    pdf.set_text_color(40, 40, 50)
+
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "1. Hold Window", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(60, 60, 70)
+    pdf.multi_cell(0, 5,
+        "The Hold Window is Snapwire's human-in-the-loop control mechanism. When an AI agent makes a "
+        "tool call that triggers a constitutional rule, the action is held for human review instead of "
+        "being immediately blocked or approved."
+    )
+    pdf.ln(3)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(40, 40, 50)
+    pdf.cell(0, 6, "How It Works", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(60, 60, 70)
+    hold_items = [
+        "When a tool call matches a hold-eligible rule, Snapwire returns HTTP 202 (Accepted) to the calling agent, signaling the action is pending review.",
+        "The configurable hold timeout ranges from 0 to 60 seconds. If no human responds within the timeout, the action is auto-released according to your configured policy (approve or deny).",
+        "Operators can approve or deny held actions from the Snapwire dashboard, Slack, or via the API.",
+        "All hold decisions are logged in the immutable audit trail with the operator identity, timestamp, and decision rationale.",
+    ]
+    for item in hold_items:
+        pdf.cell(5, 5, "")
+        pdf.multi_cell(0, 5, f"- {item}")
+        pdf.ln(1)
+    pdf.ln(3)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(40, 40, 50)
+    pdf.cell(0, 6, "Configuration", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(60, 60, 70)
+    pdf.multi_cell(0, 5,
+        "Set the hold window duration in your tenant settings (0-60 seconds). A value of 0 disables the "
+        "hold window and reverts to immediate block/approve behavior. The recommended setting for "
+        "production deployments is 30 seconds."
+    )
+    pdf.ln(6)
+
+    pdf.set_text_color(40, 40, 50)
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "2. Slack Alerts", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(60, 60, 70)
+    pdf.multi_cell(0, 5,
+        "Snapwire integrates with Slack via Socket Mode to deliver real-time alerts when actions are "
+        "held for review. This enables operators to triage agent actions without leaving their existing workflow."
+    )
+    pdf.ln(3)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(40, 40, 50)
+    pdf.cell(0, 6, "Setup", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(60, 60, 70)
+    setup_items = [
+        "Create a Slack app at api.slack.com with Socket Mode enabled.",
+        "Add the SLACK_BOT_TOKEN and SLACK_APP_TOKEN environment variables to your Snapwire instance.",
+        "Configure the notification channel in your Snapwire dashboard under Settings > Webhooks & Notifications.",
+        "Snapwire will send Block Kit messages to the configured channel whenever an action is held.",
+    ]
+    for item in setup_items:
+        pdf.cell(5, 5, "")
+        pdf.multi_cell(0, 5, f"- {item}")
+        pdf.ln(1)
+    pdf.ln(3)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(40, 40, 50)
+    pdf.cell(0, 6, "Approve / Kill Buttons", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(60, 60, 70)
+    pdf.multi_cell(0, 5,
+        "Each Slack alert includes interactive Approve and Kill buttons. Clicking Approve releases the "
+        "held action and allows the agent to proceed. Clicking Kill permanently denies the action. Both "
+        "decisions are recorded in the audit log with the Slack user identity (slack:<username>) as the "
+        "resolver, providing full traceability."
+    )
+    pdf.ln(6)
+
+    pdf.set_text_color(40, 40, 50)
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "3. Weekly Compliance Digest", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(60, 60, 70)
+    pdf.multi_cell(0, 5,
+        "Every Friday at 9:00 AM UTC, Snapwire generates and distributes a Weekly Compliance Digest "
+        "summarizing the prior week's agent activity, enforcement decisions, and compliance posture."
+    )
+    pdf.ln(3)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(40, 40, 50)
+    pdf.cell(0, 6, "Digest Contents", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(60, 60, 70)
+    digest_items = [
+        "Total tool calls intercepted and evaluated during the week.",
+        "Breakdown of approved, blocked, held, and shadow-blocked actions.",
+        "Top triggered rules and most active agents.",
+        "Risk score trends and high-risk action summary.",
+        "SHA-256 fingerprint of the audit log for the reporting period, enabling independent verification of log integrity.",
+    ]
+    for item in digest_items:
+        pdf.cell(5, 5, "")
+        pdf.multi_cell(0, 5, f"- {item}")
+        pdf.ln(1)
+    pdf.ln(3)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(40, 40, 50)
+    pdf.cell(0, 6, "Distribution", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(60, 60, 70)
+    pdf.multi_cell(0, 5,
+        "The digest is sent via Slack (if configured) and email (if email notifications are enabled in "
+        "tenant settings). It can also be accessed on-demand via the Snapwire dashboard."
+    )
+    pdf.ln(6)
+
+    pdf.set_text_color(40, 40, 50)
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "4. Safety PDF & Compliance Reporting", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(60, 60, 70)
+    pdf.multi_cell(0, 5,
+        "Snapwire generates a comprehensive Safety Disclosure PDF that documents your instance's "
+        "compliance posture, active safeguards, and NIST IR 8596 coverage grade."
+    )
+    pdf.ln(3)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(40, 40, 50)
+    pdf.cell(0, 6, "Using the Safety PDF", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(60, 60, 70)
+    usage_items = [
+        "Download from the /safety page or via /safety/pdf at any time.",
+        "The PDF includes your current NIST grade, coverage breakdown by CSF 2.0 function, active safeguards list, and audit log fingerprint.",
+        "Use it as supporting documentation for NIST AI RMF compliance filings.",
+        "Attach it to Colorado SB24-205 impact assessments as evidence of algorithmic discrimination protections and human oversight.",
+        "The audit log fingerprint (SHA-256) enables independent verification that your logs have not been tampered with.",
+    ]
+    for item in usage_items:
+        pdf.cell(5, 5, "")
+        pdf.multi_cell(0, 5, f"- {item}")
+        pdf.ln(1)
+    pdf.ln(3)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(40, 40, 50)
+    pdf.cell(0, 6, "Regulatory Alignment", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(60, 60, 70)
+    reg_items = [
+        "NIST IR 8596 (AI Agent Security Profile / CSF 2.0): Coverage grading across Govern, Protect, Detect, Respond, and Recover functions.",
+        "Colorado SB24-205 (AI Consumer Protections): Affirmative defense evidence including human oversight records, discrimination testing, and safety disclosures.",
+        "OWASP Top 10 for LLM Applications: Safeguards mapped to prompt injection, insecure output handling, and other LLM-specific threats.",
+    ]
+    for item in reg_items:
+        pdf.cell(5, 5, "")
+        pdf.multi_cell(0, 5, f"- {item}")
+        pdf.ln(1)
+    pdf.ln(6)
+
+    pdf.set_fill_color(245, 245, 248)
+    pdf.set_font("Helvetica", "I", 8)
+    pdf.set_text_color(120, 120, 130)
+    disclaimer = (
+        "This guide is provided by Snapwire for informational purposes only. It does not constitute legal advice, "
+        "formal certification, or a guarantee of regulatory compliance. Snapwire operates as a technical monitoring "
+        "utility. All blocks, alerts, and signals are heuristic and advisory in nature. The final Duty of Care for "
+        "all agent actions and budgetary releases remains solely with the human operator."
+    )
+    pdf.multi_cell(0, 4, disclaimer, fill=True)
+
+    pdf.ln(4)
+    pdf.set_font("Helvetica", "", 7)
+    pdf.set_text_color(150, 150, 160)
+    pdf.cell(0, 4, f"Snapwire  |  Vanguard User Guide  |  Generated {now.strftime('%Y-%m-%d %H:%M UTC')}", align="C")
+
+    return bytes(pdf.output())

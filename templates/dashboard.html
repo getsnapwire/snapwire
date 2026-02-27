@@ -818,6 +818,7 @@
                 <button class="sub-tab" data-subtab="catalog" data-group="security">Tool Catalog</button>
                 <button class="sub-tab" data-subtab="risk" data-group="security">Risk Intelligence</button>
                 <button class="sub-tab" data-subtab="autotriage" data-group="security">Auto-Triage</button>
+                <button class="sub-tab" data-subtab="stealth" data-group="security">Stealth Mode</button>
             </div>
         </div>
         {% endif %}
@@ -835,6 +836,7 @@
                 <button class="sub-tab" data-subtab="admin" data-group="settings-group">Users</button>
                 <button class="sub-tab" data-subtab="contacts" data-group="settings-group">Contact Inbox</button>
                 <button class="sub-tab" data-subtab="telemetry" data-group="settings-group">Telemetry</button>
+                <a href="/compliance-portal" class="sub-tab" style="text-decoration:none;">Compliance Portal &#8594;</a>
                 {% endif %}
             </div>
         </div>
@@ -1041,6 +1043,7 @@
                     <div style="display:flex;gap:8px;">
                         <button onclick="fetchNistReport()" class="btn" style="padding:8px 16px;font-size:12px;background:var(--accent-blue);color:white;border:none;border-radius:6px;cursor:pointer;">Generate Report</button>
                         <a href="/api/compliance/nist-report/pdf" download class="btn" style="padding:8px 16px;font-size:12px;background:var(--accent);color:white;border:none;border-radius:6px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">&#128196; Download NIST Audit Report</a>
+                        <a href="/safety/vanguard-guide.pdf" download class="btn" style="padding:8px 16px;font-size:12px;background:var(--accent-blue);color:white;border:none;border-radius:6px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">&#128216; Download Vanguard Guide</a>
                     </div>
                 </div>
                 <div id="nist-report-content">
@@ -2405,6 +2408,32 @@ def handle_tool_call(tool_call):
         </div>
     </div>
 
+    <div id="panel-stealth" class="panel">
+        <h3 style="margin-bottom:16px;">Stealth Mode</h3>
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">When stealth mode is active, community features (Leaderboard, Founding Sentinel Wall of Fame, Community Rules) are hidden from non-admin users. Backend tracking continues — flip the switch once you hit 150 contributors.</p>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:14px;font-weight:600;color:var(--text-primary);" id="stealth-status-label">Stealth Mode: Loading...</div>
+                    <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Community pages hidden from non-admin users when enabled.</div>
+                </div>
+                <button id="stealth-toggle-btn" onclick="toggleStealthMode()" style="background:var(--accent);border:none;color:#fff;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13px;">Toggle</button>
+            </div>
+        </div>
+        <div style="background:rgba(0,245,212,0.06);border:1px solid rgba(0,245,212,0.15);border-radius:10px;padding:14px 18px;display:flex;align-items:flex-start;gap:10px;">
+            <span style="font-size:16px;">&#x1F6E1;</span>
+            <div>
+                <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">What stays hidden</div>
+                <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">
+                    &bull; Leaderboard rankings<br>
+                    &bull; Founding Sentinel Wall of Fame<br>
+                    &bull; Community Rules marketplace<br>
+                    &bull; Public sentinel counts on landing page (shows "Coming Soon" instead)
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="add-triage-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:500px;width:90%;">
             <h3 style="margin-bottom:16px;">Add Auto-Triage Rule</h3>
@@ -2585,7 +2614,7 @@ def handle_tool_call(tool_call):
             'activity': ['pending', 'log', 'stream', 'digest'],
             'rules-group': ['rules', 'history', 'test'],
             'agents-group': ['agents', 'analytics'],
-            'security': ['vault', 'honeypots', 'blast', 'catalog', 'risk', 'autotriage'],
+            'security': ['vault', 'honeypots', 'blast', 'holdwindow', 'catalog', 'risk', 'autotriage', 'stealth'],
             'settings-group': ['keys', 'llm', 'org', 'account', 'settings', 'admin', 'contacts', 'telemetry']
         };
 
@@ -2971,13 +3000,24 @@ def handle_tool_call(tool_call):
                             </div>
                             <div class="snap-panel snap-panel-signal">
                                 <div class="snap-panel-label" style="color:var(--accent-red);">&#x1F6AB; Security Signal</div>
-                                ${violations.map(v => `
-                                    <div style="margin-bottom:8px;">
-                                        <div style="font-size:12px;font-weight:600;color:var(--text-primary);">${v.rule} <span class="severity-badge severity-${v.severity}" style="font-size:10px;">${v.severity}</span></div>
-                                        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${v.reason}</div>
+                                ${action.audit_result?.vibe_summary ? `
+                                    <div style="margin-bottom:10px;padding:10px 12px;background:var(--bg-secondary);border-left:3px solid var(--accent);border-radius:6px;">
+                                        <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Vibe Summary</div>
+                                        <div style="font-size:13px;color:var(--text-primary);line-height:1.6;">${action.audit_result.vibe_summary}</div>
                                     </div>
-                                `).join('')}
-                                ${action.audit_result?.analysis ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;color:var(--text-secondary);line-height:1.5;">${action.audit_result.analysis}</div>` : ''}
+                                ` : ''}
+                                <div id="violations-toggle-${action.id}">
+                                    <button onclick="document.getElementById('violations-detail-${action.id}').style.display=document.getElementById('violations-detail-${action.id}').style.display==='none'?'block':'none'; this.textContent=this.textContent.includes('View')?'Hide Code':'View Code'" style="background:none;border:1px solid var(--border);color:var(--text-secondary);font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;margin-bottom:6px;">${action.audit_result?.vibe_summary ? 'View Code' : 'Hide Code'}</button>
+                                </div>
+                                <div id="violations-detail-${action.id}" style="display:${action.audit_result?.vibe_summary ? 'none' : 'block'};">
+                                    ${violations.map(v => `
+                                        <div style="margin-bottom:8px;">
+                                            <div style="font-size:12px;font-weight:600;color:var(--text-primary);">${v.rule} <span class="severity-badge severity-${v.severity}" style="font-size:10px;">${v.severity}</span></div>
+                                            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${v.reason}</div>
+                                        </div>
+                                    `).join('')}
+                                    ${action.audit_result?.analysis ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;color:var(--text-secondary);line-height:1.5;">${action.audit_result.analysis}</div>` : ''}
+                                </div>
                             </div>
                         </div>
 
@@ -5733,6 +5773,28 @@ def handle_tool_call(tool_call):
             status.style.color = 'var(--accent-green)';
             setTimeout(() => { status.textContent = ''; }, 3000);
         }
+        async function loadStealthMode() {
+            try {
+                const resp = await fetch('/api/settings/stealth-mode');
+                const data = await resp.json();
+                const isOn = data.is_stealth_mode;
+                const label = document.getElementById('stealth-status-label');
+                const btn = document.getElementById('stealth-toggle-btn');
+                if (label) {
+                    label.textContent = isOn ? 'Stealth Mode: Active' : 'Stealth Mode: Disabled';
+                    label.style.color = isOn ? 'var(--accent)' : 'var(--accent-green)';
+                }
+                if (btn) btn.textContent = isOn ? 'Disable Stealth' : 'Enable Stealth';
+            } catch(e) { console.error('Failed to load stealth mode', e); }
+        }
+        async function toggleStealthMode() {
+            try {
+                const resp = await fetch('/api/settings/stealth-mode', {method:'PATCH'});
+                const data = await resp.json();
+                loadStealthMode();
+            } catch(e) { console.error('Failed to toggle stealth mode', e); }
+        }
+        loadStealthMode();
         async function unlockAgent(agentId) {
             await fetch(`/api/blast-radius/clear/${agentId}`, {method:'POST'});
             loadBlastRadius();

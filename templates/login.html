@@ -643,11 +643,11 @@
             <div class="animate animate-d3" style="margin-top:20px;display:none;align-items:center;gap:16px;justify-content:center;flex-wrap:wrap;" id="hero-social-proof">
                 <div id="sentinel-badge" style="display:none;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,107,0,0.08);border:1px solid rgba(255,107,0,0.2);border-radius:10px;">
                     <span style="font-size:18px;">&#x1F6E1;</span>
-                    <span style="font-size:14px;color:var(--text-secondary);"><strong id="sentinel-count" style="color:var(--accent);font-size:16px;">0</strong> / 150 Founding Sentinel Slots Claimed</span>
+                    <span id="sentinel-label" style="font-size:14px;color:var(--text-secondary);"><strong id="sentinel-count" style="color:var(--accent);font-size:16px;">0</strong> Community Security Validations</span>
                 </div>
                 <div id="blocked-badge" style="display:none;align-items:center;gap:8px;padding:8px 16px;background:rgba(0,245,212,0.06);border:1px solid rgba(0,245,212,0.15);border-radius:10px;">
                     <span style="font-size:18px;">&#x26A1;</span>
-                    <span style="font-size:14px;color:var(--text-secondary);"><strong id="total-blocked-count" style="color:var(--green);font-size:16px;">0</strong> actions blocked</span>
+                    <span style="font-size:14px;color:var(--text-secondary);"><strong id="total-blocked-count" style="color:var(--green);font-size:16px;">0</strong> Protected Agents</span>
                 </div>
                 <div id="static-badge-1" style="display:none;align-items:center;gap:8px;padding:8px 16px;background:rgba(0,245,212,0.06);border:1px solid rgba(0,245,212,0.15);border-radius:10px;">
                     <span style="font-size:14px;color:var(--green);font-weight:600;">&#x2713;</span>
@@ -1036,26 +1036,30 @@
                 const res = await fetch('/api/public/stats');
                 if (!res.ok) return;
                 const data = await res.json();
-                const sentinels = data.sentinels_claimed || 0;
-                const blocked = data.total_blocked || 0;
+                const validations = data.community_validations || data.sentinels_claimed || 0;
+                const agents = data.protected_agents || data.total_blocked || 0;
+                const stealthMode = data.stealth_mode || false;
                 const container = document.getElementById('hero-social-proof');
 
-                if (sentinels > 0) {
-                    document.getElementById('sentinel-count').textContent = sentinels;
+                if (validations > 0 && !stealthMode) {
+                    document.getElementById('sentinel-count').textContent = validations;
+                    document.getElementById('sentinel-badge').style.display = 'flex';
+                } else if (stealthMode) {
+                    document.getElementById('sentinel-label').innerHTML = '<span style="color:var(--accent);font-size:14px;">Coming Soon</span>';
                     document.getElementById('sentinel-badge').style.display = 'flex';
                 }
-                if (blocked > 0) {
-                    document.getElementById('total-blocked-count').textContent = blocked.toLocaleString();
+                if (agents > 0) {
+                    document.getElementById('total-blocked-count').textContent = agents.toLocaleString();
                     document.getElementById('blocked-badge').style.display = 'flex';
                 }
-                if (sentinels === 0 && blocked === 0) {
+                if (validations === 0 && agents === 0 && !stealthMode) {
                     document.getElementById('static-badge-1').style.display = 'flex';
                     document.getElementById('static-badge-2').style.display = 'flex';
                 } else {
-                    if (sentinels === 0) {
+                    if (validations === 0 && !stealthMode) {
                         document.getElementById('static-badge-1').style.display = 'flex';
                     }
-                    if (blocked === 0) {
+                    if (agents === 0) {
                         document.getElementById('static-badge-2').style.display = 'flex';
                     }
                 }

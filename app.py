@@ -54,6 +54,9 @@ with app.app_context():
         "ALTER TABLE tenant_settings ADD COLUMN reasoning_enforcement BOOLEAN DEFAULT TRUE",
         "ALTER TABLE pending_actions ADD COLUMN hold_expires_at TIMESTAMP",
         "ALTER TABLE tenant_settings ADD COLUMN hold_window_seconds INTEGER DEFAULT 0",
+        "ALTER TABLE audit_log ADD COLUMN vibe_summary TEXT",
+        "ALTER TABLE pending_actions ADD COLUMN vibe_summary TEXT",
+        "ALTER TABLE tenant_settings ADD COLUMN is_stealth_mode BOOLEAN DEFAULT TRUE",
     ]
     for sql in migrations:
         try:

@@ -87,6 +87,14 @@ NIST_CATEGORIES = {
         "scenario_categories": ["crypto_transaction"],
         "rule_packs": ["financial_compliance"],
     },
+    "RESPOND-1.1": {
+        "id": "RESPOND-1.1",
+        "function": "RESPOND",
+        "name": "Incident Response",
+        "description": "Active human incident response and intervention for AI agent actions, including real-time kill decisions via operator channels.",
+        "scenario_categories": ["incident_response"],
+        "rule_packs": ["incident_response"],
+    },
 }
 
 
@@ -99,6 +107,7 @@ RULE_PACK_NIST_MAP = {
     "code_safety": ["MANAGE-2.4"],
     "data_protection": ["GOVERN-1.2", "MAP-3.5", "MAP-5.1"],
     "egress_allowlist": ["MAP-3.4", "MANAGE-2.3"],
+    "incident_response": ["RESPOND-1.1"],
 }
 
 
@@ -125,6 +134,7 @@ PACK_RECOMMENDATIONS = {
     "MANAGE-2.3": "egress_allowlist",
     "MANAGE-2.4": "shell_safety",
     "MANAGE-4.1": "financial_compliance",
+    "RESPOND-1.1": "incident_response",
 }
 
 

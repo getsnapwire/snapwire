@@ -85,6 +85,7 @@ class AuditLogEntry(db.Model):
     risk_score = db.Column(db.Integer, default=0)
     violations_json = db.Column(db.Text, nullable=True)
     analysis = db.Column(db.Text, nullable=True)
+    vibe_summary = db.Column(db.Text, nullable=True)
     chain_of_thought = db.Column(db.Text, nullable=True)
     agent_id = db.Column(db.String, default='unknown')
     api_key_id = db.Column(db.String, nullable=True)
@@ -124,6 +125,7 @@ class AuditLogEntry(db.Model):
                 "violations": violations,
                 "risk_score": self.risk_score,
                 "analysis": self.analysis or "",
+                "vibe_summary": self.vibe_summary or "",
                 "allowed": self.status in ("allowed", "approved", "auto-approved", "auto-triage-approved", "trust-approved"),
                 "chain_of_thought": cot,
             },
@@ -148,6 +150,7 @@ class PendingAction(db.Model):
     risk_score = db.Column(db.Integer, default=0)
     violations_json = db.Column(db.Text, nullable=True)
     analysis = db.Column(db.Text, nullable=True)
+    vibe_summary = db.Column(db.Text, nullable=True)
     agent_id = db.Column(db.String, default='unknown')
     api_key_id = db.Column(db.String, nullable=True)
     parent_agent_id = db.Column(db.String, nullable=True, index=True)
@@ -183,6 +186,7 @@ class PendingAction(db.Model):
                 "violations": violations,
                 "risk_score": self.risk_score,
                 "analysis": self.analysis or "",
+                "vibe_summary": self.vibe_summary or "",
                 "allowed": False,
             },
             "status": self.status,
@@ -523,6 +527,7 @@ class TenantSettings(db.Model):
     auto_install_starter_rules = db.Column(db.Boolean, default=True)
     reasoning_enforcement = db.Column(db.Boolean, default=True, nullable=False)
     hold_window_seconds = db.Column(db.Integer, default=0, nullable=False)
+    is_stealth_mode = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 

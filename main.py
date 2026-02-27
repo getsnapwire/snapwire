@@ -599,6 +599,214 @@ def safety_pdf():
     )
 
 
+@app.route("/safety/vanguard-guide.pdf")
+def vanguard_guide_pdf():
+    from src.safety_pdf import generate_vanguard_guide_pdf
+    pdf_bytes = generate_vanguard_guide_pdf()
+    return Response(
+        pdf_bytes,
+        mimetype="application/pdf",
+        headers={
+            "Content-Disposition": 'attachment; filename="snapwire-vanguard-guide.pdf"'
+        },
+    )
+
+
+@app.route("/compliance-portal")
+@require_login
+def compliance_portal():
+    from src.nist_mapping import generate_compliance_report
+    from models import ConstitutionRule, TenantSettings
+    from sqlalchemy import func
+    import hashlib
+
+    tenant_id = get_current_tenant_id()
+
+    rule_names = set()
+    try:
+        q = ConstitutionRule.query
+        if tenant_id:
+            q = q.filter_by(tenant_id=tenant_id)
+        rules = q.all()
+        rule_names = {r.rule_name for r in rules}
+    except Exception:
+        pass
+
+    report = generate_compliance_report(rule_names)
+
+    safeguard_list = [
+        "Constitutional Rule Engine",
+        "OpenClaw CVE-2026-25253 Safeguard",
+        "Loop Detector (Fuse Breaker)",
+        "Input Sanitizer",
+        "Blast Radius Controls",
+        "Honeypot Tripwires",
+        "Identity Vault (Snap-Tokens)",
+        "Tool Safety Catalog",
+        "Deception Detector",
+        "Schema Guard",
+        "Risk Index Scoring",
+        "Thinking Token Sentinel",
+        "Rate Limiter",
+    ]
+
+    base_q = AuditLogEntry.query
+    if tenant_id:
+        base_q = base_q.filter(AuditLogEntry.tenant_id == tenant_id)
+
+    total_audited = base_q.with_entities(func.count(AuditLogEntry.id)).scalar() or 0
+    total_blocked = base_q.filter(
+        AuditLogEntry.status.like("blocked%")
+    ).with_entities(func.count(AuditLogEntry.id)).scalar() or 0
+    human_reviewed = base_q.filter(
+        AuditLogEntry.resolved_by.like("slack:%")
+    ).with_entities(func.count(AuditLogEntry.id)).scalar() or 0
+
+    top_violation = None
+    try:
+        top_q = base_q.filter(
+            AuditLogEntry.violations_json.isnot(None),
+            AuditLogEntry.violations_json != '[]'
+        ).order_by(AuditLogEntry.created_at.desc()).first()
+        if top_q and top_q.violations_json:
+            import json as _json
+            violations = _json.loads(top_q.violations_json)
+            if violations:
+                top_violation = violations[0].get("rule", "Unknown")
+    except Exception:
+        pass
+
+    audit_fingerprint = ""
+    try:
+        recent = base_q.order_by(AuditLogEntry.created_at.desc()).limit(100).all()
+        log_data = "|".join(
+            f"{e.id}:{e.tool_name}:{e.status}:{e.created_at}" for e in recent
+        )
+        audit_fingerprint = hashlib.sha256(log_data.encode()).hexdigest()
+    except Exception:
+        audit_fingerprint = "N/A"
+
+    hold_window_seconds = 0
+    try:
+        settings = TenantSettings.query.filter_by(tenant_id=tenant_id).first() if tenant_id else TenantSettings.query.first()
+        if settings and hasattr(settings, 'hold_window_seconds'):
+            hold_window_seconds = settings.hold_window_seconds or 0
+    except Exception:
+        pass
+
+    return render_template(
+        "compliance_portal.html",
+        nist_grade=report.get("grade", "D"),
+        nist_score=report.get("overall_score", 0),
+        nist_covered=report.get("covered", 0),
+        nist_partial=report.get("partial", 0),
+        nist_gaps=report.get("gaps", 0),
+        nist_total=report.get("total_categories", 0),
+        safeguards=safeguard_list,
+        total_audited=total_audited,
+        total_blocked=total_blocked,
+        human_reviewed=human_reviewed,
+        top_violation=top_violation,
+        audit_fingerprint=audit_fingerprint,
+        active_rules=len(rule_names),
+        hold_window_seconds=hold_window_seconds,
+    )
+
+
+@app.route("/api/compliance/audit-bundle")
+@require_login
+def compliance_audit_bundle():
+    import zipfile
+    import io
+    import csv
+    import hashlib
+    from datetime import datetime
+
+    from src.safety_pdf import generate_safety_pdf
+
+    tenant_id = get_current_tenant_id()
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        try:
+            pdf_bytes = generate_safety_pdf()
+            zf.writestr("snapwire-safety-disclosure.pdf", pdf_bytes)
+        except Exception as e:
+            zf.writestr("safety-disclosure-error.txt", f"Failed to generate PDF: {str(e)}")
+
+        try:
+            resolved_q = AuditLogEntry.query.filter(
+                AuditLogEntry.resolved_by.isnot(None)
+            )
+            if tenant_id:
+                resolved_q = resolved_q.filter(AuditLogEntry.tenant_id == tenant_id)
+            resolved = resolved_q.order_by(AuditLogEntry.created_at.desc()).all()
+
+            csv_buffer = io.StringIO()
+            writer = csv.writer(csv_buffer)
+            writer.writerow(["id", "tool_name", "agent_id", "status", "risk_score", "resolved_by", "resolved_at", "created_at", "violations_json"])
+            for entry in resolved:
+                writer.writerow([
+                    entry.id,
+                    entry.tool_name,
+                    entry.agent_id,
+                    entry.status,
+                    entry.risk_score,
+                    entry.resolved_by,
+                    getattr(entry, 'resolved_at', ''),
+                    entry.created_at,
+                    entry.violations_json,
+                ])
+            zf.writestr("resolved-actions.csv", csv_buffer.getvalue())
+        except Exception as e:
+            zf.writestr("resolved-actions-error.txt", f"Failed to export: {str(e)}")
+
+        try:
+            all_q = AuditLogEntry.query
+            if tenant_id:
+                all_q = all_q.filter(AuditLogEntry.tenant_id == tenant_id)
+            all_entries = all_q.order_by(AuditLogEntry.created_at.desc()).limit(10000).all()
+            audit_records = []
+            for entry in all_entries:
+                record = {
+                    "id": entry.id,
+                    "tool_name": entry.tool_name,
+                    "agent_id": entry.agent_id,
+                    "status": entry.status,
+                    "risk_score": entry.risk_score,
+                    "resolved_by": entry.resolved_by,
+                    "created_at": str(entry.created_at),
+                    "violations_json": entry.violations_json,
+                }
+                record_str = json.dumps(record, sort_keys=True)
+                record["content_hash"] = hashlib.sha256(record_str.encode()).hexdigest()
+                audit_records.append(record)
+
+            bundle_hash = hashlib.sha256(
+                json.dumps(audit_records, sort_keys=True).encode()
+            ).hexdigest()
+
+            export = {
+                "generated_at": datetime.utcnow().isoformat() + "Z",
+                "total_records": len(audit_records),
+                "bundle_hash": bundle_hash,
+                "records": audit_records,
+            }
+            zf.writestr("audit-log-signed.json", json.dumps(export, indent=2))
+        except Exception as e:
+            zf.writestr("audit-log-error.txt", f"Failed to export: {str(e)}")
+
+    zip_buffer.seek(0)
+    now = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    return Response(
+        zip_buffer.getvalue(),
+        mimetype="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="snapwire-audit-bundle-{now}.zip"'
+        },
+    )
+
+
 @app.route("/badge/nist-grade")
 def nist_grade_badge():
     from src.nist_mapping import generate_compliance_report, score_to_grade
@@ -964,6 +1172,18 @@ def intercept_tool_call():
             "risk_score": 90,
             "analysis": f"The AI auditor could not be reached. For safety, this action is blocked until the auditor is available. Error: {str(e)}",
         }
+
+    if audit_result.get("violations") and not audit_result.get("vibe_summary"):
+        try:
+            from src.auditor import generate_vibe_summary
+            audit_result["vibe_summary"] = generate_vibe_summary(
+                tool_call.get("tool_name", "unknown"),
+                audit_result.get("violations", []),
+                audit_result.get("analysis", ""),
+                tenant_id=tenant_id,
+            )
+        except Exception:
+            pass
 
     shadow_violations = audit_result.pop("shadow_violations", [])
 
@@ -3647,7 +3867,7 @@ def public_kill_feed():
 
 @app.route("/api/public/stats", methods=["GET"])
 def public_stats():
-    from models import CommunityProfile
+    from models import CommunityProfile, TenantSettings
     from sqlalchemy import func
 
     total_users = db.session.query(func.count(User.id)).scalar() or 0
@@ -3658,11 +3878,24 @@ def public_stats():
         AuditLogEntry.status.like("blocked%")
     ).scalar() or 0
 
+    stealth_mode = True
+    try:
+        settings = TenantSettings.query.first()
+        if settings and hasattr(settings, 'is_stealth_mode'):
+            stealth_mode = settings.is_stealth_mode
+    except Exception:
+        pass
+
+    unique_agents = db.session.query(func.count(func.distinct(AuditLogEntry.agent_id))).scalar() or 0
+
     return jsonify({
         "sentinels_claimed": founding_sentinels,
         "sentinels_total": 150,
         "total_users": total_users,
         "total_blocked": total_blocked,
+        "community_validations": founding_sentinels + total_blocked,
+        "protected_agents": unique_agents or total_users,
+        "stealth_mode": stealth_mode,
     })
 
 
@@ -4044,6 +4277,7 @@ def get_settings():
         "auto_install_starter_rules": settings.auto_install_starter_rules,
         "reasoning_enforcement": reasoning if reasoning is not None else True,
         "hold_window_seconds": getattr(settings, 'hold_window_seconds', 0) or 0,
+        "is_stealth_mode": getattr(settings, 'is_stealth_mode', True),
     })
 
 
@@ -4071,6 +4305,27 @@ def update_hold_window():
     return jsonify({
         "hold_window_seconds": settings.hold_window_seconds,
         "message": f"Hold window set to {seconds}s" if seconds > 0 else "Hold window disabled",
+    })
+
+
+@app.route("/api/settings/stealth-mode", methods=["GET"])
+@require_login
+def get_stealth_mode():
+    tenant_id = get_current_tenant_id()
+    settings = get_tenant_settings(tenant_id)
+    return jsonify({"is_stealth_mode": getattr(settings, 'is_stealth_mode', True)})
+
+
+@app.route("/api/settings/stealth-mode", methods=["PATCH"])
+@require_admin
+def toggle_stealth_mode():
+    tenant_id = get_current_tenant_id()
+    settings = get_tenant_settings(tenant_id)
+    settings.is_stealth_mode = not getattr(settings, 'is_stealth_mode', True)
+    db.session.commit()
+    return jsonify({
+        "is_stealth_mode": settings.is_stealth_mode,
+        "message": "Stealth mode enabled — community features hidden" if settings.is_stealth_mode else "Stealth mode disabled — community features visible",
     })
 
 

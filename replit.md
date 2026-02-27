@@ -50,6 +50,12 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **Deterministic Hold Window**: Temporarily holds high-risk allowed calls for configurable seconds, with Slack integration for review and approval/denial.
 -   **Auto-Triage Rules**: Automated approval/denial of actions based on regex matching and risk thresholds.
 -   **OpenClaw**: A deterministic BASE_URL redirect attack detector.
+-   **Vibe-Summary**: Claude-powered 3-sentence plain-English summaries on Snap-Cards (deterministic fallback without LLM key). Stored in `PendingAction.vibe_summary` and `AuditLogEntry.vibe_summary`.
+-   **Stealth Mode**: `TenantSettings.is_stealth_mode` (default True) hides community features (Leaderboard, Founding Sentinel Wall of Fame, Community Rules) from non-admin users. Admin toggle in dashboard Security > Stealth Mode.
+-   **Deployer Compliance Portal**: `/compliance-portal` with auto-fill impact assessment, audit bundle ZIP download (`/api/compliance/audit-bundle`), and Colorado SB24-205 affirmative defense checklist.
+-   **Batch Ingestor**: `scripts/batch_ingestor.py` processes JSON files of MCP tool schemas through the CVE gauntlet with auto-heal, dry-run, and cost caps.
+-   **Vanguard User Guide PDF**: `/safety/vanguard-guide.pdf` — branded PDF covering Hold Window, Slack Alerts, Weekly Digest, and Safety PDF features.
+-   **NIST RESPOND-1.1 Tagging**: Slack Kill actions auto-tagged with RESPOND-1.1 in audit log violations for active human incident response governance.
 
 ## External Dependencies
 -   **Database**: PostgreSQL, SQLite

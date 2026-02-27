@@ -24,8 +24,33 @@ def _require_auth():
     return None
 
 
+def _is_stealth_mode():
+    try:
+        from models import TenantSettings
+        from src.tenant import get_current_tenant_id
+        tenant_id = get_current_tenant_id()
+        if tenant_id:
+            settings = TenantSettings.query.filter_by(tenant_id=tenant_id).first()
+        else:
+            settings = TenantSettings.query.first()
+        if settings and hasattr(settings, 'is_stealth_mode'):
+            return settings.is_stealth_mode
+    except Exception:
+        pass
+    return True
+
+
 @community_bp.route("/api/sentinels.json", methods=["GET"])
 def api_sentinels_json():
+    if _is_stealth_mode():
+        return jsonify({
+            "version": 1,
+            "generated_at": datetime.utcnow().isoformat() + "Z",
+            "total_slots": 150,
+            "claimed": 0,
+            "sentinels": [],
+            "stealth_mode": True,
+        })
     sentinels = get_wall_of_fame()
     claimed = len(sentinels)
     sentinel_entries = []
@@ -76,12 +101,20 @@ def api_my_sentinel_status():
 def leaderboard_page():
     if not current_user.is_authenticated:
         return redirect(url_for("dashboard"))
+    if _is_stealth_mode() and getattr(current_user, 'role', '') != 'admin':
+        from flask import flash
+        flash("Community features are launching soon. Stay tuned!", "info")
+        return redirect(url_for("dashboard"))
     return render_template("leaderboard.html", user=current_user)
 
 
 @community_bp.route("/community-rules")
 def community_rules_page():
     if not current_user.is_authenticated:
+        return redirect(url_for("dashboard"))
+    if _is_stealth_mode() and getattr(current_user, 'role', '') != 'admin':
+        from flask import flash
+        flash("Community features are launching soon. Stay tuned!", "info")
         return redirect(url_for("dashboard"))
     return render_template("community_rules.html", user=current_user)
 

@@ -40,6 +40,46 @@ def _get_slack_app():
             ack()
             _handle_action_button(body, client, "denied")
 
+        @_slack_app.action("view_vibe_summary")
+        def handle_view_summary(ack, body, client):
+            ack()
+            try:
+                import json as _json
+                raw_value = body["actions"][0]["value"]
+                payload = _json.loads(raw_value)
+                vibe_summary = payload.get("vibe_summary", "")
+                action_id = payload.get("action_id", "unknown")
+
+                if not vibe_summary:
+                    from models import PendingAction
+                    action = PendingAction.query.get(action_id)
+                    if action:
+                        vibe_summary = getattr(action, 'vibe_summary', '') or action.analysis or "No summary available."
+                    else:
+                        vibe_summary = "No summary available for this action."
+
+                trigger_id = body.get("trigger_id")
+                if trigger_id:
+                    client.views_open(
+                        trigger_id=trigger_id,
+                        view={
+                            "type": "modal",
+                            "title": {"type": "plain_text", "text": "Vibe Summary"},
+                            "close": {"type": "plain_text", "text": "Close"},
+                            "blocks": [
+                                {
+                                    "type": "section",
+                                    "text": {
+                                        "type": "mrkdwn",
+                                        "text": f":shield: *Action `{action_id}`*\n\n{vibe_summary}"
+                                    }
+                                }
+                            ]
+                        }
+                    )
+            except Exception as e:
+                logger.error(f"Slack view summary handler error: {e}")
+
         handler = SocketModeHandler(_slack_app, app_token)
         thread = threading.Thread(target=handler.start, daemon=True)
         thread.start()
@@ -105,7 +145,7 @@ def _handle_action_button(body, client, decision):
         logger.error(f"Slack button handler error: {e}")
 
 
-def send_hold_alert(action_id, tool_name, agent_id, risk_score, hold_seconds, tenant_id=None):
+def send_hold_alert(action_id, tool_name, agent_id, risk_score, hold_seconds, tenant_id=None, vibe_summary=""):
     app = _get_slack_app()
     if not app or not _slack_client:
         return
@@ -113,6 +153,31 @@ def send_hold_alert(action_id, tool_name, agent_id, risk_score, hold_seconds, te
     try:
         import json as _json
         button_value = _json.dumps({"action_id": action_id, "tenant_id": tenant_id})
+        summary_value = _json.dumps({"action_id": action_id, "tenant_id": tenant_id, "vibe_summary": vibe_summary or ""})
+
+        action_buttons = [
+            {
+                "type": "button",
+                "text": {"type": "plain_text", "text": ":white_check_mark: Approve", "emoji": True},
+                "style": "primary",
+                "action_id": "approve_action",
+                "value": button_value
+            },
+            {
+                "type": "button",
+                "text": {"type": "plain_text", "text": ":x: Kill", "emoji": True},
+                "style": "danger",
+                "action_id": "kill_action",
+                "value": button_value
+            },
+        ]
+        if vibe_summary:
+            action_buttons.append({
+                "type": "button",
+                "text": {"type": "plain_text", "text": ":mag: View Summary", "emoji": True},
+                "action_id": "view_vibe_summary",
+                "value": summary_value
+            })
 
         blocks = [
             {
@@ -141,22 +206,7 @@ def send_hold_alert(action_id, tool_name, agent_id, risk_score, hold_seconds, te
             {"type": "divider"},
             {
                 "type": "actions",
-                "elements": [
-                    {
-                        "type": "button",
-                        "text": {"type": "plain_text", "text": ":white_check_mark: Approve", "emoji": True},
-                        "style": "primary",
-                        "action_id": "approve_action",
-                        "value": button_value
-                    },
-                    {
-                        "type": "button",
-                        "text": {"type": "plain_text", "text": ":x: Kill", "emoji": True},
-                        "style": "danger",
-                        "action_id": "kill_action",
-                        "value": button_value
-                    }
-                ]
+                "elements": action_buttons
             }
         ]
 

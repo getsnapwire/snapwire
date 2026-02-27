@@ -50,6 +50,7 @@ def add_pending_action(tool_call, audit_result, webhook_url=None, agent_id=None,
         risk_score=audit_result.get("risk_score", 0),
         violations_json=json.dumps(audit_result.get("violations", [])),
         analysis=audit_result.get("analysis", ""),
+        vibe_summary=audit_result.get("vibe_summary", ""),
         agent_id=agent_id or "unknown",
         api_key_id=api_key_id,
         parent_agent_id=parent_agent_id,
@@ -84,6 +85,7 @@ def add_held_action(tool_call, audit_result, hold_window_seconds, webhook_url=No
         risk_score=audit_result.get("risk_score", 0),
         violations_json=json.dumps(audit_result.get("violations", [])),
         analysis=audit_result.get("analysis", ""),
+        vibe_summary=audit_result.get("vibe_summary", ""),
         agent_id=agent_id or "unknown",
         api_key_id=api_key_id,
         parent_agent_id=parent_agent_id,
@@ -110,6 +112,7 @@ def add_held_action(tool_call, audit_result, hold_window_seconds, webhook_url=No
             risk_score=audit_result.get("risk_score", 0),
             hold_seconds=hold_window_seconds,
             tenant_id=tenant_id,
+            vibe_summary=audit_result.get("vibe_summary", ""),
         )
     except Exception:
         pass
@@ -152,6 +155,20 @@ def resolve_action(action_id, decision, resolved_by="user", tenant_id=None):
     action.resolved_at = datetime.utcnow()
     action.resolved_by = resolved_by
 
+    violations_data = action.violations_json
+    if decision == "denied" and resolved_by and resolved_by.startswith("slack:"):
+        try:
+            existing_violations = json.loads(violations_data) if violations_data else []
+            existing_violations.append({
+                "rule": "__incident_response__",
+                "severity": "info",
+                "reason": f"Human operator ({resolved_by}) killed action via Slack",
+                "nist_id": "RESPOND-1.1",
+            })
+            violations_data = json.dumps(existing_violations)
+        except Exception:
+            pass
+
     log_entry = AuditLogEntry(
         id=action.id,
         tenant_id=action.tenant_id,
@@ -161,8 +178,9 @@ def resolve_action(action_id, decision, resolved_by="user", tenant_id=None):
         context=action.context,
         status=decision,
         risk_score=action.risk_score,
-        violations_json=action.violations_json,
+        violations_json=violations_data,
         analysis=action.analysis,
+        vibe_summary=getattr(action, 'vibe_summary', None),
         agent_id=action.agent_id,
         api_key_id=action.api_key_id,
         parent_agent_id=getattr(action, 'parent_agent_id', None),
@@ -282,6 +300,7 @@ def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None, 
         risk_score=audit_result.get("risk_score", 0),
         violations_json=json.dumps(violations),
         analysis=audit_result.get("analysis", ""),
+        vibe_summary=audit_result.get("vibe_summary", ""),
         chain_of_thought=cot_detail,
         agent_id=agent_id or "unknown",
         api_key_id=api_key_id,

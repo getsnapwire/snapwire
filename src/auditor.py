@@ -112,3 +112,56 @@ Analyze this tool call against the constitutional rules and return your assessme
             result["shadow_violations"] = []
 
     return result
+
+
+VIBE_SUMMARY_PROMPT = """You are a plain-English security summarizer. Given information about a blocked or flagged AI agent action, produce exactly 3 sentences:
+1. What action is being intercepted (tool name and what it does).
+2. The specific risk it poses (why it was flagged).
+3. The NIST control it maps to (which governance category applies).
+
+Write for a non-technical executive. No jargon. No bullet points. Just 3 clear sentences."""
+
+
+def generate_vibe_summary(tool_name, violations, analysis, tenant_id=None):
+    from src.nist_mapping import RULE_PACK_NIST_MAP, NIST_CATEGORIES
+
+    nist_ids = set()
+    for v in (violations or []):
+        rule = v.get("rule", "")
+        for pack, cats in RULE_PACK_NIST_MAP.items():
+            if rule.startswith(pack) or pack in rule:
+                nist_ids.update(cats)
+    if not nist_ids:
+        nist_ids.add("GOVERN-1.1")
+
+    nist_names = []
+    for nid in list(nist_ids)[:3]:
+        cat = NIST_CATEGORIES.get(nid)
+        if cat:
+            nist_names.append(f"{nid} ({cat['name']})")
+        else:
+            nist_names.append(nid)
+
+    violation_reasons = "; ".join(v.get("reason", v.get("rule", "unknown")) for v in (violations or [])[:3])
+
+    try:
+        user_message = f"""Tool: {tool_name}
+Violations: {violation_reasons}
+Analysis: {analysis or 'No analysis available'}
+NIST Categories: {', '.join(nist_names)}
+
+Write exactly 3 sentences summarizing this for a non-technical executive."""
+
+        response_text = chat(VIBE_SUMMARY_PROMPT, user_message, max_tokens=300, tenant_id=tenant_id)
+        if response_text and len(response_text.strip()) > 20:
+            return response_text.strip()
+    except Exception:
+        pass
+
+    top_violation = violation_reasons if violation_reasons else "policy violation detected"
+    nist_label = nist_names[0] if nist_names else "GOVERN-1.1 (Legal and Regulatory Requirements)"
+    return (
+        f"An agent attempted to use the '{tool_name}' tool, which was intercepted by the security gateway. "
+        f"This action was flagged because: {top_violation}. "
+        f"This maps to NIST control {nist_label}, ensuring compliance with AI governance standards."
+    )
