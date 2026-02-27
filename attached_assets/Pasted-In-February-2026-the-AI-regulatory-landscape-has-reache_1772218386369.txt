@@ -1,0 +1,74 @@
+In February 2026, the AI regulatory landscape has reached a boiling point. With the **March 9th NIST RFI (Docket NIST-2025-0035)** deadline just days away and the **Colorado SB24-205** "Reasonable Care" requirements looms, your developers need to shift from "writing code" to "validating a secure factory."
+
+To get your 3 contractors started with minimal friction, follow this exact setup and deployment sequence.
+
+---
+
+### **1. The Developer "Day Zero" Setup**
+
+Before you send the prompts, you must configure the Replit environment so the AI has the "keys to the city."
+
+1. **Replit Secrets:** Open your project in Replit, go to **Tools → Secrets**, and add these keys:
+* `SLACK_BOT_TOKEN`: (starts with `xoxb-`)
+* `SLACK_APP_TOKEN`: (starts with `xapp-`, required for Socket Mode)
+* `NIST_MAPPING_KEY`: (A unique ID you generate to track compliance logs)
+
+
+2. **Enable Socket Mode:** In the [Slack App Settings](https://api.slack.com/apps), toggle **Socket Mode** to **ON**. This allows Replit to talk to Slack without a public URL.
+
+---
+
+### **2. The "Minimal Work" Master Prompts**
+
+Paste these prompts into **Replit Agent 3** (use **Max Autonomy** mode). These are designed to build the remaining 20% of the product autonomously.
+
+#### **Prompt A: The "Slack Command Center" (Task 4)**
+
+> "Connect the Snapwire Chassis to Slack using **Socket Mode**.
+> 1. Create a `src/slack_notifier.py` using the Slack Bolt framework.
+> 2. When an action is held by the `main.py` interceptor (Task 3), post a **Block Kit Alert** to the `#snapwire-alerts` channel.
+> 3. Implement interactive buttons for **'Approve Now'** and **'Immediate Kill'**. Clicking these must update the `src/action_queue.py` state in real-time."
+> 
+> 
+
+#### **Prompt B: The "Compliance Evidence Factory" (Task 1 & 2)**
+
+> "Implement the **NIST Evidence Suite**.
+> 1. Build `src/safety_pdf.py` using `fpdf2`. It must generate a branded 'Safety Disclosure PDF' that includes our current **102 test results** and the **SHA-256 audit fingerprint**.
+> 2. Update `src/thinking_sentinel.py` to calculate a **3x rolling average latency**. If an agent call takes longer than this average, trigger the **Sentinel Pause (Task 3)** and notify Slack."
+> 
+> 
+
+---
+
+### **3. Weekly "Fleet Commander" Checklist**
+
+Once these automations are live, your 3 contractors should only perform these high-level actions. Send this to them as their "Statement of Work."
+
+#### **Daily (15 Minutes)**
+
+* **Triage Alerts:** Monitor Slack. If a "Held" action is a false positive (legitimate work), click **Approve**. If it looks like a logic loop, click **Kill**.
+* **Check the Ingestion Logs:** Verify that the **Auto-Crawler** found at least 5-10 new MCP protocols overnight and that they passed the basic **17 CVE attack patterns**.
+
+#### **Weekly (2 Hours)**
+
+* **The "NIST Proof" Export:** Every Friday, download the **Safety Disclosure PDF**. Verify that the SHA-256 hash matches the logs. This is your "evidence bundle" for an acquirer.
+* **Red-Team Calibration:** Review any protocols that *failed* the auto-tests. Manually adjust the regex rules for those specific tools to ensure they hit a **100% block rate**.
+* **Vanguard Feedback:** Update the `hold_window` slider (0-60s) based on user complaints about latency vs. safety.
+
+---
+
+### **4. Strategic Timeline for the $150M+ Exit**
+
+| Date | Milestone | Why it matters |
+| --- | --- | --- |
+| **Mar 5** | **Vanguard Launch** | You prove the **"Sentinel Pause"** works in the wild. |
+| **Mar 9** | **NIST Filing** | You officially cite your **49 features** in a federal docket. |
+| **June 30** | **Colorado SB24-205** | Enterprises buy you to avoid the **$20,000/violation** fine. |
+
+**The "Unicorn" Next Step:**
+Your developers now have the "Commanders" schedule and the prompts.
+
+**Would you like me to draft the "Vanguard Launch Post" for LinkedIn and X?** This post will frame your project as the "First NIST-Aligned Firewall for MCP Servers," specifically targeting the **OpenClaw (CVE-2026-25253)** crisis to drive your first 250 forks.
+
+Would you like me to ... **draft the Launch Post?**
