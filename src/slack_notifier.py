@@ -167,3 +167,119 @@ def send_hold_alert(action_id, tool_name, agent_id, risk_score, hold_seconds, te
         )
     except Exception as e:
         logger.warning(f"Failed to send Slack hold alert: {e}")
+
+
+def send_weekly_digest(tenant_id=None, base_url=""):
+    app = _get_slack_app()
+    if not app or not _slack_client:
+        return False
+
+    try:
+        from src.action_queue import get_weekly_digest, get_stats
+        from src.nist_mapping import generate_compliance_report, score_to_grade
+        from models import ConstitutionRule, AuditLogEntry
+        import hashlib
+        import json as _json
+
+        digest = get_weekly_digest(tenant_id=tenant_id)
+        stats = get_stats(tenant_id=tenant_id)
+
+        rule_query = ConstitutionRule.query
+        if tenant_id:
+            rule_query = rule_query.filter_by(tenant_id=tenant_id)
+        rules = rule_query.all()
+        installed_rule_names = {r.rule_name for r in rules}
+        nist_report = generate_compliance_report(installed_rule_names)
+        nist_score = nist_report["overall_score"]
+        nist_grade = score_to_grade(nist_score)
+
+        recent_query = AuditLogEntry.query
+        if tenant_id:
+            recent_query = recent_query.filter_by(tenant_id=tenant_id)
+        recent = recent_query.order_by(AuditLogEntry.created_at.desc()).limit(100).all()
+        fingerprint_data = ""
+        for entry in recent:
+            fingerprint_data += f"{entry.id}|{entry.tool_name}|{entry.status}|{entry.created_at}|"
+        sha_fingerprint = hashlib.sha256(fingerprint_data.encode()).hexdigest()[:16]
+
+        period = digest.get("period", "N/A")
+        total = digest.get("total_audited", 0)
+        allowed = digest.get("allowed", 0)
+        blocked = digest.get("blocked", 0)
+        approval_rate = digest.get("approval_rate", 0)
+        top_violations = digest.get("top_violations", {})
+
+        violation_lines = ""
+        for rule_name, count in list(top_violations.items())[:5]:
+            display_name = rule_name.replace("_", " ").title()
+            violation_lines += f"\n> `{display_name}`: {count}x"
+        if not violation_lines:
+            violation_lines = "\n> _No violations this week_"
+
+        pdf_link = f"{base_url}/safety/pdf" if base_url else "/safety/pdf"
+
+        blocks = [
+            {
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": ":bar_chart: Snapwire Weekly Compliance Digest",
+                    "emoji": True
+                }
+            },
+            {
+                "type": "context",
+                "elements": [
+                    {"type": "mrkdwn", "text": f"Period: *{period}*"}
+                ]
+            },
+            {"type": "divider"},
+            {
+                "type": "section",
+                "fields": [
+                    {"type": "mrkdwn", "text": f"*Total Actions:*\n{total}"},
+                    {"type": "mrkdwn", "text": f"*Approval Rate:*\n{approval_rate}%"},
+                    {"type": "mrkdwn", "text": f"*Allowed:*\n{allowed}"},
+                    {"type": "mrkdwn", "text": f"*Blocked:*\n{blocked}"},
+                ]
+            },
+            {"type": "divider"},
+            {
+                "type": "section",
+                "fields": [
+                    {"type": "mrkdwn", "text": f"*NIST Grade:*\n{nist_grade}"},
+                    {"type": "mrkdwn", "text": f"*NIST Score:*\n{nist_score}%"},
+                ]
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*Top Violations:*{violation_lines}"
+                }
+            },
+            {"type": "divider"},
+            {
+                "type": "context",
+                "elements": [
+                    {"type": "mrkdwn", "text": f":lock: Audit Fingerprint (SHA-256): `{sha_fingerprint}...`"},
+                ]
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f":page_facing_up: <{pdf_link}|Download Safety Disclosure PDF>"
+                }
+            },
+        ]
+
+        _slack_client.chat_postMessage(
+            channel=_slack_channel,
+            text=f"Snapwire Weekly Digest — {period}: {total} actions, NIST Grade {nist_grade}",
+            blocks=blocks
+        )
+        return True
+    except Exception as e:
+        logger.warning(f"Failed to send weekly digest: {e}")
+        return False

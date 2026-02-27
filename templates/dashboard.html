@@ -817,6 +817,7 @@
                 <button class="sub-tab" data-subtab="holdwindow" data-group="security">Hold Window</button>
                 <button class="sub-tab" data-subtab="catalog" data-group="security">Tool Catalog</button>
                 <button class="sub-tab" data-subtab="risk" data-group="security">Risk Intelligence</button>
+                <button class="sub-tab" data-subtab="autotriage" data-group="security">Auto-Triage</button>
             </div>
         </div>
         {% endif %}
@@ -2389,6 +2390,54 @@ def handle_tool_call(tool_call):
         </div>
     </div>
 
+    <div id="panel-autotriage" class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;">Auto-Triage Rules</h3>
+            <button onclick="showAddTriageModal()" style="background:var(--accent-green);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">+ Add Rule</button>
+        </div>
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Auto-triage rules automatically approve or deny matching tool calls below a risk threshold, eliminating repetitive manual reviews of known false positives.</p>
+        <div id="autotriage-list"></div>
+        <div id="autotriage-empty" style="display:none;text-align:center;padding:40px 20px;">
+            <div style="font-size:32px;margin-bottom:12px;">&#9889;</div>
+            <div style="color:var(--text-secondary);font-size:14px;margin-bottom:8px;">No auto-triage rules configured</div>
+            <div style="color:var(--text-secondary);font-size:12px;margin-bottom:16px;">Add rules to automatically handle repetitive false positives without manual review.</div>
+            <button class="empty-state-link" onclick="showAddTriageModal()">+ Add Auto-Triage Rule</button>
+        </div>
+    </div>
+
+    <div id="add-triage-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:500px;width:90%;">
+            <h3 style="margin-bottom:16px;">Add Auto-Triage Rule</h3>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Tool Name Pattern (regex)</label>
+                <input type="text" id="triage-tool-pattern" placeholder="e.g. read_file or read_.*" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Agent ID Pattern (regex, default: .*)</label>
+                <input type="text" id="triage-agent-pattern" placeholder=".*" value=".*" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Action</label>
+                <select id="triage-action" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;">
+                    <option value="auto_approve">Auto-Approve</option>
+                    <option value="auto_deny">Auto-Deny</option>
+                </select>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Max Risk Score (only applies if risk &le; this)</label>
+                <input type="number" id="triage-max-risk" value="50" min="0" max="100" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Expires At (optional, ISO format)</label>
+                <input type="datetime-local" id="triage-expires" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button onclick="hideAddTriageModal()" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:8px 16px;border-radius:8px;cursor:pointer;">Cancel</button>
+                <button onclick="addTriageRule()" style="background:var(--accent-green);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;">Add Rule</button>
+            </div>
+        </div>
+    </div>
+
     <div id="add-vault-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:450px;width:90%;">
             <h3 style="margin-bottom:16px;">Add Vault Entry</h3>
@@ -2536,7 +2585,7 @@ def handle_tool_call(tool_call):
             'activity': ['pending', 'log', 'stream', 'digest'],
             'rules-group': ['rules', 'history', 'test'],
             'agents-group': ['agents', 'analytics'],
-            'security': ['vault', 'honeypots', 'blast', 'catalog', 'risk'],
+            'security': ['vault', 'honeypots', 'blast', 'catalog', 'risk', 'autotriage'],
             'settings-group': ['keys', 'llm', 'org', 'account', 'settings', 'admin', 'contacts', 'telemetry']
         };
 
@@ -2574,6 +2623,7 @@ def handle_tool_call(tool_call):
             if (name === 'blast') loadBlastRadius();
             if (name === 'holdwindow') loadHoldWindow();
             if (name === 'risk') loadRiskIntelligence();
+            if (name === 'autotriage') loadAutoTriageRules();
             if (name === 'analytics') loadAnalytics(7);
             if (name === 'telemetry') loadAdminTab();
             if (name === 'digest') { fetchDigest(); loadDigestEmailState(); }
@@ -4001,7 +4051,7 @@ def handle_tool_call(tool_call):
                     return;
                 }
                 container.innerHTML = actions.map(a => {
-                    const statusColor = ['allowed','approved','auto-approved','trust-approved'].includes(a.status) ? 'var(--accent-green)' : a.status === 'pending' ? 'var(--accent-yellow)' : 'var(--accent-red)';
+                    const statusColor = ['allowed','approved','auto-approved','trust-approved','auto-triage-approved'].includes(a.status) ? 'var(--accent-green)' : a.status === 'pending' ? 'var(--accent-yellow)' : 'var(--accent-red)';
                     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;">
                         <span style="width:8px;height:8px;border-radius:50%;background:${statusColor};flex-shrink:0;"></span>
                         <span style="font-family:'Fira Code',monospace;color:var(--text-primary);">${a.tool_call?.tool_name || 'unknown'}</span>
@@ -4231,14 +4281,14 @@ def handle_tool_call(tool_call):
                 }
 
                 const statusColor = s => {
-                    if (s === 'allowed' || s === 'approved' || s === 'auto-approved' || s === 'trust-approved') return '#10b981';
+                    if (s === 'allowed' || s === 'approved' || s === 'auto-approved' || s === 'trust-approved' || s === 'auto-triage-approved') return '#10b981';
                     if (s === 'blocked' || s === 'denied' || s === 'blocked-deception') return '#ef4444';
                     if (s === 'reasoning-requested') return '#f97316';
                     if (s === 'pending' || s === 'shadow-blocked') return '#eab308';
                     return '#6b7280';
                 };
                 const statusLabel = s => {
-                    if (s === 'allowed' || s === 'approved' || s === 'auto-approved' || s === 'trust-approved') return 'Allowed';
+                    if (s === 'allowed' || s === 'approved' || s === 'auto-approved' || s === 'trust-approved' || s === 'auto-triage-approved') return 'Allowed';
                     if (s === 'blocked' || s === 'denied' || s === 'blocked-deception') return 'Blocked';
                     if (s === 'reasoning-requested') return 'Halt';
                     if (s === 'pending' || s === 'shadow-blocked') return 'Pending';
@@ -5521,6 +5571,63 @@ def handle_tool_call(tool_call):
             if (!confirm('Delete this honeypot?')) return;
             await fetch(`/api/honeypots/${id}`, {method:'DELETE'});
             loadHoneypots();
+        }
+        function showAddTriageModal() { document.getElementById('add-triage-modal').style.display = 'flex'; }
+        function hideAddTriageModal() { document.getElementById('add-triage-modal').style.display = 'none'; }
+        async function loadAutoTriageRules() {
+            const resp = await fetch('/api/settings/auto-triage-rules');
+            const data = await resp.json();
+            const list = document.getElementById('autotriage-list');
+            const empty = document.getElementById('autotriage-empty');
+            if (!data.rules || data.rules.length === 0) {
+                list.innerHTML = '';
+                empty.style.display = 'block';
+            } else {
+                empty.style.display = 'none';
+                list.innerHTML = data.rules.map(r => `
+                    <div style="background:var(--bg-card);border:1px solid ${r.is_active ? (r.action==='auto_approve'?'rgba(0,245,212,0.3)':'rgba(255,77,77,0.3)') : 'var(--border)'};border-radius:10px;padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;gap:14px;">
+                        <div style="font-size:20px;">${r.action==='auto_approve' ? '&#9989;' : '&#9940;'}</div>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:14px;font-family:'Fira Code',monospace;">${r.tool_name_pattern}</div>
+                            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Agent: <code>${r.agent_id_pattern}</code> | Action: <strong>${r.action === 'auto_approve' ? 'Auto-Approve' : 'Auto-Deny'}</strong> | Max Risk: ${r.max_risk_score}</div>
+                            <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Created by: ${r.created_by || 'unknown'} | ${r.expires_at ? 'Expires: '+new Date(r.expires_at).toLocaleString() : 'No expiry'}${!r.is_active ? ' | <span style=color:var(--accent-red)>Expired</span>' : ''}</div>
+                        </div>
+                        <button onclick="deleteTriageRule(${r.id})" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-secondary);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;">Delete</button>
+                    </div>
+                `).join('');
+            }
+        }
+        async function addTriageRule() {
+            const toolPattern = document.getElementById('triage-tool-pattern').value.trim();
+            if (!toolPattern) { alert('Tool name pattern is required'); return; }
+            const body = {
+                tool_name_pattern: toolPattern,
+                agent_id_pattern: document.getElementById('triage-agent-pattern').value.trim() || '.*',
+                action: document.getElementById('triage-action').value,
+                max_risk_score: parseInt(document.getElementById('triage-max-risk').value) || 50,
+            };
+            const expiresVal = document.getElementById('triage-expires').value;
+            if (expiresVal) body.expires_at = new Date(expiresVal).toISOString();
+            const resp = await fetch('/api/settings/auto-triage-rules', {
+                method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+            });
+            if (resp.ok) {
+                hideAddTriageModal();
+                document.getElementById('triage-tool-pattern').value = '';
+                document.getElementById('triage-agent-pattern').value = '.*';
+                document.getElementById('triage-action').value = 'auto_approve';
+                document.getElementById('triage-max-risk').value = '50';
+                document.getElementById('triage-expires').value = '';
+                loadAutoTriageRules();
+            } else {
+                const d = await resp.json();
+                alert(d.error || 'Failed to add rule');
+            }
+        }
+        async function deleteTriageRule(id) {
+            if (!confirm('Delete this auto-triage rule?')) return;
+            await fetch(`/api/settings/auto-triage-rules/${id}`, {method:'DELETE'});
+            loadAutoTriageRules();
         }
         // === BLAST RADIUS GOVERNOR ===
         async function loadBlastRadius() {

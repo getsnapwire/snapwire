@@ -124,7 +124,7 @@ class AuditLogEntry(db.Model):
                 "violations": violations,
                 "risk_score": self.risk_score,
                 "analysis": self.analysis or "",
-                "allowed": self.status in ("allowed", "approved", "auto-approved"),
+                "allowed": self.status in ("allowed", "approved", "auto-approved", "auto-triage-approved", "trust-approved"),
                 "chain_of_thought": cot,
             },
             "status": self.status,
@@ -839,6 +839,39 @@ class ContactSubmission(db.Model):
     message = db.Column(db.Text, nullable=False)
     ip_address = db.Column(db.String(45), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class AutoTriageRule(db.Model):
+    __tablename__ = 'auto_triage_rules'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=False, index=True)
+    tool_name_pattern = db.Column(db.String, nullable=False)
+    agent_id_pattern = db.Column(db.String, default='.*')
+    action = db.Column(db.String, nullable=False, default='auto_approve')
+    max_risk_score = db.Column(db.Integer, default=50)
+    created_by = db.Column(db.String, nullable=True)
+    expires_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_active = db.Column(db.Boolean, default=True)
+
+    def is_expired(self):
+        if self.expires_at and self.expires_at < datetime.utcnow():
+            return True
+        return False
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "tenant_id": self.tenant_id,
+            "tool_name_pattern": self.tool_name_pattern,
+            "agent_id_pattern": self.agent_id_pattern,
+            "action": self.action,
+            "max_risk_score": self.max_risk_score,
+            "created_by": self.created_by,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "is_active": self.is_active and not self.is_expired(),
+        }
 
 
 class TenantLLMConfig(db.Model):

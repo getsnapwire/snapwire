@@ -357,7 +357,7 @@ def get_stats(tenant_id=None):
     pending_count = pending_query.count()
     total = total_log + pending_count
 
-    allowed_query = log_query.filter(AuditLogEntry.status.in_(["allowed", "approved", "auto-approved", "trust-approved"]))
+    allowed_query = log_query.filter(AuditLogEntry.status.in_(["allowed", "approved", "auto-approved", "trust-approved", "auto-triage-approved"]))
     denied_query = log_query.filter(AuditLogEntry.status == "denied")
     allowed = allowed_query.count()
     denied = denied_query.count()
@@ -411,7 +411,7 @@ def get_stats(tenant_id=None):
     for entry in all_entries:
         aid = entry.agent_id or "unknown"
         agent_stats[aid]["total"] += 1
-        if entry.status in ("allowed", "approved", "auto-approved", "trust-approved"):
+        if entry.status in ("allowed", "approved", "auto-approved", "trust-approved", "auto-triage-approved"):
             agent_stats[aid]["allowed"] += 1
         else:
             agent_stats[aid]["blocked"] += 1
@@ -638,7 +638,7 @@ def get_weekly_digest(tenant_id=None):
         query = query.filter_by(tenant_id=tenant_id)
     entries = query.all()
     total = len(entries)
-    allowed = len([e for e in entries if e.status in ("allowed", "approved", "auto-approved", "trust-approved")])
+    allowed = len([e for e in entries if e.status in ("allowed", "approved", "auto-approved", "trust-approved", "auto-triage-approved")])
     denied = len([e for e in entries if e.status == "denied"])
     blocked = total - allowed
 
@@ -668,3 +668,38 @@ def get_weekly_digest(tenant_id=None):
         "top_violations": dict(sorted(top_violations.items(), key=lambda x: x[1], reverse=True)[:5]),
         "top_agents": dict(sorted(top_agents.items(), key=lambda x: x[1], reverse=True)[:5]),
     }
+
+
+def check_auto_triage(tool_name, agent_id, risk_score, tenant_id=None):
+    import re
+    from models import AutoTriageRule
+
+    if not tenant_id:
+        return None
+
+    rules = AutoTriageRule.query.filter_by(tenant_id=tenant_id, is_active=True).all()
+    rules.sort(key=lambda r: (0 if r.action == "auto_deny" else 1))
+    for rule in rules:
+        if rule.is_expired():
+            continue
+        try:
+            if not re.fullmatch(rule.tool_name_pattern, tool_name):
+                continue
+        except re.error:
+            continue
+        try:
+            if rule.agent_id_pattern and rule.agent_id_pattern != '.*':
+                if not re.fullmatch(rule.agent_id_pattern, agent_id):
+                    continue
+        except re.error:
+            continue
+        if risk_score > rule.max_risk_score:
+            continue
+        return {
+            "rule_id": rule.id,
+            "action": rule.action,
+            "tool_name_pattern": rule.tool_name_pattern,
+            "agent_id_pattern": rule.agent_id_pattern,
+            "max_risk_score": rule.max_risk_score,
+        }
+    return None

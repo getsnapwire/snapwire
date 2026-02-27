@@ -38,6 +38,7 @@ from src.action_queue import (
     check_auto_approve,
     auto_deny_expired,
     get_weekly_digest,
+    check_auto_triage,
 )
 from src.rule_templates import get_templates, get_template
 from src.rate_limiter import check_rate_limit, get_rate_limit_info, RATE_LIMIT_PER_MINUTE
@@ -57,7 +58,7 @@ from src.loop_detector import check_for_loop, get_loop_events, get_loop_stats
 from src.schema_guard import validate_tool_params, get_schema_stats
 from src.risk_index import calculate_risk_score, record_risk_signal, get_risk_signals, get_tool_risk_summary
 from src.thinking_sentinel import check_thinking_tokens, check_latency_anomaly, get_sentinel_stats
-from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings, LoopDetectorEvent, SchemaViolationEvent, ProxyToken, RiskSignal
+from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings, LoopDetectorEvent, SchemaViolationEvent, ProxyToken, RiskSignal, AutoTriageRule
 
 
 import uuid as _uuid_mod
@@ -268,12 +269,25 @@ def start_telemetry_ping_timer():
 def start_weekly_digest_timer():
     def run():
         last_sent = {}
+        last_slack_sent = None
         while True:
             time.sleep(3600)
             try:
                 with app.app_context():
                     from datetime import timedelta
                     now = datetime.utcnow()
+                    if now.weekday() == 4 and now.hour == 9:
+                        if not last_slack_sent or (now - last_slack_sent).total_seconds() > 72000:
+                            try:
+                                from src.slack_notifier import send_weekly_digest as slack_digest
+                                from src.tenant import get_all_tenant_ids
+                                base_url = os.environ.get("BASE_URL", "")
+                                for tid in get_all_tenant_ids():
+                                    slack_digest(tenant_id=tid, base_url=base_url)
+                                last_slack_sent = now
+                            except Exception as e:
+                                import logging
+                                logging.getLogger(__name__).warning(f"Weekly Slack digest failed: {e}")
                     if now.weekday() == 0 and now.hour == 8:
                         tenants = db.session.query(NotificationSetting).filter(
                             NotificationSetting.email_digest == True
@@ -1134,6 +1148,39 @@ def intercept_tool_call():
                 if mcp_request:
                     return _wrap_mcp_response(resp, 412, mcp_id)
                 return jsonify(resp), 412
+
+        triage_result = check_auto_triage(
+            tool_call.get("tool_name", "unknown"), agent_id,
+            audit_result.get("risk_score", 0), tenant_id=tenant_id
+        )
+        if triage_result:
+            triage_action = triage_result["action"]
+            if triage_action == "auto_approve":
+                log_action(tool_call, audit_result, "auto-triage-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata)
+                _track_usage(tenant_id)
+                resp = {
+                    "status": "auto-triage-approved",
+                    "audit": audit_result,
+                    "message": f"Auto-triaged: approved by rule matching '{triage_result['tool_name_pattern']}'.",
+                    "auto_triage": triage_result,
+                    **response_extra,
+                }
+                if mcp_request:
+                    return _wrap_mcp_response(resp, 200, mcp_id)
+                return jsonify(resp)
+            elif triage_action == "auto_deny":
+                log_action(tool_call, audit_result, "auto-triage-denied", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata)
+                _track_usage(tenant_id)
+                resp = {
+                    "status": "auto-triage-denied",
+                    "audit": audit_result,
+                    "message": f"Auto-triaged: denied by rule matching '{triage_result['tool_name_pattern']}'.",
+                    "auto_triage": triage_result,
+                    **response_extra,
+                }
+                if mcp_request:
+                    return _wrap_mcp_response(resp, 403, mcp_id)
+                return jsonify(resp), 403
 
         action_id = add_pending_action(tool_call, audit_result, webhook_url=webhook_url, agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id)
 
@@ -2395,6 +2442,22 @@ def nist_compliance_report_pdf():
         )
     except Exception as e:
         return jsonify({"error": f"Failed to generate PDF report: {str(e)}"}), 500
+
+
+@app.route("/api/compliance/weekly-digest", methods=["POST"])
+@require_admin
+def trigger_weekly_digest():
+    tenant_id = get_current_tenant_id()
+    try:
+        from src.slack_notifier import send_weekly_digest
+        base_url = request.host_url.rstrip("/")
+        sent = send_weekly_digest(tenant_id=tenant_id, base_url=base_url)
+        if sent:
+            return jsonify({"status": "sent", "message": "Weekly compliance digest sent to Slack."})
+        else:
+            return jsonify({"status": "skipped", "message": "Slack not configured. Digest not sent."}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to send digest: {str(e)}"}), 500
 
 
 @app.route("/api/rate-limits", methods=["GET"])
@@ -4129,6 +4192,75 @@ def delete_llm_settings():
         db.session.delete(config)
         db.session.commit()
     return jsonify({"message": "LLM provider configuration removed"})
+
+
+@app.route("/api/settings/auto-triage-rules", methods=["GET"])
+@require_login
+def get_auto_triage_rules():
+    tenant_id = get_current_tenant_id()
+    rules = AutoTriageRule.query.filter_by(tenant_id=tenant_id).order_by(AutoTriageRule.created_at.desc()).all()
+    return jsonify({"rules": [r.to_dict() for r in rules]})
+
+
+@app.route("/api/settings/auto-triage-rules", methods=["POST"])
+@require_login
+@require_admin
+def create_auto_triage_rule():
+    import re
+    tenant_id = get_current_tenant_id()
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No JSON payload"}), 400
+    tool_name_pattern = (data.get("tool_name_pattern") or "").strip()
+    if not tool_name_pattern:
+        return jsonify({"error": "tool_name_pattern is required"}), 400
+    try:
+        re.compile(tool_name_pattern)
+    except re.error:
+        return jsonify({"error": "Invalid regex for tool_name_pattern"}), 400
+    agent_id_pattern = (data.get("agent_id_pattern") or ".*").strip()
+    try:
+        re.compile(agent_id_pattern)
+    except re.error:
+        return jsonify({"error": "Invalid regex for agent_id_pattern"}), 400
+    action = data.get("action", "auto_approve")
+    if action not in ("auto_approve", "auto_deny"):
+        return jsonify({"error": "action must be 'auto_approve' or 'auto_deny'"}), 400
+    max_risk_score = int(data.get("max_risk_score", 50))
+    if max_risk_score < 0 or max_risk_score > 100:
+        return jsonify({"error": "max_risk_score must be between 0 and 100"}), 400
+    expires_at = None
+    if data.get("expires_at"):
+        try:
+            expires_at = datetime.fromisoformat(data["expires_at"])
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid expires_at format"}), 400
+    rule = AutoTriageRule(
+        tenant_id=tenant_id,
+        tool_name_pattern=tool_name_pattern,
+        agent_id_pattern=agent_id_pattern,
+        action=action,
+        max_risk_score=max_risk_score,
+        created_by=current_user.email or current_user.id,
+        expires_at=expires_at,
+        is_active=True,
+    )
+    db.session.add(rule)
+    db.session.commit()
+    return jsonify({"rule": rule.to_dict()}), 201
+
+
+@app.route("/api/settings/auto-triage-rules/<int:rule_id>", methods=["DELETE"])
+@require_login
+@require_admin
+def delete_auto_triage_rule(rule_id):
+    tenant_id = get_current_tenant_id()
+    rule = AutoTriageRule.query.filter_by(id=rule_id, tenant_id=tenant_id).first()
+    if not rule:
+        return jsonify({"error": "Rule not found"}), 404
+    db.session.delete(rule)
+    db.session.commit()
+    return jsonify({"message": "Auto-triage rule deleted"})
 
 
 @app.route("/api/telemetry/transparency", methods=["GET"])

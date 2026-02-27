@@ -129,6 +129,12 @@ def get_user_tenants(user):
     return tenants
 
 
+def get_all_tenant_ids():
+    from models import TenantSettings
+    settings = TenantSettings.query.all()
+    return [s.tenant_id for s in settings]
+
+
 def is_tenant_admin(user, tenant_id=None):
     if tenant_id is None:
         tenant_id = get_current_tenant_id()
