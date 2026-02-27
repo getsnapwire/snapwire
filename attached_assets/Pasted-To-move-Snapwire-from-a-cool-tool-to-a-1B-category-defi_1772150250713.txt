@@ -1,0 +1,39 @@
+To move Snapwire from a "cool tool" to a **$1B category-defining asset**, you need to prompt your developers to build the "plumbing" that satisfies the **NIST February 2026 "Accelerating AI Agent Identity"** standards.
+
+Here are the specific, high-level technical prompts you should give your internal elite team to build the **"Trust Fabric"** of 2026.
+
+### **1. Prompt for Saqib (Infrastructure): The "JIT SPIFFE Mint"**
+
+> *"Build a **Just-In-Time (JIT) Identity Mint** for our MCP (Model Context Protocol) gateway. Use **SPIFFE/SPIRE** to issue ephemeral, short-lived **X.509 SVIDs** (certificates) for every individual agent tool-call.
+> **Requirement:** The identity must be 'attested' against the agent's workload (e.g., its Docker image hash or Kubernetes namespace). When an agent calls `read_database`, Snapwire must intercept the call, verify the workload's integrity, and inject a 60-second SVID into the request. If the call takes longer than 60 seconds or the workload changes, the identity must automatically revoke. Aim for **<1ms latency** overhead."*
+
+---
+
+### **2. Prompt for Bohdan (Enterprise): The "Recursive Delegation Token"**
+
+> *"Develop a **Recursive Delegation Token** format based on **OAuth 2.0 Token Exchange (RFC 8693)** but designed for multi-agent chains.
+> **Requirement:** When Human $A$ delegates to Agent $B$, and Agent $B$ delegates to Agent $C$, the token must be a 'Russian Nesting Doll' of signatures. Each hop must cryptographically 'wrap' the previous token and add its own **Scope Attenuation** (narrowing permissions). Agent $C$ should only be able to see the specific tool-call permission it needs, but the final resource provider must be able to 'unwrap' the token to verify the **Original Human Principal** at the root. Ensure it works across Azure AI and AWS Bedrock simultaneously."*
+
+---
+
+### **3. Prompt for Taha (Architect): The "Intent-Binding Hash"**
+
+> *"Architect a **Contextual Intent Hashing** system that satisfies **NISTIR 8596 (Cyber AI Profile)** requirement for 'Non-Repudiation of Intent.'
+> **Requirement:** Before an agent executes a tool, Snapwire must capture a **SHA-256 Hash of the Prompt Context** (the 'Intent'). This hash must be cryptographically bound to the JIT Identity created by Saqib. If an agent tries to perform an action (e.g., 'Delete File') that cannot be semantically derived from the signed Intent Hash, the gateway must **Deterministicly Block** the action and flag a 'Context Drift' alert in the forensic logs."*
+
+---
+
+### **4. Prompt for Big-Silver (Product): The "Forensic Lineage Map"**
+
+> *"Build a D3-powered **Recursive Trace Map** for the Snapwire Dashboard that visualizes the 'Life of a Request' across 2026-era agent swarms.
+> **Requirement:** The UI must display the **Lineage Path** ($Human \rightarrow Agent \rightarrow Tool$). Use color-coding to highlight where 'Identity Wrapping' occurred and show the real-time **'Intent Alignment' score** for each hop. If a sub-agent attempts an action that deviates from the original human intent hash, the map should highlight that specific node in red and allow the auditor to drill down into the **NIST Compliance Evidence** for that specific failure."*
+
+### **Why these prompts work for the $1B exit:**
+
+By the end of March 2026, these four features will make Snapwire the **only** platform that can answer the three "Billion Dollar Questions" of enterprise AI:
+
+1. **Who** initiated the action? (The Recursive Token)
+2. **What** was the original intent? (The Intent Hash)
+3. **How** was it authorized at runtime? (The JIT SPIFFE Mint)
+
+**Should I draft the "SVID Minting" logic for Saqib?** This will give him the exact code structure needed to start injecting short-lived identities into MCP traffic today.
