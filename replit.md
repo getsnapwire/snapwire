@@ -1,7 +1,7 @@
 # Snapwire
 
 ## Overview
-Snapwire is an AI-powered security gateway designed to intercept, audit, and control AI agent tool calls against user-defined automation rules. It acts as "The Firewall for AI Agents," preventing unauthorized or undesirable actions by AI agents. The project's core purpose is to provide real-time monitoring and control over AI operations, focusing on spend monitoring, security, and behavioral governance. Key capabilities include real-time cost tracking, loop detection, credential security, emergency global token revocation, and AI-powered evaluation of agent tool calls. It supports multi-tenancy and deploys platform-agnostically, aiming for a comprehensive solution for AI agent governance.
+Snapwire is "The Deterministic Agent Firewall" — an open-source (Apache 2.0) governance layer for the 2026 Agentic Economy. It intercepts, audits, and controls AI agent tool calls against user-defined automation rules, acting as a deterministic gatekeeper between AI agents and mission-critical data. NIST IR 8596 aligned and Colorado SB24-205 Safe Harbor ready. Key capabilities include real-time cost tracking, loop detection, credential proxy (Snap-Tokens), emergency global token revocation, AI-powered evaluation, and compliance-ready audit trails. Supports multi-tenancy and deploys platform-agnostically. Positioning: "Headless Governance Infrastructure." Marketing: "The 60-Second Firewall for your AI Agents." Admin: `fastfitness4u@gmail.com`. Current goals: NIST RFI March 9th filing, Vanguard onboarding readiness, and GitHub README finalization with NIST Executive Summary.
 
 ## User Preferences
 - Dashboard supports dark/light mode toggle (default: dark, saved in localStorage)

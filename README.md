@@ -2,12 +2,13 @@
   <img src="static/badge-snapwire.svg" alt="Protected by Snapwire" />
 </p>
 
-<h1 align="center">Snapwire</h1>
-<p align="center"><strong>The Firewall for AI Agents</strong></p>
+<h1 align="center">Snapwire: The Deterministic Agent Firewall</h1>
+<p align="center"><strong>NIST IR 8596 Aligned | Colorado SB24-205 Safe Harbor Ready</strong></p>
 
 <p align="center">
-  Real-time spend monitoring, deterministic loop detection, and credential proxy for autonomous AI agents.<br/>
-  Designed to detect and intercept loops based on user-defined velocity limits.
+  <strong>Snapwire</strong> is a high-performance, open-source governance layer designed for the 2026 Agentic Economy.<br/>
+  It acts as a <strong>Deterministic Gatekeeper</strong> between your AI Agents and your mission-critical data,<br/>
+  transforming autonomous "black boxes" into governed, traceable, and legally defensible assets.
 </p>
 
 <p align="center">
@@ -17,12 +18,13 @@
 </p>
 
 <p align="center">
+  <a href="#executive-summary-for-nist--regulatory-compliance">NIST Summary</a> &middot;
+  <a href="#core-features-at-a-glance">Features</a> &middot;
   <a href="#quick-start">Quick Start</a> &middot;
-  <a href="#how-snapwire-compares">Compare</a> &middot;
   <a href="#audit-cli">Audit CLI</a> &middot;
   <a href="#custom-rules">Custom Rules</a> &middot;
   <a href="#api">API</a> &middot;
-  <a href="#compliance--nistir-8596-alignment">Compliance</a> &middot;
+  <a href="#how-snapwire-compares">Compare</a> &middot;
   <a href="#self-hosting">Self-Hosting</a> &middot;
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
@@ -34,6 +36,65 @@ git clone https://github.com/snapwire-ai/snapwire.git && cd snapwire && docker c
 ```
 
 PostgreSQL + Snapwire, running locally in under 60 seconds. Your keys, your data, your infrastructure.
+
+---
+
+## Executive Summary for NIST & Regulatory Compliance
+
+This project is architected to satisfy the **NIST AI Risk Management Framework (AI RMF 1.0)** and the **NIST Cybersecurity Framework (CSF 2.0) Profile for AI (NIST IR 8596)**.
+
+### 1. Governance & Accountability (NIST GV.OC / GV.RR)
+
+* **A2A Identity & Traceability:** Implements **Parent Agent ID** tracing and **Human-Accountability Headers** (`X-Snapwire-Authorized-By`) to ensure every autonomous action is mapped to a verifiable human intent.
+* **Three-Tier Role Model:** Strict separation of duties between **Platform Admins** (Global Governance), **Workspace Owners** (Tenant Compliance), and **Viewers** (Auditors).
+* **Forensic Lineage Map:** Visual chain-of-command tree with NIST RESPOND-1.1 badges and trace detail click-through (Origin-ID, Parent-ID, Trace-ID, Authorized-By).
+
+### 2. Risk Mapping & Measurement (NIST MAP / MEASURE)
+
+* **The CVE Gauntlet:** Automated protection against **OpenClaw (CVE-2026-25253)** and 17+ hardcoded attack patterns (Redirects, SSRF, Hijacking).
+* **Dynamic Chaos Ingestor:** Autonomous stress-testing of 1,000+ protocols using LLM-generated attack scenarios to calculate a **Risk Confidence Index** before deployment.
+* **Self-Correction Loop:** When the CVE Gauntlet detects a vulnerability, the system generates an AI-powered fix and presents an "Original vs. Fixed" diff for one-click admin approval.
+
+### 3. Continuous Monitoring & Management (NIST MANAGE / PROTECT)
+
+* **Deterministic Hold Window:** Prevents "Machine-Speed Malice" by enforcing a configurable human-review pause for high-consequence tool calls.
+* **Sentinel Proxy (Sidecar):** A zero-trust reverse proxy that intercepts all LLM traffic, providing **Observe**, **Audit**, and **Enforce** modes without modifying agent logic.
+* **Vibe-Audit Weekly Summarizer:** Automated Friday 4 PM executive summary aggregating all security actions, cost savings, and compliance posture — delivered to Slack.
+
+### 4. Content Integrity & Non-Repudiation (NIST DE.AE / RS.AN)
+
+* **SHA-256 Content Hashing:** Every audit log entry is cryptographically hashed for tamper-evident forensic readiness.
+* **HMAC-Signed Headers:** `X-Snapwire-Signature` provides non-repudiation for every intercepted tool call.
+* **Immutable Audit Trail:** Exportable via API, Audit CLI, and Safety Disclosure PDF with NIST grade verification.
+
+---
+
+## Colorado SB24-205 "Safe Harbor" Support
+
+Snapwire provides the **"Reasonable Care"** evidence required by the Colorado AI Act (effective June 30, 2026):
+
+* **Automated Impact Assessments:** Generates one-click **Safety Disclosure PDFs** containing NIST grades and risk-mitigation logs.
+* **Substantial Modification Tracking:** Real-time dashboard alerts when agent capabilities shift, ensuring compliance assessments stay current.
+* **Consequentiality Tagging:** Mark high-stakes tools for explicit governance, with compliance portal reporting for Colorado SB24-205 affirmative defense.
+* **Legal Counsel Acknowledgment Gate:** Compliance downloads require explicit acknowledgment, audit-logged with user ID and timestamp.
+* **Deployer Compliance Portal:** One-click audit bundle ZIP download with auto-fill impact assessment and affirmative defense checklist.
+
+---
+
+## Core Features at a Glance
+
+* **60-Second Setup:** Deploy via Replit or Docker in one line of code.
+* **Plain-Language Audits:** **Vibe-Summary** converts complex JSON tool-calls into 3-sentence English for non-technical stakeholders.
+* **Loop Protection:** **Fuse Breaker** and **Thinking Token Sentinel** auto-block hallucination loops and costly logic spirals.
+* **Cost Governance:** **Live Burn Meter** provides real-time spend projections and hard-cap enforcement.
+* **Credential Proxy:** **Snap-Tokens** replace raw API keys. Agents never see real credentials. One-click revocation with **The Snap** emergency kill-switch.
+* **Review Queue:** Blocked actions shown as structured **Snap-Cards** with Reject, Edit & Release, and Trust 24h actions.
+* **Goal Drift Detection:** Flags behavioral shifts in agent reasoning for human review (advisory, heuristic).
+* **Honeypot Tripwires:** Decoy tools detect unauthorized access attempts.
+* **Schema Validation Guard:** Per-tool JSON schema enforcement with strict/flexible modes.
+* **Auto-Triage Rules:** Regex-based automatic approval/denial with risk thresholds.
+
+> All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator.
 
 ---
 
@@ -57,26 +118,6 @@ We are submitting a joint technical response based on the Sentinel Proxy archite
 ```markdown
 ![NIST Grade](https://your-instance.com/badge/nist-grade)
 ```
-
----
-
-## What Snapwire Does
-
-Snapwire sits between your AI agents and the tools they call. Before any agent can send an email, modify a file, call an API, or take any action, Snapwire intercepts the call, checks it against your rules, and either approves it automatically or holds it for your review.
-
-**Deterministic features (no AI involved):**
-- **Fuse Breaker** — Detects hallucination loops (same tool + same args 3x in 30s) and auto-blocks. No more $200 "thinking" loops while you sleep.
-- **Live Burn Meter** — Real-time cost tracking with daily burn rate and 30-day spend projections.
-- **Snap-Tokens** — Proxy tokens (`snap_` prefixed) replace raw API keys. Agents never see real credentials. One-click revocation.
-- **The Snap** — Emergency kill-switch. Revoke all active Snap-Tokens with one click.
-- **Schema Validation Guard** — Per-tool JSON schema enforcement with strict/flexible modes.
-- **Snap-Card Review Queue** — Blocked actions shown as structured cards with Reject, Edit & Release, and Trust 24h actions.
-
-**Heuristic features (AI-powered, advisory only):**
-- **Goal Drift Alerts** — Flags behavioral shifts in agent reasoning for human review. Outputs are advisory signals, not guarantees.
-- **Automation Rules** — LLM-powered evaluation of tool calls against custom natural-language rules.
-
-> All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator.
 
 ---
 
@@ -316,9 +357,10 @@ curl -X POST http://localhost:5000/api/intercept \
 | `/api/tools/<id>/risk-score` | GET | Risk confidence index for a tool |
 | `/api/rules/export` | POST | Export rules as branded JSON |
 | `/api/rules/import` | POST | Import rule packs |
+| `/api/compliance/openapi.json` | GET | OpenAPI 3.0.3 governance spec |
 | `/health` | GET | Health check (DB, secrets, features, setup status) |
 
-Full API documentation available at `/docs` when running the server.
+Full API documentation available at `/docs` when running the server. Headless compliance API reference at `/docs/compliance`.
 
 ---
 
@@ -338,6 +380,9 @@ Copy `.env.example` and configure:
 | `OPENAI_API_KEY` | No | Alternative to Anthropic for AI features |
 | `PORT` | No | Server port (default: 5000) |
 | `LLM_PROVIDER` | No | Force `anthropic` or `openai` (auto-detected from keys) |
+| `SLACK_WEBHOOK_URL` | No | For Watchdog alerts, Hold Window notifications, and Weekly Vibe-Audit delivery |
+| `ADMIN_EMAIL` | No | Platform Admin email for Engine Room access |
+| `WATCHDOG_SOURCE_URL` | No | URL for automated nightly tool registry scanning |
 
 ### Docker
 
@@ -349,6 +394,19 @@ docker run -p 5000:5000 \
   snapwire
 ```
 
+### Sentinel Proxy (Sidecar)
+
+Deploy as a transparent reverse proxy alongside your LLM gateway:
+
+```bash
+docker compose -f sentinel/docker-compose.yml up
+```
+
+The Sentinel Proxy intercepts all LLM API traffic and routes it through Snapwire governance in three modes:
+- **Observe** — Fire-and-forget logging (zero latency impact)
+- **Audit** — Log + inject NIST provenance headers
+- **Enforce** — Log + headers + block (fail-closed)
+
 ### Production
 
 For production deployments, use Gunicorn (included in the Docker image):
@@ -356,6 +414,39 @@ For production deployments, use Gunicorn (included in the Docker image):
 ```bash
 gunicorn --bind 0.0.0.0:5000 --workers 2 --timeout 120 --reuse-port main:app
 ```
+
+---
+
+## How Snapwire Compares
+
+| Feature | **Agent Sandboxes** | **LiteLLM / Standard Proxies** | **Guardrails AI** | **Snapwire** |
+|---------|---------------------|-------------------------------|-------------------|-------------|
+| **Primary Goal** | Runtime Isolation | Model Interoperability | Data Quality / Hallucination | **Agentic Safety & Governance** |
+| **Loop Protection** | None | None (costs run until timeout) | None | **Deterministic Fuse Breaker (3x/30s)** |
+| **Enforcement Model** | OS-level containment | Probabilistic (LLM-checks-LLM) | Probabilistic | **Deterministic Fuses + Optional Heuristic** |
+| **Review Flow** | None | Silent failures | Retries | **Snap-Card Interactive Queue (Reject / Edit / Trust)** |
+| **Credential Proxy** | None | Pass-through | Pass-through | **Snap-Tokens with instant revocation** |
+| **Spend Monitoring** | None | Basic logging | None | **Live Burn Meter with projections** |
+| **NIST IR 8596** | None | None | None | **Full alignment with GV/MAP/PROTECT/DETECT** |
+| **Colorado SB24-205** | Manual | Manual | Manual | **Built-in Safe Harbor evidence** |
+| **Deployment** | Container / VM | Cloud proxy | Python library | **Self-hosted, your infrastructure** |
+
+**The key difference:** Most proxies use another LLM to check the first one — slow, expensive, and can hallucinate. Snapwire's core uses deterministic code (regex, JSON schema, velocity counters). The LLM layer is optional and always labeled `[HEURISTIC]`.
+
+---
+
+## EU AI Act
+
+Snapwire provides **Conformity-Ready Infrastructure** for organizations operating under the EU AI Act (2026) and similar regulatory frameworks.
+
+| Requirement | EU AI Act Article | Snapwire Feature |
+|-------------|------------------|-----------------|
+| **Automatic Logging** | Article 12 (Record-keeping) | Full audit trail of every intercepted tool call, with timestamps, agent ID, rule evaluations, and human decisions. Exportable via API. |
+| **Human Oversight** | Article 14 (Human Oversight) | Snap-Card Review Queue with Reject, Edit & Release, and Trust 24h actions. Blocked calls require explicit human approval before proceeding. |
+| **Risk Management** | Article 9 (Risk Management) | Risk Confidence Index per tool, Blast Radius Governor per agent, real-time spend monitoring via Live Burn Meter. |
+| **Technical Documentation** | Article 11 (Technical Documentation) | Config export/import, Safety Disclosure PDFs, Audit CLI for offline analysis. |
+
+> Snapwire does not guarantee regulatory compliance. These features provide technical infrastructure that supports compliance programs. Consult qualified legal counsel for your specific obligations.
 
 ---
 
@@ -371,62 +462,6 @@ Add this to your README to show your agents are governed:
 
 ---
 
-## How Snapwire Compares
-
-| Feature | **Agent Sandboxes** | **LiteLLM / Standard Proxies** | **Guardrails AI** | **Snapwire** |
-|---------|---------------------|-------------------------------|-------------------|-------------|
-| **Primary Goal** | Runtime Isolation | Model Interoperability | Data Quality / Hallucination | **Agentic Safety & Governance** |
-| **Loop Protection** | None | None (costs run until timeout) | None | **Deterministic Fuse Breaker (3x/30s)** |
-| **Enforcement Model** | OS-level containment | Probabilistic (LLM-checks-LLM) | Probabilistic | **Deterministic Fuses + Optional Heuristic** |
-| **Review Flow** | None | Silent failures | Retries | **Snap-Card Interactive Queue (Reject / Edit / Trust)** |
-| **Credential Proxy** | None | Pass-through | Pass-through | **Snap-Tokens with instant revocation** |
-| **Spend Monitoring** | None | Basic logging | None | **Live Burn Meter with projections** |
-| **Intent Guard** | None | None | Output validation | **Semantic Goal-Drift Detection [HEURISTIC]** |
-| **EU AI Act Ready** | Manual | Manual | Manual | **Built-in Article 12 & 14 conformity** |
-| **Deployment** | Container / VM | Cloud proxy | Python library | **Self-hosted, your infrastructure** |
-
-**Sandboxes and Snapwire are complementary.** Sandboxes protect your machine — they isolate the agent's filesystem, network, and OS access. Snapwire protects your business — it intercepts tool calls, enforces spend limits, and guards credentials. Snapwire runs inside any sandbox, container, or cloud, adding the governance layer that isolation alone can't provide.
-
-**The key difference:** Most proxies use another LLM to check the first one — slow, expensive, and can hallucinate. Snapwire's core uses deterministic code (regex, JSON schema, velocity counters). The LLM layer is optional and always labeled `[HEURISTIC]`.
-
----
-
-## Compliance & NISTIR 8596 Alignment
-
-### NISTIR 8596 (Cyber AI Profile)
-
-Snapwire is a **Deterministic Policy Enforcement Point (PEP)**. Unlike probabilistic AI-safety layers, Snapwire's core operates on hard-coded, user-defined rules. By deploying Snapwire, you implement an **NISTIR 8596 (Cyber AI Profile)** aligned governance layer, specifically addressing the **Protect (PR)** and **Detect (DE)** functions of the 2026 NIST Cybersecurity Framework.
-
-| NISTIR 8596 Function | Snapwire Implementation |
-|---|---|
-| **Protect (PR)** — Policy Enforcement | Deterministic rule engine, Schema Validation Guard, Blast Radius Governor, Snap-Token credential masking |
-| **Detect (DE)** — Anomaly Identification | Fuse Breaker loop detection, Thinking Token Sentinel, Deception & Goal Drift Detector, Honeypot Tripwires |
-| **Govern (GV)** — Risk Management | Constitutional rules with human oversight, Snap-Card Review Queue, Trust Rules with 24h TTL |
-| **Identity Attribution** | Agent ID + Parent Agent ID tracking for full chain-of-command traceability across multi-agent systems |
-| **Forensic Readiness** | SHA-256 content-hashed audit log entries, immutable decision records, exportable via API and Audit CLI |
-
-**Liability & Sovereignty:**
-- **User-Defined Logic:** Snapwire executes policies provided by the User. The User retains full responsibility for the standard of care and configuration of specific rules.
-- **As-Is Utility:** This software is provided under the **Apache 2.0 License**. It is a tool for forensic readiness and deterministic interception, not a guarantee of AI performance.
-- **Data Sovereignty:** Snapwire is self-hosted. The User acts as the Data Controller. Snapwire never accesses, stores, or transmits your API keys or tool-call data to third parties.
-
-> *Implementing Snapwire helps organizations demonstrate "Reasonable Cybersecurity Practices" under the 2026 Cyber AI Profile, providing a defensible audit trail in the event of an autonomous agent failure.*
-
-### EU AI Act
-
-Snapwire provides **Conformity-Ready Infrastructure** for organizations operating under the EU AI Act (2026) and similar regulatory frameworks.
-
-| Requirement | EU AI Act Article | Snapwire Feature |
-|-------------|------------------|-----------------|
-| **Automatic Logging** | Article 12 (Record-keeping) | Full audit trail of every intercepted tool call, with timestamps, agent ID, rule evaluations, and human decisions. Exportable via API. |
-| **Human Oversight** | Article 14 (Human Oversight) | Snap-Card Review Queue with Reject, Edit & Release, and Trust 24h actions. Blocked calls require explicit human approval before proceeding. |
-| **Risk Management** | Article 9 (Risk Management) | Risk Confidence Index per tool, Blast Radius Governor per agent, real-time spend monitoring via Live Burn Meter. |
-| **Technical Documentation** | Article 11 (Technical Documentation) | Config export/import, rule documentation, Audit CLI for offline analysis. |
-
-> Snapwire does not guarantee regulatory compliance. These features provide technical infrastructure that supports compliance programs. Consult qualified legal counsel for your specific obligations.
-
----
-
 ## Performance
 
 Snapwire introduces a **Governance Tax** — the latency overhead of intercepting each tool call through the safety gateway.
@@ -438,17 +473,15 @@ Snapwire introduces a **Governance Tax** — the latency overhead of interceptin
 
 **The tradeoff:** You are trading single-digit milliseconds of deterministic latency for the certainty that your agent won't enter a $1,000 loop or leak your production credentials. For 99% of agent workloads (which aren't doing high-frequency trading), this overhead is irrelevant compared to the safety gain.
 
-**For high-velocity environments:** The Python/Flask gateway is designed for governance, not hot-path throughput. If you need sub-10ms overhead at scale, the deterministic rule engine can be extracted into a standalone sidecar.
-
 ---
 
 ## Roadmap
 
-- **Egress Allowlisting** — Restrict outbound agent requests to approved domains and IPs (Coming March 2026)
-- **Compliance Export** — One-click audit trail exports for SOC 2 / ISO 27001 evidence (Coming March 2026)
 - **HSM Integration** — AWS KMS, HashiCorp Vault, Azure Key Vault as external key backends (Q3 2026)
 - **Snapwire Core (High-Velocity Engine)** — Compiled sidecar for sub-10ms deterministic rule evaluation at scale (Q3/Q4 2026)
 - **Cryptographic Agility** — Post-quantum ready key rotation and algorithm-agnostic encryption layer
+- **Multi-Cloud Sentinel** — Pre-built Sentinel Proxy images for AWS ECS, GCP Cloud Run, and Azure Container Instances
+- **SOC 2 Evidence Pack** — One-click audit trail export mapped to SOC 2 Trust Service Criteria
 
 ---
 
@@ -463,6 +496,14 @@ See [SECURITY.md](SECURITY.md) for vulnerability reporting process and Safe Harb
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for fork and customization guidelines.
+
+---
+
+### How to Use this Document
+
+1. **For GitHub:** This README signals to the community that Snapwire is the professional, compliance-ready choice for AI agent governance.
+2. **For Clients:** Provide a link to this page as the "Executive Governance Overview."
+3. **For NIST RFI (March 9th):** Use the Executive Summary as the basis for your official comment to Docket NIST-2025-0035.
 
 ---
 
