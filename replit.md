@@ -51,7 +51,7 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **Auto-Triage Rules**: Automated approval/denial of actions based on regex matching and risk thresholds.
 -   **OpenClaw**: A deterministic BASE_URL redirect attack detector.
 -   **Vibe-Summary**: Claude-powered 3-sentence plain-English summaries on Snap-Cards (deterministic fallback without LLM key). Stored in `PendingAction.vibe_summary` and `AuditLogEntry.vibe_summary`.
--   **Stealth Mode**: `TenantSettings.is_stealth_mode` (default True) hides community features (Leaderboard, Founding Sentinel Wall of Fame, Community Rules) from non-admin users. Admin toggle in dashboard Security > Stealth Mode.
+-   **Stealth Mode**: `TenantSettings.is_stealth_mode` (default True) hides community features (Leaderboard, Founding Sentinel Wall of Fame, Community Rules) from non-admin users. Admin toggle in dashboard Security > Stealth Mode. Platform Admin global override in Engine Room > Stealth Control.
 -   **Deployer Compliance Portal**: `/compliance-portal` with auto-fill impact assessment, audit bundle ZIP download (`/api/compliance/audit-bundle`), and Colorado SB24-205 affirmative defense checklist.
 -   **Batch Ingestor**: `scripts/batch_ingestor.py` processes JSON files of MCP tool schemas through the CVE gauntlet with auto-heal, dry-run, and cost caps.
 -   **Vanguard User Guide PDF**: `/safety/vanguard-guide.pdf` — branded PDF covering Hold Window, Slack Alerts, Weekly Digest, and Safety PDF features.
@@ -63,6 +63,9 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **Legal Counsel Acknowledgment Gate**: Compliance portal download buttons (Audit Bundle, Safety PDF) disabled until user checks "I have reviewed with qualified legal counsel" checkbox. Each download logs `compliance_counsel_acknowledgment` to audit log with user ID and timestamp.
 -   **Substantial Modification Trigger**: `TenantSettings.last_assessment_at` tracks when last audit bundle was downloaded. Dashboard shows alert banner when 10+ tools added since last assessment, linking to compliance portal. Downloading audit bundle resets the counter.
 -   **Homepage Rewrite**: Plain-language hero ("AI Agents act on your behalf. We make sure they don't go rogue."), Plug/Watch/Control "How It Works", NISTIR 8596 badge, Shared Responsibility Matrix table, compliance feature card, updated nav/footer links (Compliance, Governance-as-Code), 60-second messaging throughout.
+-   **Engine Room (Super-Admin Tab Group)**: Platform Admin-only dashboard tab with 5 sub-panels: Batch Ingestor UI (file upload/URL input with dry-run/no-heal/no-chaos options, results table), Chaos Lab (per-tool chaos test runner with catch/miss stats), Global Burn Meter (cross-tenant spend aggregation), Stealth Control (global/per-tenant stealth mode toggle), and Telemetry (relocated from Settings). All endpoints gated by `require_platform_admin`. Orange accent styling (#FF6B00) distinguishes from tenant workspace tabs.
+-   **Watchdog Script**: `scripts/watchdog.py` — automated batch ingestor run with Slack failure alerts (`SLACK_WEBHOOK_URL`). Configurable source via `WATCHDOG_SOURCE_URL` env var. Silent on success, alerts on D/F grades or CVE failures. Manual trigger via Engine Room > Batch Ingestor > "Run Now" button. API: `POST /api/admin/watchdog/run`, `GET /api/admin/watchdog/status`.
+-   **Admin/Tenant Dashboard Split**: Three-tier role model enforced — Platform Admin sees Engine Room tab + all Settings sub-tabs; Workspace Owner (admin role) sees Security tab + Webhooks; Viewer sees Home/Activity/Rules/Agents/Settings(account only). All tenant data endpoints scoped by `get_current_tenant_id()`.
 
 ## External Dependencies
 -   **Database**: PostgreSQL, SQLite

@@ -557,9 +557,14 @@ def safety_page():
 
     base_url = request.url_root.rstrip("/")
 
+    tenant_id = get_current_tenant_id() if current_user.is_authenticated else None
+
     rule_names = set()
     try:
-        rules = ConstitutionRule.query.all()
+        q = ConstitutionRule.query
+        if tenant_id:
+            q = q.filter_by(tenant_id=tenant_id)
+        rules = q.all()
         rule_names = {r.rule_name for r in rules}
     except Exception:
         pass
@@ -2149,7 +2154,8 @@ def sandbox_test():
 @app.route("/api/notifications/poll", methods=["GET"])
 @require_login
 def poll_notifications():
-    pending = get_pending_actions()
+    tenant_id = get_current_tenant_id()
+    pending = get_pending_actions(tenant_id=tenant_id)
     return jsonify({"count": len(pending), "actions": pending})
 
 
@@ -4173,7 +4179,7 @@ def complete_onboarding():
 def onboarding_status():
     tenant_id = get_current_tenant_id()
     has_rules = ConstitutionRule.query.filter_by(tenant_id=tenant_id).count() > 0
-    has_keys = ApiKey.query.filter_by(user_id=current_user.id).count() > 0
+    has_keys = ApiKey.query.filter_by(tenant_id=tenant_id).count() > 0
     has_tested = AuditLogEntry.query.filter_by(tenant_id=tenant_id).count() > 0
     has_snap_token = ProxyToken.query.filter_by(tenant_id=tenant_id).count() > 0
     return jsonify({
@@ -4253,7 +4259,7 @@ def overview_stats():
     approved = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='approved').count()
     denied = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='denied').count()
     pending = AuditLogEntry.query.filter_by(tenant_id=tenant_id, status='pending').count()
-    active_keys = ApiKey.query.filter_by(user_id=current_user.id, is_active=True).count()
+    active_keys = ApiKey.query.filter_by(tenant_id=tenant_id, is_active=True).count()
     rules_count = ConstitutionRule.query.filter_by(tenant_id=tenant_id).count()
     settings = get_tenant_settings(tenant_id)
 
@@ -5060,6 +5066,208 @@ def compliance_openapi_spec():
         }
     }
     return jsonify(spec)
+
+
+_watchdog_last_run = {"ran_at": None, "failure_count": 0, "total": 0}
+
+
+@app.route("/api/admin/batch-ingest", methods=["POST"])
+@require_platform_admin
+def api_admin_batch_ingest():
+    from scripts.batch_ingestor import process_tools, load_tools_from_url
+    data = request.get_json(force=True) or {}
+    dry_run = bool(data.get("dry_run", False))
+    no_heal = bool(data.get("no_heal", False))
+    no_chaos = bool(data.get("no_chaos", False))
+    tools = data.get("tools")
+    source_url = data.get("source_url")
+    if source_url:
+        tools = load_tools_from_url(source_url)
+        if tools is None:
+            return jsonify({"error": "Failed to load tools from URL"}), 400
+    if not tools or not isinstance(tools, list):
+        return jsonify({"error": "No tools provided. Supply 'tools' array or 'source_url'."}), 400
+    summary = process_tools(tools, dry_run=dry_run, no_heal=no_heal, no_chaos=no_chaos)
+    return jsonify(summary)
+
+
+@app.route("/api/admin/chaos-test", methods=["POST"])
+@require_platform_admin
+def api_admin_chaos_test():
+    from scripts.batch_ingestor import generate_chaos_exploits, run_chaos_exploits, LLMCallTracker, MAX_LLM_CALLS
+    data = request.get_json(force=True) or {}
+    tool_id = data.get("tool_id")
+    if not tool_id:
+        return jsonify({"error": "tool_id is required"}), 400
+    tool = ToolCatalog.query.get(tool_id)
+    if not tool:
+        return jsonify({"error": "Tool not found"}), 404
+    parameters = {}
+    if tool.schema_json:
+        try:
+            parameters = json.loads(tool.schema_json)
+        except Exception:
+            pass
+    tool_schema = {"name": tool.tool_name, "description": tool.description or "", "parameters": parameters}
+    llm_tracker = LLMCallTracker(MAX_LLM_CALLS)
+    exploits = generate_chaos_exploits(tool.tool_name, tool.description or "", parameters, llm_tracker)
+    if not exploits:
+        return jsonify({"total": 0, "caught": 0, "missed": 0, "results": [], "message": "No exploits generated"})
+    chaos_results = run_chaos_exploits(tool_schema, exploits)
+    return jsonify(chaos_results)
+
+
+@app.route("/api/admin/chaos-stats", methods=["GET"])
+@require_platform_admin
+def api_admin_chaos_stats():
+    entries = AuditLogEntry.query.filter_by(tool_name='chaos_test').all()
+    total_tests = len(entries)
+    caught = sum(1 for e in entries if e.status in ('blocked', 'blocked-blast-radius', 'blocked-sanitizer', 'blocked-catalog'))
+    missed = total_tests - caught
+    return jsonify({"total_tests": total_tests, "caught": caught, "missed": missed})
+
+
+@app.route("/api/admin/global-burn", methods=["GET"])
+@require_platform_admin
+def api_admin_global_burn():
+    from datetime import timedelta
+    cutoff = datetime.utcnow() - timedelta(hours=24)
+    all_tenants = TenantSettings.query.all()
+    total_spend = 0.0
+    total_agents = 0
+    active_tenants = 0
+    breakdown = []
+    for ts in all_tenants:
+        tid = ts.tenant_id
+        event_count = AuditLogEntry.query.filter(
+            AuditLogEntry.tenant_id == tid,
+            AuditLogEntry.created_at >= cutoff
+        ).count()
+        agent_count = db.session.query(db.func.count(db.func.distinct(AuditLogEntry.agent_id))).filter(
+            AuditLogEntry.tenant_id == tid,
+            AuditLogEntry.created_at >= cutoff
+        ).scalar() or 0
+        spend = 0.0
+        try:
+            blast_events = BlastRadiusEvent.query.filter(
+                BlastRadiusEvent.tenant_id == tid,
+                BlastRadiusEvent.triggered_at >= cutoff
+            ).all()
+            for be in blast_events:
+                if be.spend_amount:
+                    spend += be.spend_amount
+        except Exception:
+            pass
+        total_spend += spend
+        total_agents += agent_count
+        if event_count > 0:
+            active_tenants += 1
+        breakdown.append({
+            "tenant_id": tid,
+            "events_24h": event_count,
+            "agents": agent_count,
+            "spend": round(spend, 4),
+        })
+    return jsonify({
+        "total_spend": round(total_spend, 4),
+        "active_tenants": active_tenants,
+        "total_agents": total_agents,
+        "breakdown": breakdown,
+    })
+
+
+@app.route("/api/admin/stealth-status", methods=["GET"])
+@require_platform_admin
+def api_admin_stealth_status():
+    all_settings = TenantSettings.query.all()
+    result = [{"tenant_id": s.tenant_id, "is_stealth_mode": s.is_stealth_mode} for s in all_settings]
+    return jsonify({"tenants": result})
+
+
+@app.route("/api/admin/stealth-mode", methods=["POST"])
+@require_platform_admin
+def api_admin_stealth_mode():
+    data = request.get_json(force=True) or {}
+    tenant_id = data.get("tenant_id")
+    enabled = data.get("enabled", True)
+    if tenant_id:
+        ts = TenantSettings.query.filter_by(tenant_id=tenant_id).first()
+        if not ts:
+            return jsonify({"error": "Tenant not found"}), 404
+        ts.is_stealth_mode = bool(enabled)
+        db.session.commit()
+        return jsonify({"tenant_id": ts.tenant_id, "is_stealth_mode": ts.is_stealth_mode})
+    all_settings = TenantSettings.query.all()
+    for ts in all_settings:
+        ts.is_stealth_mode = bool(enabled)
+    db.session.commit()
+    result = [{"tenant_id": s.tenant_id, "is_stealth_mode": s.is_stealth_mode} for s in all_settings]
+    return jsonify({"tenants": result})
+
+
+@app.route("/api/admin/watchdog/run", methods=["POST"])
+@require_platform_admin
+def api_admin_watchdog_run():
+    global _watchdog_last_run
+    from scripts.batch_ingestor import process_tools, load_tools_from_url
+    try:
+        source_url = os.environ.get("WATCHDOG_SOURCE_URL", "").strip() or None
+        tools = None
+        if source_url:
+            tools = load_tools_from_url(source_url)
+        if not tools:
+            default_path = os.path.join(os.path.dirname(__file__), "examples", "sample_logs.json")
+            if os.path.exists(default_path):
+                with open(default_path, "r") as f:
+                    data = json.load(f)
+                if isinstance(data, list):
+                    tools = data
+                elif isinstance(data, dict) and "tools" in data:
+                    tools = data["tools"]
+        if not tools:
+            return jsonify({"error": "No tool source configured"}), 400
+        summary = process_tools(tools, dry_run=False, no_heal=False, no_chaos=True)
+        failed_tools = [r for r in summary.get("results", []) if r.get("status") == "error" or r.get("cve_failed", 0) > 0]
+        summary["failed_tools"] = failed_tools
+        slack_url = os.environ.get("SLACK_WEBHOOK_URL", "").strip()
+        if slack_url and failed_tools:
+            import requests as _req
+            msg = f"Watchdog Alert: {len(failed_tools)} tool(s) failed security checks.\n"
+            for ft in failed_tools[:10]:
+                msg += f"  - {ft.get('tool_name', 'unknown')} -- CVE failed: {ft.get('cve_failed', 0)}\n"
+            try:
+                _req.post(slack_url, json={"text": msg}, timeout=10)
+            except Exception:
+                pass
+        ran_at = datetime.utcnow().isoformat()
+        _watchdog_last_run = {
+            "ran_at": ran_at,
+            "failure_count": len(failed_tools),
+            "total": summary.get("total", 0),
+        }
+        return jsonify({
+            "summary": summary,
+            "failures": failed_tools,
+            "ran_at": ran_at,
+            "slack_sent": bool(slack_url and failed_tools),
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/admin/watchdog/status", methods=["GET"])
+@require_platform_admin
+def api_admin_watchdog_status():
+    source_url = os.environ.get("WATCHDOG_SOURCE_URL", "").strip()
+    slack_configured = bool(os.environ.get("SLACK_WEBHOOK_URL", "").strip())
+    return jsonify({
+        "last_run": _watchdog_last_run,
+        "source_url": source_url or "(default local file)",
+        "slack_configured": slack_configured,
+        "schedule": "Ready for cron/systemd timer (not auto-scheduled)",
+    })
 
 
 if __name__ == "__main__":

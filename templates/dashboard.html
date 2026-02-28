@@ -724,6 +724,9 @@
                     <button class="tab" data-tab="security">Security</button>
                     {% endif %}
                     <button class="tab" data-tab="settings-group">Settings</button>
+                    {% if is_platform_admin %}
+                    <button class="tab" data-tab="engine-room" style="color:#FF6B00;">&#x2699; Engine Room</button>
+                    {% endif %}
                     <a href="/leaderboard" class="tab" style="text-decoration:none;color:var(--accent-green);">Leaderboard</a>
                     <a href="/community-rules" class="tab" style="text-decoration:none;color:var(--accent-blue);">Community Rules</a>
                 </div>
@@ -737,6 +740,9 @@
             <button class="tab" data-tab="security" data-tooltip="Snap-Tokens, honeypots, blast radius, tool catalog, and risk intelligence" data-tooltip-pos="bottom">Security</button>
             {% endif %}
             <button class="tab" data-tab="settings-group" data-tooltip="API keys, organization, account, and admin settings" data-tooltip-pos="bottom">Settings</button>
+            {% if is_platform_admin %}
+            <button class="tab" data-tab="engine-room" data-tooltip="Super-Admin tools: Batch Ingestor, Chaos Lab, Global Burn, Stealth Control, Telemetry" data-tooltip-pos="bottom" style="color:#FF6B00;border-color:rgba(255,107,0,0.3);">&#x2699; Engine Room</button>
+            {% endif %}
             <a href="/leaderboard" class="tab" style="text-decoration:none;color:var(--accent-green);" data-tooltip="Community leaderboard with badges and rankings" data-tooltip-pos="bottom">Leaderboard</a>
             <a href="/community-rules" class="tab" style="text-decoration:none;color:var(--accent-blue);" data-tooltip="Browse and submit community safety rules" data-tooltip-pos="bottom">Community Rules</a>
             {% endif %}
@@ -843,7 +849,6 @@
                 {% if is_platform_admin %}
                 <button class="sub-tab" data-subtab="admin" data-group="settings-group">Users</button>
                 <button class="sub-tab" data-subtab="contacts" data-group="settings-group">Contact Inbox</button>
-                <button class="sub-tab" data-subtab="telemetry" data-group="settings-group">Telemetry</button>
                 <a href="/compliance-portal" class="sub-tab" style="text-decoration:none;">Compliance Portal &#8594;</a>
                 {% endif %}
             </div>
@@ -1513,7 +1518,217 @@
         {% endif %}
 
         {% if is_platform_admin %}
-        <div id="panel-telemetry" class="panel">
+        <div id="panel-engine-room" class="panel">
+            <div class="sub-tabs" style="border-bottom-color:rgba(255,107,0,0.2);">
+                <button class="sub-tab active" data-subtab="er-ingestor" data-group="engine-room" style="color:#FF6B00;">Batch Ingestor</button>
+                <button class="sub-tab" data-subtab="er-chaos" data-group="engine-room">Chaos Lab</button>
+                <button class="sub-tab" data-subtab="er-burn" data-group="engine-room">Global Burn</button>
+                <button class="sub-tab" data-subtab="er-stealth" data-group="engine-room">Stealth Control</button>
+                <button class="sub-tab" data-subtab="er-telemetry" data-group="engine-room">Telemetry</button>
+            </div>
+        </div>
+
+        <div id="panel-er-ingestor" class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div>
+                    <h3 style="margin-bottom:4px;">&#x1F4E6; Batch Ingestor</h3>
+                    <p style="color:var(--text-secondary);font-size:13px;">Bulk-process MCP tool schemas through the CVE gauntlet with auto-heal and safety grading.</p>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                    <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Upload Tools JSON</h4>
+                    <input type="file" id="ingestor-file" accept=".json" style="width:100%;padding:10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;box-sizing:border-box;margin-bottom:12px;">
+                    <div style="font-size:12px;color:var(--text-secondary);">Accepts JSON array of MCP tool schemas or object with "tools" key.</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                    <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Or Fetch From URL</h4>
+                    <input type="text" id="ingestor-url" placeholder="https://registry.example.com/tools.json" style="width:100%;padding:10px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;box-sizing:border-box;margin-bottom:12px;">
+                    <div style="font-size:12px;color:var(--text-secondary);">Remote MCP registry URL to fetch tool schemas from.</div>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:16px;align-items:center;margin-bottom:20px;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);cursor:pointer;">
+                    <input type="checkbox" id="ingestor-dry-run" style="accent-color:#FF6B00;"> Dry Run
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);cursor:pointer;">
+                    <input type="checkbox" id="ingestor-no-heal" style="accent-color:#FF6B00;"> No Auto-Heal
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);cursor:pointer;">
+                    <input type="checkbox" id="ingestor-no-chaos" style="accent-color:#FF6B00;"> No Chaos Exploits
+                </label>
+                <div style="flex:1;"></div>
+                <button onclick="runBatchIngestor()" style="background:#FF6B00;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">&#x25B6; Run Ingestor</button>
+            </div>
+
+            <div id="ingestor-status" style="display:none;margin-bottom:16px;padding:12px 16px;border-radius:8px;font-size:13px;"></div>
+
+            <div id="ingestor-summary" style="display:none;margin-bottom:20px;">
+                <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;">
+                    <div style="text-align:center;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;">
+                        <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Total</div>
+                        <div id="ing-total" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--text-primary);">0</div>
+                    </div>
+                    <div style="text-align:center;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;">
+                        <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Ingested</div>
+                        <div id="ing-ingested" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-green);">0</div>
+                    </div>
+                    <div style="text-align:center;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;">
+                        <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Healed</div>
+                        <div id="ing-healed" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-blue);">0</div>
+                    </div>
+                    <div style="text-align:center;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;">
+                        <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Failed</div>
+                        <div id="ing-failed" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-red);">0</div>
+                    </div>
+                    <div style="text-align:center;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;">
+                        <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">LLM Calls</div>
+                        <div id="ing-llm" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-purple);">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ingestor-results" style="display:none;">
+                <h4 style="margin-bottom:12px;font-size:14px;">Results</h4>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Tool Name</th>
+                                <th>Grade</th>
+                                <th>Status</th>
+                                <th>CVE Pass</th>
+                                <th>Chaos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ingestor-results-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div style="margin-top:24px;padding:20px;background:var(--bg-card);border:1px solid rgba(255,107,0,0.2);border-radius:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <h4 style="font-size:14px;">&#x1F415; Watchdog</h4>
+                    <button id="watchdog-run-btn" onclick="runWatchdog()" style="background:rgba(255,107,0,0.15);color:#FF6B00;border:1px solid rgba(255,107,0,0.3);padding:6px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Run Now</button>
+                </div>
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Automated nightly scan. Sends Slack alerts only when tools fail the CVE gauntlet or receive D/F grades. Silent on success.</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+                    <div style="padding:10px;background:var(--bg-secondary);border-radius:8px;">
+                        <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Last Run</div>
+                        <div id="watchdog-last-run" style="font-size:13px;font-family:'Fira Code',monospace;color:var(--text-primary);">Never</div>
+                    </div>
+                    <div style="padding:10px;background:var(--bg-secondary);border-radius:8px;">
+                        <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Source</div>
+                        <div id="watchdog-source" style="font-size:13px;font-family:'Fira Code',monospace;color:var(--text-primary);word-break:break-all;">—</div>
+                    </div>
+                    <div style="padding:10px;background:var(--bg-secondary);border-radius:8px;">
+                        <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Slack Alerts</div>
+                        <div id="watchdog-slack" style="font-size:13px;font-family:'Fira Code',monospace;color:var(--text-primary);">—</div>
+                    </div>
+                </div>
+                <div id="watchdog-status" style="font-size:12px;color:var(--text-secondary);"></div>
+                <div id="watchdog-failures" style="display:none;margin-top:12px;"></div>
+            </div>
+        </div>
+
+        <div id="panel-er-chaos" class="panel">
+            <h3 style="margin-bottom:4px;">&#x1F9EA; Chaos Lab</h3>
+            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;">Run Claude-generated attack simulations against cataloged tools. Tests parameter injection, privilege escalation, and data exfiltration.</p>
+
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+                <div style="text-align:center;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;">
+                    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Tests Run</div>
+                    <div id="chaos-total-tests" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--text-primary);">0</div>
+                </div>
+                <div style="text-align:center;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;">
+                    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Caught</div>
+                    <div id="chaos-total-caught" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-green);">0</div>
+                </div>
+                <div style="text-align:center;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;">
+                    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Missed</div>
+                    <div id="chaos-total-missed" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-red);">0</div>
+                </div>
+            </div>
+
+            <div id="chaos-tools-list" style="margin-bottom:16px;">
+                <div style="text-align:center;padding:24px;color:var(--text-secondary);">Loading tools...</div>
+            </div>
+
+            <div id="chaos-results" style="display:none;margin-top:20px;">
+                <h4 style="margin-bottom:12px;font-size:14px;">Latest Results</h4>
+                <div id="chaos-results-body" style="display:flex;flex-direction:column;gap:8px;"></div>
+            </div>
+        </div>
+
+        <div id="panel-er-burn" class="panel">
+            <h3 style="margin-bottom:4px;">&#x1F525; Global Burn Meter</h3>
+            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;">Cross-tenant API spend monitoring. See total costs and per-tenant breakdown.</p>
+
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+                <div style="text-align:center;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;">
+                    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Total Spend</div>
+                    <div id="gburn-total-spend" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-red);">$0.00</div>
+                </div>
+                <div style="text-align:center;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;">
+                    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Active Tenants</div>
+                    <div id="gburn-tenants" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-blue);">0</div>
+                </div>
+                <div style="text-align:center;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;">
+                    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Total Agents</div>
+                    <div id="gburn-agents" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-green);">0</div>
+                </div>
+            </div>
+
+            <div id="gburn-table-wrap" class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Tenant</th>
+                            <th>Spend</th>
+                            <th>Agents</th>
+                            <th>Intercepts (24h)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gburn-body">
+                        <tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:24px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="panel-er-stealth" class="panel">
+            <h3 style="margin-bottom:4px;">&#x1F575; Stealth Control</h3>
+            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;">Manage stealth mode across all tenants. Stealth mode hides community features from non-admin users.</p>
+
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;">
+                <span style="font-size:14px;font-weight:600;color:var(--text-primary);">Global Stealth Mode</span>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                    <input type="checkbox" id="global-stealth-toggle" onchange="toggleGlobalStealth(this.checked)" style="accent-color:#FF6B00;width:18px;height:18px;">
+                    <span id="global-stealth-label" style="font-size:13px;color:var(--text-secondary);">OFF</span>
+                </label>
+                <div style="flex:1;"></div>
+                <span style="font-size:12px;color:var(--text-secondary);">Applies to all tenants</span>
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Tenant</th>
+                            <th>Stealth Mode</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stealth-body">
+                        <tr><td colspan="3" style="text-align:center;color:var(--text-secondary);padding:24px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="panel-er-telemetry" class="panel">
             <h3 style="margin-bottom:20px;">&#128225; Telemetry Dashboard</h3>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
@@ -2615,7 +2830,8 @@ def handle_tool_call(tool_call):
             'rules-group': 'rules',
             'agents-group': 'agents',
             'security': 'vault',
-            'settings-group': 'keys'
+            'settings-group': 'keys',
+            'engine-room': 'er-ingestor'
         };
 
         const GROUP_CHILDREN = {
@@ -2623,7 +2839,8 @@ def handle_tool_call(tool_call):
             'rules-group': ['rules', 'history', 'test'],
             'agents-group': ['agents', 'analytics'],
             'security': ['vault', 'honeypots', 'blast', 'holdwindow', 'catalog', 'risk', 'autotriage', 'stealth'],
-            'settings-group': ['keys', 'llm', 'org', 'account', 'settings', 'admin', 'contacts', 'telemetry']
+            'settings-group': ['keys', 'llm', 'org', 'account', 'settings', 'admin', 'contacts'],
+            'engine-room': ['er-ingestor', 'er-chaos', 'er-burn', 'er-stealth', 'er-telemetry']
         };
 
         let activeSubTabs = {};
@@ -2662,8 +2879,12 @@ def handle_tool_call(tool_call):
             if (name === 'risk') loadRiskIntelligence();
             if (name === 'autotriage') loadAutoTriageRules();
             if (name === 'analytics') loadAnalytics(7);
-            if (name === 'telemetry') loadAdminTab();
             if (name === 'digest') { fetchDigest(); loadDigestEmailState(); }
+            if (name === 'er-ingestor') { if (typeof loadWatchdogStatus === 'function') loadWatchdogStatus(); }
+            if (name === 'er-chaos') loadChaosLab();
+            if (name === 'er-burn') loadGlobalBurn();
+            if (name === 'er-stealth') loadStealthControl();
+            if (name === 'er-telemetry') loadAdminTab();
         }
 
         document.querySelectorAll('.tab[data-tab]').forEach(tab => {
@@ -6189,6 +6410,212 @@ def handle_tool_call(tool_call):
             }
         }
 
+        async function runBatchIngestor() {
+            var statusEl = document.getElementById('ingestor-status');
+            statusEl.style.display = 'block';
+            statusEl.style.background = 'rgba(77,139,255,0.1)';
+            statusEl.style.color = 'var(--accent-blue)';
+            statusEl.textContent = 'Running batch ingestor... this may take a few minutes.';
+
+            var fileInput = document.getElementById('ingestor-file');
+            var urlInput = document.getElementById('ingestor-url');
+            var dryRun = document.getElementById('ingestor-dry-run').checked;
+            var noHeal = document.getElementById('ingestor-no-heal').checked;
+            var noChaos = document.getElementById('ingestor-no-chaos').checked;
+
+            var body = { dry_run: dryRun, no_heal: noHeal, no_chaos: noChaos };
+
+            if (fileInput.files.length > 0) {
+                try {
+                    var text = await fileInput.files[0].text();
+                    var parsed = JSON.parse(text);
+                    body.tools = Array.isArray(parsed) ? parsed : (parsed.tools || []);
+                } catch(e) {
+                    statusEl.style.background = 'rgba(255,77,106,0.1)';
+                    statusEl.style.color = 'var(--accent-red)';
+                    statusEl.textContent = 'Error: Invalid JSON file.';
+                    return;
+                }
+            } else if (urlInput.value.trim()) {
+                body.source_url = urlInput.value.trim();
+            } else {
+                statusEl.style.background = 'rgba(255,77,106,0.1)';
+                statusEl.style.color = 'var(--accent-red)';
+                statusEl.textContent = 'Please upload a JSON file or enter a URL.';
+                return;
+            }
+
+            try {
+                var res = await fetch('/api/admin/batch-ingest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                var data = await res.json();
+                if (!res.ok) {
+                    statusEl.style.background = 'rgba(255,77,106,0.1)';
+                    statusEl.style.color = 'var(--accent-red)';
+                    statusEl.textContent = data.error || 'Ingestor failed.';
+                    return;
+                }
+
+                statusEl.style.background = 'rgba(45,212,168,0.1)';
+                statusEl.style.color = 'var(--accent-green)';
+                statusEl.textContent = 'Ingestor complete!';
+
+                document.getElementById('ingestor-summary').style.display = 'block';
+                document.getElementById('ing-total').textContent = data.total || 0;
+                document.getElementById('ing-ingested').textContent = data.ingested || 0;
+                document.getElementById('ing-healed').textContent = data.healed || 0;
+                document.getElementById('ing-failed').textContent = data.failed || 0;
+                document.getElementById('ing-llm').textContent = (data.llm_calls_used || 0) + '/' + 50;
+
+                var results = data.results || [];
+                if (results.length > 0) {
+                    document.getElementById('ingestor-results').style.display = 'block';
+                    document.getElementById('ingestor-results-body').innerHTML = results.map(function(r) {
+                        var cveTotal = (r.cve_passed || 0) + (r.cve_failed || 0);
+                        var chaos = r.chaos_exploits ? (r.chaos_exploits.caught + '/' + r.chaos_exploits.total) : '—';
+                        var statusClass = r.status === 'approved' ? 'color:var(--accent-green)' : (r.status === 'error' ? 'color:var(--accent-red)' : 'color:var(--accent-yellow)');
+                        return '<tr><td>' + (r.tool_name || '?') + '</td><td>' + (r.grade || '?') + '</td><td style="' + statusClass + '">' + (r.status || '?') + (r.healed ? ' (healed)' : '') + '</td><td>' + (r.cve_passed || 0) + '/' + cveTotal + '</td><td>' + chaos + '</td></tr>';
+                    }).join('');
+                }
+            } catch(e) {
+                statusEl.style.background = 'rgba(255,77,106,0.1)';
+                statusEl.style.color = 'var(--accent-red)';
+                statusEl.textContent = 'Network error: ' + e.message;
+            }
+        }
+
+        async function loadChaosLab() {
+            try {
+                var [toolsRes, statsRes] = await Promise.all([
+                    fetch('/api/catalog'),
+                    fetch('/api/admin/chaos-stats')
+                ]);
+                var tools = await toolsRes.json();
+                var stats = await statsRes.json();
+
+                document.getElementById('chaos-total-tests').textContent = stats.total_tests || 0;
+                document.getElementById('chaos-total-caught').textContent = stats.caught || 0;
+                document.getElementById('chaos-total-missed').textContent = stats.missed || 0;
+
+                var toolsList = document.getElementById('chaos-tools-list');
+                var toolsArr = tools.tools || tools || [];
+                if (Array.isArray(toolsArr) && toolsArr.length > 0) {
+                    toolsList.innerHTML = toolsArr.map(function(t) {
+                        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;">' +
+                            '<div><span style="font-weight:600;font-size:14px;">' + (t.tool_name || t.name) + '</span>' +
+                            '<span style="margin-left:10px;font-size:12px;padding:2px 8px;border-radius:4px;background:rgba(77,139,255,0.1);color:var(--accent-blue);">' + (t.safety_grade || 'U') + '</span></div>' +
+                            '<button onclick="runChaosTest(\'' + (t.id || t.tool_name || t.name) + '\',this)" style="background:rgba(255,77,106,0.15);color:var(--accent-red);border:1px solid rgba(255,77,106,0.3);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Run Chaos</button>' +
+                            '</div>';
+                    }).join('');
+                } else {
+                    toolsList.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-secondary);">No tools in catalog. Ingest tools first.</div>';
+                }
+            } catch(e) {
+                console.error('Failed to load chaos lab', e);
+            }
+        }
+
+        async function runChaosTest(toolId, btn) {
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+            try {
+                var res = await fetch('/api/admin/chaos-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tool_id: toolId })
+                });
+                var data = await res.json();
+                btn.textContent = data.caught + '/' + data.total + ' caught';
+                btn.style.background = data.missed > 0 ? 'rgba(255,77,106,0.15)' : 'rgba(45,212,168,0.15)';
+                btn.style.color = data.missed > 0 ? 'var(--accent-red)' : 'var(--accent-green)';
+
+                var resultsDiv = document.getElementById('chaos-results');
+                resultsDiv.style.display = 'block';
+                var body = document.getElementById('chaos-results-body');
+                body.innerHTML = (data.results || []).map(function(r) {
+                    var color = r.status === 'caught' ? 'var(--accent-green)' : 'var(--accent-red)';
+                    return '<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;">' +
+                        '<span style="font-size:13px;">' + r.exploit + ' <span style="color:var(--text-secondary);font-size:11px;">(' + r.category + ')</span></span>' +
+                        '<span style="color:' + color + ';font-size:13px;font-weight:600;">' + r.status.toUpperCase() + '</span></div>';
+                }).join('');
+            } catch(e) {
+                btn.textContent = 'Error';
+            }
+            btn.disabled = false;
+        }
+
+        async function loadGlobalBurn() {
+            try {
+                var res = await fetch('/api/admin/global-burn');
+                var data = await res.json();
+                document.getElementById('gburn-total-spend').textContent = '$' + (data.total_spend || 0).toFixed(2);
+                document.getElementById('gburn-tenants').textContent = data.active_tenants || 0;
+                document.getElementById('gburn-agents').textContent = data.total_agents || 0;
+
+                var body = document.getElementById('gburn-body');
+                var tenants = data.breakdown || data.tenants || [];
+                if (tenants.length > 0) {
+                    body.innerHTML = tenants.map(function(t) {
+                        return '<tr><td>' + (t.tenant_id || '—') + '</td><td>$' + (t.spend || 0).toFixed(2) + '</td><td>' + (t.agents || 0) + '</td><td>' + (t.events_24h || t.intercepts_24h || 0) + '</td></tr>';
+                    }).join('');
+                } else {
+                    body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:24px;">No tenant data available.</td></tr>';
+                }
+            } catch(e) {
+                console.error('Failed to load global burn', e);
+            }
+        }
+
+        async function loadStealthControl() {
+            try {
+                var res = await fetch('/api/admin/stealth-status');
+                var data = await res.json();
+                var tenants = data.tenants || [];
+                var allStealth = tenants.length > 0 && tenants.every(function(t) { return t.is_stealth_mode; });
+                document.getElementById('global-stealth-toggle').checked = allStealth;
+                document.getElementById('global-stealth-label').textContent = allStealth ? 'ON' : 'OFF';
+
+                var body = document.getElementById('stealth-body');
+                if (tenants.length > 0) {
+                    body.innerHTML = tenants.map(function(t) {
+                        var checked = t.is_stealth_mode ? 'checked' : '';
+                        return '<tr><td>' + t.tenant_id + '</td><td>' + (t.is_stealth_mode ? '<span style="color:var(--accent-green);">ON</span>' : '<span style="color:var(--text-secondary);">OFF</span>') + '</td>' +
+                            '<td><button onclick="toggleTenantStealth(\'' + t.tenant_id + '\',' + !t.is_stealth_mode + ')" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;">' + (t.is_stealth_mode ? 'Disable' : 'Enable') + '</button></td></tr>';
+                    }).join('');
+                } else {
+                    body.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);padding:24px;">No tenants found.</td></tr>';
+                }
+            } catch(e) {
+                console.error('Failed to load stealth control', e);
+            }
+        }
+
+        async function toggleGlobalStealth(enabled) {
+            try {
+                await fetch('/api/admin/stealth-mode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled: enabled })
+                });
+                document.getElementById('global-stealth-label').textContent = enabled ? 'ON' : 'OFF';
+                loadStealthControl();
+            } catch(e) { console.error('Stealth toggle error', e); }
+        }
+
+        async function toggleTenantStealth(tenantId, enabled) {
+            try {
+                await fetch('/api/admin/stealth-mode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tenant_id: tenantId, enabled: enabled })
+                });
+                loadStealthControl();
+            } catch(e) { console.error('Stealth toggle error', e); }
+        }
+
         const BASE_URL = window.location.origin;
         function showSdkTab(lang, btn) {
             document.querySelectorAll('.sdk-panel').forEach(p => p.style.display = 'none');
@@ -6643,6 +7070,64 @@ if (result.status === "allowed") {
             document.getElementById('onboarding-overlay').style.display = 'none';
         }
         checkFirstVisit();
+
+        async function loadWatchdogStatus() {
+            try {
+                const res = await fetch('/api/admin/watchdog/status');
+                if (!res.ok) return;
+                const data = await res.json();
+                const lastRun = data.last_run || {};
+                document.getElementById('watchdog-last-run').textContent = lastRun.ran_at ? new Date(lastRun.ran_at).toLocaleString() : 'Never';
+                document.getElementById('watchdog-source').textContent = data.source_url || '—';
+                const slackEl = document.getElementById('watchdog-slack');
+                if (data.slack_configured) {
+                    slackEl.innerHTML = '<span style="color:var(--accent-green);">Configured</span>';
+                } else {
+                    slackEl.innerHTML = '<span style="color:var(--text-secondary);">Not configured</span>';
+                }
+            } catch (e) {}
+        }
+
+        async function runWatchdog() {
+            const btn = document.getElementById('watchdog-run-btn');
+            const statusEl = document.getElementById('watchdog-status');
+            const failuresEl = document.getElementById('watchdog-failures');
+            btn.disabled = true;
+            btn.textContent = 'Running...';
+            statusEl.textContent = 'Watchdog is running...';
+            statusEl.style.color = '#FF6B00';
+            failuresEl.style.display = 'none';
+            try {
+                const res = await fetch('/api/admin/watchdog/run', { method: 'POST' });
+                const data = await res.json();
+                if (data.error) {
+                    statusEl.textContent = 'Error: ' + data.error;
+                    statusEl.style.color = 'var(--accent-red)';
+                } else {
+                    const summary = data.summary || {};
+                    const failures = data.failures || [];
+                    if (failures.length === 0) {
+                        statusEl.innerHTML = '<span style="color:var(--accent-green);">All clear — no failures detected.</span> Processed ' + summary.total + ' tools.';
+                    } else {
+                        statusEl.innerHTML = '<span style="color:var(--accent-red);">' + failures.length + ' failure(s) detected</span> out of ' + summary.total + ' tools.';
+                        let html = '<div style="background:rgba(255,77,77,0.08);border:1px solid rgba(255,77,77,0.2);border-radius:8px;padding:12px;font-size:12px;">';
+                        html += '<div style="font-weight:600;margin-bottom:8px;color:var(--accent-red);">Failed Tools:</div>';
+                        failures.forEach(f => {
+                            html += '<div style="margin-bottom:4px;"><code>' + (f.tool_name||'?') + '</code> — Grade: ' + (f.grade||'?') + ', CVE: ' + (f.cve_passed||0) + '/' + ((f.cve_passed||0)+(f.cve_failed||0)) + ' — ' + (f.reason||'') + '</div>';
+                        });
+                        html += '</div>';
+                        failuresEl.innerHTML = html;
+                        failuresEl.style.display = 'block';
+                    }
+                    document.getElementById('watchdog-last-run').textContent = data.ran_at ? new Date(data.ran_at).toLocaleString() : 'Just now';
+                }
+            } catch (e) {
+                statusEl.textContent = 'Request failed: ' + e.message;
+                statusEl.style.color = 'var(--accent-red)';
+            }
+            btn.disabled = false;
+            btn.textContent = 'Run Now';
+        }
     </script>
 
     <div style="text-align:center;padding:16px;color:#8B919A;font-size:12px;border-top:1px solid rgba(39,49,64,0.6);">
