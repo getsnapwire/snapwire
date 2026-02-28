@@ -257,6 +257,8 @@ Return only valid JSON."""
     tool_info = json.dumps(tool_schema, indent=2)
     failed_info = json.dumps(failed_patterns, indent=2)
 
+    original_schema = json.loads(json.dumps(tool_schema))
+
     try:
         from src.llm_provider import chat, parse_json_response
         llm_tracker.increment()
@@ -267,6 +269,28 @@ Return only valid JSON."""
         )
         result = parse_json_response(response)
         if result and result.get("healed"):
+            diff_parts = []
+            orig_constraints = original_schema.get("security_constraints", [])
+            new_constraints = result.get("security_constraints", [])
+            added_constraints = [c for c in new_constraints if c not in orig_constraints]
+            if added_constraints:
+                diff_parts.append(f"Added {len(added_constraints)} security constraint(s)")
+            orig_params = original_schema.get("parameters", {})
+            new_params = result.get("parameters", {})
+            added_keys = set(new_params.keys()) - set(orig_params.keys())
+            modified_keys = [k for k in orig_params if k in new_params and orig_params[k] != new_params[k]]
+            if added_keys:
+                diff_parts.append(f"Added parameter(s): {', '.join(added_keys)}")
+            if modified_keys:
+                diff_parts.append(f"Modified parameter(s): {', '.join(modified_keys)}")
+            heal_diff_summary = "; ".join(diff_parts) if diff_parts else "Schema updated with security fixes"
+
+            result["_original_schema"] = original_schema
+            result["_healed_schema"] = result.copy()
+            del result["_healed_schema"]["_original_schema"]
+            if "_healed_schema" in result["_healed_schema"]:
+                del result["_healed_schema"]["_healed_schema"]
+            result["_heal_diff_summary"] = heal_diff_summary
             return result
     except Exception as e:
         logger.warning(f"Auto-heal LLM call failed: {e}")
@@ -274,7 +298,11 @@ Return only valid JSON."""
     return None
 
 
-def add_to_catalog(tool_schema, gauntlet_results, llm_tracker, dry_run=False):
+def add_to_catalog(tool_schema, gauntlet_results, llm_tracker, dry_run=False, healed=False):
+    original_schema_data = tool_schema.pop("_original_schema", None)
+    healed_schema_data = tool_schema.pop("_healed_schema", None)
+    heal_diff_summary = tool_schema.pop("_heal_diff_summary", None)
+
     tool_name = tool_schema.get("name", "unknown")
     description = tool_schema.get("description", "")
     parameters = tool_schema.get("parameters", {})
@@ -292,7 +320,9 @@ def add_to_catalog(tool_schema, gauntlet_results, llm_tracker, dry_run=False):
         except Exception as e:
             logger.warning(f"Grading failed for {tool_name}: {e}")
 
-    if gauntlet_results["failed"] > 0:
+    if healed and healed_schema_data:
+        status = "pending_heal"
+    elif gauntlet_results["failed"] > 0:
         status = "pending_review"
     elif grade in ("D", "F"):
         status = "pending_review"
@@ -302,7 +332,7 @@ def add_to_catalog(tool_schema, gauntlet_results, llm_tracker, dry_run=False):
         status = "pending_review"
 
     if dry_run:
-        return {
+        result = {
             "tool_name": tool_name,
             "grade": grade,
             "status": status,
@@ -311,6 +341,11 @@ def add_to_catalog(tool_schema, gauntlet_results, llm_tracker, dry_run=False):
             "cve_failed": gauntlet_results["failed"],
             "dry_run": True,
         }
+        if healed and original_schema_data and healed_schema_data:
+            result["original_schema"] = original_schema_data
+            result["healed_schema"] = healed_schema_data
+            result["heal_diff_summary"] = heal_diff_summary
+        return result
 
     try:
         from app import db
@@ -318,14 +353,24 @@ def add_to_catalog(tool_schema, gauntlet_results, llm_tracker, dry_run=False):
 
         tenant_id = os.environ.get("SNAPWIRE_TENANT_ID", "default")
         existing = ToolCatalog.query.filter_by(tenant_id=tenant_id, tool_name=tool_name).first()
+
+        original_params_json = json.dumps(original_schema_data.get("parameters", {})) if original_schema_data else None
+        pending_heal_json = json.dumps(healed_schema_data) if healed_schema_data else None
+
         if existing:
             existing.safety_grade = grade
             existing.status = status
             existing.description = description
             if safety_analysis:
                 existing.safety_analysis = safety_analysis
-            existing.schema_json = json.dumps(parameters) if parameters else None
+            if healed and original_schema_data:
+                existing.original_schema = json.dumps(original_schema_data)
+                existing.schema_json = original_params_json or existing.schema_json
+                existing.pending_heal_schema = pending_heal_json
+            else:
+                existing.schema_json = json.dumps(parameters) if parameters else None
             db.session.commit()
+            catalog_id = existing.id
             logger.info(f"Updated existing catalog entry: {tool_name} (grade={grade}, status={status})")
         else:
             entry = ToolCatalog(
@@ -335,15 +380,19 @@ def add_to_catalog(tool_schema, gauntlet_results, llm_tracker, dry_run=False):
                 status=status,
                 description=description,
                 safety_analysis=safety_analysis,
-                schema_json=json.dumps(parameters) if parameters else None,
+                schema_json=original_params_json if healed else (json.dumps(parameters) if parameters else None),
+                original_schema=json.dumps(original_schema_data) if original_schema_data else None,
+                pending_heal_schema=pending_heal_json,
                 first_seen=datetime.utcnow(),
                 call_count=0,
             )
             db.session.add(entry)
             db.session.commit()
+            catalog_id = entry.id
             logger.info(f"Added new catalog entry: {tool_name} (grade={grade}, status={status})")
 
-        return {
+        result = {
+            "tool_id": catalog_id,
             "tool_name": tool_name,
             "grade": grade,
             "status": status,
@@ -351,6 +400,11 @@ def add_to_catalog(tool_schema, gauntlet_results, llm_tracker, dry_run=False):
             "cve_passed": gauntlet_results["passed"],
             "cve_failed": gauntlet_results["failed"],
         }
+        if healed and original_schema_data and healed_schema_data:
+            result["original_schema"] = original_schema_data
+            result["healed_schema"] = healed_schema_data
+            result["heal_diff_summary"] = heal_diff_summary
+        return result
     except Exception as e:
         logger.error(f"Failed to write catalog entry for {tool_name}: {e}")
         return {
@@ -431,7 +485,7 @@ def process_tools(tools, dry_run=False, no_heal=False, no_chaos=False):
                 else:
                     logger.info(f"  Heal attempt {retry+1} returned no result")
 
-        catalog_result = add_to_catalog(tool_schema, gauntlet_results, llm_tracker, dry_run=dry_run)
+        catalog_result = add_to_catalog(tool_schema, gauntlet_results, llm_tracker, dry_run=dry_run, healed=healed)
 
         if healed:
             summary["healed"] += 1

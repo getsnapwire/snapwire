@@ -588,6 +588,103 @@
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.5; transform: scale(1.3); }
         }
+
+        .heal-diff-row td {
+            padding: 0 !important;
+            border-bottom: 1px solid var(--border);
+        }
+        .heal-diff-container {
+            padding: 16px 20px;
+            background: rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
+        }
+        .heal-diff-panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .heal-diff-panel {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 14px;
+            overflow: auto;
+            max-height: 320px;
+        }
+        .heal-diff-panel-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .heal-diff-panel-original .heal-diff-panel-label { color: var(--accent-red); }
+        .heal-diff-panel-fixed .heal-diff-panel-label { color: var(--accent-green); }
+        .heal-diff-panel pre {
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 0;
+        }
+        .heal-diff-panel-original pre .diff-removed {
+            background: rgba(255,77,77,0.12);
+            display: block;
+        }
+        .heal-diff-panel-fixed pre .diff-added {
+            background: rgba(0,245,212,0.10);
+            display: block;
+        }
+        .heal-diff-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .heal-btn-approve {
+            background: rgba(0,245,212,0.12);
+            color: var(--accent-green);
+            border: 1px solid rgba(0,245,212,0.4);
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .heal-btn-approve:hover {
+            background: rgba(0,245,212,0.2);
+            box-shadow: 0 0 12px rgba(0,245,212,0.2);
+        }
+        .heal-btn-reject {
+            background: transparent;
+            color: #ff4d4d;
+            border: 1px solid rgba(255,77,77,0.4);
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .heal-btn-reject:hover {
+            background: rgba(255,77,77,0.12);
+        }
+        .pending-heal-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 9px;
+            background: #FF6B00;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            margin-left: 6px;
+            line-height: 1;
+        }
     </style>
 </head>
 <body>
@@ -1520,11 +1617,12 @@
         {% if is_platform_admin %}
         <div id="panel-engine-room" class="panel">
             <div class="sub-tabs" style="border-bottom-color:rgba(255,107,0,0.2);">
-                <button class="sub-tab active" data-subtab="er-ingestor" data-group="engine-room" style="color:#FF6B00;">Batch Ingestor</button>
+                <button class="sub-tab active" data-subtab="er-ingestor" data-group="engine-room" style="color:#FF6B00;">Batch Ingestor<span id="pending-heal-badge" class="pending-heal-badge" style="display:none;">0</span></button>
                 <button class="sub-tab" data-subtab="er-chaos" data-group="engine-room">Chaos Lab</button>
                 <button class="sub-tab" data-subtab="er-burn" data-group="engine-room">Global Burn</button>
                 <button class="sub-tab" data-subtab="er-stealth" data-group="engine-room">Stealth Control</button>
                 <button class="sub-tab" data-subtab="er-telemetry" data-group="engine-room">Telemetry</button>
+                <button class="sub-tab" data-subtab="er-summary" data-group="engine-room">Weekly Summary</button>
             </div>
         </div>
 
@@ -1587,6 +1685,23 @@
                         <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">LLM Calls</div>
                         <div id="ing-llm" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-purple);">0</div>
                     </div>
+                </div>
+            </div>
+
+            <div id="pending-heals-section" style="display:none;margin-bottom:20px;">
+                <h4 style="margin-bottom:12px;font-size:14px;">Pending Fixes</h4>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Tool Name</th>
+                                <th>Grade</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pending-heals-body"></tbody>
+                    </table>
                 </div>
             </div>
 
@@ -1810,6 +1925,27 @@
                             <span style="font-size:10px;color:var(--text-secondary);margin-top:6px;">—</span>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-er-summary" class="panel">
+            <h3 style="margin-bottom:4px;">&#128202; Weekly Vibe-Audit Summary</h3>
+            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;">Generate an executive-level weekly summary of all audit activity, security posture, and cost impact.</p>
+
+            <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center;flex-wrap:wrap;">
+                <button class="btn btn-test" onclick="generateWeeklySummary()" id="er-summary-generate-btn" style="background:var(--accent-blue);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Generate Now</button>
+                <button class="btn" onclick="sendWeeklySummaryToSlack()" id="er-summary-slack-btn" style="background:var(--bg-card);color:var(--text-secondary);border:1px solid var(--border);padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Send to Slack</button>
+                <span id="er-summary-last-sent" style="font-size:12px;color:var(--text-secondary);margin-left:auto;"></span>
+            </div>
+
+            <div id="er-summary-loading" style="display:none;text-align:center;padding:40px;color:var(--text-secondary);font-size:14px;">
+                Generating summary...
+            </div>
+
+            <div id="er-summary-content" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;min-height:200px;">
+                <div style="text-align:center;padding:40px;color:var(--text-secondary);font-size:14px;">
+                    Click <strong>Generate Now</strong> to create a weekly executive summary.
                 </div>
             </div>
         </div>
@@ -2840,7 +2976,7 @@ def handle_tool_call(tool_call):
             'agents-group': ['agents', 'analytics'],
             'security': ['vault', 'honeypots', 'blast', 'holdwindow', 'catalog', 'risk', 'autotriage', 'stealth'],
             'settings-group': ['keys', 'llm', 'org', 'account', 'settings', 'admin', 'contacts'],
-            'engine-room': ['er-ingestor', 'er-chaos', 'er-burn', 'er-stealth', 'er-telemetry']
+            'engine-room': ['er-ingestor', 'er-chaos', 'er-burn', 'er-stealth', 'er-telemetry', 'er-summary']
         };
 
         let activeSubTabs = {};
@@ -2880,7 +3016,7 @@ def handle_tool_call(tool_call):
             if (name === 'autotriage') loadAutoTriageRules();
             if (name === 'analytics') loadAnalytics(7);
             if (name === 'digest') { fetchDigest(); loadDigestEmailState(); }
-            if (name === 'er-ingestor') { if (typeof loadWatchdogStatus === 'function') loadWatchdogStatus(); }
+            if (name === 'er-ingestor') { if (typeof loadWatchdogStatus === 'function') loadWatchdogStatus(); loadPendingHeals(); }
             if (name === 'er-chaos') loadChaosLab();
             if (name === 'er-burn') loadGlobalBurn();
             if (name === 'er-stealth') loadStealthControl();
@@ -6477,13 +6613,185 @@ def handle_tool_call(tool_call):
                         var cveTotal = (r.cve_passed || 0) + (r.cve_failed || 0);
                         var chaos = r.chaos_exploits ? (r.chaos_exploits.caught + '/' + r.chaos_exploits.total) : '—';
                         var statusClass = r.status === 'approved' ? 'color:var(--accent-green)' : (r.status === 'error' ? 'color:var(--accent-red)' : 'color:var(--accent-yellow)');
-                        return '<tr><td>' + (r.tool_name || '?') + '</td><td>' + (r.grade || '?') + '</td><td style="' + statusClass + '">' + (r.status || '?') + (r.healed ? ' (healed)' : '') + '</td><td>' + (r.cve_passed || 0) + '/' + cveTotal + '</td><td>' + chaos + '</td></tr>';
+                        var healBtn = '';
+                        if (r.healed && r.tool_id) {
+                            healBtn = ' <button onclick="toggleHealDiff(' + r.tool_id + ',this)" style="background:rgba(77,139,255,0.12);color:var(--accent-blue);border:1px solid rgba(77,139,255,0.3);padding:3px 10px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;">View Fix</button>';
+                        }
+                        return '<tr id="ingestor-row-' + (r.tool_id || '') + '"><td>' + (r.tool_name || '?') + '</td><td>' + (r.grade || '?') + '</td><td style="' + statusClass + '">' + (r.status || '?') + (r.healed ? ' (healed)' : '') + healBtn + '</td><td>' + (r.cve_passed || 0) + '/' + cveTotal + '</td><td>' + chaos + '</td></tr>';
                     }).join('');
                 }
+                loadPendingHeals();
             } catch(e) {
                 statusEl.style.background = 'rgba(255,77,106,0.1)';
                 statusEl.style.color = 'var(--accent-red)';
                 statusEl.textContent = 'Network error: ' + e.message;
+            }
+        }
+
+        async function loadPendingHeals() {
+            try {
+                var res = await fetch('/api/catalog');
+                var data = await res.json();
+                var tools = data.tools || data || [];
+                var pending = tools.filter(function(t) { return t.pending_heal_schema && t.original_schema; });
+                var badge = document.getElementById('pending-heal-badge');
+                if (badge) {
+                    if (pending.length > 0) {
+                        badge.style.display = 'inline-flex';
+                        badge.textContent = pending.length;
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+                var section = document.getElementById('pending-heals-section');
+                var tbody = document.getElementById('pending-heals-body');
+                if (pending.length > 0) {
+                    section.style.display = 'block';
+                    tbody.innerHTML = pending.map(function(t) {
+                        return '<tr id="pending-heal-row-' + t.id + '">' +
+                            '<td style="font-family:\'Fira Code\',monospace;font-weight:600;">' + (t.tool_name || '?') + '</td>' +
+                            '<td>' + (t.safety_grade || 'U') + '</td>' +
+                            '<td style="color:var(--accent-yellow);">pending_heal</td>' +
+                            '<td><button onclick="toggleHealDiff(' + t.id + ',this)" style="background:rgba(77,139,255,0.12);color:var(--accent-blue);border:1px solid rgba(77,139,255,0.3);padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">View Fix</button></td>' +
+                            '</tr>';
+                    }).join('');
+                } else {
+                    section.style.display = 'none';
+                }
+            } catch(e) {
+                console.error('Failed to load pending heals', e);
+            }
+        }
+
+        function escapeHtml(str) {
+            var div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function computeLineDiff(originalStr, fixedStr) {
+            var origLines = originalStr.split('\n');
+            var fixedLines = fixedStr.split('\n');
+            var origSet = new Set(origLines);
+            var fixedSet = new Set(fixedLines);
+            var origHtml = origLines.map(function(line) {
+                if (!fixedSet.has(line)) {
+                    return '<span class="diff-removed">' + escapeHtml(line) + '</span>';
+                }
+                return escapeHtml(line);
+            }).join('\n');
+            var fixedHtml = fixedLines.map(function(line) {
+                if (!origSet.has(line)) {
+                    return '<span class="diff-added">' + escapeHtml(line) + '</span>';
+                }
+                return escapeHtml(line);
+            }).join('\n');
+            return { origHtml: origHtml, fixedHtml: fixedHtml };
+        }
+
+        async function toggleHealDiff(toolId, btn) {
+            var existingDiff = document.getElementById('heal-diff-' + toolId);
+            if (existingDiff) {
+                existingDiff.remove();
+                btn.textContent = 'View Fix';
+                return;
+            }
+            btn.textContent = 'Loading...';
+            try {
+                var res = await fetch('/api/catalog');
+                var data = await res.json();
+                var tools = data.tools || data || [];
+                var tool = tools.find(function(t) { return t.id === toolId; });
+                if (!tool || !tool.pending_heal_schema) {
+                    btn.textContent = 'No Fix';
+                    return;
+                }
+                var originalStr = JSON.stringify(tool.original_schema || {}, null, 2);
+                var fixedStr = JSON.stringify(tool.pending_heal_schema || {}, null, 2);
+                var diff = computeLineDiff(originalStr, fixedStr);
+
+                var parentRow = btn.closest('tr');
+                var colCount = parentRow.children.length;
+                var diffRow = document.createElement('tr');
+                diffRow.id = 'heal-diff-' + toolId;
+                diffRow.className = 'heal-diff-row';
+                diffRow.innerHTML = '<td colspan="' + colCount + '">' +
+                    '<div class="heal-diff-container">' +
+                    '<div class="heal-diff-panels">' +
+                    '<div class="heal-diff-panel heal-diff-panel-original">' +
+                    '<div class="heal-diff-panel-label">Original Schema</div>' +
+                    '<pre>' + diff.origHtml + '</pre>' +
+                    '</div>' +
+                    '<div class="heal-diff-panel heal-diff-panel-fixed">' +
+                    '<div class="heal-diff-panel-label">Fixed Schema</div>' +
+                    '<pre>' + diff.fixedHtml + '</pre>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="heal-diff-actions">' +
+                    '<button class="heal-btn-approve" onclick="healApprove(' + toolId + ')">Approve Fix</button>' +
+                    '<button class="heal-btn-reject" onclick="healReject(' + toolId + ')">Reject Fix</button>' +
+                    '</div>' +
+                    '</div>' +
+                    '</td>';
+                parentRow.after(diffRow);
+                btn.textContent = 'Hide Fix';
+            } catch(e) {
+                btn.textContent = 'View Fix';
+                showToast('Failed to load diff: ' + e.message, 'error');
+            }
+        }
+
+        async function healApprove(toolId) {
+            try {
+                var res = await fetch('/api/admin/heal-approve/' + toolId, { method: 'POST' });
+                var data = await res.json();
+                if (!res.ok) {
+                    showToast(data.error || 'Approve failed', 'error');
+                    return;
+                }
+                showToast('Fix approved for ' + (data.tool_name || 'tool'), 'success');
+                var diffRow = document.getElementById('heal-diff-' + toolId);
+                if (diffRow) diffRow.remove();
+                var pendingRow = document.getElementById('pending-heal-row-' + toolId);
+                if (pendingRow) {
+                    pendingRow.querySelector('td:nth-child(3)').innerHTML = '<span style="color:var(--accent-green);">approved</span>';
+                    pendingRow.querySelector('td:nth-child(4)').innerHTML = '<span style="color:var(--accent-green);font-size:12px;font-weight:600;">&#x2713; Approved</span>';
+                }
+                var ingestorRow = document.getElementById('ingestor-row-' + toolId);
+                if (ingestorRow) {
+                    var statusCell = ingestorRow.querySelector('td:nth-child(3)');
+                    if (statusCell) statusCell.innerHTML = '<span style="color:var(--accent-green);">approved</span>';
+                }
+                loadPendingHeals();
+            } catch(e) {
+                showToast('Network error: ' + e.message, 'error');
+            }
+        }
+
+        async function healReject(toolId) {
+            try {
+                var res = await fetch('/api/admin/heal-reject/' + toolId, { method: 'POST' });
+                var data = await res.json();
+                if (!res.ok) {
+                    showToast(data.error || 'Reject failed', 'error');
+                    return;
+                }
+                showToast('Fix rejected for ' + (data.tool_name || 'tool'), 'success');
+                var diffRow = document.getElementById('heal-diff-' + toolId);
+                if (diffRow) diffRow.remove();
+                var pendingRow = document.getElementById('pending-heal-row-' + toolId);
+                if (pendingRow) {
+                    pendingRow.querySelector('td:nth-child(3)').innerHTML = '<span style="color:var(--accent-red);">pending_review</span>';
+                    pendingRow.querySelector('td:nth-child(4)').innerHTML = '<span style="color:var(--accent-red);font-size:12px;font-weight:600;">&#x2717; Rejected</span>';
+                }
+                var ingestorRow = document.getElementById('ingestor-row-' + toolId);
+                if (ingestorRow) {
+                    var statusCell = ingestorRow.querySelector('td:nth-child(3)');
+                    if (statusCell) statusCell.innerHTML = '<span style="color:var(--accent-yellow);">pending_review</span>';
+                }
+                loadPendingHeals();
+            } catch(e) {
+                showToast('Network error: ' + e.message, 'error');
             }
         }
 
@@ -6909,6 +7217,71 @@ if (result.status === "allowed") {
             } catch(e) { console.error('Telemetry toggle error:', e); }
         }
         loadTelemetrySettings();
+
+        function markdownToHtml(md) {
+            let html = md
+                .replace(/^### (.+)$/gm, '<h3 style="color:var(--accent-blue);margin:18px 0 8px;font-size:16px;">$1</h3>')
+                .replace(/^## (.+)$/gm, '<h2 style="color:var(--text-primary);margin:20px 0 10px;font-size:18px;border-bottom:1px solid var(--border);padding-bottom:6px;">$1</h2>')
+                .replace(/^# (.+)$/gm, '<h1 style="color:var(--text-primary);margin:20px 0 12px;font-size:22px;">$1</h1>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/^- (.+)$/gm, '<li style="margin:4px 0;margin-left:20px;">$1</li>')
+                .replace(/^(\d+)\. (.+)$/gm, '<li style="margin:4px 0;margin-left:20px;">$2</li>')
+                .replace(/`([^`]+)`/g, '<code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-family:Fira Code,monospace;font-size:12px;">$1</code>')
+                .replace(/\n\n/g, '<br><br>')
+                .replace(/\n/g, '<br>');
+            return '<div style="line-height:1.7;font-size:14px;color:var(--text-primary);">' + html + '</div>';
+        }
+
+        async function generateWeeklySummary() {
+            const btn = document.getElementById('er-summary-generate-btn');
+            const loading = document.getElementById('er-summary-loading');
+            const content = document.getElementById('er-summary-content');
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            loading.style.display = 'block';
+            content.style.display = 'none';
+            try {
+                const res = await fetch('/api/admin/weekly-summary');
+                const data = await res.json();
+                if (res.ok && data.summary) {
+                    content.innerHTML = markdownToHtml(data.summary);
+                    if (data.generated_at) {
+                        document.getElementById('er-summary-last-sent').textContent = 'Generated: ' + new Date(data.generated_at).toLocaleString();
+                    }
+                } else {
+                    content.innerHTML = '<div style="text-align:center;padding:30px;color:#ff4d4d;">' + (data.error || 'Failed to generate summary') + '</div>';
+                }
+            } catch(e) {
+                content.innerHTML = '<div style="text-align:center;padding:30px;color:#ff4d4d;">Network error generating summary</div>';
+            }
+            content.style.display = 'block';
+            loading.style.display = 'none';
+            btn.disabled = false;
+            btn.textContent = 'Generate Now';
+        }
+
+        async function sendWeeklySummaryToSlack() {
+            const btn = document.getElementById('er-summary-slack-btn');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            try {
+                const res = await fetch('/api/admin/weekly-summary/send', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message || 'Summary sent to Slack', 'success');
+                    if (data.sent_at) {
+                        document.getElementById('er-summary-last-sent').textContent = 'Sent to Slack: ' + new Date(data.sent_at).toLocaleString();
+                    }
+                } else {
+                    showToast(data.error || 'Failed to send to Slack', 'error');
+                }
+            } catch(e) {
+                showToast('Network error sending to Slack', 'error');
+            }
+            btn.disabled = false;
+            btn.textContent = 'Send to Slack';
+        }
 
         async function loadLLMSettings() {
             try {

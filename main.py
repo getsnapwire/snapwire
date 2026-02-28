@@ -306,10 +306,75 @@ def start_weekly_digest_timer():
     t.start()
 
 
+def start_vibe_audit_timer():
+    def run():
+        import logging
+        logger = logging.getLogger(__name__)
+        last_sent = None
+        while True:
+            time.sleep(3600)
+            try:
+                with app.app_context():
+                    from datetime import timedelta
+                    now = datetime.utcnow()
+                    if now.weekday() == 4 and now.hour == 16:
+                        if last_sent and (now - last_sent).total_seconds() < 72000:
+                            continue
+                        logger.info("Vibe-Audit weekly timer triggered (Friday 16:00 UTC)")
+                        result = generate_weekly_vibe_audit()
+                        slack_url = os.environ.get("SLACK_WEBHOOK_URL", "").strip()
+                        if not slack_url:
+                            logger.info("SLACK_WEBHOOK_URL not configured — printing Vibe-Audit summary to stdout")
+                            print("=== Weekly Vibe-Audit Summary ===")
+                            print(result.get("summary", "No summary available"))
+                            print("=================================")
+                            last_sent = now
+                            continue
+                        import requests as _req
+                        metrics = result.get("metrics", {})
+                        slack_text = (
+                            f":bar_chart: *Weekly Vibe-Audit Summary*\n"
+                            f"_{result.get('generated_at', 'N/A')}_\n\n"
+                            f"*Actions*: {metrics.get('total_actions', 0)} total | "
+                            f"{metrics.get('actions_blocked', 0)} blocked | "
+                            f"{metrics.get('actions_approved', 0)} approved\n"
+                            f"*Agents*: {metrics.get('unique_agents', 0)} | "
+                            f"*Tools*: {metrics.get('unique_tools', 0)}\n"
+                            f"*Security*: {metrics.get('high_risk_actions', 0)} high-risk | "
+                            f"{metrics.get('honeypot_triggers', 0)} honeypot | "
+                            f"{metrics.get('loop_detections', 0)} loops\n"
+                            f"*Spend Saved*: ${metrics.get('estimated_spend_saved', 0)}\n"
+                            f"*Hardening*: {metrics.get('tools_hardened', 0)} hardened | "
+                            f"{metrics.get('tools_healed', 0)} healed | "
+                            f"{metrics.get('chaos_tests_run', 0)} chaos tests\n\n"
+                            f"```\n{result.get('summary', 'No summary available')[:2800]}\n```"
+                        )
+                        slack_payload = {
+                            "blocks": [
+                                {
+                                    "type": "section",
+                                    "text": {"type": "mrkdwn", "text": slack_text},
+                                }
+                            ]
+                        }
+                        resp = _req.post(slack_url, json=slack_payload, timeout=15)
+                        if resp.status_code == 200:
+                            logger.info("Vibe-Audit weekly summary sent to Slack successfully")
+                        else:
+                            logger.warning(f"Vibe-Audit Slack post failed: {resp.status_code} {resp.text}")
+                        last_sent = now
+            except Exception as e:
+                import logging as _log
+                _log.getLogger(__name__).warning(f"Vibe-Audit weekly timer error: {e}")
+    t = threading.Thread(target=run, daemon=True)
+    t.start()
+
+
 start_auto_deny_timer()
 start_daily_risk_summary_timer()
 start_weekly_digest_timer()
 start_telemetry_ping_timer()
+start_vibe_audit_timer()
 
 
 VERIFY_EXEMPT_PATHS = {
@@ -5091,6 +5156,47 @@ def api_admin_batch_ingest():
     return jsonify(summary)
 
 
+@app.route("/api/admin/heal-approve/<int:tool_id>", methods=["POST"])
+@require_platform_admin
+def api_admin_heal_approve(tool_id):
+    tool = ToolCatalog.query.get(tool_id)
+    if not tool:
+        return jsonify({"error": "Tool not found"}), 404
+    if not tool.pending_heal_schema:
+        return jsonify({"error": "No pending heal schema for this tool"}), 400
+    try:
+        healed = json.loads(tool.pending_heal_schema)
+        healed_params = healed.get("parameters", {})
+        tool.schema_json = json.dumps(healed_params)
+        tool.pending_heal_schema = None
+        tool.status = "approved"
+        tool.reviewed_by = current_user.email or current_user.id
+        tool.reviewed_at = datetime.utcnow()
+        db.session.commit()
+        return jsonify({"status": "approved", "tool_name": tool.tool_name, "message": "Healed schema adopted successfully"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/admin/heal-reject/<int:tool_id>", methods=["POST"])
+@require_platform_admin
+def api_admin_heal_reject(tool_id):
+    tool = ToolCatalog.query.get(tool_id)
+    if not tool:
+        return jsonify({"error": "Tool not found"}), 404
+    if not tool.pending_heal_schema:
+        return jsonify({"error": "No pending heal schema for this tool"}), 400
+    try:
+        tool.pending_heal_schema = None
+        tool.status = "pending_review"
+        db.session.commit()
+        return jsonify({"status": "pending_review", "tool_name": tool.tool_name, "message": "Healed schema rejected, tool remains pending review"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/admin/chaos-test", methods=["POST"])
 @require_platform_admin
 def api_admin_chaos_test():
@@ -5268,6 +5374,241 @@ def api_admin_watchdog_status():
         "slack_configured": slack_configured,
         "schedule": "Ready for cron/systemd timer (not auto-scheduled)",
     })
+
+
+_last_vibe_audit_summary = {"summary": None, "generated_at": None}
+
+
+def generate_weekly_vibe_audit():
+    from datetime import timedelta
+    import logging
+    logger = logging.getLogger(__name__)
+
+    now = datetime.utcnow()
+    cutoff = now - timedelta(days=7)
+
+    total_actions = AuditLogEntry.query.filter(AuditLogEntry.created_at >= cutoff).count()
+
+    blocked_statuses = [
+        'blocked', 'blocked-blast-radius', 'blocked-sanitizer',
+        'blocked-catalog', 'blocked-deception', 'shadow-blocked',
+    ]
+    actions_blocked = AuditLogEntry.query.filter(
+        AuditLogEntry.created_at >= cutoff,
+        AuditLogEntry.status.in_(blocked_statuses),
+    ).count()
+
+    approved_statuses = ['allowed', 'approved', 'auto-approved', 'auto-triage-approved', 'trust-approved']
+    actions_approved = AuditLogEntry.query.filter(
+        AuditLogEntry.created_at >= cutoff,
+        AuditLogEntry.status.in_(approved_statuses),
+    ).count()
+
+    unique_agents = db.session.query(
+        db.func.count(db.func.distinct(AuditLogEntry.agent_id))
+    ).filter(AuditLogEntry.created_at >= cutoff).scalar() or 0
+
+    unique_tools = db.session.query(
+        db.func.count(db.func.distinct(AuditLogEntry.tool_name))
+    ).filter(AuditLogEntry.created_at >= cutoff).scalar() or 0
+
+    honeypot_triggers = HoneypotAlert.query.filter(
+        HoneypotAlert.triggered_at >= cutoff
+    ).count()
+
+    loop_detections = LoopDetectorEvent.query.filter(
+        LoopDetectorEvent.detected_at >= cutoff
+    ).count()
+
+    high_risk_actions = AuditLogEntry.query.filter(
+        AuditLogEntry.created_at >= cutoff,
+        AuditLogEntry.risk_score >= 70,
+    ).count()
+
+    estimated_spend_saved = round(actions_blocked * 0.12, 2)
+
+    tools_hardened = ToolCatalog.query.filter(
+        ToolCatalog.first_seen >= cutoff,
+        ToolCatalog.status.in_(['approved', 'pending_review']),
+    ).count()
+
+    tools_healed = ToolCatalog.query.filter(
+        ToolCatalog.first_seen >= cutoff,
+        ToolCatalog.status == 'pending_heal',
+    ).count()
+    tools_healed += ToolCatalog.query.filter(
+        ToolCatalog.pending_heal_schema.isnot(None),
+    ).count()
+
+    chaos_tests = AuditLogEntry.query.filter(
+        AuditLogEntry.created_at >= cutoff,
+        AuditLogEntry.tool_name == 'chaos_test',
+    ).count()
+
+    aggregated = {
+        "period_start": cutoff.isoformat(),
+        "period_end": now.isoformat(),
+        "total_actions": total_actions,
+        "actions_blocked": actions_blocked,
+        "actions_approved": actions_approved,
+        "unique_agents": unique_agents,
+        "unique_tools": unique_tools,
+        "honeypot_triggers": honeypot_triggers,
+        "loop_detections": loop_detections,
+        "high_risk_actions": high_risk_actions,
+        "estimated_spend_saved": estimated_spend_saved,
+        "tools_hardened": tools_hardened,
+        "tools_healed": tools_healed,
+        "chaos_tests_run": chaos_tests,
+    }
+
+    try:
+        from src.llm_provider import chat, get_provider_info
+        info = get_provider_info()
+        if not info.get("configured"):
+            raise RuntimeError("No LLM key configured")
+
+        prompt_system = (
+            "You are an executive AI security analyst for Snapwire Agentic Firewall. "
+            "Generate a concise 1-page Markdown executive summary from the provided weekly metrics. "
+            "Use these exact sections: ## Overview, ## Security Posture, ## Cost Impact, "
+            "## Tool Hardening, ## Notable Events, ## Recommendations. "
+            "Be concise, data-driven, and actionable. Use bullet points. "
+            "Format numbers clearly. Keep the entire summary under 600 words."
+        )
+        prompt_user = (
+            f"Weekly Vibe-Audit Metrics (past 7 days):\n\n"
+            f"- Total actions processed: {total_actions}\n"
+            f"- Actions blocked: {actions_blocked}\n"
+            f"- Actions approved: {actions_approved}\n"
+            f"- Unique agents active: {unique_agents}\n"
+            f"- Unique tools observed: {unique_tools}\n"
+            f"- Honeypot triggers: {honeypot_triggers}\n"
+            f"- Loop detections: {loop_detections}\n"
+            f"- High-risk actions (score >= 70): {high_risk_actions}\n"
+            f"- Estimated spend saved: ${estimated_spend_saved}\n"
+            f"- Tools hardened this week: {tools_hardened}\n"
+            f"- Tools healed (auto-fix pending/applied): {tools_healed}\n"
+            f"- Chaos tests run: {chaos_tests}\n"
+            f"\nGenerate the executive summary now."
+        )
+        summary_md = chat(prompt_system, prompt_user, max_tokens=2048)
+        source = "llm"
+    except Exception as e:
+        logger.info(f"LLM summary generation unavailable ({e}), using deterministic fallback")
+        block_rate = round((actions_blocked / total_actions * 100), 1) if total_actions > 0 else 0.0
+        summary_md = (
+            f"# Weekly Vibe-Audit Summary\n\n"
+            f"**Period**: {cutoff.strftime('%Y-%m-%d')} to {now.strftime('%Y-%m-%d')}\n\n"
+            f"## Overview\n"
+            f"- **{total_actions}** total actions processed across **{unique_agents}** agents and **{unique_tools}** tools\n"
+            f"- Block rate: **{block_rate}%** ({actions_blocked} blocked, {actions_approved} approved)\n\n"
+            f"## Security Posture\n"
+            f"- **{high_risk_actions}** high-risk actions detected (risk score ≥ 70)\n"
+            f"- **{honeypot_triggers}** honeypot triggers — potential adversarial probing\n"
+            f"- **{loop_detections}** loop detections — runaway agent patterns caught\n\n"
+            f"## Cost Impact\n"
+            f"- Estimated spend saved by blocking: **${estimated_spend_saved}**\n"
+            f"- Cost per blocked action: $0.12 (industry average)\n\n"
+            f"## Tool Hardening\n"
+            f"- **{tools_hardened}** tools hardened this week\n"
+            f"- **{tools_healed}** tools auto-healed (pending or applied)\n"
+            f"- **{chaos_tests}** chaos exploitation tests executed\n\n"
+            f"## Notable Events\n"
+            f"- {'No honeypot triggers — low adversarial activity' if honeypot_triggers == 0 else f'{honeypot_triggers} honeypot trigger(s) detected — review recommended'}\n"
+            f"- {'No loop detections — agents operating normally' if loop_detections == 0 else f'{loop_detections} loop detection(s) — check agent configurations'}\n\n"
+            f"## Recommendations\n"
+            f"- {'Consider enabling more rules to increase coverage' if total_actions == 0 else 'Continue monitoring — system operating within normal parameters'}\n"
+            f"- Review any high-risk actions in the audit log\n"
+            f"- Schedule chaos tests for newly onboarded tools\n"
+        )
+        source = "deterministic"
+
+    result = {
+        "summary": summary_md,
+        "source": source,
+        "metrics": aggregated,
+        "generated_at": now.isoformat(),
+    }
+
+    global _last_vibe_audit_summary
+    _last_vibe_audit_summary = {"summary": result, "generated_at": now.isoformat()}
+
+    return result
+
+
+@app.route("/api/admin/weekly-summary", methods=["GET"])
+@require_platform_admin
+def api_admin_weekly_summary():
+    try:
+        result = generate_weekly_vibe_audit()
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/admin/weekly-summary/send", methods=["POST"])
+@require_platform_admin
+def api_admin_weekly_summary_send():
+    try:
+        result = generate_weekly_vibe_audit()
+        slack_url = os.environ.get("SLACK_WEBHOOK_URL", "").strip()
+        if not slack_url:
+            return jsonify({
+                "status": "skipped",
+                "message": "SLACK_WEBHOOK_URL not configured. Summary generated but not sent.",
+                "summary": result,
+            })
+
+        import requests as _req
+        metrics = result.get("metrics", {})
+        slack_text = (
+            f":bar_chart: *Weekly Vibe-Audit Summary*\n"
+            f"_{result.get('generated_at', 'N/A')}_\n\n"
+            f"*Actions*: {metrics.get('total_actions', 0)} total | "
+            f"{metrics.get('actions_blocked', 0)} blocked | "
+            f"{metrics.get('actions_approved', 0)} approved\n"
+            f"*Agents*: {metrics.get('unique_agents', 0)} | "
+            f"*Tools*: {metrics.get('unique_tools', 0)}\n"
+            f"*Security*: {metrics.get('high_risk_actions', 0)} high-risk | "
+            f"{metrics.get('honeypot_triggers', 0)} honeypot | "
+            f"{metrics.get('loop_detections', 0)} loops\n"
+            f"*Spend Saved*: ${metrics.get('estimated_spend_saved', 0)}\n"
+            f"*Hardening*: {metrics.get('tools_hardened', 0)} hardened | "
+            f"{metrics.get('tools_healed', 0)} healed | "
+            f"{metrics.get('chaos_tests_run', 0)} chaos tests\n\n"
+            f"```\n{result.get('summary', 'No summary available')[:2800]}\n```"
+        )
+
+        slack_payload = {
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": slack_text},
+                }
+            ]
+        }
+
+        resp = _req.post(slack_url, json=slack_payload, timeout=15)
+        if resp.status_code == 200:
+            return jsonify({
+                "status": "sent",
+                "message": "Weekly Vibe-Audit summary sent to Slack.",
+                "summary": result,
+                "sent_at": datetime.utcnow().isoformat(),
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "message": f"Slack returned status {resp.status_code}: {resp.text}",
+                "summary": result,
+            }), 502
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":

@@ -345,6 +345,8 @@ class ToolCatalog(db.Model):
     schema_json = db.Column(db.Text, nullable=True)
     schema_enforcement = db.Column(db.String(10), default='flexible')
     is_consequential = db.Column(db.Boolean, default=False)
+    pending_heal_schema = db.Column(db.Text, nullable=True)
+    original_schema = db.Column(db.Text, nullable=True)
     __table_args__ = (UniqueConstraint('tenant_id', 'tool_name', name='uq_tenant_tool'),)
 
     def to_dict(self):
@@ -369,6 +371,8 @@ class ToolCatalog(db.Model):
             "schema": schema_parsed,
             "schema_enforcement": self.schema_enforcement,
             "is_consequential": self.is_consequential or False,
+            "pending_heal_schema": json.loads(self.pending_heal_schema) if self.pending_heal_schema else None,
+            "original_schema": json.loads(self.original_schema) if self.original_schema else None,
         }
 
 
