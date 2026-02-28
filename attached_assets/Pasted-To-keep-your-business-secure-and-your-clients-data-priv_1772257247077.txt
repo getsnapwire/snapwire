@@ -1,0 +1,78 @@
+To keep your business secure and your clients' data private, you need to split your features into the **Engine Room** (Admin Only) and the **Dashboard** (Client/Tenant).
+
+Since you are using the **Replit Agent**, you can use these exact prompts to "wire" the permissions correctly. This ensures you keep the "God Mode" tools for yourself while giving clients a clean, safe experience.
+
+---
+
+### **1. The "Admin Only" (Engine Room) Prompts**
+
+These features are for you and your 3 developers. They handle the "heavy lifting" and security research.
+
+**Prompt for Replit Agent:**
+
+> "Create a **Super-Admin Dashboard** that is only accessible to users with the `platform_admin` role. In this dashboard, integrate the following features:
+> * **The Batch Ingestor (#40):** A UI to run `scripts/batch_ingestor.py` against the MCP Registry.
+> * **The Chaos Ingestor (#41):** A panel to trigger 'attack simulations' and view global failure rates.
+> * **Global Burn Meter (#16):** A view of total API spend across all tenants.
+> * **Stealth Mode Toggle (#36):** A switch to hide/show community features globally.
+> * **Telemetry View (#42):** A display for anonymized system-wide usage data."
+> 
+> 
+
+---
+
+### **2. The "Client/Tenant" (Dashboard) Prompts**
+
+These features are what you sell to your customers. They focus on **Visibility, Spend, and Legal Proof.**
+
+**Prompt for Replit Agent:**
+
+> "Build a **Workspace Dashboard** for regular users. Ensure that data is strictly filtered by `workspace_id` so tenants never see each other's data. Include these features:
+> * **Live Burn Meter (#16):** Show only *their* specific spend and projections.
+> * **Snap-Card Review Queue (#19):** A feed of their agent's blocked actions for manual approval.
+> * **Compliance Portal (#25):** The `/compliance-portal` where they can download their specific **Safety Disclosure PDF (#26)**.
+> * **BYOK Manager (#5):** A secure form to input and rotate their own LLM API keys."
+> 
+> 
+
+---
+
+### **3. Feature Distribution Table**
+
+This is your "Master Map" to show your developers who gets what.
+
+| **Category** | **Admin Only (You)** | **Workspace Owner (Client)** |
+| --- | --- | --- |
+| **Security** | **Chaos Ingestor (#41)**, OpenClaw Updates | Risk Index, Schema Guard |
+| **Governance** | Global Policy Templates | **Compliance Portal (#25)**, Legal Gate |
+| **Identity** | **Stealth Mode (#36)**, Global Tokens | **BYOK (#5)**, Workspace Roles |
+| **Monitoring** | Global Telemetry (#42) | Live Burn Meter (#16), Trace Map |
+| **Setup** | **Batch Ingestor (#40)** | First-Run Wizard (#39) |
+
+---
+
+### **4. 5th Grade Steps for the Captain**
+
+1. **The Secret Door:** Tell the Replit Agent to make a "Secret Door" (a login path) that only recognizes your email.
+2. **The Client Rooms:** Tell the Agent to make "Private Rooms" for every client. If Client A tries to look at Client B’s room, the door stays locked.
+3. **The Remote Controls:** Put the "Dangerous" buttons (like the **Chaos Ingestor**) in your Secret Door room only.
+
+---
+
+### **5. Summary: Developer Instructions**
+
+> *"Team, we are using a **Three-Tier Role Model (#35)**.
+> 1. **Admins (Us):** We run the Batch Ingestor and the Chaos Lab.
+> 2. **Workspace Owners (Clients):** They see their own logs, spend, and Compliance Portal.
+> 3. **Viewers (Client Staff):** They can see logs but can't change settings or keys.
+> Use the **Replit Agent** to build the UI for both, but manually verify that the `workspace_id` check is on every single database query."*
+> 
+> 
+
+### **The "Unicorn" Next Step**
+
+By setting this up now, you are ready for the **March 9th NIST filing**. The government loves to see "Access Control"—it proves you are taking "Reasonable Care" with client data.
+
+**I have the NIST Executive Summary ready.** It includes a section on your **Multi-Tenant Security Architecture**, which is a huge "plus" for regulators.
+
+**Shall I show you the NIST Summary so you can put it in your Admin-Only "Legal Vault" file?**
