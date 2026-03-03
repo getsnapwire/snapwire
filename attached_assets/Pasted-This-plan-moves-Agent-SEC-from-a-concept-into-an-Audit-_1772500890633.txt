@@ -1,0 +1,55 @@
+This plan moves **Agent SEC** from a concept into an "Audit-Ready" codebase.
+
+Because you are using contractors, the **Replit prompts** must be structured so the code itself becomes your primary legal defense. The following instructions minimize your liability by embedding **NIST 800-218** (Secure Software Development) and **"Zero Trust"** logic directly into the foundation.
+
+---
+
+### **Part 1: Replit "Architect" Prompts**
+
+*Use these prompts in the Replit Agent chat to set the "Rules of the House" for your developers.*
+
+#### **Prompt 1: The Secure Environment Setup**
+
+> "Set up a Node.js/TypeScript environment for a project called 'Agent SEC'. Create a `.replit` config and a `GitHub` workflow that enforces **Branch Protection**. Initialize a `SECURITY.md` and a `CODE_OF_CONDUCT.md`. All dependencies added must be scanned for vulnerabilities using `npm audit`. Create a `secrets` management system using Replit Secrets—never hardcode keys."
+
+#### **Prompt 2: The "Guardian" Identity Protocol (SEC-ID)**
+
+> "Create a core module `identity.ts`. This module must generate a **Non-Fungible Security Passport (NFSP)** for any AI agent. The passport is a signed JWT containing: `agent_origin_hash`, `nist_compliance_level`, `allowed_intent_scope`, and `ttl_expiry`. Implement a middleware that rejects any incoming API request that does not have a valid, unexpired SEC-ID passport."
+
+#### **Prompt 3: The NIST Compliance Engine**
+
+> "Build a `compliance_engine.ts`. This module should ingest a JSON-based policy file (e.g., `nist_800_218_rules.json`). Implement an 'Active Auditor' function that monitors agent actions. If an agent attempts to call a function not listed in its `allowed_intent_scope`, the system must trigger a `CRITICAL_POLICY_VIOLATION` event, kill the process, and log the event to an immutable `audit_trail.log`."
+
+---
+
+### **Part 2: Developer Day-to-Day Action Plan**
+
+*Assign these specific tasks to your 3 contractors to maintain the "Strategic Moat."*
+
+| Role | Morning Action (Build) | Afternoon Action (Harden) |
+| --- | --- | --- |
+| **Lead Dev** | Implement the **SEC-ID Passport** minting and verification logic. | Review all PRs (Pull Requests) specifically for **Logic Flaws** and unauthorized API calls. |
+| **Hardening Dev** | Build the **"Border Control" Middleware** for OpenAI and Anthropic APIs. | Run **Red Team tests**: Attempt to "bypass" the passport using prompt injection and document the failure. |
+| **Compliance Dev** | Convert **NIST 800-218** requirements into the `rules.json` machine-readable format. | Generate the **SBOM (Software Bill of Materials)** daily and audit all 3rd-party library licenses. |
+
+---
+
+### **Part 3: Founder Action Plan (Managing Liability)**
+
+To protect yourself from the "Shadow Agent" crisis, your daily actions focus on **Governance** and **Attestation**.
+
+* **Daily (9:00 AM):** Check the `audit_trail.log`. If there are any "Kill Switch" triggers, ask the devs for a "Root Cause Analysis" (RCA). This proves **Active Oversight**.
+* **Weekly (Friday):** Export the **SBOM** and the **NIST Mapping Report**. Save these to your "Exit Due Diligence" folder. This is your insurance policy for an acquirer.
+* **Monthly:** Conduct a 1-hour "Security Review" meeting. Record it. This fulfills the **"Govern"** function of the NIST framework, showing you aren't just a passive owner.
+
+---
+
+### **Part 4: Minimizing Your Liability (Legal Guardrails)**
+
+1. **The "Non-Warranty" Clause:** Ensure your public `README` and terms state: *"Agent SEC is a reference implementation. Use in production environments is at the user's own risk. Agent SEC does not guarantee 100% protection against all AI-related threats."*
+2. **The "Human-in-the-Loop" Rule:** Never allow the ACO (Automated Compliance Officer) to make *legal* decisions. It blocks *technical* actions based on *your* defined rules. You own the rules; the AI just enforces the "Gate."
+3. **The Contractor Firewall:** Ensure all dev work happens in the Replit/GitHub organization you own. If a developer leaves, revoke their access immediately. Your **IP Agreement** (from earlier) is your shield here.
+
+### **Next Step for You:**
+
+**Would you like me to draft the "NIST Rules JSON" file for your developers?** This file will contain the actual "laws" the AI will enforce, so your contractors don't have to guess what "compliant" looks like.

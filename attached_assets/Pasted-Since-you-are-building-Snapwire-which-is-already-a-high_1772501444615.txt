@@ -1,0 +1,51 @@
+Since you are building **Snapwire**, which is already a high-maturity "v4" product, you don't need the basic "getting started" scaffolding. You need to automate the "Audit" and "Governance" layers so that Snapwire can be the **official standard** for an acquisition.
+
+The following prompts are designed for **Replit Agent** (or your lead developers) to implement the "Missing Link" features: **NIST IR 8596 Compliance** and the **Automated AIBOM**.
+
+---
+
+### **Part 1: The "v5" Replit Engineering Prompts**
+
+*These are high-level architecture prompts. Copy-paste these into the Replit Agent to build the advanced governance layer.*
+
+#### **1. The NIST IR 8596 "Cyber AI" Auditor**
+
+> "Implement a new service `Snap-IR8596-Auditor`. This service must map every event from the `Sentinel Proxy` and `Snap-Token` logs to the six functions of **NIST IR 8596** (Govern, Identify, Protect, Detect, Respond, Recover). Create a dynamic dashboard that shows 'Real-Time Compliance Drift'—if an agent's actions deviate from its intended IR 8596 safety profile, trigger the `Fuse Breaker` immediately. Output a weekly 'Board-Ready' Attestation PDF."
+
+#### **2. The Automated AIBOM (CycloneDX v1.7)**
+
+> "Create a `Snap-AIBOM-Generator`. It must automatically track the 'Supply Chain' of every agent session, including: Model ID (e.g., GPT-4o-2024-08-06), System Prompt Version, Temperature, and any Third-Party Tool-Calls. Export this data as a **CycloneDX v1.7 JSON** file. Add a 'Forensic Lineage' field that hashes the relationship between the prompt and the specific data source accessed, ensuring a tamper-proof chain of custody."
+
+#### **3. The "Honeypot Tripwire" Extension**
+
+> "Add a `Honeypot-Logic` module to the `Sentinel Proxy`. For every 100 requests, inject a 'Canary Token' or a fake sensitive data string into the agent's context. If the agent attempts to exfiltrate or process this 'Canary' data without explicit authorization, flag the session as 'Compromised' and initiate a 'Live Burn' on that specific Snap-Token."
+
+---
+
+### **Part 2: Strategic Action Plan (Owner & Developers)**
+
+#### **Your Daily Actions (The Founder)**
+
+* **Morning (Trust Check):** Review the `AIBOM` logs. Ensure no "Shadow AI" (unauthorized models) has crept into the dev environment.
+* **Afternoon (Strategy):** Use the `NIST IR 8596` dashboard to identify "Protect" or "Detect" gaps. This is your primary talking point for investors.
+* **End of Day (Liability):** Verify that all `Live Burn` events are HMAC-signed and stored in the immutable database. This is your "Legal Black Box."
+
+#### **Developer Daily Actions (The Squad)**
+
+* **Lead Dev:** Focus on **Interoperability**. Build a "Plug-in" for **ServiceNow** so they can ingest Snapwire's compliance bundles natively. (This makes you easy to buy).
+* **Hardening Dev:** Automate the **Chaos Ingestor**. Every night, run 10,000 adversarial prompts against the system to find "Goal Drift" before a customer does.
+* **Compliance Dev:** Ensure the **SBOM/AIBOM** automation is 100% accurate. They own the "Evidence" that proves Snapwire is better than a manual consultant.
+
+---
+
+### **Part 3: Minimizing Your Liability (Advanced Tier)**
+
+Since Snapwire is a sophisticated tool, your liability is actually **higher** if you claim it's perfect. Use these "Safe Harbors":
+
+1. **The "Probabilistic Warning":** Add a permanent header to the Compliance Portal: *"Snapwire uses AI to govern AI. Governance outcomes are probabilistic. This tool provides 'Duty of Care' evidence but does not replace human legal counsel."*
+2. **The "Forensic Export" Requirement:** Ensure that if a customer cancels their subscription, they get a **Full Forensic Bundle** (the AIBOMs and SHA-256 logs) for their records. This prevents "Data Hostage" claims.
+3. **Third-Party Audit:** In Q3 2026, hire a firm to certify that Snapwire's **NIST IR 8596** mapping is accurate. This "Audit of the Auditor" is the final step before a $100M exit.
+
+### **Next Step for You:**
+
+**Would you like me to draft the "Sales Pitch" for Snapwire to a Fortune 500 CISO?** I can focus on how the **Automated AIBOM** and **IR 8596 Mapping** specifically solve their 2026 legal liability problems.
