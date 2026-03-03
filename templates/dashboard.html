@@ -1811,6 +1811,27 @@
                     </tbody>
                 </table>
             </div>
+
+            <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+                <h4 style="margin-bottom:12px;font-size:14px;">&#x1F9EC; AIBOM Supply Chain</h4>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;">
+                    <div style="text-align:center;padding:12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;">
+                        <div id="gburn-aibom-components" style="font-size:22px;font-weight:700;color:#FF6B00;">--</div>
+                        <div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">Total Components</div>
+                    </div>
+                    <div style="text-align:center;padding:12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;">
+                        <div id="gburn-aibom-services" style="font-size:22px;font-weight:700;color:#00d4aa;">--</div>
+                        <div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">Total Intercepts</div>
+                    </div>
+                    <div style="text-align:center;padding:12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;">
+                        <div id="gburn-aibom-tenants" style="font-size:22px;font-weight:700;color:var(--accent-blue);">--</div>
+                        <div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">Tenants Tracked</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="window.location.href='/api/admin/aibom/download'" class="btn-secondary" style="font-size:12px;padding:6px 12px;">Download Global AIBOM</button>
+                </div>
+            </div>
         </div>
 
         <div id="panel-er-stealth" class="panel">
@@ -6874,6 +6895,16 @@ def handle_tool_call(tool_call):
                 }
             } catch(e) {
                 console.error('Failed to load global burn', e);
+            }
+
+            try {
+                var aRes = await fetch('/api/admin/aibom/summary');
+                var aData = await aRes.json();
+                document.getElementById('gburn-aibom-components').textContent = aData.total_components || 0;
+                document.getElementById('gburn-aibom-services').textContent = aData.total_services || 0;
+                document.getElementById('gburn-aibom-tenants').textContent = aData.tenant_count || 0;
+            } catch(e) {
+                console.error('Failed to load AIBOM summary', e);
             }
         }
 

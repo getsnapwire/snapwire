@@ -891,6 +891,13 @@ def compliance_audit_bundle():
         except Exception as e:
             zf.writestr("audit-log-error.txt", f"Failed to export: {str(e)}")
 
+        try:
+            from src.aibom_generator import generate_aibom
+            aibom = generate_aibom(tenant_id, days=30)
+            zf.writestr("snapwire-aibom.cdx.json", json.dumps(aibom, indent=2))
+        except Exception as e:
+            zf.writestr("aibom-error.txt", f"Failed to generate AIBOM: {str(e)}")
+
     try:
         settings = TenantSettings.query.filter_by(tenant_id=tenant_id).first() if tenant_id else None
         if settings:
@@ -938,6 +945,55 @@ def compliance_counsel_ack():
         db.session.rollback()
 
     return jsonify({"status": "acknowledged"})
+
+
+@app.route("/api/compliance/aibom")
+@require_login
+def compliance_aibom():
+    from src.aibom_generator import generate_aibom
+    tenant_id = get_current_tenant_id()
+    days = request.args.get("days", 30, type=int)
+    days = min(max(days, 1), 365)
+    try:
+        bom = generate_aibom(tenant_id, days=days)
+        return jsonify(bom)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/compliance/aibom/download")
+@require_login
+def compliance_aibom_download():
+    from src.aibom_generator import generate_aibom
+    tenant_id = get_current_tenant_id()
+    days = request.args.get("days", 30, type=int)
+    days = min(max(days, 1), 365)
+    try:
+        bom = generate_aibom(tenant_id, days=days)
+        bom_json = json.dumps(bom, indent=2)
+        now = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        tenant_slug = (tenant_id or "global").replace(" ", "-")[:20]
+        filename = f"snapwire-aibom-{tenant_slug}-{now}.cdx.json"
+        return Response(
+            bom_json,
+            mimetype="application/json",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/compliance/aibom/summary")
+@require_login
+def compliance_aibom_summary():
+    from src.aibom_generator import generate_aibom_summary
+    tenant_id = get_current_tenant_id()
+    days = request.args.get("days", 30, type=int)
+    try:
+        summary = generate_aibom_summary(tenant_id, days=days)
+        return jsonify(summary)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/badge/nist-grade")
@@ -5007,13 +5063,67 @@ def compliance_openapi_spec():
             "/api/compliance/audit-bundle": {
                 "get": {
                     "summary": "Download Audit Bundle",
-                    "description": "Generate a cryptographically signed ZIP archive with Safety Disclosure PDF, resolved actions CSV, and SHA-256 hashed audit log.",
+                    "description": "Generate a cryptographically signed ZIP archive with Safety Disclosure PDF, resolved actions CSV, SHA-256 hashed audit log, and CycloneDX v1.7 AIBOM.",
                     "operationId": "getAuditBundle",
                     "tags": ["Compliance"],
                     "responses": {
                         "200": {
                             "description": "ZIP archive",
                             "content": {"application/zip": {"schema": {"type": "string", "format": "binary"}}}
+                        },
+                        "401": {"description": "Authentication required"}
+                    }
+                }
+            },
+            "/api/compliance/aibom": {
+                "get": {
+                    "summary": "Get AI Bill of Materials",
+                    "description": "Generate a CycloneDX v1.7 JSON AIBOM for the current tenant. Includes all registered tools as components, observed tool-call services, aggregate compliance properties, and SHA-256 formulation hashes linking intent to action.",
+                    "operationId": "getAIBOM",
+                    "tags": ["Compliance"],
+                    "parameters": [
+                        {"name": "days", "in": "query", "required": False, "schema": {"type": "integer", "default": 30}, "description": "Number of days to include in the AIBOM window (1-365)"}
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "CycloneDX v1.7 JSON",
+                            "content": {"application/json": {"schema": {"type": "object"}}}
+                        },
+                        "401": {"description": "Authentication required"}
+                    }
+                }
+            },
+            "/api/compliance/aibom/download": {
+                "get": {
+                    "summary": "Download AIBOM File",
+                    "description": "Download the CycloneDX v1.7 AIBOM as a .cdx.json file attachment.",
+                    "operationId": "downloadAIBOM",
+                    "tags": ["Compliance"],
+                    "parameters": [
+                        {"name": "days", "in": "query", "required": False, "schema": {"type": "integer", "default": 30}, "description": "Number of days to include (1-365)"}
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "CycloneDX JSON file",
+                            "content": {"application/json": {"schema": {"type": "string", "format": "binary"}}}
+                        },
+                        "401": {"description": "Authentication required"}
+                    }
+                }
+            },
+            "/api/compliance/aibom/summary": {
+                "get": {
+                    "summary": "AIBOM Summary Stats",
+                    "description": "Returns component count, unique service count, total intercepts, safety grade distribution, and consequential tool count for the current tenant.",
+                    "operationId": "getAIBOMSummary",
+                    "tags": ["Compliance"],
+                    "parameters": [
+                        {"name": "days", "in": "query", "required": False, "schema": {"type": "integer", "default": 30}, "description": "Number of days to include (1-365)"}
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "AIBOM summary",
+                            "content": {"application/json": {"schema": {"type": "object", "properties": {"component_count": {"type": "integer"}, "service_count": {"type": "integer"}, "total_intercepts": {"type": "integer"}, "grade_distribution": {"type": "object"}, "consequential_count": {"type": "integer"}}}}}
                         },
                         "401": {"description": "Authentication required"}
                     }
@@ -5280,6 +5390,65 @@ def api_admin_global_burn():
         "total_agents": total_agents,
         "breakdown": breakdown,
     })
+
+
+@app.route("/api/admin/aibom")
+@require_platform_admin
+def api_admin_aibom():
+    from src.aibom_generator import generate_aibom
+    days = request.args.get("days", 30, type=int)
+    days = min(max(days, 1), 365)
+    try:
+        bom = generate_aibom(None, days=days)
+        return jsonify(bom)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/admin/aibom/download")
+@require_platform_admin
+def api_admin_aibom_download():
+    from src.aibom_generator import generate_aibom
+    days = request.args.get("days", 30, type=int)
+    days = min(max(days, 1), 365)
+    try:
+        bom = generate_aibom(None, days=days)
+        bom_json = json.dumps(bom, indent=2)
+        now = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        filename = f"snapwire-aibom-global-{now}.cdx.json"
+        return Response(
+            bom_json,
+            mimetype="application/json",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/admin/aibom/summary")
+@require_platform_admin
+def api_admin_aibom_summary():
+    from src.aibom_generator import generate_aibom_summary
+    try:
+        all_tenants = TenantSettings.query.all()
+        total_components = 0
+        total_services = 0
+        tenant_summaries = []
+        for ts in all_tenants:
+            s = generate_aibom_summary(ts.tenant_id)
+            total_components += s["component_count"]
+            total_services += s["service_count"]
+            tenant_summaries.append({"tenant_id": ts.tenant_id, **s})
+        return jsonify({
+            "total_components": total_components,
+            "total_services": total_services,
+            "tenant_count": len(all_tenants),
+            "tenants": tenant_summaries,
+            "spec_version": "1.7",
+            "format": "CycloneDX",
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/admin/stealth-status", methods=["GET"])

@@ -187,6 +187,7 @@
     <div class="portal-nav">
         <a href="/dashboard" class="btn-secondary" style="border:none;padding:8px 14px;">&#8592; Dashboard</a>
         <a href="#impact" class="active">Impact Assessment</a>
+        <a href="#aibom">AIBOM</a>
         <a href="#bundle">Audit Bundle</a>
         <a href="#defense">Affirmative Defense</a>
         <a href="/docs/compliance">Headless API</a>
@@ -256,6 +257,48 @@
             </div>
         </div>
 
+        <div class="section-card" id="aibom">
+            <h2><span class="icon">&#x1F9EC;</span> AI Bill of Materials (AIBOM)</h2>
+            <p class="subtitle">CycloneDX v1.7 supply chain manifest for all AI agent tools, services, and forensic lineage. Compatible with OWASP Dependency-Track, SBOM tooling, and enterprise supply chain security platforms.</p>
+
+            <div id="aibom-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;">
+                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:var(--accent);" id="aibom-components">--</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Components</div>
+                </div>
+                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:#00d4aa;" id="aibom-services">--</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Unique Services</div>
+                </div>
+                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:#f59e0b;" id="aibom-consequential">--</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">High-Stakes Tools</div>
+                </div>
+                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:var(--text-secondary);" id="aibom-spec">v1.7</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">CycloneDX Spec</div>
+                </div>
+            </div>
+
+            <div id="aibom-grades" style="margin-bottom:16px;"></div>
+
+            <details style="margin-bottom:16px;">
+                <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--text-primary);padding:8px 0;">Preview AIBOM Components</summary>
+                <div id="aibom-preview" style="margin-top:8px;max-height:300px;overflow-y:auto;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:'Fira Code',monospace;font-size:11px;color:var(--text-secondary);">Loading...</div>
+            </details>
+
+            <div style="display:flex;flex-wrap:wrap;gap:12px;">
+                <a href="#" onclick="return downloadWithAck('/api/compliance/aibom/download')" class="btn-primary compliance-dl" style="opacity:0.5;pointer-events:none;">
+                    &#x1F9EC; Download AIBOM (.cdx.json)
+                </a>
+            </div>
+
+            <div class="info-banner" style="margin-top:16px;">
+                <span style="font-size:16px;">&#x1F50D;</span>
+                <div>The AIBOM tracks every tool your AI agents interact with, their safety grades, call volumes, risk scores, and cryptographic formulation hashes linking each intent to its resulting action. Import into Dependency-Track or any CycloneDX-compatible tool for automated supply chain analysis.</div>
+            </div>
+        </div>
+
         <div class="section-card" id="bundle">
             <h2><span class="icon">&#x1F4E6;</span> Download Audit Bundle</h2>
             <p class="subtitle">Generate a cryptographically signed compliance package for regulatory filings, insurance underwriters, or internal governance reviews.</p>
@@ -291,6 +334,10 @@
             <div class="metric-row">
                 <span class="metric-label">3. Audit Log JSON</span>
                 <span class="metric-value" style="font-size:12px;">SHA-256 content hashes for tamper detection</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">4. AIBOM (CycloneDX v1.7)</span>
+                <span class="metric-value" style="font-size:12px;">AI Bill of Materials — tool supply chain manifest</span>
             </div>
 
             <div class="info-banner">
@@ -393,6 +440,55 @@
             window.location.href = url;
             return false;
         }
+
+        (function loadAIBOM() {
+            fetch('/api/compliance/aibom/summary')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    document.getElementById('aibom-components').textContent = data.component_count || 0;
+                    document.getElementById('aibom-services').textContent = data.service_count || 0;
+                    document.getElementById('aibom-consequential').textContent = data.consequential_count || 0;
+
+                    var gd = data.grade_distribution || {};
+                    var gradesHtml = '';
+                    var gradeColors = {A:'#00d4aa',B:'#4ade80',C:'#f59e0b',D:'#f97316',F:'#ef4444',U:'#6b7280'};
+                    Object.keys(gd).sort().forEach(function(g) {
+                        var c = gradeColors[g] || '#6b7280';
+                        gradesHtml += '<span style="display:inline-flex;align-items:center;gap:4px;margin-right:12px;font-size:13px;"><span style="width:10px;height:10px;border-radius:50%;background:'+c+';display:inline-block;"></span> Grade '+g+': <strong>'+gd[g]+'</strong></span>';
+                    });
+                    document.getElementById('aibom-grades').innerHTML = gradesHtml;
+                })
+                .catch(function() {});
+
+            fetch('/api/compliance/aibom')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var comps = data.components || [];
+                    if (comps.length === 0) {
+                        document.getElementById('aibom-preview').textContent = 'No components registered yet. Tools are added automatically when agents make their first tool call.';
+                        return;
+                    }
+                    var html = '';
+                    comps.slice(0, 20).forEach(function(c) {
+                        var grade = 'U';
+                        var calls = '0';
+                        (c.properties || []).forEach(function(p) {
+                            if (p.name === 'snapwire:safety_grade') grade = p.value;
+                            if (p.name === 'snapwire:call_count') calls = p.value;
+                        });
+                        var gc = {A:'#00d4aa',B:'#4ade80',C:'#f59e0b',D:'#f97316',F:'#ef4444',U:'#6b7280'};
+                        html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">';
+                        html += '<span>' + c.name + '</span>';
+                        html += '<span><span style="color:'+(gc[grade]||'#6b7280')+';">'+grade+'</span> &middot; '+calls+' calls</span>';
+                        html += '</div>';
+                    });
+                    if (comps.length > 20) html += '<div style="padding:4px 0;color:var(--text-secondary);">... and ' + (comps.length - 20) + ' more</div>';
+                    document.getElementById('aibom-preview').innerHTML = html;
+                })
+                .catch(function() {
+                    document.getElementById('aibom-preview').textContent = 'Failed to load preview.';
+                });
+        })();
     </script>
 </body>
 </html>

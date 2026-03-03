@@ -78,6 +78,7 @@ Snapwire provides the **"Reasonable Care"** evidence required by the Colorado AI
 * **Consequentiality Tagging:** Mark high-stakes tools for explicit governance, with compliance portal reporting for Colorado SB24-205 affirmative defense.
 * **Legal Counsel Acknowledgment Gate:** Compliance downloads require explicit acknowledgment, audit-logged with user ID and timestamp.
 * **Deployer Compliance Portal:** One-click audit bundle ZIP download with auto-fill impact assessment and affirmative defense checklist.
+* **AI Bill of Materials (AIBOM):** CycloneDX v1.7 JSON supply chain manifest tracking all agent tools, services, safety grades, and cryptographic formulation hashes. Compatible with OWASP Dependency-Track and enterprise SBOM tooling.
 
 ---
 
@@ -357,6 +358,8 @@ curl -X POST http://localhost:5000/api/intercept \
 | `/api/tools/<id>/risk-score` | GET | Risk confidence index for a tool |
 | `/api/rules/export` | POST | Export rules as branded JSON |
 | `/api/rules/import` | POST | Import rule packs |
+| `/api/compliance/aibom` | GET | CycloneDX v1.7 AI Bill of Materials |
+| `/api/compliance/aibom/download` | GET | Download AIBOM as .cdx.json file |
 | `/api/compliance/openapi.json` | GET | OpenAPI 3.0.3 governance spec |
 | `/health` | GET | Health check (DB, secrets, features, setup status) |
 
