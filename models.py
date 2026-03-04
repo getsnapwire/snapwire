@@ -347,6 +347,8 @@ class ToolCatalog(db.Model):
     is_consequential = db.Column(db.Boolean, default=False)
     pending_heal_schema = db.Column(db.Text, nullable=True)
     original_schema = db.Column(db.Text, nullable=True)
+    sensitivity_level = db.Column(db.String(20), default='none')
+    io_type = db.Column(db.String(20), default='processor')
     __table_args__ = (UniqueConstraint('tenant_id', 'tool_name', name='uq_tenant_tool'),)
 
     def to_dict(self):
@@ -373,6 +375,8 @@ class ToolCatalog(db.Model):
             "is_consequential": self.is_consequential or False,
             "pending_heal_schema": json.loads(self.pending_heal_schema) if self.pending_heal_schema else None,
             "original_schema": json.loads(self.original_schema) if self.original_schema else None,
+            "sensitivity_level": self.sensitivity_level or "none",
+            "io_type": self.io_type or "processor",
         }
 
 
@@ -534,6 +538,8 @@ class TenantSettings(db.Model):
     reasoning_enforcement = db.Column(db.Boolean, default=True, nullable=False)
     hold_window_seconds = db.Column(db.Integer, default=0, nullable=False)
     is_stealth_mode = db.Column(db.Boolean, default=True, nullable=False)
+    strict_reasoning = db.Column(db.Boolean, default=False, nullable=False)
+    pulse_ttl_minutes = db.Column(db.Integer, default=0, nullable=False)
     last_assessment_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -609,9 +615,18 @@ class ProxyToken(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     revoked_at = db.Column(db.DateTime, nullable=True)
     expires_at = db.Column(db.DateTime, nullable=True)
+    is_tainted = db.Column(db.Boolean, default=False)
+    taint_source = db.Column(db.String, nullable=True)
+    tainted_at = db.Column(db.DateTime, nullable=True)
+    pulse_expiry = db.Column(db.DateTime, nullable=True)
 
     def is_expired(self):
         if self.expires_at and self.expires_at < datetime.utcnow():
+            return True
+        return False
+
+    def is_pulse_expired(self):
+        if self.pulse_expiry and self.pulse_expiry < datetime.utcnow():
             return True
         return False
 
@@ -627,6 +642,10 @@ class ProxyToken(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "revoked_at": self.revoked_at.isoformat() if self.revoked_at else None,
             "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "is_tainted": self.is_tainted or False,
+            "taint_source": self.taint_source,
+            "tainted_at": self.tainted_at.isoformat() if self.tainted_at else None,
+            "pulse_expiry": self.pulse_expiry.isoformat() if self.pulse_expiry else None,
         }
 
 

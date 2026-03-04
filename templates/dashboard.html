@@ -929,6 +929,7 @@
                 <button class="sub-tab" data-subtab="catalog" data-group="security">Tool Catalog</button>
                 <button class="sub-tab" data-subtab="risk" data-group="security">Risk Intelligence</button>
                 <button class="sub-tab" data-subtab="autotriage" data-group="security">Auto-Triage</button>
+                <button class="sub-tab" data-subtab="taintpulse" data-group="security">Taint &amp; Pulse</button>
                 <button class="sub-tab" data-subtab="stealth" data-group="security">Stealth Mode</button>
             </div>
         </div>
@@ -2788,6 +2789,77 @@ def handle_tool_call(tool_call):
         </div>
     </div>
 
+    <div id="panel-taintpulse" class="panel">
+        <h3 style="margin-bottom:16px;">Taint Tracking &amp; Session Pulse</h3>
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;">Data-flow governance across multi-step agent sessions. Taint Tracking flags tokens that access sensitive data and blocks subsequent external calls. Session Pulse enforces periodic re-validation of agent identity.</p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                <h4 style="margin-bottom:14px;font-size:14px;">Strict Reasoning Mode</h4>
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">When enabled, ALL tool calls must include an <code>inner_monologue</code> field explaining the agent's intent. Calls without reasoning are rejected with HTTP 412.</p>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <div>
+                        <div style="font-size:14px;font-weight:600;color:var(--text-primary);" id="strict-reasoning-label">Loading...</div>
+                        <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Ensures AIBOM is always populated with "Why"</div>
+                    </div>
+                    <button id="strict-reasoning-btn" onclick="toggleStrictReasoning()" style="background:var(--accent);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">Toggle</button>
+                </div>
+            </div>
+
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                <h4 style="margin-bottom:14px;font-size:14px;">Session Pulse TTL</h4>
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Snap-Tokens must be re-validated periodically. Set 0 to disable, or a value in minutes. Expired tokens return HTTP 401 until refreshed via <code>/api/vault/proxy-tokens/refresh</code>.</p>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <input type="number" id="pulse-ttl-input" min="0" max="1440" value="0" style="width:80px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:14px;">
+                    <span style="font-size:13px;color:var(--text-secondary);">minutes</span>
+                    <button onclick="savePulseTTL()" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">Save</button>
+                </div>
+                <div id="pulse-ttl-status" style="font-size:12px;color:var(--text-secondary);margin-top:8px;"></div>
+            </div>
+        </div>
+
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
+            <h4 style="margin-bottom:14px;font-size:14px;">Taint Tracking — How It Works</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                <div style="background:var(--bg-secondary);border-radius:8px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;margin-bottom:6px;">&#128270;</div>
+                    <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px;">1. Agent Reads Sensitive Data</div>
+                    <div style="font-size:11px;color:var(--text-secondary);">Tool tagged as SOURCE with PII/Internal/Confidential sensitivity</div>
+                </div>
+                <div style="background:var(--bg-secondary);border-radius:8px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;margin-bottom:6px;">&#9888;</div>
+                    <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px;">2. Token Gets TAINTED</div>
+                    <div style="font-size:11px;color:var(--text-secondary);">Snap-Token session enters tainted state automatically</div>
+                </div>
+                <div style="background:var(--bg-secondary);border-radius:8px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;margin-bottom:6px;">&#128683;</div>
+                    <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px;">3. External Calls Blocked</div>
+                    <div style="font-size:11px;color:var(--text-secondary);">SINK tools (HTTP, email, messaging) are blocked until human clears taint</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
+            <h4 style="margin-bottom:14px;font-size:14px;">Currently Tainted Tokens</h4>
+            <div id="tainted-tokens-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+            <div id="tainted-tokens-empty" style="color:var(--text-secondary);font-size:13px;">No tokens are currently tainted. Tokens become tainted when agents access sensitive data sources.</div>
+        </div>
+
+        <div style="background:rgba(0,245,212,0.06);border:1px solid rgba(0,245,212,0.15);border-radius:10px;padding:14px 18px;display:flex;align-items:flex-start;gap:10px;">
+            <span style="font-size:16px;">&#128161;</span>
+            <div>
+                <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">Setup: Tag your tools in Tool Catalog</div>
+                <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">
+                    Go to <strong>Security &gt; Tool Catalog</strong> and use the Sensitivity and I/O Type dropdowns on each tool.<br>
+                    &bull; <strong>SOURCE</strong> tools read data (file readers, DB queries, API fetchers)<br>
+                    &bull; <strong>SINK</strong> tools send data externally (HTTP clients, email senders, Slack)<br>
+                    &bull; <strong>PROCESSOR</strong> tools transform data internally (parsers, formatters)<br>
+                    &bull; Sensitivity levels: <strong>None</strong> (no taint), <strong>Internal</strong>, <strong>PII</strong>, <strong>Confidential</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="panel-stealth" class="panel">
         <h3 style="margin-bottom:16px;">Stealth Mode</h3>
         <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">When stealth mode is active, community features (Leaderboard, Founding Sentinel Wall of Fame, Community Rules) are hidden from non-admin users. Backend tracking continues — flip the switch once you hit 150 contributors.</p>
@@ -2995,7 +3067,7 @@ def handle_tool_call(tool_call):
             'activity': ['pending', 'log', 'stream', 'digest'],
             'rules-group': ['rules', 'history', 'test'],
             'agents-group': ['agents', 'analytics'],
-            'security': ['vault', 'honeypots', 'blast', 'holdwindow', 'catalog', 'risk', 'autotriage', 'stealth'],
+            'security': ['vault', 'honeypots', 'blast', 'holdwindow', 'catalog', 'risk', 'autotriage', 'taintpulse', 'stealth'],
             'settings-group': ['keys', 'llm', 'org', 'account', 'settings', 'admin', 'contacts'],
             'engine-room': ['er-ingestor', 'er-chaos', 'er-burn', 'er-stealth', 'er-telemetry', 'er-summary']
         };
@@ -3035,6 +3107,7 @@ def handle_tool_call(tool_call):
             if (name === 'holdwindow') loadHoldWindow();
             if (name === 'risk') loadRiskIntelligence();
             if (name === 'autotriage') loadAutoTriageRules();
+            if (name === 'taintpulse') loadTaintPulseSettings();
             if (name === 'analytics') loadAnalytics(7);
             if (name === 'digest') { fetchDigest(); loadDigestEmailState(); }
             if (name === 'er-ingestor') { if (typeof loadWatchdogStatus === 'function') loadWatchdogStatus(); loadPendingHeals(); }
@@ -5695,11 +5768,25 @@ def handle_tool_call(tool_call):
                             <div style="display:flex;align-items:center;gap:6px;">
                                 <span style="font-weight:600;font-size:14px;font-family:'Fira Code',monospace;">${t.tool_name}</span>
                                 ${t.is_consequential ? '<span style="font-size:10px;padding:2px 6px;background:rgba(239,68,68,0.15);color:#ef4444;border-radius:4px;font-weight:600;">HIGH-STAKES</span>' : ''}
+                                ${t.io_type==='source' ? '<span style="font-size:10px;padding:2px 6px;background:rgba(59,130,246,0.15);color:#3b82f6;border-radius:4px;font-weight:600;">SOURCE</span>' : ''}
+                                ${t.io_type==='sink' ? '<span style="font-size:10px;padding:2px 6px;background:rgba(249,115,22,0.15);color:#f97316;border-radius:4px;font-weight:600;">SINK</span>' : ''}
+                                ${t.sensitivity_level && t.sensitivity_level!=='none' ? '<span style="font-size:10px;padding:2px 6px;background:rgba(168,85,247,0.15);color:#a855f7;border-radius:4px;font-weight:600;">' + t.sensitivity_level.toUpperCase() + '</span>' : ''}
                             </div>
                             <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Status: <span style="color:${t.status==='approved'?'var(--accent-green)':t.status==='blocked'?'var(--accent-red)':'var(--accent-yellow)'}">${t.status}</span> | Calls: ${t.call_count} | First seen: ${t.first_seen ? new Date(t.first_seen).toLocaleDateString() : 'N/A'}</div>
                             ${t.description ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${t.description}</div>` : ''}
                         </div>
                         <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                            <select onchange="updateCatalogSensitivity(${t.id}, this.value, null)" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);padding:3px 6px;border-radius:5px;font-size:11px;cursor:pointer;" title="Sensitivity Level">
+                                <option value="none" ${(t.sensitivity_level||'none')==='none'?'selected':''}>No Sensitivity</option>
+                                <option value="internal" ${t.sensitivity_level==='internal'?'selected':''}>Internal</option>
+                                <option value="pii" ${t.sensitivity_level==='pii'?'selected':''}>PII</option>
+                                <option value="confidential" ${t.sensitivity_level==='confidential'?'selected':''}>Confidential</option>
+                            </select>
+                            <select onchange="updateCatalogSensitivity(${t.id}, null, this.value)" style="background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);padding:3px 6px;border-radius:5px;font-size:11px;cursor:pointer;" title="I/O Type">
+                                <option value="processor" ${(t.io_type||'processor')==='processor'?'selected':''}>Processor</option>
+                                <option value="source" ${t.io_type==='source'?'selected':''}>Source</option>
+                                <option value="sink" ${t.io_type==='sink'?'selected':''}>Sink</option>
+                            </select>
                             <button onclick="toggleConsequential(${t.id})" style="background:${t.is_consequential ? 'rgba(239,68,68,0.15)' : 'var(--bg-secondary)'};border:1px solid ${t.is_consequential ? 'rgba(239,68,68,0.4)' : 'var(--border)'};color:${t.is_consequential ? '#ef4444' : 'var(--text-secondary)'};padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;" title="${t.is_consequential ? 'Remove High-Stakes tag' : 'Tag as High-Stakes (Consequential)'}">${t.is_consequential ? '&#x1F6E1; High-Stakes' : '&#x1F6E1; Tag Stakes'}</button>
                             <button onclick="updateCatalogTool(${t.id},'approved')" style="background:var(--accent-green);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;" title="Approve">Approve</button>
                             <button onclick="updateCatalogTool(${t.id},'blocked')" style="background:var(--accent-red);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;" title="Block">Block</button>
@@ -5721,6 +5808,66 @@ def handle_tool_call(tool_call):
         async function toggleConsequential(id) {
             await fetch(`/api/catalog/${id}/consequential`, {method:'PATCH'});
             loadCatalog();
+        }
+        async function updateCatalogSensitivity(id, sensitivityLevel, ioType) {
+            const body = {};
+            if (sensitivityLevel !== null) body.sensitivity_level = sensitivityLevel;
+            if (ioType !== null) body.io_type = ioType;
+            await fetch(`/api/catalog/${id}/sensitivity`, {method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+            loadCatalog();
+        }
+
+        async function loadTaintPulseSettings() {
+            try {
+                const [srResp, settingsResp, tokensResp] = await Promise.all([
+                    fetch('/api/settings/strict-reasoning'),
+                    fetch('/api/settings'),
+                    fetch('/api/vault/proxy-tokens')
+                ]);
+                const srData = await srResp.json();
+                const settingsData = await settingsResp.json();
+                const srLabel = document.getElementById('strict-reasoning-label');
+                if (srLabel) srLabel.textContent = srData.strict_reasoning ? 'Strict Reasoning: ON' : 'Strict Reasoning: OFF';
+                const pulseInput = document.getElementById('pulse-ttl-input');
+                if (pulseInput && settingsData.pulse_ttl_minutes !== undefined) pulseInput.value = settingsData.pulse_ttl_minutes;
+                const pulseStatus = document.getElementById('pulse-ttl-status');
+                if (pulseStatus) pulseStatus.textContent = settingsData.pulse_ttl_minutes > 0 ? `Active: tokens must refresh every ${settingsData.pulse_ttl_minutes} minutes` : 'Disabled: no pulse re-validation required';
+                const tokensData = await tokensResp.json();
+                const taintedList = document.getElementById('tainted-tokens-list');
+                const taintedEmpty = document.getElementById('tainted-tokens-empty');
+                const tainted = (tokensData.tokens || []).filter(t => t.is_tainted);
+                if (tainted.length === 0) {
+                    if (taintedList) taintedList.innerHTML = '';
+                    if (taintedEmpty) taintedEmpty.style.display = 'block';
+                } else {
+                    if (taintedEmpty) taintedEmpty.style.display = 'none';
+                    if (taintedList) taintedList.innerHTML = tainted.map(t => `
+                        <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;">
+                            <span style="font-size:18px;">&#9888;</span>
+                            <div style="flex:1;">
+                                <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${t.label || t.token}</div>
+                                <div style="font-size:12px;color:var(--accent-red);margin-top:2px;">TAINTED by: <strong>${t.taint_source || 'unknown'}</strong> ${t.tainted_at ? '| Since: ' + new Date(t.tainted_at).toLocaleString() : ''}</div>
+                                ${t.pulse_expiry ? '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Pulse expires: ' + new Date(t.pulse_expiry).toLocaleString() + '</div>' : ''}
+                            </div>
+                            <button onclick="clearTokenTaint(${t.id})" style="background:var(--accent-green);border:none;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Clear Taint</button>
+                        </div>
+                    `).join('');
+                }
+            } catch(e) { console.error('Failed to load taint/pulse settings', e); }
+        }
+        async function toggleStrictReasoning() {
+            await fetch('/api/settings/strict-reasoning', {method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
+            loadTaintPulseSettings();
+        }
+        async function savePulseTTL() {
+            const val = parseInt(document.getElementById('pulse-ttl-input').value) || 0;
+            await fetch('/api/settings', {method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({pulse_ttl_minutes: val})});
+            loadTaintPulseSettings();
+        }
+        async function clearTokenTaint(tokenId) {
+            if (!confirm('Clear taint on this token? The agent will be able to call external sink tools again.')) return;
+            await fetch(`/api/vault/proxy-tokens/${tokenId}/clear-taint`, {method:'POST'});
+            loadVault();
         }
         async function deleteCatalogTool(id) {
             if (!confirm('Remove this tool from the catalog?')) return;

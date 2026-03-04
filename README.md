@@ -57,6 +57,8 @@ This project is architected to satisfy the **NIST AI Risk Management Framework (
 
 ### 3. Continuous Monitoring & Management (NIST MANAGE / PROTECT)
 
+* **Taint Tracking (Data-Flow Governor):** Cross-call session governance. Agents that access sensitive data (PII/Confidential) enter a "tainted" state — all subsequent external sink calls are deterministically blocked until a human clears the taint. Prevents multi-step exfiltration chains.
+* **Session Pulse:** TTL-based continuous token re-validation. Snap-Tokens auto-expire unless periodically refreshed, with Goal Drift advisory checks on each refresh.
 * **Deterministic Hold Window:** Prevents "Machine-Speed Malice" by enforcing a configurable human-review pause for high-consequence tool calls.
 * **Sentinel Proxy (Sidecar):** A zero-trust reverse proxy that intercepts all LLM traffic, providing **Observe**, **Audit**, and **Enforce** modes without modifying agent logic.
 * **Vibe-Audit Weekly Summarizer:** Automated Friday 4 PM executive summary aggregating all security actions, cost savings, and compliance posture — delivered to Slack.
@@ -94,6 +96,9 @@ Snapwire provides the **"Reasonable Care"** evidence required by the Colorado AI
 * **Honeypot Tripwires:** Decoy tools detect unauthorized access attempts.
 * **Schema Validation Guard:** Per-tool JSON schema enforcement with strict/flexible modes.
 * **Auto-Triage Rules:** Regex-based automatic approval/denial with risk thresholds.
+* **Taint Tracking:** Cross-call data-flow governance. When an agent accesses sensitive data (PII, Internal, Confidential), its session token is "tainted" and blocked from calling external sink tools until a human clears it. Prevents multi-step exfiltration chains deterministically.
+* **Session Pulse:** TTL-based continuous token re-validation. Snap-Tokens must periodically refresh or they auto-expire, satisfying NIST IR 8596 "Continuous Monitoring" requirements.
+* **Strict Reasoning Mode:** Tenant-level toggle requiring `inner_monologue` on every tool call, ensuring AIBOM is always populated with the "Why" for audit-readiness.
 
 > All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator.
 

@@ -52,12 +52,13 @@ from src.tool_catalog import check_tool_catalog, get_catalog, update_tool_status
 from community.routes import community_bp
 from src.blast_radius import check_blast_radius, get_blast_radius_config, update_blast_radius_config, get_blast_radius_events, clear_lockout, get_active_lockouts
 from src.honeypot import check_honeypot, get_honeypots, create_honeypot, delete_honeypot, toggle_honeypot, get_honeypot_alerts
-from src.vault import get_vault_entries, create_vault_entry, delete_vault_entry, update_vault_entry, get_vault_credentials, generate_proxy_token, resolve_proxy_token, get_proxy_tokens, revoke_proxy_token, revoke_all_proxy_tokens
+from src.vault import get_vault_entries, create_vault_entry, delete_vault_entry, update_vault_entry, get_vault_credentials, generate_proxy_token, resolve_proxy_token, get_proxy_tokens, revoke_proxy_token, revoke_all_proxy_tokens, refresh_proxy_token
 from src.deception import analyze_deception
 from src.loop_detector import check_for_loop, get_loop_events, get_loop_stats
 from src.schema_guard import validate_tool_params, get_schema_stats
 from src.risk_index import calculate_risk_score, record_risk_signal, get_risk_signals, get_tool_risk_summary
 from src.thinking_sentinel import check_thinking_tokens, check_latency_anomaly, get_sentinel_stats
+from src.taint_tracker import check_taint, apply_taint, clear_taint
 from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings, LoopDetectorEvent, SchemaViolationEvent, ProxyToken, RiskSignal, AutoTriageRule
 
 
@@ -1148,6 +1149,24 @@ def intercept_tool_call():
             "protocol": raw_metadata.get("protocol", ""),
         }
 
+    if data.get("proxy_token") and tenant_id:
+        try:
+            pulse_proxy = ProxyToken.query.filter_by(token=data["proxy_token"], is_active=True).first()
+            if pulse_proxy:
+                settings = TenantSettings.query.filter_by(tenant_id=tenant_id).first()
+                if settings and getattr(settings, 'pulse_ttl_minutes', 0) and settings.pulse_ttl_minutes > 0:
+                    if not pulse_proxy.pulse_expiry or pulse_proxy.is_pulse_expired():
+                        resp = {
+                            "status": "blocked",
+                            "message": "Security Pulse Expired: Re-validation Required",
+                            "error_code": "pulse_expired",
+                        }
+                        if mcp_request:
+                            return _wrap_mcp_response(resp, 401, mcp_id)
+                        return jsonify(resp), 401
+        except Exception:
+            pass
+
     required_fields = ["tool_name"]
     for field in required_fields:
         if field not in data:
@@ -1155,6 +1174,27 @@ def intercept_tool_call():
             if mcp_request:
                 return _wrap_mcp_response(resp, 400, mcp_id)
             return jsonify(resp), 400
+
+    if tenant_id:
+        _sr_settings = TenantSettings.query.filter_by(tenant_id=tenant_id).first()
+        if _sr_settings and _sr_settings.strict_reasoning:
+            _im = data.get("inner_monologue")
+            if not _im or (isinstance(_im, str) and not _im.strip()):
+                log_action(
+                    {"tool_name": data["tool_name"], "parameters": data.get("parameters", {}), "intent": data.get("intent", ""), "context": data.get("context", "")},
+                    {"allowed": False, "violations": [{"rule": "strict_reasoning", "severity": "high", "reason": "Strict Reasoning Mode: inner_monologue required on all tool calls"}], "risk_score": 60, "analysis": "Blocked by Strict Reasoning Mode — no inner_monologue provided"},
+                    "blocked-strict-reasoning",
+                    agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id,
+                    sentinel_metadata=sentinel_metadata,
+                )
+                resp = {
+                    "status": "blocked",
+                    "message": "Strict Reasoning Mode: inner_monologue required on all tool calls",
+                    "requirement": "inner_monologue",
+                }
+                if mcp_request:
+                    return _wrap_mcp_response(resp, 412, mcp_id)
+                return jsonify(resp), 412
 
     params = data.get("parameters", {})
     sanitization = sanitize_parameters(params)
@@ -1269,6 +1309,30 @@ def intercept_tool_call():
         if mcp_request:
             return _wrap_mcp_response(resp, 403, mcp_id)
         return jsonify(resp), 403
+
+    _taint_proxy_token = None
+    _taint_catalog_entry = None
+    if data.get("proxy_token") and catalog_result.get("entry"):
+        _taint_proxy_token = ProxyToken.query.filter_by(token=data["proxy_token"], is_active=True).first()
+        _taint_catalog_entry = ToolCatalog.query.filter_by(tenant_id=tenant_id, tool_name=data["tool_name"]).first()
+        if _taint_proxy_token and _taint_catalog_entry:
+            taint_result = check_taint(_taint_proxy_token, _taint_catalog_entry)
+            if taint_result:
+                log_action(
+                    {"tool_name": data["tool_name"], "parameters": params, "intent": data.get("intent", ""), "context": data.get("context", "")},
+                    {"allowed": False, "violations": [{"rule": "taint_tracking", "severity": "critical", "reason": taint_result["reason"]}], "risk_score": 95, "analysis": taint_result["reason"]},
+                    "blocked-taint",
+                    agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id,
+                    sentinel_metadata=sentinel_metadata,
+                )
+                resp = {
+                    "status": "blocked",
+                    "message": taint_result["reason"],
+                    "taint_violation": taint_result,
+                }
+                if mcp_request:
+                    return _wrap_mcp_response(resp, 403, mcp_id)
+                return jsonify(resp), 403
 
     tool_call = {
         "tool_name": data["tool_name"],
@@ -1423,6 +1487,8 @@ def intercept_tool_call():
             vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
             if vault_creds:
                 response_extra["vault_credentials"] = vault_creds
+        if _taint_proxy_token and _taint_catalog_entry:
+            apply_taint(_taint_proxy_token, _taint_catalog_entry)
         resp = {
             "status": "allowed",
             "audit": audit_result,
@@ -1475,6 +1541,8 @@ def intercept_tool_call():
             vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
             if vault_creds:
                 response_extra["vault_credentials"] = vault_creds
+        if _taint_proxy_token and _taint_catalog_entry:
+            apply_taint(_taint_proxy_token, _taint_catalog_entry)
         resp = {
             "status": "allowed",
             "audit": audit_result,
@@ -1499,6 +1567,8 @@ def intercept_tool_call():
                 vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
                 if vault_creds:
                     response_extra["vault_credentials"] = vault_creds
+            if _taint_proxy_token and _taint_catalog_entry:
+                apply_taint(_taint_proxy_token, _taint_catalog_entry)
             resp = {
                 "status": "trust-approved",
                 "audit": audit_result,
@@ -1520,6 +1590,8 @@ def intercept_tool_call():
                 vault_creds = get_vault_credentials(data["tool_name"], tenant_id)
                 if vault_creds:
                     response_extra["vault_credentials"] = vault_creds
+            if _taint_proxy_token and _taint_catalog_entry:
+                apply_taint(_taint_proxy_token, _taint_catalog_entry)
             resp = {
                 "status": "auto-approved",
                 "audit": audit_result,
@@ -3446,6 +3518,28 @@ def delete_catalog_tool(tool_id):
     return jsonify({"status": "deleted"})
 
 
+@app.route("/api/catalog/<int:tool_id>/sensitivity", methods=["PATCH"])
+@require_admin
+def update_catalog_sensitivity(tool_id):
+    tenant_id = get_current_tenant_id()
+    entry = ToolCatalog.query.filter_by(id=tool_id, tenant_id=tenant_id).first()
+    if not entry:
+        return jsonify({"error": "Tool not found"}), 404
+    data = request.get_json() or {}
+    valid_sensitivity = ('none', 'internal', 'pii', 'confidential')
+    valid_io_type = ('source', 'sink', 'processor')
+    if "sensitivity_level" in data:
+        if data["sensitivity_level"] not in valid_sensitivity:
+            return jsonify({"error": f"Invalid sensitivity_level. Must be one of: {', '.join(valid_sensitivity)}"}), 400
+        entry.sensitivity_level = data["sensitivity_level"]
+    if "io_type" in data:
+        if data["io_type"] not in valid_io_type:
+            return jsonify({"error": f"Invalid io_type. Must be one of: {', '.join(valid_io_type)}"}), 400
+        entry.io_type = data["io_type"]
+    db.session.commit()
+    return jsonify({"tool": entry.to_dict()})
+
+
 @app.route("/api/blast-radius/config", methods=["GET"])
 @require_login
 def get_br_config():
@@ -3664,6 +3758,35 @@ def revoke_all_proxy_tokens_endpoint():
     tenant_id = get_current_tenant_id()
     count = revoke_all_proxy_tokens(tenant_id)
     return jsonify({"status": "all_revoked", "count": count})
+
+
+@app.route("/api/vault/proxy-tokens/<int:token_id>/clear-taint", methods=["POST"])
+@require_admin
+def clear_taint_endpoint(token_id):
+    tenant_id = get_current_tenant_id()
+    token = ProxyToken.query.filter_by(id=token_id, tenant_id=tenant_id).first()
+    if not token:
+        return jsonify({"error": "Token not found"}), 404
+    result = clear_taint(token_id)
+    if not result:
+        return jsonify({"error": "Failed to clear taint"}), 500
+    log_action(
+        {"tool_name": "clear_taint", "parameters": {"token_id": token_id}, "intent": "Human-in-the-loop taint release", "context": ""},
+        {"allowed": True, "violations": [], "risk_score": 0, "analysis": f"Taint cleared on token {token_id} by admin"},
+        "taint-cleared",
+        agent_id="admin",
+        tenant_id=tenant_id,
+    )
+    return jsonify({"status": "taint_cleared", "token": result})
+
+
+@app.route("/api/vault/proxy-tokens/refresh", methods=["POST"])
+def refresh_proxy_token_endpoint():
+    data = request.get_json()
+    if not data or not data.get("token"):
+        return jsonify({"error": "token required"}), 400
+    result, status_code = refresh_proxy_token(data["token"])
+    return jsonify(result), status_code
 
 
 @app.route("/api/tools/<int:tool_id>/risk-score", methods=["GET"])
@@ -4512,6 +4635,28 @@ def get_settings():
         "reasoning_enforcement": reasoning if reasoning is not None else True,
         "hold_window_seconds": getattr(settings, 'hold_window_seconds', 0) or 0,
         "is_stealth_mode": getattr(settings, 'is_stealth_mode', True),
+        "strict_reasoning": getattr(settings, 'strict_reasoning', False),
+        "pulse_ttl_minutes": getattr(settings, 'pulse_ttl_minutes', 0) or 0,
+    })
+
+
+@app.route("/api/settings", methods=["PATCH"])
+@require_admin
+def update_settings():
+    tenant_id = get_current_tenant_id()
+    settings = get_tenant_settings(tenant_id)
+    data = request.get_json() or {}
+    if "pulse_ttl_minutes" in data:
+        val = int(data["pulse_ttl_minutes"])
+        if val < 0:
+            val = 0
+        if val > 1440:
+            val = 1440
+        settings.pulse_ttl_minutes = val
+    db.session.commit()
+    return jsonify({
+        "pulse_ttl_minutes": getattr(settings, 'pulse_ttl_minutes', 0) or 0,
+        "message": "Settings updated",
     })
 
 
@@ -4587,6 +4732,31 @@ def toggle_reasoning_enforcement():
     return jsonify({
         "reasoning_enforcement": settings.reasoning_enforcement,
         "message": "Reasoning enforcement enabled" if settings.reasoning_enforcement else "Reasoning enforcement disabled",
+    })
+
+
+@app.route("/api/settings/strict-reasoning", methods=["GET"])
+@require_login
+def get_strict_reasoning():
+    tenant_id = get_current_tenant_id()
+    settings = get_tenant_settings(tenant_id)
+    return jsonify({"strict_reasoning": settings.strict_reasoning})
+
+
+@app.route("/api/settings/strict-reasoning", methods=["PATCH"])
+@require_admin
+def toggle_strict_reasoning():
+    tenant_id = get_current_tenant_id()
+    data = request.get_json() or {}
+    settings = get_tenant_settings(tenant_id)
+    if "enabled" in data:
+        settings.strict_reasoning = bool(data["enabled"])
+    else:
+        settings.strict_reasoning = not settings.strict_reasoning
+    db.session.commit()
+    return jsonify({
+        "strict_reasoning": settings.strict_reasoning,
+        "message": "Strict Reasoning Mode enabled" if settings.strict_reasoning else "Strict Reasoning Mode disabled",
     })
 
 
