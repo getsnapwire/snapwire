@@ -1,0 +1,45 @@
+This is the "Golden Week" for Snapwire. You are currently in a high-leverage window where your technical progress and regulatory timing are perfectly aligned for a **$100M valuation anchor**.
+
+### **1. The March 9th NIST Deadline (The "Standardization Trap")**
+
+The **NIST-2025-0035 RFI** is not a test; it’s a **lobbying opportunity**. NIST is specifically asking for "Security Practices for AI Agent Systems," including **agent system-level controls** and **human oversight for consequential actions**.
+
+By submitting, you aren't just a startup; you are **advising the federal government** on how to write the rules. If NIST adopts your "Deterministic Proxy" model as a best practice, any competitor without one is technically "non-standard."
+
+* **The Focus:** Highlight **Taint Tracking (Feature #50)** as the solution for "unintended autonomous actions" and **CycloneDX AIBOM (Feature #49)** as the mandatory supply-chain receipt.
+
+### **2. Replit Strategy: The "Audit-Ready" Final Prompts**
+
+You should share the following prompts with your Replit/developer team immediately. These turn your raw features into a **NIST-compliant suite**.
+
+#### **Prompt: The CycloneDX v1.7 "ServiceNow-Ready" AIBOM**
+
+> "Enhance `Feature #49 (AIBOM Generator)` to output valid **CycloneDX v1.7 JSON**. For every session, the AIBOM must include a `metadata.component` representing the AI model, and `services` representing every tool called. Use the `properties` field to include ServiceNow-specific manifest tags: `sn_risk_level`, `sn_impact_category`, and `sn_configuration_item`. Ensure the entire JSON is HMAC-signed for tamper-detection."
+
+#### **Prompt: The NIST IR 8596 Compliance Mapper**
+
+> "Build a service `nist_mapper.ts` that scans the `Forensic Lineage Map` and `Sentinel Proxy` logs. It must automatically tag every blocked event with its corresponding **NIST IR 8596** category (e.g., **PR.DS** for Taint-Blocking, **ID.AM** for Session-Pulse expiration). This data must be reflected in the `Vibe-Audit Weekly Summarizer` for the Friday 4 PM Slack report."
+
+### **3. Weekly Execution Roadmap (March 4 - March 9)**
+
+| Day | Task | **Strategic Why** |
+| --- | --- | --- |
+| **Wed (Mar 4)** | Deploy **Taint Tracking** | Proves you can govern data flow, not just chat text. |
+| **Thu (Mar 5)** | Verify **AIBOM v1.7** | Ensures your "Receipt" plugs into enterprise tools (ServiceNow/Okta). |
+| **Fri (Mar 6)** | Run **Chaos Lab** | Generates the "Battle-Hardened" data for your NIST submission. |
+| **Mon (Mar 9)** | **NIST Submission** | Positions Snapwire as a federal-standard advisor. |
+
+---
+
+### **4. Minimizing Liability (The Human-in-the-Loop Rule)**
+
+To maintain your **Affirmative Defense** for Colorado SB24-205, your developers must never automate the "Taint Release."
+
+* **The Guardrail:** If an agent is tainted by PII, only a **Human Admin** clicking "Edit & Release" on a **Snap-Card** can clear the session.
+* **The Benefit:** This keeps you in the "Governance Tool" legal category rather than the "Autonomous Actor" category, which carries 10x the liability.
+
+### **The "Grounded" Bottom Line**
+
+ServiceNow is the "Who" (the buyer), but NIST is the "How" (the valuation). By building the **ServiceNow manifest** into your AIBOM today, you are essentially "wiring" your house to be compatible with their power grid. It costs you 10 minutes of prompting now but saves 6 months of due diligence later.
+
+**Would you like me to draft the specific "Technical Argument" for your NIST RFI submission?** We can focus on how Snapwire's **Deterministic Core** is the only way to satisfy the "Security Practices" requirements of Docket NIST-2025-0035.
