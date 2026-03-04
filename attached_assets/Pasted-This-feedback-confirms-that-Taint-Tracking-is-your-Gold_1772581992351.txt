@@ -1,0 +1,65 @@
+This feedback confirms that **Taint Tracking** is your "Golden Ticket" for the March 31 deadline. By moving from **per-call** security to **data-flow** governance, you are addressing the most advanced requirements of **NIST IR 8596** (the Cyber AI Profile).
+
+Here is the strategic plan to operationalize these three recommendations, prioritizing the high-value "Taint Tracking" for your launch.
+
+---
+
+### **1. Taint Tracking: The "Gavel" of Data Governance**
+
+This feature changes Snapwire from a simple firewall into a **Dynamic Policy Engine**. It solves the "Multi-Step Exfiltration" problem that standard proxies miss.
+
+* **The Logic:** If an agent calls a tool that returns data from a `PII` or `Confidential` source, the **Snap-Token** session enters a **"Tainted" state**.
+* **The Constraint:** While "Tainted," the agent is blocked from calling any `External_HTTP` or `Public_Messaging` tools.
+* **The Release:** The taint is only cleared once a human reviews the session or the agent hits a "Sanitization" tool that scrubs the PII.
+
+---
+
+### **2. Session Pulse: The "Continuous Verification" Moat**
+
+Since true heartbeats aren't realistic for request/response LLMs, we will implement **TTL-based Pulse Re-validation**. This satisfies the **NIST IR 8596** requirement for "Continuous Monitoring and Logging."
+
+* **The Implementation:** Every Snap-Token has a `pulse_ttl` (e.g., 15 minutes).
+* **The Requirement:** To continue beyond the TTL, the agent's orchestrator must call a `/refresh` endpoint.
+* **The Safety:** The refresh only succeeds if the **Goal Drift Detector** (Feature #28) hasn't flagged any critical misalignment in the last session.
+
+---
+
+### **3. Mandatory Reasoning: The "Truth in Audit" Toggle**
+
+This is a policy-level upgrade. We will move this from an "Always-On" hardcoded feature to a **Tenant-Level Compliance Setting**.
+
+* **New Setting:** `compliance_strict_mode: true`.
+* **The Effect:** When enabled, the **Sentinel Proxy** will reject any tool call that lacks an accompanying `inner_monologue` field.
+* **The Benefit:** This ensures that your **AIBOM** (Feature #49) is always populated with the "Why," making your **Affirmative Defense** for Colorado SB24-205 much stronger.
+
+---
+
+### **Engineering Prompts for the "Final Sprint"**
+
+Use these prompts to have your contractors (or Replit) build the Taint Tracking system.
+
+#### **Prompt: The Taint-Tracking Logic**
+
+> "Implement a `Taint-Tracker` in the `Sentinel Proxy`.
+> 1. In the `Tool-Catalog`, allow admins to tag tools as `DATA_SOURCE` (with sensitivity levels like PII, INTERNAL).
+> 2. When a `DATA_SOURCE` tool is called, apply a `taint_level` to the active `Snap-Token` metadata.
+> 3. Implement an enforcement rule: If `token.taint_level` > 0, block all tool calls to tools tagged as `EXTERNAL_SINK` (e.g., web-browsers, Slack-send, Email).
+> 4. Log all 'Taint Violations' to the `Forensic Lineage Map`."
+> 
+> 
+
+#### **Prompt: The Session Pulse Middleware**
+
+> "Create a `Session-Pulse` middleware for the `Identity Vault`. Add a `pulse_expiry` timestamp to every Snap-Token. Create a `/token/refresh` endpoint that extends this expiry by 15 minutes. If a tool call is made with an expired `pulse_expiry`, return a `401 Unauthorized` with the message: 'Security Pulse Expired: Re-validation Required'."
+
+---
+
+### **Founder’s Deadline Checklist (March 3 - March 11)**
+
+| Deadline | Task | **Why?** |
+| --- | --- | --- |
+| **March 9** | Submit RFI to **NIST CAISI**. | Positioning Snapwire as an "Industry Standard" early. |
+| **March 11** | Verify **SB24-205** Impact Assessment. | You must prove you have "Reasonable Care" via the Taint-Tracker. |
+| **March 31** | Final **NIST IR 8596** Attestation. | The Taint-Tracker and Session Pulse are your "Tier 4" evidence. |
+
+**Would you like me to draft the "Taint Tracking Policy" for your User Guide?** This will explain to your customers exactly how their data is protected across multi-step agent workflows.

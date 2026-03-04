@@ -1,0 +1,66 @@
+This assessment confirms that **Taint Tracking** is your "Priority One" for the upcoming compliance deadlines. By shifting from per-call security to data-flow governance, you are solving the exact "Shadow Agent" risks that regulators are most worried about in 2026.
+
+Here is your focused build-and-action plan to secure your **$100M exit** value.
+
+---
+
+## **Part 1: The "Gavel" Build Sprint (March 3 - March 10)**
+
+This sprint turns your contractors into a high-output governance squad.
+
+### **1. Taint Tracking (The Core)**
+
+* **The Build:** Implement two new metadata fields in the `Tool-Catalog`: `tool_sensitivity` (PII, Internal, Public) and `tool_class` (Source, Sink).
+* **The Logic:** When a `Source` tool returns data, flag the `Snap-Token` as `TAINTED`.
+* **The Guardrail:** If `token.is_tainted == true`, the `Sentinel Proxy` must block any tool call classified as an `External_Sink`.
+
+### **2. Session Pulse (Continuous Identity)**
+
+* **The Build:** Add a `pulse_expiry` (TTL) to every token.
+* **The Twist:** Implement a `/refresh` endpoint. While the refresh remains deterministic, it logs a "Goal Drift Warning" if the advisory AI detects misalignment.
+
+### **3. Strict Reasoning Toggle**
+
+* **The Build:** Add a `strict_reasoning` boolean to the `TenantSettings`.
+* **The Effect:** If `true`, the system rejects any tool call lacking an `inner_monologue`. This ensures your **AIBOM** is always "Audit-Ready" for legal teams.
+
+---
+
+## **Part 2: The Critical Deadlines**
+
+You are currently in a "Regulatory Red Zone." Missing these dates could jeopardize a 2026 acquisition.
+
+| Date | Deadline | **Why it Matters for Snapwire** |
+| --- | --- | --- |
+| **March 9, 2026** | **NIST CAISI RFI** | This is the final day to submit your "Red Team" findings to NIST. Doing so positions Snapwire as a pioneer in **NIST IR 8596** (Cyber AI Profile). |
+| **March 11, 2026** | **NIST Federal Eval** | The U.S. Secretary of Commerce will evaluate state laws (like Colorado). You need your **Affirmative Defense** documentation ready to show you align with whatever standard wins. |
+| **March 31, 2026** | **Q1 Insurance Audit** | Enterprise insurers require **NIST AI RMF 1.0** attestation. Your **AIBOM (CycloneDX 1.7)** is the primary proof they will demand. |
+
+---
+
+## **Part 3: Replit "Final Sprint" Prompts**
+
+*Copy these into Replit to execute the Taint Tracking system immediately.*
+
+### **Prompt 1: Taint Tracker Infrastructure**
+
+> "Implement a `Taint-Tracker` service. Update the `ToolCatalog` schema to include `sensitivity_level` (NONE, INTERNAL, PII) and `io_type` (SOURCE, SINK, PROCESSOR). When a tool of type SOURCE returns data, the active `Snap-Token` must be updated with a `tainted: true` metadata flag. Log this state change to the `Forensic Lineage Map`."
+
+### **Prompt 2: Taint Enforcement Middleware**
+
+> "Modify the `Sentinel Proxy` interceptor. If an incoming tool call is made by a token with `tainted: true`, and the target tool is an `EXTERNAL_SINK` (e.g., email, browser, web-request), the proxy must BLOCK the call, trigger the `Fuse Breaker`, and generate a 'Data Exfiltration Prevention' record for the `Snap-Card Review Queue`."
+
+---
+
+## **Part 4: Founder’s Liability Minimization**
+
+1. **The "Affirmative Defense" Folder:** By **March 9**, ensure you have a folder containing:
+* Signed **Contractor IP Agreements**.
+* Results of your **Chaos Ingestor** tests showing the Taint-Tracker in action.
+* A draft of your **NIST IR 8596 Attestation**.
+
+
+2. **The AIBOM Signature:** Ensure Feature #49 (AIBOM) is generating a **SHA-256 Formulation Hash**. In a 2026 audit, an unsigned AIBOM is considered "inadmissible evidence."
+3. **Human-in-the-Loop:** Explicitly market the "Taint Release" mechanism as a **Manual Override**. This keeps you in the "Governance" category rather than the "Autonomous Decision-Maker" category (which has higher legal risk).
+
+**Would you like me to draft the "NIST CAISI RFI Response"?** This 2-page document (due March 9) is your opportunity to "brag" to the government about how Snapwire solves the Agent Security Crisis, which is a massive signal to potential $100M acquirers.

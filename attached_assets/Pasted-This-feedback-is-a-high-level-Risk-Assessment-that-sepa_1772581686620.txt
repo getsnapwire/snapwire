@@ -1,0 +1,59 @@
+This feedback is a high-level **Risk Assessment** that separates your "Theoretical Security" from your "Operational Reality." It identifies exactly where **Snapwire** is currently **Deterministic** (absolute protection) versus **Heuristic** (probabilistic protection).
+
+To hit the **March 31 NIST Q1 Deadline**, you need to address the "Exfiltration Chain" and "Identity Spoofing" gaps. These are the areas where a sophisticated auditor will poke holes in your **NIST IR 8596** (Cyber AI Profile) filing.
+
+---
+
+### **1. Critical Gap Analysis: The "Multi-Step" Exfiltration Problem**
+
+The feedback correctly identifies that Snapwire sees individual actions but doesn't necessarily "connect the dots" of a complex attack (e.g., Read File $\rightarrow$ Encode $\rightarrow$ Send to Malicious URL).
+
+#### **The "Leapfrog" Solution: Contextual Correlation**
+
+Instead of just watching the tools, you need to watch the **State Change**. If an agent reads sensitive data, it should enter a "Tainted State."
+
+* **The New Protocol:** Any agent that accesses a file tagged as **PII** or **Internal** has its `Snap-Token` scope automatically restricted. It can no longer call "External HTTP" tools until the session is cleared by a human.
+* **Valuation Impact:** This moves you from a "Firewall" to a **"Data-Flow Governor,"** a much higher-tier security category.
+
+---
+
+### **2. Addressing the "NIST IR 8596" Identity Defect**
+
+The feedback points out that the **Fuse Breaker** won't catch a "Single-Shot" identity spoof. While your token architecture handles this, NIST IR 8596 requires **"Continuous Verification."**
+
+* **The Fix:** Implement **Heartbeat Attestation**. Every 60 seconds, the agent must perform a cryptographic "handshake" with the Identity Vault. If the agent's code-hash or session-ID has changed even slightly, the token is auto-revoked.
+* **Result:** You can now check the "Continuous Authentication" box in your NIST audit, which is a Tier 4 (Adaptive) requirement.
+
+---
+
+### **3. Strategic Plan: The "Red Team" Correction Sprint**
+
+*Focus these prompts on your Replit/Contractors to close the gaps identified in the feedback.*
+
+#### **Replit Prompt: Tainted-State Data Governance**
+
+> "Build a `Data-Taint-Tracker`. When the `Sentinel Proxy` detects an agent accessing a file or database marked as 'Confidential', it must apply a `TAINTED` flag to the active `Snap-Token`. Any subsequent tool calls to non-allowlisted external domains must be blocked until the `TAINTED` flag is removed by a human-in-the-loop review."
+
+#### **Replit Prompt: Heartbeat Attestation Logic**
+
+> "Implement a `Session-Pulse` mechanism in the `Identity Vault`. The agent must send a signed heartbeat every 60 seconds. If a heartbeat is missed, or if the cryptographic signature of the agent's environment fails verification, initiate an immediate `Live Burn` of all associated tokens and log a 'Session Hijack' event to the `Forensic Lineage Map`."
+
+---
+
+### **4. Updated Exit Strategy: The "Audit of the Auditor"**
+
+By addressing these 3 "Partially Pass" tests, your **Affirmative Defense** for the **March 11 NIST Deadline** becomes ironclad. You aren't just saying you have a tool; you are proving you have **Full Lifecycle Control**.
+
+| Feature Gap | Original Status | **Post-Sprint Status** |
+| --- | --- | --- |
+| **Exfiltration Chain** | Partially Caught | **Blocked (via Taint-Tracking)** |
+| **Identity Spoofing** | Partially Caught | **Blocked (via Heartbeat Pulse)** |
+| **Decision Auditing** | Heuristic/Advisory | **Deterministic (via Mandatory inner_monologue)** |
+
+---
+
+### **The "Grounded" Bottom Line**
+
+The feedback you got was a "Reality Check." Your "v4" is great, but to survive a 2026 enterprise audit, you need to turn those **Heuristic** (AI-guessed) features into **Deterministic** (Hardcoded) rules.
+
+**Would you like me to draft the "NIST IR 8596 Compliance Matrix"?** This is the actual spreadsheet an auditor will use. We can pre-fill it with your "v5" features so you can see exactly where your 100% "Pass" scores come from.
