@@ -111,6 +111,35 @@ RULE_PACK_NIST_MAP = {
 }
 
 
+BLOCK_STATUS_NIST_MAP = {
+    "blocked-sanitizer": {"category": "PR.DS-1", "function": "PROTECT", "name": "Data Security — Input Sanitization"},
+    "blocked-openclaw": {"category": "PR.DS-2", "function": "PROTECT", "name": "Data Security — Redirect Attack Prevention"},
+    "blocked-honeypot": {"category": "DE.AE-1", "function": "DETECT", "name": "Adverse Events — Rogue Agent Detection"},
+    "blocked-blast-radius": {"category": "PR.AC-1", "function": "PROTECT", "name": "Access Control — Rate/Spend Limits"},
+    "blocked-strict-reasoning": {"category": "GV.PO-1", "function": "GOVERN", "name": "Policy — Reasoning Requirements"},
+    "blocked-catalog": {"category": "ID.AM-2", "function": "IDENTIFY", "name": "Asset Management — Unapproved Tool"},
+    "blocked-taint": {"category": "PR.DS-1", "function": "PROTECT", "name": "Data Security — Exfiltration Prevention"},
+    "blocked-deception": {"category": "DE.AE-2", "function": "DETECT", "name": "Adverse Events — Intent Mismatch"},
+    "blocked-loop": {"category": "DE.CM-1", "function": "DETECT", "name": "Continuous Monitoring — Hallucination Loop"},
+    "blocked-schema": {"category": "PR.DS-1", "function": "PROTECT", "name": "Data Security — Schema Violation"},
+    "blocked": {"category": "PR.AC-1", "function": "PROTECT", "name": "Access Control — Policy Violation"},
+    "held": {"category": "RS.AN-1", "function": "RESPOND", "name": "Analysis — Human Review Required"},
+    "shadow-blocked": {"category": "DE.CM-1", "function": "DETECT", "name": "Continuous Monitoring — Shadow Observation"},
+}
+
+
+def get_nist_tag_for_status(status):
+    if not status:
+        return None
+    entry = BLOCK_STATUS_NIST_MAP.get(status)
+    if entry:
+        return entry
+    for key, val in BLOCK_STATUS_NIST_MAP.items():
+        if status.startswith(key):
+            return val
+    return None
+
+
 def score_to_grade(score: int) -> str:
     if score >= 80:
         return "A"

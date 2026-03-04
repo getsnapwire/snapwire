@@ -1,5 +1,7 @@
 import hashlib
+import hmac
 import json
+import os
 import uuid
 from datetime import datetime, timedelta
 
@@ -62,12 +64,48 @@ def generate_aibom(tenant_id, days=30, include_formulation=True):
     }
 
     bom_json = json.dumps(bom, sort_keys=True)
+    bom_hash = hashlib.sha256(bom_json.encode()).hexdigest()
     bom["properties"].append({
         "name": "snapwire:bom_hash",
-        "value": hashlib.sha256(bom_json.encode()).hexdigest()
+        "value": bom_hash
     })
 
+    signing_secret = os.environ.get("SESSION_SECRET")
+    if not signing_secret:
+        bom["signature"] = {"algorithm": "HMAC-SHA256", "value": None, "error": "SESSION_SECRET not configured", "signed_at": timestamp}
+        return bom
+    canonical_json = json.dumps(bom, sort_keys=True, separators=(",", ":"))
+    hmac_digest = hmac.new(
+        signing_secret.encode(),
+        canonical_json.encode(),
+        hashlib.sha256
+    ).hexdigest()
+    bom["signature"] = {
+        "algorithm": "HMAC-SHA256",
+        "value": hmac_digest,
+        "signed_at": timestamp,
+    }
+
     return bom
+
+
+def verify_aibom_hmac(aibom_data, secret=None):
+    if not secret:
+        secret = os.environ.get("SESSION_SECRET")
+    if not secret:
+        return False
+    sig = aibom_data.get("signature")
+    if not sig or sig.get("algorithm") != "HMAC-SHA256":
+        return False
+    original_sig = sig["value"]
+    bom_copy = {k: v for k, v in aibom_data.items() if k != "signature"}
+    canonical_json = json.dumps(bom_copy, sort_keys=True, separators=(",", ":"))
+    expected = hmac.new(
+        secret.encode(),
+        canonical_json.encode(),
+        hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(original_sig, expected)
 
 
 def _build_components(tools):
@@ -85,6 +123,24 @@ def _build_components(tools):
             props.append({"name": "snapwire:first_seen", "value": tool.first_seen.isoformat() + "Z"})
         if tool.reviewed_by:
             props.append({"name": "snapwire:reviewed_by", "value": tool.reviewed_by})
+
+        grade = (tool.safety_grade or "U").upper()
+        sn_risk = "low" if grade in ("A", "B") else "moderate" if grade == "C" else "high" if grade in ("D", "F") else "unknown"
+        io_type = getattr(tool, "io_type", "processor") or "processor"
+        is_conseq = tool.is_consequential or False
+        if is_conseq and io_type == "sink":
+            sn_impact = "critical"
+        elif is_conseq:
+            sn_impact = "high"
+        elif io_type in ("sink", "source"):
+            sn_impact = "moderate"
+        else:
+            sn_impact = "low"
+        props.extend([
+            {"name": "sn:configuration_item", "value": f"snapwire-tool:{tool.tool_name}"},
+            {"name": "sn:risk_level", "value": sn_risk},
+            {"name": "sn:impact_category", "value": sn_impact},
+        ])
 
         component = {
             "type": "application",
@@ -174,6 +230,17 @@ def _build_services(logs):
 
         status_props = [{"name": f"snapwire:status:{k}", "value": str(v)} for k, v in data["statuses"].items()]
         svc["properties"].extend(status_props)
+
+        sn_svc_risk = "low" if avg_risk <= 30 else "moderate" if avg_risk <= 70 else "high"
+        blocked_count = sum(v for k, v in data["statuses"].items() if "block" in k.lower())
+        total_calls = data["call_count"]
+        block_pct = (blocked_count / total_calls * 100) if total_calls > 0 else 0
+        sn_svc_impact = "high" if block_pct > 50 else "moderate" if block_pct > 20 else "low"
+        svc["properties"].extend([
+            {"name": "sn:configuration_item", "value": f"snapwire-service:{name}"},
+            {"name": "sn:risk_level", "value": sn_svc_risk},
+            {"name": "sn:impact_category", "value": sn_svc_impact},
+        ])
 
         services.append(svc)
 

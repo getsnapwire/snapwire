@@ -70,9 +70,11 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **Taint Tracking**: Cross-call data-flow governance, classifying tools by sensitivity and I/O type to prevent data leakage.
 -   **Session Pulse**: TTL-based continuous token re-validation for security.
 -   **Strict Reasoning Toggle**: Requires `inner_monologue` for all tool calls when enabled.
--   **AIBOM Generator**: Generates CycloneDX v1.7 JSON AI Bill of Materials from tool catalog and audit log data.
+-   **AIBOM Generator**: Generates CycloneDX v1.7 JSON AI Bill of Materials from tool catalog and audit log data. Embeds ServiceNow ITSM properties (`sn:risk_level`, `sn:impact_category`, `sn:configuration_item`) in components and services. HMAC-SHA256 signed for tamper detection with `verify_aibom_hmac()` verification.
+-   **NIST IR 8596 Auto-Tagger**: Automatically tags every blocked/held audit log entry with its corresponding NIST IR 8596 category ID (e.g., `PR.DS-1`, `DE.CM-1`) in `violations_json`. Mapping in `src/nist_mapping.py`.
 -   **NIST IR 8596 Attestation PDF**: Generates a branded PDF mapping Snapwire features to NIST IR 8596 / CSF 2.0 categories.
 -   **ServiceNow Manifest**: Generates a JSON mapping Snapwire data to ServiceNow ITSM fields.
+-   **Vibe-Audit Weekly Summarizer**: Includes NIST IR 8596 category breakdown showing enforcement activity by NIST function/category in both LLM-generated and deterministic fallback reports.
 
 ## External Dependencies
 -   **Database**: PostgreSQL, SQLite

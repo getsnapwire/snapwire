@@ -5836,6 +5836,30 @@ def generate_weekly_vibe_audit():
 
     estimated_spend_saved = round(actions_blocked * 0.12, 2)
 
+    nist_breakdown = {}
+    try:
+        from src.nist_mapping import get_nist_tag_for_status
+        blocked_held_entries = AuditLogEntry.query.filter(
+            AuditLogEntry.created_at >= cutoff,
+            AuditLogEntry.violations_json.isnot(None),
+        ).all()
+        for bh_entry in blocked_held_entries:
+            try:
+                violations = json.loads(bh_entry.violations_json) if bh_entry.violations_json else []
+                for v in violations:
+                    if isinstance(v, dict) and "nist_category" in v:
+                        cat = v["nist_category"]
+                        nist_breakdown[cat] = nist_breakdown.get(cat, 0) + 1
+            except (json.JSONDecodeError, TypeError):
+                pass
+        if not nist_breakdown and blocked_held_entries:
+            for bh_entry in blocked_held_entries:
+                nist_tag = get_nist_tag_for_status(bh_entry.status)
+                if nist_tag:
+                    nist_breakdown[nist_tag["category"]] = nist_breakdown.get(nist_tag["category"], 0) + 1
+    except Exception:
+        pass
+
     tools_hardened = ToolCatalog.query.filter(
         ToolCatalog.first_seen >= cutoff,
         ToolCatalog.status.in_(['approved', 'pending_review']),
@@ -5869,6 +5893,7 @@ def generate_weekly_vibe_audit():
         "tools_hardened": tools_hardened,
         "tools_healed": tools_healed,
         "chaos_tests_run": chaos_tests,
+        "nist_breakdown": nist_breakdown,
     }
 
     try:
@@ -5899,7 +5924,8 @@ def generate_weekly_vibe_audit():
             f"- Tools hardened this week: {tools_hardened}\n"
             f"- Tools healed (auto-fix pending/applied): {tools_healed}\n"
             f"- Chaos tests run: {chaos_tests}\n"
-            f"\nGenerate the executive summary now."
+            f"- NIST IR 8596 enforcement breakdown: {json.dumps(nist_breakdown) if nist_breakdown else 'No tagged events'}\n"
+            f"\nGenerate the executive summary now. Include a '## NIST IR 8596 Coverage' section showing which NIST categories had enforcement activity."
         )
         summary_md = chat(prompt_system, prompt_user, max_tokens=2048)
         source = "llm"
@@ -5926,6 +5952,12 @@ def generate_weekly_vibe_audit():
             f"## Notable Events\n"
             f"- {'No honeypot triggers — low adversarial activity' if honeypot_triggers == 0 else f'{honeypot_triggers} honeypot trigger(s) detected — review recommended'}\n"
             f"- {'No loop detections — agents operating normally' if loop_detections == 0 else f'{loop_detections} loop detection(s) — check agent configurations'}\n\n"
+            f"## NIST IR 8596 Coverage\n"
+            + (
+                "".join(f"- **{cat}**: {count} enforcement event(s)\n" for cat, count in sorted(nist_breakdown.items(), key=lambda x: -x[1]))
+                if nist_breakdown else "- No NIST-tagged enforcement events this period\n"
+            )
+            + f"\n"
             f"## Recommendations\n"
             f"- {'Consider enabling more rules to increase coverage' if total_actions == 0 else 'Continue monitoring — system operating within normal parameters'}\n"
             f"- Review any high-risk actions in the audit log\n"

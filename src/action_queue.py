@@ -74,6 +74,20 @@ def add_held_action(tool_call, audit_result, hold_window_seconds, webhook_url=No
 
     action_id = str(uuid.uuid4())[:8]
     hold_expires_at = datetime.utcnow() + timedelta(seconds=hold_window_seconds)
+
+    violations = audit_result.get("violations", [])
+    try:
+        from src.nist_mapping import get_nist_tag_for_status
+        nist_tag = get_nist_tag_for_status("held")
+        if nist_tag:
+            violations.append({
+                "nist_category": nist_tag["category"],
+                "nist_function": nist_tag["function"],
+                "nist_name": nist_tag["name"],
+            })
+    except Exception:
+        pass
+
     action = PendingAction(
         id=action_id,
         tenant_id=tenant_id,
@@ -83,7 +97,7 @@ def add_held_action(tool_call, audit_result, hold_window_seconds, webhook_url=No
         context=tool_call.get("context", ""),
         status="held",
         risk_score=audit_result.get("risk_score", 0),
-        violations_json=json.dumps(audit_result.get("violations", [])),
+        violations_json=json.dumps(violations),
         analysis=audit_result.get("analysis", ""),
         vibe_summary=audit_result.get("vibe_summary", ""),
         agent_id=agent_id or "unknown",
@@ -278,6 +292,19 @@ def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None, 
     chain_of_thought = audit_result.get("analysis", "")
     violations = audit_result.get("violations", [])
     shadow_violations = audit_result.get("shadow_violations", [])
+
+    if status and ("block" in status.lower() or status in ("held", "shadow-blocked")):
+        try:
+            from src.nist_mapping import get_nist_tag_for_status
+            nist_tag = get_nist_tag_for_status(status)
+            if nist_tag:
+                violations.append({
+                    "nist_category": nist_tag["category"],
+                    "nist_function": nist_tag["function"],
+                    "nist_name": nist_tag["name"],
+                })
+        except Exception:
+            pass
     cot_data = {
         "analysis": chain_of_thought,
         "violations": violations,
