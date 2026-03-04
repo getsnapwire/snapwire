@@ -188,6 +188,7 @@
         <a href="/dashboard" class="btn-secondary" style="border:none;padding:8px 14px;">&#8592; Dashboard</a>
         <a href="#impact" class="active">Impact Assessment</a>
         <a href="#aibom">AIBOM</a>
+        <a href="#attestation">NIST Attestation</a>
         <a href="#bundle">Audit Bundle</a>
         <a href="#defense">Affirmative Defense</a>
         <a href="/docs/compliance">Headless API</a>
@@ -299,6 +300,58 @@
             </div>
         </div>
 
+        <div class="section-card" id="attestation">
+            <h2><span class="icon">&#x1F3DB;</span> NIST IR 8596 Attestation</h2>
+            <p class="subtitle">Comprehensive feature-to-NIST mapping with SHA-256 integrity hashes. Maps all {{ attestation.total_features }} Snapwire features to NIST IR 8596 / CSF 2.0 categories.</p>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;">
+                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:var(--accent);">{{ attestation.total_features }}</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Features Mapped</div>
+                </div>
+                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:#00d4aa;">{{ attestation.categories_covered }}</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">NIST Categories</div>
+                </div>
+                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:#f59e0b;">{{ attestation.functions_covered }}/{{ attestation.total_functions }}</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Functions Covered</div>
+                </div>
+                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;{% if attestation.score >= 80 %}color:#00d4aa;{% elif attestation.score >= 50 %}color:#f59e0b;{% else %}color:#ef4444;{% endif %}">{{ attestation.score }}%</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Coverage Score</div>
+                </div>
+            </div>
+
+            <div style="font-size:13px;font-weight:600;margin-bottom:10px;">Coverage by NIST Function</div>
+            {% for func_name in ['GOVERN', 'IDENTIFY', 'PROTECT', 'DETECT', 'RESPOND', 'MAP', 'MEASURE', 'MANAGE'] %}
+            {% set cov = attestation.coverage_by_function.get(func_name, {}) %}
+            {% set count = cov.get('feature_count', 0) %}
+            {% set pct = cov.get('coverage_percentage', 0) %}
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+                <span style="font-size:12px;font-weight:600;color:var(--text-primary);width:80px;">{{ func_name }}</span>
+                <div style="flex:1;background:var(--bg-secondary);border-radius:6px;height:20px;overflow:hidden;border:1px solid var(--border);">
+                    <div style="height:100%;background:{% if count > 0 %}linear-gradient(90deg, #00d4aa, #00b894){% else %}#ef4444{% endif %};width:{{ pct }}%;border-radius:6px;transition:width 0.3s;"></div>
+                </div>
+                <span style="font-size:11px;color:var(--text-secondary);width:90px;text-align:right;">{{ count }} features ({{ pct }}%)</span>
+            </div>
+            {% endfor %}
+
+            <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:16px;margin-bottom:16px;">
+                <a href="#" onclick="return downloadWithAck('/api/compliance/nist-attestation')" class="btn-primary compliance-dl" style="opacity:0.5;pointer-events:none;">
+                    &#x1F3DB; Download Attestation PDF
+                </a>
+                <a href="#" onclick="return downloadWithAck('/api/compliance/servicenow-manifest')" class="btn-secondary compliance-dl" style="opacity:0.5;pointer-events:none;">
+                    &#x2699; Download ServiceNow Manifest (.json)
+                </a>
+            </div>
+
+            <div class="info-banner" style="margin-top:12px;">
+                <span style="font-size:16px;">&#x1F512;</span>
+                <div>Each feature mapping includes a SHA-256 hash incorporating the feature's enforcement evidence and your tenant's current configuration state. The attestation PDF and a ServiceNow ITSM manifest (<code>service_now_manifest.json</code>) are also included in the Audit Bundle ZIP.</div>
+            </div>
+        </div>
+
         <div class="section-card" id="bundle">
             <h2><span class="icon">&#x1F4E6;</span> Download Audit Bundle</h2>
             <p class="subtitle">Generate a cryptographically signed compliance package for regulatory filings, insurance underwriters, or internal governance reviews.</p>
@@ -338,6 +391,14 @@
             <div class="metric-row">
                 <span class="metric-label">4. AIBOM (CycloneDX v1.7)</span>
                 <span class="metric-value" style="font-size:12px;">AI Bill of Materials — tool supply chain manifest</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">5. NIST IR 8596 Attestation PDF</span>
+                <span class="metric-value" style="font-size:12px;">52-feature mapping to NIST categories with SHA-256 hashes</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">6. ServiceNow Manifest</span>
+                <span class="metric-value" style="font-size:12px;">ITSM field mapping for enterprise integration readiness</span>
             </div>
 
             <div class="info-banner">

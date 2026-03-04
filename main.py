@@ -789,6 +789,30 @@ def compliance_portal():
     except Exception:
         pass
 
+    attestation_data = {}
+    try:
+        from src.nist_attestation import generate_attestation_data
+        attest = generate_attestation_data(tenant_id)
+        attestation_data = {
+            "total_features": attest["summary"]["total_features"],
+            "categories_covered": attest["summary"]["nist_categories_covered"],
+            "functions_covered": attest["summary"]["nist_functions_covered"],
+            "total_functions": attest["summary"]["total_nist_functions"],
+            "score": attest["summary"]["overall_attestation_score"],
+            "bundle_hash": attest["integrity"]["bundle_sha256"],
+            "coverage_by_function": attest["coverage_by_function"],
+        }
+    except Exception:
+        attestation_data = {
+            "total_features": 0,
+            "categories_covered": 0,
+            "functions_covered": 0,
+            "total_functions": 8,
+            "score": 0,
+            "bundle_hash": "N/A",
+            "coverage_by_function": {},
+        }
+
     return render_template(
         "compliance_portal.html",
         nist_grade=report.get("grade", "D"),
@@ -806,6 +830,7 @@ def compliance_portal():
         active_rules=len(rule_names),
         hold_window_seconds=hold_window_seconds,
         consequential_count=consequential_count,
+        attestation=attestation_data,
     )
 
 
@@ -899,6 +924,20 @@ def compliance_audit_bundle():
         except Exception as e:
             zf.writestr("aibom-error.txt", f"Failed to generate AIBOM: {str(e)}")
 
+        try:
+            from src.nist_attestation_pdf import generate_nist_attestation_pdf
+            attestation_pdf = generate_nist_attestation_pdf(tenant_id)
+            zf.writestr("snapwire-nist-attestation.pdf", attestation_pdf)
+        except Exception as e:
+            zf.writestr("nist-attestation-error.txt", f"Failed to generate NIST Attestation PDF: {str(e)}")
+
+        try:
+            from src.servicenow_manifest import generate_servicenow_manifest
+            sn_manifest = generate_servicenow_manifest(tenant_id)
+            zf.writestr("service_now_manifest.json", json.dumps(sn_manifest, indent=2))
+        except Exception as e:
+            zf.writestr("servicenow-manifest-error.txt", f"Failed to generate ServiceNow manifest: {str(e)}")
+
     try:
         settings = TenantSettings.query.filter_by(tenant_id=tenant_id).first() if tenant_id else None
         if settings:
@@ -916,6 +955,37 @@ def compliance_audit_bundle():
             "Content-Disposition": f'attachment; filename="snapwire-audit-bundle-{now}.zip"'
         },
     )
+
+
+@app.route("/api/compliance/nist-attestation")
+@require_login
+def compliance_nist_attestation():
+    from src.nist_attestation_pdf import generate_nist_attestation_pdf
+    tenant_id = get_current_tenant_id()
+    try:
+        pdf_bytes = generate_nist_attestation_pdf(tenant_id)
+        now = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        return Response(
+            pdf_bytes,
+            mimetype="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="snapwire-nist-attestation-{now}.pdf"'
+            },
+        )
+    except Exception as e:
+        return jsonify({"error": f"Failed to generate NIST Attestation PDF: {str(e)}"}), 500
+
+
+@app.route("/api/compliance/servicenow-manifest")
+@require_login
+def compliance_servicenow_manifest():
+    from src.servicenow_manifest import generate_servicenow_manifest
+    tenant_id = get_current_tenant_id()
+    try:
+        manifest = generate_servicenow_manifest(tenant_id)
+        return jsonify(manifest)
+    except Exception as e:
+        return jsonify({"error": f"Failed to generate ServiceNow manifest: {str(e)}"}), 500
 
 
 @app.route("/api/compliance/counsel-ack", methods=["POST"])
