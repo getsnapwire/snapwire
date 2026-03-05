@@ -103,10 +103,79 @@
         .footer { border-top: 1px solid var(--gray-200); padding: 32px; text-align: center; background: #0B0D10; }
         .footer p { font-size: 13px; color: var(--gray-400); }
 
+        .playground {
+            background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 12px;
+            padding: 24px 28px; margin-bottom: 24px;
+        }
+        .playground h3 { margin-top: 0; }
+        .playground-note {
+            font-size: 13px; color: var(--gray-400); line-height: 1.6; margin-bottom: 16px;
+            padding: 10px 14px; background: rgba(255,107,0,0.06); border-left: 3px solid #FF6B00; border-radius: 4px;
+        }
+        .playground-dare {
+            font-size: 13px; color: var(--green-500); font-weight: 600; margin-bottom: 16px;
+        }
+        .playground-field { margin-bottom: 14px; }
+        .playground-field label {
+            display: block; font-size: 12px; font-weight: 600; color: var(--gray-500);
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+        }
+        .playground-field input, .playground-field textarea {
+            width: 100%; background: var(--gray-50); border: 1px solid var(--gray-300); border-radius: 8px;
+            padding: 10px 14px; font-family: 'Fira Code', monospace; font-size: 13px; color: var(--gray-900);
+            outline: none; transition: border-color 0.2s;
+        }
+        .playground-field input:focus, .playground-field textarea:focus {
+            border-color: #FF6B00;
+        }
+        .playground-field textarea { resize: vertical; min-height: 120px; }
+        .playground-btns { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+        .playground-btns button {
+            padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
+            border: none; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-run { background: #FF6B00; color: #fff; }
+        .btn-run:hover { background: #E56000; }
+        .btn-run:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-copy-curl { background: var(--gray-200); color: var(--gray-800); }
+        .btn-copy-curl:hover { background: var(--gray-300); }
+        .playground-response {
+            background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 10px;
+            padding: 16px 20px; font-family: 'Fira Code', monospace; font-size: 13px;
+            color: #e2e8f0; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+            display: none; position: relative;
+        }
+        .playground-response.visible { display: block; }
+        .playground-response .resp-label {
+            font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block;
+        }
+        .resp-allowed { color: var(--green-500); }
+        .resp-blocked { color: #f85149; }
+        .resp-pending { color: #FFD66B; }
+        .resp-error { color: var(--gray-400); }
+        .playground-outcomes {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px;
+        }
+        .outcome-card {
+            background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px;
+            padding: 14px 16px;
+        }
+        .outcome-card h4 {
+            font-size: 13px; font-weight: 700; margin-bottom: 6px;
+        }
+        .outcome-card p {
+            font-size: 12px; color: var(--gray-400); line-height: 1.5; margin: 0;
+        }
+        .outcome-allowed h4 { color: var(--green-500); }
+        .outcome-blocked h4 { color: #f85149; }
+        .outcome-pending h4 { color: #FFD66B; }
+
         @media (max-width: 768px) {
             .docs-sidebar { display: none; }
             .docs-content { padding: 24px 20px; }
             .nav-links a:not(.nav-btn) { display: none; }
+            .playground-outcomes { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -125,6 +194,7 @@
             <a href="#overview" class="active">Overview</a>
             <a href="#authentication">Authentication</a>
             <a href="#quickstart">Quick Start</a>
+            <a href="#try-it">Try It Playground</a>
             <h3>Core API</h3>
             <a href="#intercept">Intercept Tool Call</a>
             <a href="#actions">Pending Actions</a>
@@ -211,6 +281,51 @@ allowed = check_tool_call(
 
 if allowed:
     send_email(...)  # Your actual tool call</pre>
+
+            <h2 id="try-it">Try It Playground</h2>
+            <p>Test a live tool call against your Snapwire instance. This sends a real request to <code class="inline-code">POST /api/intercept</code> so you can see how Snapwire evaluates and responds.</p>
+            <div class="playground-note">This sends a real request to your Snapwire instance. Generate an API key from the dashboard first.</div>
+            <p class="playground-dare">Try something malicious — Snapwire will catch it.</p>
+            <div class="playground">
+                <div class="playground-field">
+                    <label>API Key</label>
+                    <input type="text" id="pg-api-key" placeholder="af_your_api_key_here" autocomplete="off">
+                </div>
+                <div class="playground-field">
+                    <label>Request Body (JSON)</label>
+                    <textarea id="pg-body">{
+  "tool_name": "send_email",
+  "parameters": {
+    "to": "user@example.com",
+    "subject": "Test"
+  },
+  "intent": "Send a test email to verify Snapwire integration",
+  "agent_id": "playground-agent"
+}</textarea>
+                </div>
+                <div class="playground-btns">
+                    <button class="btn-run" id="pg-run" onclick="runPlayground()">Run</button>
+                    <button class="btn-copy-curl" onclick="copyCurl()">Copy as curl</button>
+                </div>
+                <div class="playground-response" id="pg-response">
+                    <span class="resp-label resp-error" id="pg-resp-label">Response</span>
+                    <span id="pg-resp-body"></span>
+                </div>
+                <div class="playground-outcomes">
+                    <div class="outcome-card outcome-allowed">
+                        <h4>Allowed</h4>
+                        <p>The tool call passed all rules and is safe to execute. No human review needed.</p>
+                    </div>
+                    <div class="outcome-card outcome-blocked">
+                        <h4>Blocked</h4>
+                        <p>The tool call violated one or more rules and was denied. The response includes the violations and reasons.</p>
+                    </div>
+                    <div class="outcome-card outcome-pending">
+                        <h4>Pending</h4>
+                        <p>The tool call was flagged for human review. A Snap-Card is created in the dashboard for approve/deny/edit.</p>
+                    </div>
+                </div>
+            </div>
 
             <h2 id="intercept">Intercept Tool Call</h2>
             <div class="endpoint-card">
@@ -1126,6 +1241,95 @@ def handle_tool_call(tool_call):
                 this.classList.add('active');
             });
         });
+
+        function getPlaygroundPayload() {
+            var body = document.getElementById('pg-body').value;
+            try { return JSON.parse(body); } catch(e) { return null; }
+        }
+
+        async function runPlayground() {
+            var apiKey = document.getElementById('pg-api-key').value.trim();
+            var bodyEl = document.getElementById('pg-body');
+            var respEl = document.getElementById('pg-response');
+            var labelEl = document.getElementById('pg-resp-label');
+            var bodyOut = document.getElementById('pg-resp-body');
+            var runBtn = document.getElementById('pg-run');
+
+            if (!apiKey) {
+                respEl.classList.add('visible');
+                labelEl.className = 'resp-label resp-error';
+                labelEl.textContent = 'Error';
+                bodyOut.textContent = 'Please enter your API key above.';
+                return;
+            }
+
+            var payload = getPlaygroundPayload();
+            if (!payload) {
+                respEl.classList.add('visible');
+                labelEl.className = 'resp-label resp-error';
+                labelEl.textContent = 'Error';
+                bodyOut.textContent = 'Invalid JSON in request body. Please fix and try again.';
+                return;
+            }
+
+            runBtn.disabled = true;
+            runBtn.textContent = 'Sending...';
+            respEl.classList.add('visible');
+            labelEl.className = 'resp-label resp-error';
+            labelEl.textContent = 'Sending...';
+            bodyOut.textContent = '';
+
+            try {
+                var res = await fetch('/api/intercept', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiKey
+                    },
+                    body: JSON.stringify(payload)
+                });
+                var data = await res.json();
+                var pretty = JSON.stringify(data, null, 2);
+                bodyOut.textContent = pretty;
+
+                var status = data.status || '';
+                if (status === 'allowed') {
+                    labelEl.className = 'resp-label resp-allowed';
+                    labelEl.textContent = 'Allowed';
+                } else if (status === 'pending') {
+                    labelEl.className = 'resp-label resp-pending';
+                    labelEl.textContent = 'Pending — Held for Review';
+                } else if (status === 'blocked' || status === 'denied' || status === 'shadow-blocked') {
+                    labelEl.className = 'resp-label resp-blocked';
+                    labelEl.textContent = 'Blocked by Snapwire';
+                } else {
+                    labelEl.className = 'resp-label resp-error';
+                    labelEl.textContent = 'Response (' + res.status + ')';
+                }
+            } catch(err) {
+                labelEl.className = 'resp-label resp-error';
+                labelEl.textContent = 'Error';
+                bodyOut.textContent = err.message || 'Request failed. Check your connection and try again.';
+            } finally {
+                runBtn.disabled = false;
+                runBtn.textContent = 'Run';
+            }
+        }
+
+        function copyCurl() {
+            var apiKey = document.getElementById('pg-api-key').value.trim() || 'af_your_api_key_here';
+            var body = document.getElementById('pg-body').value;
+            var baseUrl = window.location.origin;
+            var curl = "curl -X POST " + baseUrl + "/api/intercept \\\n  -H 'Content-Type: application/json' \\\n  -H 'Authorization: Bearer " + apiKey + "' \\\n  -d '" + body.replace(/'/g, "'\\''") + "'";
+
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(curl).then(function() {
+                    var btn = document.querySelector('.btn-copy-curl');
+                    btn.textContent = 'Copied!';
+                    setTimeout(function() { btn.textContent = 'Copy as curl'; }, 2000);
+                });
+            }
+        }
     </script>
 </body>
 </html>

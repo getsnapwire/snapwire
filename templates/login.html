@@ -586,7 +586,7 @@
             .hero-sub { font-size: 16px; }
             .section { padding: 80px 20px; }
             .section-title { font-size: 28px; }
-            .steps { grid-template-columns: 1fr; gap: 32px; }
+            .steps { grid-template-columns: 1fr !important; gap: 32px; }
             .steps::before { display: none; }
             .features { grid-template-columns: 1fr; }
             .final-cta h2 { font-size: 28px; }
@@ -598,6 +598,7 @@
 
         @media (max-width: 1024px) and (min-width: 769px) {
             .features { grid-template-columns: repeat(2, 1fr); }
+            .steps { grid-template-columns: repeat(2, 1fr) !important; }
         }
 
         @media (max-width: 480px) {
@@ -744,18 +745,56 @@
                     </div>
                 </div>
             </div>
-            <div style="background:var(--base);border:1px solid var(--border);border-radius:16px;padding:40px;">
+            <div style="background:var(--base);border:1px solid var(--border);border-radius:16px;padding:40px;opacity:0.55;position:relative;">
+                <div style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text-muted);font-size:11px;font-weight:700;padding:4px 12px;border-radius:100px;text-transform:uppercase;letter-spacing:0.5px;">Coming Soon</div>
                 <div style="font-size:28px;margin-bottom:12px;">&#x2601;</div>
-                <h3 style="font-size:22px;font-weight:700;margin-bottom:10px;color:var(--text-primary);">Cloud</h3>
-                <p style="font-size:14px;color:var(--text-secondary);line-height:1.65;margin-bottom:28px;">Fully managed. Sign up and start protecting your agents in under 2 minutes. We handle infrastructure, updates, and scaling.</p>
+                <h3 style="font-size:22px;font-weight:700;margin-bottom:10px;color:var(--text-primary);">Cloud (Coming Soon)</h3>
+                <p style="font-size:14px;color:var(--text-secondary);line-height:1.65;margin-bottom:28px;">Fully managed. We'll handle infrastructure, updates, and scaling. Join the waitlist to get early access.</p>
                 <ul style="list-style:none;margin-bottom:32px;font-size:13px;color:var(--text-secondary);">
-                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Instant setup, no servers needed</li>
-                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Automatic updates &amp; scaling</li>
-                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Free &mdash; Bring Your Own Key</li>
-                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">&#10003;</span> Dashboard &amp; analytics included</li>
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--text-muted);">&#10003;</span> Instant setup, no servers needed</li>
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--text-muted);">&#10003;</span> Automatic updates &amp; scaling</li>
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--text-muted);">&#10003;</span> Free &mdash; Bring Your Own Key</li>
+                    <li style="padding:7px 0;display:flex;align-items:center;gap:8px;"><span style="color:var(--text-muted);">&#10003;</span> Dashboard &amp; analytics included</li>
                 </ul>
-                <a href="{{ login_url }}" style="display:block;text-align:center;background:var(--surface);color:var(--text-secondary);padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;text-decoration:none;border:1px solid var(--border);transition:all 0.2s;">Sign Up Free &rarr;</a>
+                <span style="display:block;text-align:center;background:rgba(255,255,255,0.04);color:var(--text-muted);padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;border:1px solid var(--border);cursor:default;">Join Waitlist &rarr;</span>
             </div>
+        </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- SECTION 3B: What to Expect After Forking -->
+    <section id="after-forking" class="section">
+        <p class="section-label">What to Expect</p>
+        <h2 class="section-title">From fork to protected in 4 steps</h2>
+        <p class="section-desc">Here's exactly what happens after you click "Fork." No surprises, no hidden setup.</p>
+        <div class="steps" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="step">
+                <div class="step-num" style="background:var(--accent-subtle);color:var(--accent);border:1px solid var(--accent-border);">1</div>
+                <h3>Fork</h3>
+                <p>One click on Replit and your own Snapwire instance spins up. Full source code, your infrastructure, running in seconds.</p>
+            </div>
+            <div class="step">
+                <div class="step-num" style="background:var(--blue-subtle);color:var(--blue);border:1px solid rgba(64, 224, 255, 0.15);">2</div>
+                <h3>Setup Wizard</h3>
+                <p>Set your admin email, choose your first security rules, and configure budget limits. Guided walkthrough &mdash; no docs required.</p>
+            </div>
+            <div class="step">
+                <div class="step-num" style="background:var(--amber-subtle);color:var(--amber);border:1px solid rgba(255, 214, 107, 0.15);">3</div>
+                <h3>Send Your First Tool Call</h3>
+                <p>Copy-paste a curl command, hit enter, and watch your first Snap-Card appear in the review queue. Instant proof it works.</p>
+                <div style="margin-top:12px;padding:10px 12px;background:#0d1117;border:1px solid var(--border);border-radius:8px;font-family:'SFMono-Regular',Consolas,monospace;font-size:11px;color:#c9d1d9;overflow-x:auto;white-space:nowrap;">
+                    <code>curl -X POST /api/intercept -d '{"tool_name":"send_email"}'</code>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num" style="background:var(--green-subtle);color:var(--green);border:1px solid rgba(0, 245, 212, 0.15);">4</div>
+                <h3>You're Protected</h3>
+                <p>Your dashboard lights up with real-time monitoring. All deterministic features &mdash; loop detection, spend tracking, kill switch &mdash; are active immediately.</p>
+            </div>
+        </div>
+        <div style="text-align:center;margin-top:48px;">
+            <a href="https://replit.com/@MasonJeffreys/Snapwire" target="_blank" class="cta cta-primary">Fork on Replit &mdash; Free &rarr;</a>
         </div>
     </section>
 
@@ -770,20 +809,37 @@
             <div class="step">
                 <div class="step-num">1</div>
                 <h3>Plug In</h3>
-                <p>Add our proxy URL to your agent's config. One environment variable and you're connected.</p>
+                <p>Add our proxy URL to your agent's config. One environment variable and you're connected. Works with any LLM provider. Compatible with LangChain, CrewAI, OpenAI Assistants, and any MCP-compatible agent.</p>
                 <div style="margin-top:12px;padding:10px 12px;background:#0d1117;border:1px solid var(--border);border-radius:8px;font-family:'SFMono-Regular',Consolas,monospace;font-size:12px;color:#c9d1d9;overflow-x:auto;white-space:nowrap;">
                     <code>OPENAI_BASE_URL=https://your-snapwire/v1</code>
+                </div>
+                <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+                    <span style="padding:4px 10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text-secondary);font-weight:600;">LangChain</span>
+                    <span style="padding:4px 10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text-secondary);font-weight:600;">CrewAI</span>
+                    <span style="padding:4px 10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text-secondary);font-weight:600;">OpenAI Assistants</span>
+                    <span style="padding:4px 10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text-secondary);font-weight:600;">MCP</span>
+                    <span style="padding:4px 10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text-secondary);font-weight:600;">A2A</span>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">2</div>
                 <h3>Watch</h3>
-                <p>We read every tool call your agent tries to make &mdash; what it's doing, what it costs, and whether it's stuck in a loop. All in real time.</p>
+                <p>Every tool call is intercepted and scored for risk. Snapwire checks for hallucination loops, spend overruns, data exfiltration, schema violations, and goal drift &mdash; all before the action executes.</p>
+                <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;">
+                    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);"><span style="color:var(--blue);font-weight:700;">&#x26A1;</span> Fuse Breaker &mdash; kills runaway loops</div>
+                    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);"><span style="color:var(--amber);font-weight:700;">&#x1F4B0;</span> Burn Meter &mdash; tracks spend in real time</div>
+                    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);"><span style="color:var(--red);font-weight:700;">&#x1F50D;</span> Taint Tracking &mdash; follows sensitive data flow</div>
+                </div>
             </div>
             <div class="step">
                 <div class="step-num">3</div>
                 <h3>Control</h3>
-                <p>We pause risky moves and ask for your thumbs-up in Slack. Loops get killed, spend gets capped, and compliance paperwork generates automatically.</p>
+                <p>High-risk actions are held for human review as Snap-Cards. One-click approve, deny, or edit-and-release. Automatic NIST IR 8596 compliance reports. Fix prompts generated for your agent. Every decision logged for audit.</p>
+                <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;">
+                    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);"><span style="color:var(--green);font-weight:700;">&#x1F4CB;</span> Snap-Cards &mdash; full-context review queue</div>
+                    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);"><span style="color:var(--accent);font-weight:700;">&#x1F527;</span> Fix Prompts &mdash; AI-generated corrections</div>
+                    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);"><span style="color:var(--blue);font-weight:700;">&#x1F4C4;</span> NIST compliance &amp; audit trail</div>
+                </div>
             </div>
         </div>
     </section>
@@ -982,6 +1038,50 @@
                 <div class="faq-answer">
                     <div class="faq-answer-inner">
                         Yes. Create an organization to share rules, API keys, and review queues with your team. Roles (owner, admin, member) control who can change rules vs. who can only view.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    How do I self-host Snapwire?
+                    <span class="faq-arrow">&#x25BC;</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Fork the repo on Replit or clone it and run with Docker &mdash; your own instance is live in 60 seconds. Snapwire is fully open source under the Apache 2.0 license, so you get the complete source code with no feature gates or usage limits.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    What environment variables do I need?
+                    <span class="faq-arrow">&#x25BC;</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Only <strong>ADMIN_EMAIL</strong> is required. DATABASE_URL defaults to a local SQLite database if not set, and SESSION_SECRET is auto-generated on first boot. LLM API keys (ANTHROPIC_API_KEY or OPENAI_API_KEY) are optional &mdash; add one to unlock AI-powered features like rule evaluation and drift detection.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    Can I use Snapwire without an LLM API key?
+                    <span class="faq-arrow">&#x25BC;</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Yes. All deterministic security features work without any LLM key &mdash; loop detection, spend tracking, schema validation, kill switch, Snap-Tokens, and honeypot tripwires are fully functional out of the box. AI-powered features like natural-language rule evaluation, drift detection, and tool grading require an API key.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    How do I get updates after forking?
+                    <span class="faq-arrow">&#x25BC;</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Pull from the upstream repo using <code style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px;font-size:13px;">git merge</code> or simply re-fork on Replit for a fresh start. Your rules and configuration can be exported and re-imported, so updates never wipe your setup.
                     </div>
                 </div>
             </div>

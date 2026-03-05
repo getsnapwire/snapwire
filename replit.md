@@ -63,7 +63,7 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **Legal Counsel Acknowledgment Gate**: Requires user acknowledgment before downloading compliance documents.
 -   **Substantial Modification Trigger**: Alerts users when 10+ tools added since last audit.
 -   **Homepage Rewrite**: Focuses on plain-language explanations of Snapwire's purpose and features. UI uses universal terms: "Runtime Violations," "Security Signals," "Detected Vulnerabilities."
--   **Engine Room (Super-Admin Tab Group)**: Platform Admin-only dashboard with Batch Ingestor UI, Chaos Lab, Global Burn Meter, Stealth Control, Telemetry, and Weekly Summary.
+-   **Engine Room (Super-Admin Tab Group)**: Platform Admin-only dashboard with System Health, Batch Ingestor UI, Chaos Lab, Global Burn Meter, Stealth Control, Telemetry, Weekly Summary, and HITL Evidence.
 -   **Self-Correction Loop**: Manages auto-healed tool schemas for admin review and approval/rejection.
 -   **Vibe-Audit Weekly Summarizer**: Automated executive summary of audit logs, ingestor results, cost savings, and security posture sent to Slack.
 -   **Watchdog Script**: Automated batch ingestor run with Slack failure alerts.
@@ -76,6 +76,17 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **NIST IR 8596 Attestation PDF**: Generates a branded PDF mapping Snapwire features to NIST IR 8596 / CSF 2.0 categories.
 -   **ServiceNow Manifest**: Generates a JSON mapping Snapwire data to ServiceNow ITSM fields.
 -   **Vibe-Audit Weekly Summarizer**: Includes NIST IR 8596 category breakdown showing enforcement activity by NIST function/category in both LLM-generated and deterministic fallback reports.
+-   **Environment Validator**: `check_setup.py` standalone script validates environment (required/recommended/optional vars, database connectivity) with color-coded report. Startup warnings in `main.py` for critical missing vars.
+-   **System Health Tab**: Engine Room sub-tab showing real-time subsystem status (database, LLM, email, Slack, Sentinel, session) with green/yellow/red indicators, refresh, and copy-diagnostics.
+-   **Observe & Audit Mode**: Renamed from "Shadow Mode" in all user-facing text. Internal identifiers unchanged (`shadow_mode`, `is_shadow_mode()`, `shadow-blocked`). Professional security posture terminology.
+-   **Enhanced Onboarding Overlay**: 5-step guided tour: Welcome + API key, Set Budget, Send Test Tool Call (copy-paste curl), Review Snap-Card (button explanations), Go Live (Observe & Audit vs Enforcement). Skip Tour on every step.
+-   **HITL Evidence Drill-Down**: Engine Room sub-tab with intervention rate %, 30-day stacked bar chart (manual vs auto resolutions), top-agents table, downloadable compliance evidence summary. Proves human governance for acquirer due diligence.
+-   **Live NIST Enforcement Heatmap**: Dashboard 6-tile grid (GOVERN, IDENTIFY, PROTECT, DETECT, RESPOND, RECOVER) with color-intensity activity levels, CSS pulse animation for recent activity, hover tooltips. RESPOND tile specifically highlights Snap-Token revocations and Kill-Switch events. Auto-refreshes every 30 seconds.
+-   **Expanded FAQ**: 9 questions covering product, fork/self-hosting, environment variables, LLM-free usage, and update strategy.
+-   **"What to Expect After Forking" Section**: Homepage 4-step visual timeline (Fork → Setup Wizard → First Tool Call → Protected) with fork CTA.
+-   **Detailed "How It Works"**: Homepage 3-step section with specific feature names (Fuse Breaker, Burn Meter, Taint Tracking, Snap-Cards, Fix Prompts, NIST compliance) and framework compatibility badges (LangChain, CrewAI, OpenAI Assistants, MCP).
+-   **Cloud Coming Soon**: Pricing page and homepage Cloud column dimmed with "Coming Soon" badges. Self-Hosted remains primary CTA. "Join Waitlist" replaces "Sign Up Free."
+-   **API Docs Try It Playground**: Interactive playground in API docs with pre-filled intercept request, Run button (live fetch), Copy as curl, color-coded response display. Honeypot-aware: abuse attempts produce "Blocked by Snapwire" demo.
 
 ## External Dependencies
 -   **Database**: PostgreSQL, SQLite

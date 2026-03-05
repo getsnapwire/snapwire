@@ -385,6 +385,21 @@
             border-color: rgba(64,224,255,0.5);
         }
 
+        @keyframes nistPulse {
+            0% { box-shadow: 0 0 0 0 rgba(0,245,212,0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(0,245,212,0); }
+            100% { box-shadow: 0 0 0 0 rgba(0,245,212,0); }
+        }
+        .nist-tile.nist-active { animation: nistPulse 2s ease-in-out infinite; }
+        .nist-tile.nist-gray { background: rgba(255,255,255,0.02) !important; border-color: rgba(255,255,255,0.06) !important; }
+        .nist-tile.nist-green { background: rgba(0,245,212,0.08) !important; border-color: rgba(0,245,212,0.3) !important; }
+        .nist-tile.nist-yellow { background: rgba(255,214,107,0.10) !important; border-color: rgba(255,214,107,0.3) !important; }
+        .nist-tile.nist-orange { background: rgba(255,107,0,0.12) !important; border-color: rgba(255,107,0,0.35) !important; }
+        .nist-tile:hover .nist-tile-tooltip { display: block !important; }
+        @media (max-width: 768px) {
+            #nist-heatmap-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+
         .edit-release-modal {
             display: none;
             position: fixed;
@@ -828,9 +843,9 @@
     <div id="shadow-mode-banner" style="display:none;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(245,158,11,0.08));border-bottom:1px solid rgba(251,191,36,0.3);padding:10px 32px;align-items:center;gap:12px;font-size:13px;cursor:pointer;" onclick="toggleShadowModeFromBanner()">
         <div style="display:flex;align-items:center;gap:10px;flex:1;">
             <span style="font-size:18px;">&#128065;</span>
-            <span style="color:#b45309;font-weight:600;">Shadow Mode Active</span>
+            <span style="color:#b45309;font-weight:600;">Observe &amp; Audit Mode Active</span>
             <span style="color:#92400e;opacity:0.8;"> &mdash; Observing only. Tool calls are audited and logged but never blocked.</span>
-            <span title="Shadow Merge: Test new rules against live traffic without blocking. See what would be caught, then promote to enforcement when confident. The same staged-rollout pattern used by Cloudflare and Datadog." style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:rgba(146,64,14,0.3);color:#92400e;font-size:10px;font-weight:700;cursor:help;margin-left:4px;">?</span>
+            <span title="Observe &amp; Audit: Test new rules against live traffic without blocking. See what would be caught, then promote to enforcement when confident. The same staged-rollout pattern used by Cloudflare and Datadog." style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:rgba(146,64,14,0.3);color:#92400e;font-size:10px;font-weight:700;cursor:help;margin-left:4px;">?</span>
         </div>
         <button id="shadow-mode-toggle-btn" style="background:#FFD66B;color:#0B0D10;border:none;border-radius:6px;padding:6px 16px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Switch to Blocking Mode</button>
     </div>
@@ -891,6 +906,51 @@
             </div>
         </div>
 
+        <div id="nist-heatmap-panel" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                <h4 style="font-size:14px;color:var(--text-secondary);margin:0;text-transform:uppercase;letter-spacing:0.5px;">NIST Enforcement Heatmap <span style="font-size:11px;font-weight:400;opacity:0.7;">(24h)</span></h4>
+                <span id="nist-heatmap-refresh" style="font-size:11px;color:var(--text-secondary);opacity:0.6;">Auto-refreshes every 30s</span>
+            </div>
+            <div id="nist-heatmap-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                <div class="nist-tile" data-fn="GOVERN" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;cursor:default;transition:all 0.3s;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);margin-bottom:8px;">Govern</div>
+                    <div class="nist-tile-count" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--text-primary);">0</div>
+                    <div class="nist-tile-last" style="font-size:11px;color:var(--text-secondary);margin-top:4px;">No events</div>
+                    <div class="nist-tile-tooltip" style="display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text-primary);white-space:nowrap;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:300px;white-space:normal;"></div>
+                </div>
+                <div class="nist-tile" data-fn="IDENTIFY" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;cursor:default;transition:all 0.3s;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);margin-bottom:8px;">Identify</div>
+                    <div class="nist-tile-count" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--text-primary);">0</div>
+                    <div class="nist-tile-last" style="font-size:11px;color:var(--text-secondary);margin-top:4px;">No events</div>
+                    <div class="nist-tile-tooltip" style="display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text-primary);white-space:nowrap;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:300px;white-space:normal;"></div>
+                </div>
+                <div class="nist-tile" data-fn="PROTECT" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;cursor:default;transition:all 0.3s;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);margin-bottom:8px;">Protect</div>
+                    <div class="nist-tile-count" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--text-primary);">0</div>
+                    <div class="nist-tile-last" style="font-size:11px;color:var(--text-secondary);margin-top:4px;">No events</div>
+                    <div class="nist-tile-tooltip" style="display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text-primary);white-space:nowrap;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:300px;white-space:normal;"></div>
+                </div>
+                <div class="nist-tile" data-fn="DETECT" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;cursor:default;transition:all 0.3s;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);margin-bottom:8px;">Detect</div>
+                    <div class="nist-tile-count" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--text-primary);">0</div>
+                    <div class="nist-tile-last" style="font-size:11px;color:var(--text-secondary);margin-top:4px;">No events</div>
+                    <div class="nist-tile-tooltip" style="display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text-primary);white-space:nowrap;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:300px;white-space:normal;"></div>
+                </div>
+                <div class="nist-tile" data-fn="RESPOND" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;cursor:default;transition:all 0.3s;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);margin-bottom:8px;">Respond</div>
+                    <div class="nist-tile-count" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--text-primary);">0</div>
+                    <div class="nist-tile-last" style="font-size:11px;color:var(--text-secondary);margin-top:4px;">No events</div>
+                    <div class="nist-tile-tooltip" style="display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text-primary);white-space:nowrap;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:300px;white-space:normal;"></div>
+                </div>
+                <div class="nist-tile" data-fn="RECOVER" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;cursor:default;transition:all 0.3s;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);margin-bottom:8px;">Recover</div>
+                    <div class="nist-tile-count" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--text-primary);">0</div>
+                    <div class="nist-tile-last" style="font-size:11px;color:var(--text-secondary);margin-top:4px;">No events</div>
+                    <div class="nist-tile-tooltip" style="display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text-primary);white-space:nowrap;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:300px;white-space:normal;"></div>
+                </div>
+            </div>
+        </div>
+
         <div id="lockout-alert-banner" style="display:none;background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.4);border-radius:10px;padding:12px 18px;margin-bottom:16px;">
             <div style="display:flex;align-items:center;gap:10px;">
                 <span style="font-size:18px;">&#9888;</span>
@@ -939,7 +999,7 @@
             {% endif %}
             <button class="tab" data-tab="settings-group" data-tooltip="API keys, organization, account, and admin settings" data-tooltip-pos="bottom">Settings</button>
             {% if is_platform_admin %}
-            <button class="tab" data-tab="engine-room" data-tooltip="Super-Admin tools: Batch Ingestor, Chaos Lab, Global Burn, Stealth Control, Telemetry" data-tooltip-pos="bottom" style="color:#FF6B00;border-color:rgba(255,107,0,0.3);">&#x2699; Engine Room</button>
+            <button class="tab" data-tab="engine-room" data-tooltip="Super-Admin tools: System Health, Batch Ingestor, Chaos Lab, Global Burn, Stealth Control, Telemetry" data-tooltip-pos="bottom" style="color:#FF6B00;border-color:rgba(255,107,0,0.3);">&#x2699; Engine Room</button>
             {% endif %}
             <a href="/leaderboard" class="tab" style="text-decoration:none;color:var(--accent-green);" data-tooltip="Community leaderboard with badges and rankings" data-tooltip-pos="bottom">Leaderboard</a>
             <a href="/community-rules" class="tab" style="text-decoration:none;color:var(--accent-blue);" data-tooltip="Browse and submit community safety rules" data-tooltip-pos="bottom">Community Rules</a>
@@ -948,50 +1008,127 @@
         </div>
 
         <div id="onboarding-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:none;align-items:center;justify-content:center;">
-            <div style="background:var(--bg-card);border-radius:16px;padding:40px;max-width:520px;width:90%;border:1px solid var(--border);">
+            <div style="background:var(--bg-card);border-radius:16px;padding:40px;max-width:520px;width:90%;max-height:85vh;overflow-y:auto;border:1px solid var(--border);">
+                <div id="onboard-progress-bar" style="display:flex;gap:6px;margin-bottom:24px;">
+                    <div class="onboard-prog active" style="flex:1;height:4px;border-radius:2px;background:var(--accent-blue);transition:background 0.3s;"></div>
+                    <div class="onboard-prog" style="flex:1;height:4px;border-radius:2px;background:var(--bg-secondary);transition:background 0.3s;"></div>
+                    <div class="onboard-prog" style="flex:1;height:4px;border-radius:2px;background:var(--bg-secondary);transition:background 0.3s;"></div>
+                    <div class="onboard-prog" style="flex:1;height:4px;border-radius:2px;background:var(--bg-secondary);transition:background 0.3s;"></div>
+                    <div class="onboard-prog" style="flex:1;height:4px;border-radius:2px;background:var(--bg-secondary);transition:background 0.3s;"></div>
+                </div>
                 <div id="onboard-step-1" class="onboard-step">
                     <div style="text-align:center;margin-bottom:20px;">
-                        <span style="font-size:36px;">&#x1F511;</span>
-                        <h3 style="margin-top:12px;">Step 1: Generate Your First API Key</h3>
-                        <p style="color:var(--text-secondary);font-size:14px;">Your agents will use this key to connect to Snapwire.</p>
+                        <span style="font-size:36px;">&#x1F6E1;</span>
+                        <h3 style="margin-top:12px;">Welcome to Snapwire</h3>
+                        <p style="color:var(--text-secondary);font-size:14px;">Agentic Runtime Security — intercept, score, and govern every AI agent tool call in real time. Let's get you set up.</p>
+                    </div>
+                    <div style="text-align:center;margin-bottom:20px;">
+                        <span style="font-size:14px;color:var(--text-secondary);">Step 1 of 5: Generate your API key so agents can connect.</span>
                     </div>
                     <button onclick="quickGenerateKey()" style="width:100%;background:var(--accent-blue);color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">Generate API Key</button>
                     <div id="onboard-key-result" style="display:none;margin-top:16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:14px;">
                         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Your API Key (save this!):</div>
                         <code id="onboard-key-value" style="word-break:break-all;font-size:13px;color:var(--accent-green);"></code>
                     </div>
-                    <button id="onboard-next-1" onclick="showOnboardStep(2)" style="display:none;width:100%;margin-top:12px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:12px;border-radius:8px;font-size:14px;cursor:pointer;">Next: Set Spend Limits &#x2192;</button>
+                    <button id="onboard-next-1" onclick="showOnboardStep(2)" style="display:none;width:100%;margin-top:12px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:12px;border-radius:8px;font-size:14px;cursor:pointer;">Next: Set Your Budget &#x2192;</button>
+                    <div style="text-align:center;margin-top:12px;">
+                        <button onclick="closeOnboarding()" style="background:none;border:none;color:var(--text-secondary);font-size:12px;cursor:pointer;text-decoration:underline;">Skip Tour</button>
+                    </div>
                 </div>
                 <div id="onboard-step-2" class="onboard-step" style="display:none;">
                     <div style="text-align:center;margin-bottom:20px;">
                         <span style="font-size:36px;">&#x1F4B0;</span>
-                        <h3 style="margin-top:12px;">Step 2: Set a Daily Spend Limit</h3>
-                        <p style="color:var(--text-secondary);font-size:14px;">Prevent runaway agent costs with automatic budget caps.</p>
+                        <h3 style="margin-top:12px;">Set Your Budget</h3>
+                        <p style="color:var(--text-secondary);font-size:14px;">Prevent runaway agent costs with automatic budget caps. The Burn Meter tracks every dollar your agents spend.</p>
                     </div>
                     <div style="margin-bottom:16px;">
                         <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:6px;">Max spend per agent session ($)</label>
                         <input type="number" id="onboard-spend-limit" value="20" min="1" max="1000" step="1" style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);font-size:15px;box-sizing:border-box;">
                     </div>
                     <button onclick="setOnboardSpendLimit()" style="width:100%;background:var(--accent-blue);color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">Set Spend Limit</button>
-                    <button onclick="showOnboardStep(3)" style="width:100%;margin-top:12px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:12px;border-radius:8px;font-size:14px;cursor:pointer;">Next: Shadow Mode &#x2192;</button>
+                    <button onclick="showOnboardStep(3)" style="width:100%;margin-top:12px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:12px;border-radius:8px;font-size:14px;cursor:pointer;">Next: Send a Test Tool Call &#x2192;</button>
+                    <div style="text-align:center;margin-top:12px;">
+                        <button onclick="closeOnboarding()" style="background:none;border:none;color:var(--text-secondary);font-size:12px;cursor:pointer;text-decoration:underline;">Skip Tour</button>
+                    </div>
                 </div>
                 <div id="onboard-step-3" class="onboard-step" style="display:none;">
                     <div style="text-align:center;margin-bottom:20px;">
-                        <span style="font-size:36px;">&#128065;</span>
-                        <h3 style="margin-top:12px;">Step 3: Shadow Mode is Active</h3>
-                        <p style="color:var(--text-secondary);font-size:14px;">Snapwire is observing all agent activity without blocking anything. You'll see what <em>would</em> be blocked so you can tune your rules before switching to enforcement.</p>
+                        <span style="font-size:36px;">&#x1F680;</span>
+                        <h3 style="margin-top:12px;">Send a Test Tool Call</h3>
+                        <p style="color:var(--text-secondary);font-size:14px;">Copy this curl command and run it in your terminal to send your first intercepted tool call. You'll see a Snap-Card appear in the Review Queue.</p>
                     </div>
-                    <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:16px;margin-bottom:16px;">
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                            <span style="font-size:16px;">&#128065;</span>
-                            <strong style="color:#b45309;font-size:14px;">Shadow Mode = Observe Only</strong>
-                        </div>
-                        <div style="font-size:13px;color:var(--text-secondary);">Everything is logged and audited. Nothing is blocked. Switch to enforcement mode when you're ready from the dashboard banner.</div>
+                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;position:relative;">
+                        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Copy &amp; paste into your terminal</div>
+                        <pre id="onboard-curl-cmd" style="font-family:'Fira Code',monospace;font-size:12px;color:var(--accent-green);white-space:pre-wrap;word-break:break-all;margin:0;line-height:1.5;">curl -X POST {{ request.url_root }}api/intercept \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool_name": "send_email",
+    "parameters": {"to": "user@example.com", "subject": "Test"},
+    "intent": "Send a test notification",
+    "agent_id": "my-first-agent"
+  }'</pre>
+                        <button onclick="navigator.clipboard.writeText(document.getElementById('onboard-curl-cmd').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500);" style="position:absolute;top:10px;right:10px;background:var(--accent-blue);color:#fff;border:none;padding:4px 12px;border-radius:6px;font-size:11px;cursor:pointer;">Copy</button>
                     </div>
-                    <button onclick="closeOnboarding()" style="width:100%;background:var(--accent-green);color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">Go to Dashboard &#x2192;</button>
+                    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Replace <code style="color:var(--accent-blue);">YOUR_API_KEY</code> with the key from Step 1. After running this, check the <strong>Pending</strong> tab to see your first Snap-Card.</div>
+                    <button onclick="showOnboardStep(4)" style="width:100%;background:var(--accent-blue);color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">Next: Review Your Snap-Card &#x2192;</button>
+                    <div style="text-align:center;margin-top:12px;">
+                        <button onclick="closeOnboarding()" style="background:none;border:none;color:var(--text-secondary);font-size:12px;cursor:pointer;text-decoration:underline;">Skip Tour</button>
+                    </div>
                 </div>
-                <div style="text-align:center;margin-top:16px;">
-                    <button onclick="closeOnboarding()" style="background:none;border:none;color:var(--text-secondary);font-size:12px;cursor:pointer;text-decoration:underline;">Skip onboarding</button>
+                <div id="onboard-step-4" class="onboard-step" style="display:none;">
+                    <div style="text-align:center;margin-bottom:20px;">
+                        <span style="font-size:36px;">&#x1F4CB;</span>
+                        <h3 style="margin-top:12px;">Review Your First Security Signal</h3>
+                        <p style="color:var(--text-secondary);font-size:14px;">When Snapwire intercepts a risky tool call, it creates a Snap-Card for human review. Here's what each action does:</p>
+                    </div>
+                    <div style="display:grid;gap:10px;margin-bottom:16px;">
+                        <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;display:flex;align-items:center;gap:12px;">
+                            <div style="background:rgba(255,77,77,0.15);color:#ff4d4d;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid rgba(255,77,77,0.3);">Reject</div>
+                            <div style="font-size:13px;color:var(--text-secondary);">Block the tool call permanently. The agent receives a denial response.</div>
+                        </div>
+                        <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;display:flex;align-items:center;gap:12px;">
+                            <div style="background:rgba(64,224,255,0.12);color:var(--accent-blue);padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid rgba(64,224,255,0.3);">Edit &amp; Release</div>
+                            <div style="font-size:13px;color:var(--text-secondary);">Modify the tool call parameters before allowing it to proceed safely.</div>
+                        </div>
+                        <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;display:flex;align-items:center;gap:12px;">
+                            <div style="background:rgba(0,245,212,0.12);color:var(--accent-green);padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid rgba(0,245,212,0.3);">Trust 24h</div>
+                            <div style="font-size:13px;color:var(--text-secondary);">Approve this tool call and auto-approve similar calls for 24 hours.</div>
+                        </div>
+                        <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;display:flex;align-items:center;gap:12px;">
+                            <div style="background:rgba(147,51,234,0.12);color:#a78bfa;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid rgba(147,51,234,0.3);">Fix Prompt</div>
+                            <div style="font-size:13px;color:var(--text-secondary);">Generate a corrective prompt to send back to the agent so it learns safer behavior.</div>
+                        </div>
+                    </div>
+                    <button onclick="showOnboardStep(5)" style="width:100%;background:var(--accent-blue);color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">Next: Go Live &#x2192;</button>
+                    <div style="text-align:center;margin-top:12px;">
+                        <button onclick="closeOnboarding()" style="background:none;border:none;color:var(--text-secondary);font-size:12px;cursor:pointer;text-decoration:underline;">Skip Tour</button>
+                    </div>
+                </div>
+                <div id="onboard-step-5" class="onboard-step" style="display:none;">
+                    <div style="text-align:center;margin-bottom:20px;">
+                        <span style="font-size:36px;">&#x26A1;</span>
+                        <h3 style="margin-top:12px;">Go Live</h3>
+                        <p style="color:var(--text-secondary);font-size:14px;">Choose when to start enforcing security rules on your agents.</p>
+                    </div>
+                    <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:16px;margin-bottom:12px;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                            <span style="font-size:16px;">&#128065;</span>
+                            <strong style="color:#b45309;font-size:14px;">Observe &amp; Audit Mode (Current)</strong>
+                        </div>
+                        <div style="font-size:13px;color:var(--text-secondary);">Everything is logged and audited, but nothing is blocked. You can see what <em>would</em> be blocked and tune your rules safely. This is active by default.</div>
+                    </div>
+                    <div style="background:rgba(0,245,212,0.08);border:1px solid rgba(0,245,212,0.3);border-radius:8px;padding:16px;margin-bottom:16px;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                            <span style="font-size:16px;">&#x1F6E1;</span>
+                            <strong style="color:var(--accent-green);font-size:14px;">Enforcement Mode</strong>
+                        </div>
+                        <div style="font-size:13px;color:var(--text-secondary);">Risky tool calls are actively blocked or held for human review. Switch to this when you're confident in your rules. You can toggle anytime from the dashboard banner.</div>
+                    </div>
+                    <button onclick="closeOnboarding()" style="width:100%;background:linear-gradient(135deg,var(--accent-blue),var(--accent-green));color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">Go to Dashboard &#x2192;</button>
+                    <div style="text-align:center;margin-top:12px;">
+                        <button onclick="closeOnboarding()" style="background:none;border:none;color:var(--text-secondary);font-size:12px;cursor:pointer;text-decoration:underline;">Skip Tour</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1068,7 +1205,7 @@
         <div id="panel-home" class="panel active">
             <div id="tip-banner" class="tip-banner" style="display:none;">
                 <span style="font-size:16px;">&#128161;</span>
-                <span id="tip-text">Try Shadow Mode to observe your agents without blocking anything. Switch from the banner above when you're ready to enforce.</span>
+                <span id="tip-text">Try Observe &amp; Audit Mode to watch your agents without blocking anything. Switch from the banner above when you're ready to enforce.</span>
                 <button class="tip-dismiss" onclick="dismissTip()">&times;</button>
             </div>
 
@@ -1426,7 +1563,7 @@
                         <span style="font-weight:600;color:var(--accent-purple);font-size:13px;">THEN</span>
                         <select id="vb-outcome" style="width:100%;">
                             <option value="block">Block the action</option>
-                            <option value="shadow">Monitor only (shadow mode)</option>
+                            <option value="shadow">Monitor only (Observe &amp; Audit)</option>
                         </select>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
@@ -1719,13 +1856,41 @@
         {% if is_platform_admin %}
         <div id="panel-engine-room" class="panel">
             <div class="sub-tabs" style="border-bottom-color:rgba(255,107,0,0.2);">
-                <button class="sub-tab active" data-subtab="er-ingestor" data-group="engine-room" style="color:#FF6B00;">Batch Ingestor<span id="pending-heal-badge" class="pending-heal-badge" style="display:none;">0</span></button>
+                <button class="sub-tab active" data-subtab="er-health" data-group="engine-room" style="color:#00F5D4;">System Health</button>
+                <button class="sub-tab" data-subtab="er-ingestor" data-group="engine-room" style="color:#FF6B00;">Batch Ingestor<span id="pending-heal-badge" class="pending-heal-badge" style="display:none;">0</span></button>
                 <button class="sub-tab" data-subtab="er-chaos" data-group="engine-room">Chaos Lab</button>
                 <button class="sub-tab" data-subtab="er-burn" data-group="engine-room">Global Burn</button>
                 <button class="sub-tab" data-subtab="er-stealth" data-group="engine-room">Stealth Control</button>
                 <button class="sub-tab" data-subtab="er-telemetry" data-group="engine-room">Telemetry</button>
                 <button class="sub-tab" data-subtab="er-summary" data-group="engine-room">Weekly Summary</button>
+                <button class="sub-tab" data-subtab="er-hitl" data-group="engine-room">HITL Evidence</button>
             </div>
+        </div>
+
+        <div id="panel-er-health" class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div>
+                    <h3 style="margin-bottom:4px;">&#x1F3E5; System Health</h3>
+                    <p style="color:var(--text-secondary);font-size:13px;">Real-time subsystem status for your Snapwire instance.</p>
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn" onclick="refreshSystemHealth()" id="er-health-refresh-btn" style="background:var(--accent-blue);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Refresh</button>
+                    <button class="btn" onclick="copySystemHealthDiagnostics()" id="er-health-copy-btn" style="background:var(--bg-card);color:var(--text-secondary);border:1px solid var(--border);padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Copy Diagnostics</button>
+                </div>
+            </div>
+
+            <div id="er-health-overall" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:20px;display:flex;align-items:center;gap:14px;">
+                <span id="er-health-overall-dot" style="width:14px;height:14px;border-radius:50%;background:#555;flex-shrink:0;"></span>
+                <div>
+                    <div id="er-health-overall-label" style="font-size:16px;font-weight:700;color:var(--text-primary);">Loading...</div>
+                    <div id="er-health-overall-uptime" style="font-size:12px;color:var(--text-secondary);margin-top:2px;"></div>
+                </div>
+            </div>
+
+            <div id="er-health-checks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;">
+            </div>
+
+            <div id="er-health-loading" style="text-align:center;padding:40px;color:var(--text-secondary);font-size:14px;">Loading system health...</div>
         </div>
 
         <div id="panel-er-ingestor" class="panel">
@@ -2073,6 +2238,68 @@
             </div>
         </div>
 
+        <div id="panel-er-hitl" class="panel">
+            <h3 style="margin-bottom:4px;">&#x1F6E1; HITL Evidence Drill-Down</h3>
+            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;">Human-in-the-loop intervention metrics for NIST compliance evidence (last 30 days).</p>
+
+            <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center;">
+                <button class="btn btn-test" onclick="loadHitlStats()" style="background:var(--accent-blue);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Refresh</button>
+                <button class="btn" onclick="downloadHitlEvidence()" style="background:var(--bg-card);color:var(--text-secondary);border:1px solid var(--border);padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#x1F4E5; Download Evidence Summary</button>
+            </div>
+
+            <div id="hitl-rate-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:28px;margin-bottom:20px;text-align:center;">
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-bottom:8px;">HITL Intervention Rate</div>
+                <div id="hitl-rate-value" style="font-size:48px;font-weight:700;color:var(--accent-blue);font-family:'Fira Code',monospace;">—</div>
+                <div id="hitl-rate-subtitle" style="font-size:13px;color:var(--text-secondary);margin-top:6px;">Loading...</div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;" id="hitl-stat-cards">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+                    <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);margin-bottom:6px;">High-Risk Actions</div>
+                    <div id="hitl-high-risk" style="font-size:28px;font-weight:700;color:#ff4d4d;font-family:'Fira Code',monospace;">—</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+                    <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);margin-bottom:6px;">Manual Reviews</div>
+                    <div id="hitl-manual" style="font-size:28px;font-weight:700;color:var(--accent-blue);font-family:'Fira Code',monospace;">—</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+                    <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);margin-bottom:6px;">Edit & Release</div>
+                    <div id="hitl-edit" style="font-size:28px;font-weight:700;color:var(--accent-green);font-family:'Fira Code',monospace;">—</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+                    <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);margin-bottom:6px;">Trust Rules</div>
+                    <div id="hitl-trust" style="font-size:28px;font-weight:700;color:#a78bfa;font-family:'Fira Code',monospace;">—</div>
+                </div>
+            </div>
+
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
+                <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">30-Day Resolution Timeline</h4>
+                <div id="hitl-chart" style="min-height:180px;display:flex;align-items:flex-end;gap:3px;padding-top:10px;"></div>
+                <div style="display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--text-secondary);">
+                    <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--accent-blue);vertical-align:middle;margin-right:4px;"></span>Manual</span>
+                    <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(255,255,255,0.15);vertical-align:middle;margin-right:4px;"></span>Auto</span>
+                </div>
+            </div>
+
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Top Agents by Human Intervention</h4>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Agent</th>
+                                <th>Interventions</th>
+                                <th>Bar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hitl-agents-body">
+                            <tr><td colspan="3" style="text-align:center;color:var(--text-secondary);padding:24px;">Click Refresh to load data.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <div id="panel-contacts" class="panel">
             <div class="test-panel">
                 <h3>Contact Inbox</h3>
@@ -2329,7 +2556,7 @@
             <div class="test-panel">
                 <h3>Policy Sandbox</h3>
                 <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 13px;">
-                    Test how your rules would respond to a tool call without actually running anything. Includes input safety scanning and shadow mode detection.
+                    Test how your rules would respond to a tool call without actually running anything. Includes input safety scanning and Observe &amp; Audit mode detection.
                 </p>
 
                 <div class="presets" data-tooltip="Click any example to auto-fill the form with a sample scenario" data-tooltip-pos="bottom">
@@ -3161,7 +3388,7 @@ def handle_tool_call(tool_call):
             'agents-group': 'agents',
             'security': 'vault',
             'settings-group': 'keys',
-            'engine-room': 'er-ingestor'
+            'engine-room': 'er-health'
         };
 
         const GROUP_CHILDREN = {
@@ -3170,7 +3397,7 @@ def handle_tool_call(tool_call):
             'agents-group': ['agents', 'analytics'],
             'security': ['vault', 'honeypots', 'blast', 'holdwindow', 'catalog', 'risk', 'autotriage', 'taintpulse', 'stealth'],
             'settings-group': ['keys', 'llm', 'org', 'account', 'settings', 'admin', 'contacts'],
-            'engine-room': ['er-ingestor', 'er-chaos', 'er-burn', 'er-stealth', 'er-telemetry', 'er-summary']
+            'engine-room': ['er-health', 'er-ingestor', 'er-chaos', 'er-burn', 'er-stealth', 'er-telemetry', 'er-summary', 'er-hitl']
         };
 
         let activeSubTabs = {};
@@ -4138,7 +4365,7 @@ def handle_tool_call(tool_call):
 
                     const mode = config.mode || 'enforce';
                     const modeColors = { enforce: 'var(--accent-green)', shadow: 'var(--accent-yellow)', disabled: 'var(--text-secondary)' };
-                    const modeLabels = { enforce: 'Enforcing', shadow: 'Shadow Mode', disabled: 'Disabled' };
+                    const modeLabels = { enforce: 'Enforcing', shadow: 'Observe & Audit', disabled: 'Disabled' };
                     const modeIcons = { enforce: '&#128994;', shadow: '&#128992;', disabled: '&#9899;' };
 
                     return `
@@ -4152,7 +4379,7 @@ def handle_tool_call(tool_call):
                             <div class="rule-card-actions">
                                 <select onchange="updateRuleMode('${name}', this.value)" style="font-size:11px;padding:4px 8px;border-radius:6px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);cursor:pointer;" title="Change rule mode">
                                     <option value="enforce" ${mode === 'enforce' ? 'selected' : ''}>Enforce</option>
-                                    <option value="shadow" ${mode === 'shadow' ? 'selected' : ''}>Shadow</option>
+                                    <option value="shadow" ${mode === 'shadow' ? 'selected' : ''}>Observe &amp; Audit</option>
                                     <option value="disabled" ${mode === 'disabled' ? 'selected' : ''}>Disabled</option>
                                 </select>
                                 <button class="icon-btn" onclick='startEditRule("${name}", JSON.parse(decodeURIComponent("${encodeURIComponent(JSON.stringify(config))}")))' title="Edit amendment">&#9998;</button>
@@ -4277,7 +4504,7 @@ def handle_tool_call(tool_call):
                 }
 
                 if (data.shadow_violations?.length > 0) {
-                    html += '<div style="margin-bottom:12px;"><strong style="color:var(--accent-yellow);">Shadow Mode Detections (not blocking):</strong>';
+                    html += '<div style="margin-bottom:12px;"><strong style="color:var(--accent-yellow);">Observe &amp; Audit Detections (not blocking):</strong>';
                     data.shadow_violations.forEach(v => {
                         html += `<div style="padding:8px 12px;margin-top:6px;background:var(--bg-secondary);border-radius:6px;border-left:3px solid var(--accent-yellow);"><strong>${v.rule}</strong> (${v.severity}) - ${v.reason}</div>`;
                     });
@@ -5765,6 +5992,63 @@ def handle_tool_call(tool_call):
             setInterval(fetchRateLimits, 10000);
         }
 
+        async function fetchNistHeatmap() {
+            try {
+                const resp = await fetch('/api/nist-heatmap');
+                if (!resp.ok) return;
+                const data = await resp.json();
+                const fns = ['GOVERN','IDENTIFY','PROTECT','DETECT','RESPOND','RECOVER'];
+                fns.forEach(fn => {
+                    const tile = document.querySelector(`.nist-tile[data-fn="${fn}"]`);
+                    if (!tile) return;
+                    const info = data[fn] || {event_count:0, last_event:null, categories:[], recent:false, respond_details:[]};
+                    const countEl = tile.querySelector('.nist-tile-count');
+                    const lastEl = tile.querySelector('.nist-tile-last');
+                    const tooltipEl = tile.querySelector('.nist-tile-tooltip');
+                    if (countEl) countEl.textContent = info.event_count;
+                    tile.classList.remove('nist-gray','nist-green','nist-yellow','nist-orange','nist-active');
+                    if (info.event_count === 0) {
+                        tile.classList.add('nist-gray');
+                    } else if (info.event_count <= 5) {
+                        tile.classList.add('nist-green');
+                    } else if (info.event_count <= 20) {
+                        tile.classList.add('nist-yellow');
+                    } else {
+                        tile.classList.add('nist-orange');
+                    }
+                    if (info.recent) {
+                        tile.classList.add('nist-active');
+                    }
+                    if (info.last_event) {
+                        const d = new Date(info.last_event);
+                        const now = new Date();
+                        const diffMin = Math.round((now - d) / 60000);
+                        if (diffMin < 1) lastEl.textContent = 'Just now';
+                        else if (diffMin < 60) lastEl.textContent = diffMin + 'm ago';
+                        else if (diffMin < 1440) lastEl.textContent = Math.round(diffMin/60) + 'h ago';
+                        else lastEl.textContent = d.toLocaleDateString();
+                    } else {
+                        lastEl.textContent = 'No events';
+                    }
+                    let tooltipHtml = '<strong>' + fn + '</strong><br>';
+                    if (info.categories && info.categories.length > 0) {
+                        tooltipHtml += '<div style="margin-top:4px;">';
+                        info.categories.forEach(c => { tooltipHtml += '<div style="font-size:11px;color:var(--text-secondary);">\u2022 ' + c + '</div>'; });
+                        tooltipHtml += '</div>';
+                    }
+                    if (fn === 'RESPOND' && info.respond_details && info.respond_details.length > 0) {
+                        tooltipHtml += '<div style="margin-top:6px;border-top:1px solid var(--border);padding-top:6px;">';
+                        info.respond_details.forEach(d => { tooltipHtml += '<div style="font-size:11px;">' + d + '</div>'; });
+                        tooltipHtml += '</div>';
+                    }
+                    tooltipHtml += '<div style="margin-top:4px;font-size:11px;color:var(--text-secondary);">' + info.event_count + ' events (24h)</div>';
+                    if (tooltipEl) tooltipEl.innerHTML = tooltipHtml;
+                });
+            } catch(e) {}
+        }
+        fetchNistHeatmap();
+        setInterval(fetchNistHeatmap, 30000);
+
         async function loadWorkspaces() {
             try {
                 const resp = await fetch('/api/tenant/current');
@@ -6806,7 +7090,7 @@ def handle_tool_call(tool_call):
                     recentEmpty.style.display = 'none';
                     recentList.innerHTML = d.recent_activity.map(a => {
                         const statusColor = a.status === 'allowed' ? 'var(--accent-green)' : a.status === 'blocked' ? 'var(--accent-red)' : a.status === 'shadow-blocked' ? '#FFD66B' : a.status === 'approved' ? 'var(--accent-blue)' : a.status === 'pending' ? '#FFD66B' : 'var(--text-secondary)';
-                        const statusLabel = a.status === 'shadow-blocked' ? 'shadow' : a.status;
+                        const statusLabel = a.status === 'shadow-blocked' ? 'observed' : a.status;
                         return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border);">
                             <div style="display:flex;align-items:center;gap:10px;">
                                 <div style="width:8px;height:8px;border-radius:50%;background:${statusColor};"></div>
@@ -7475,7 +7759,7 @@ if (result.status === "allowed") {
             if (_shadowMode) {
                 banner.style.display = 'flex';
                 if (statusBadge) {
-                    statusBadge.innerHTML = '<div class="pulse" style="background:#FFD66B;"></div> Shadow Mode';
+                    statusBadge.innerHTML = '<div class="pulse" style="background:#FFD66B;"></div> Observe &amp; Audit Mode';
                     statusBadge.style.background = 'rgba(255,214,107,0.15)';
                     statusBadge.style.color = '#FFD66B';
                 }
@@ -7589,6 +7873,89 @@ if (result.status === "allowed") {
                 .replace(/\n/g, '<br>');
             return '<div style="line-height:1.7;font-size:14px;color:var(--text-primary);">' + html + '</div>';
         }
+
+        let _systemHealthData = null;
+
+        async function refreshSystemHealth() {
+            const btn = document.getElementById('er-health-refresh-btn');
+            const loading = document.getElementById('er-health-loading');
+            const checksEl = document.getElementById('er-health-checks');
+            const overallDot = document.getElementById('er-health-overall-dot');
+            const overallLabel = document.getElementById('er-health-overall-label');
+            const overallUptime = document.getElementById('er-health-overall-uptime');
+            btn.disabled = true;
+            btn.textContent = 'Refreshing...';
+            loading.style.display = 'block';
+            checksEl.innerHTML = '';
+            try {
+                const resp = await fetch('/api/admin/system-health');
+                if (!resp.ok) throw new Error('Failed to fetch');
+                const data = await resp.json();
+                _systemHealthData = data;
+                const statusColors = { green: '#00F5D4', yellow: '#FFD66B', red: '#ff4d4d' };
+                const statusLabels = { healthy: 'All Systems Operational', degraded: 'Degraded — Some Issues', critical: 'Critical — Action Required' };
+                overallDot.style.background = statusColors[data.status === 'healthy' ? 'green' : data.status === 'critical' ? 'red' : 'yellow'];
+                overallLabel.textContent = statusLabels[data.status] || data.status;
+                overallLabel.style.color = statusColors[data.status === 'healthy' ? 'green' : data.status === 'critical' ? 'red' : 'yellow'];
+                overallUptime.textContent = 'Uptime: ' + data.uptime + ' — ' + new Date(data.timestamp + 'Z').toLocaleString();
+                let html = '';
+                for (const [key, check] of Object.entries(data.checks)) {
+                    const color = statusColors[check.status] || '#555';
+                    const icon = check.status === 'green' ? '&#x2705;' : check.status === 'yellow' ? '&#x26A0;&#xFE0F;' : '&#x274C;';
+                    html += '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;display:flex;align-items:flex-start;gap:12px;border-left:3px solid ' + color + ';">';
+                    html += '<span style="font-size:18px;flex-shrink:0;margin-top:1px;">' + icon + '</span>';
+                    html += '<div><div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:4px;">' + check.label + '</div>';
+                    html += '<div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">' + check.detail + '</div></div>';
+                    html += '</div>';
+                }
+                checksEl.innerHTML = html;
+            } catch (e) {
+                checksEl.innerHTML = '<div style="text-align:center;padding:30px;color:#ff4d4d;">Failed to load system health data.</div>';
+            }
+            loading.style.display = 'none';
+            btn.disabled = false;
+            btn.textContent = 'Refresh';
+        }
+
+        function copySystemHealthDiagnostics() {
+            if (!_systemHealthData) {
+                showToast('Load system health first', 'error');
+                return;
+            }
+            let lines = ['=== Snapwire System Health Diagnostics ==='];
+            lines.push('Status: ' + _systemHealthData.status);
+            lines.push('Uptime: ' + _systemHealthData.uptime);
+            lines.push('Timestamp: ' + _systemHealthData.timestamp);
+            lines.push('');
+            for (const [key, check] of Object.entries(_systemHealthData.checks)) {
+                const indicator = check.status === 'green' ? '[OK]' : check.status === 'yellow' ? '[WARN]' : '[FAIL]';
+                lines.push(indicator + ' ' + check.label + ': ' + check.detail);
+            }
+            lines.push('');
+            lines.push('==========================================');
+            navigator.clipboard.writeText(lines.join('\n')).then(() => {
+                showToast('Diagnostics copied to clipboard', 'success');
+            }).catch(() => {
+                showToast('Failed to copy', 'error');
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const healthTab = document.querySelector('[data-subtab="er-health"]');
+            if (healthTab) {
+                const observer = new MutationObserver(function() {
+                    const panel = document.getElementById('panel-er-health');
+                    if (panel && panel.classList.contains('active') && !_systemHealthData) {
+                        refreshSystemHealth();
+                    }
+                });
+                const panel = document.getElementById('panel-er-health');
+                if (panel) observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+                healthTab.addEventListener('click', function() {
+                    if (!_systemHealthData) refreshSystemHealth();
+                });
+            }
+        });
 
         async function generateWeeklySummary() {
             const btn = document.getElementById('er-summary-generate-btn');
@@ -7773,9 +8140,11 @@ if (result.status === "allowed") {
             }
         }
         function showOnboardStep(n) {
-            document.querySelectorAll('.onboard-step').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('#onboarding-overlay .onboard-step').forEach(s => s.style.display = 'none');
             const step = document.getElementById('onboard-step-' + n);
             if (step) step.style.display = 'block';
+            const bars = document.querySelectorAll('#onboard-progress-bar .onboard-prog');
+            bars.forEach((b, i) => { b.style.background = i < n ? 'var(--accent-blue)' : 'var(--bg-secondary)'; });
         }
         async function quickGenerateKey() {
             try {
@@ -7857,6 +8226,98 @@ if (result.status === "allowed") {
             }
             btn.disabled = false;
             btn.textContent = 'Run Now';
+        }
+        let _hitlData = null;
+        async function loadHitlStats() {
+            try {
+                const res = await fetch('/api/admin/hitl-stats');
+                if (!res.ok) throw new Error('Failed to load HITL stats');
+                _hitlData = await res.json();
+                document.getElementById('hitl-rate-value').textContent = _hitlData.intervention_rate + '%';
+                document.getElementById('hitl-rate-subtitle').textContent = _hitlData.manual_review_count + ' manual of ' + _hitlData.total_resolved + ' resolved actions';
+                document.getElementById('hitl-high-risk').textContent = _hitlData.high_risk_total;
+                document.getElementById('hitl-manual').textContent = _hitlData.manual_review_count;
+                document.getElementById('hitl-edit').textContent = _hitlData.edit_release_count;
+                document.getElementById('hitl-trust').textContent = _hitlData.trust_rule_count;
+                renderHitlChart(_hitlData.daily_series);
+                renderHitlAgents(_hitlData.agent_breakdown);
+            } catch (e) {
+                showToast('Error loading HITL stats: ' + e.message, 'error');
+            }
+        }
+
+        function renderHitlChart(series) {
+            const container = document.getElementById('hitl-chart');
+            if (!series || series.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:var(--text-secondary);width:100%;padding:40px 0;">No data available.</div>';
+                return;
+            }
+            const maxVal = Math.max(1, ...series.map(d => d.manual + d.auto));
+            let html = '';
+            series.forEach(d => {
+                const total = d.manual + d.auto;
+                const h = Math.max(2, Math.round((total / maxVal) * 160));
+                const manualH = total > 0 ? Math.round((d.manual / total) * h) : 0;
+                const autoH = h - manualH;
+                const label = d.date.slice(5);
+                html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;" title="' + d.date + ': ' + d.manual + ' manual, ' + d.auto + ' auto">';
+                html += '<div style="font-size:10px;color:var(--text-secondary);font-family:\'Fira Code\',monospace;">' + total + '</div>';
+                html += '<div style="width:100%;display:flex;flex-direction:column;gap:1px;">';
+                if (manualH > 0) html += '<div style="height:' + manualH + 'px;background:var(--accent-blue);border-radius:2px 2px 0 0;"></div>';
+                if (autoH > 0) html += '<div style="height:' + autoH + 'px;background:rgba(255,255,255,0.15);border-radius:0 0 2px 2px;"></div>';
+                html += '</div>';
+                html += '<div style="font-size:9px;color:var(--text-secondary);transform:rotate(-45deg);white-space:nowrap;margin-top:4px;">' + label + '</div>';
+                html += '</div>';
+            });
+            container.innerHTML = html;
+        }
+
+        function renderHitlAgents(agents) {
+            const tbody = document.getElementById('hitl-agents-body');
+            if (!agents || agents.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);padding:24px;">No agent interventions recorded.</td></tr>';
+                return;
+            }
+            const maxInt = Math.max(1, ...agents.map(a => a.interventions));
+            tbody.innerHTML = agents.map(a => {
+                const pct = Math.round((a.interventions / maxInt) * 100);
+                return '<tr><td><code style="font-size:12px;">' + (a.agent_id || 'unknown') + '</code></td><td style="font-family:\'Fira Code\',monospace;font-size:13px;">' + a.interventions + '</td><td style="width:40%;"><div style="height:8px;background:var(--bg-secondary);border-radius:4px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:var(--accent-blue);border-radius:4px;"></div></div></td></tr>';
+            }).join('');
+        }
+
+        function downloadHitlEvidence() {
+            if (!_hitlData) {
+                showToast('Load HITL data first', 'error');
+                return;
+            }
+            let lines = ['=== HITL Compliance Evidence Summary ==='];
+            lines.push('Generated: ' + new Date().toISOString());
+            lines.push('Period: Last 30 days');
+            lines.push('');
+            lines.push('HITL Intervention Rate: ' + _hitlData.intervention_rate + '%');
+            lines.push('High-Risk Actions (risk >= 70): ' + _hitlData.high_risk_total);
+            lines.push('Total Resolved Actions: ' + _hitlData.total_resolved);
+            lines.push('Manual Reviews: ' + _hitlData.manual_review_count);
+            lines.push('Edit & Release: ' + _hitlData.edit_release_count);
+            lines.push('Trust Rules Applied: ' + _hitlData.trust_rule_count);
+            lines.push('Auto-Timeout: ' + _hitlData.auto_timeout_count);
+            lines.push('');
+            lines.push('--- Agent Breakdown ---');
+            (_hitlData.agent_breakdown || []).forEach(a => {
+                lines.push(a.agent_id + ': ' + a.interventions + ' interventions');
+            });
+            lines.push('');
+            lines.push('--- Daily Time Series ---');
+            (_hitlData.daily_series || []).forEach(d => {
+                lines.push(d.date + ': manual=' + d.manual + ', auto=' + d.auto);
+            });
+            const blob = new Blob([lines.join('\n')], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'hitl-evidence-' + new Date().toISOString().slice(0, 10) + '.txt';
+            a.click();
+            URL.revokeObjectURL(url);
         }
     </script>
 

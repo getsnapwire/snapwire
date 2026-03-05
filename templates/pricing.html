@@ -134,6 +134,13 @@
         .comparison-table th:not(:first-child) {
             text-align: center; color: var(--text-primary); font-weight: 700;
         }
+        .comparison-table th.cloud-coming-soon,
+        .comparison-table td.cloud-coming-soon {
+            opacity: 0.45;
+        }
+        .coming-soon-label {
+            display: inline-block; font-size: 11px; font-weight: 600; color: var(--text-muted); background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px;
+        }
         .comparison-table tbody tr {
             border-bottom: 1px solid var(--border);
         }
@@ -252,54 +259,54 @@
             <thead>
                 <tr>
                     <th>Feature</th>
-                    <th>Cloud (SaaS)</th>
+                    <th class="cloud-coming-soon">Cloud (Coming Soon)</th>
                     <th>Self-Hosted</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td>Price</td>
-                    <td class="check-mark">Free</td>
+                    <td class="cloud-coming-soon">Free</td>
                     <td class="check-mark">Free</td>
                 </tr>
                 <tr>
                     <td>Setup</td>
-                    <td>Sign up and go</td>
+                    <td class="cloud-coming-soon"><span class="coming-soon-label">Coming Soon</span></td>
                     <td>Fork on Replit</td>
                 </tr>
                 <tr>
                     <td>All safety features</td>
-                    <td class="check-mark">&#x2713;</td>
+                    <td class="cloud-coming-soon">&#x2713;</td>
                     <td class="check-mark">&#x2713;</td>
                 </tr>
                 <tr>
                     <td>LLM key</td>
-                    <td>Bring your own</td>
+                    <td class="cloud-coming-soon">Bring your own</td>
                     <td>Bring your own</td>
                 </tr>
                 <tr>
                     <td>Managed hosting</td>
-                    <td class="check-mark">&#x2713;</td>
+                    <td class="cloud-coming-soon"><span class="coming-soon-label">Coming Soon</span></td>
                     <td class="dash">&mdash;</td>
                 </tr>
                 <tr>
                     <td>Auto updates</td>
-                    <td class="check-mark">&#x2713;</td>
+                    <td class="cloud-coming-soon"><span class="coming-soon-label">Coming Soon</span></td>
                     <td class="dash">Manual</td>
                 </tr>
                 <tr>
                     <td>Full source access</td>
-                    <td class="dash">&mdash;</td>
+                    <td class="cloud-coming-soon dash">&mdash;</td>
                     <td class="check-mark">&#x2713;</td>
                 </tr>
                 <tr>
                     <td>Custom modifications</td>
-                    <td class="dash">Via API</td>
+                    <td class="cloud-coming-soon dash">Via API</td>
                     <td class="check-mark">Full control</td>
                 </tr>
                 <tr>
                     <td>Data residency</td>
-                    <td>Cloud</td>
+                    <td class="cloud-coming-soon">Cloud</td>
                     <td class="check-mark">Your infra</td>
                 </tr>
             </tbody>

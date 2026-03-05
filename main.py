@@ -59,7 +59,7 @@ from src.schema_guard import validate_tool_params, get_schema_stats
 from src.risk_index import calculate_risk_score, record_risk_signal, get_risk_signals, get_tool_risk_summary
 from src.thinking_sentinel import check_thinking_tokens, check_latency_anomaly, get_sentinel_stats
 from src.taint_tracker import check_taint, apply_taint, clear_taint
-from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings, LoopDetectorEvent, SchemaViolationEvent, ProxyToken, RiskSignal, AutoTriageRule
+from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings, LoopDetectorEvent, SchemaViolationEvent, ProxyToken, RiskSignal, AutoTriageRule, PendingAction
 
 
 import uuid as _uuid_mod
@@ -1562,7 +1562,7 @@ def intercept_tool_call():
         resp = {
             "status": "allowed",
             "audit": audit_result,
-            "message": "Tool call allowed (Shadow Mode active - would have been blocked in enforcement mode).",
+            "message": "Tool call allowed (Observe & Audit Mode active - would have been blocked in enforcement mode).",
             "shadow_mode": True,
             "would_block": True,
             **response_extra,
@@ -2431,6 +2431,105 @@ def poll_notifications():
     tenant_id = get_current_tenant_id()
     pending = get_pending_actions(tenant_id=tenant_id)
     return jsonify({"count": len(pending), "actions": pending})
+
+
+@app.route("/api/nist-heatmap", methods=["GET"])
+@require_login
+def api_nist_heatmap():
+    from datetime import timedelta
+    from src.nist_mapping import BLOCK_STATUS_NIST_MAP
+    tenant_id = get_current_tenant_id()
+    now = datetime.utcnow()
+    cutoff_24h = now - timedelta(hours=24)
+    cutoff_5min = now - timedelta(minutes=5)
+
+    functions = {
+        "GOVERN": {"event_count": 0, "last_event": None, "categories": [], "recent": False, "respond_details": []},
+        "IDENTIFY": {"event_count": 0, "last_event": None, "categories": [], "recent": False, "respond_details": []},
+        "PROTECT": {"event_count": 0, "last_event": None, "categories": [], "recent": False, "respond_details": []},
+        "DETECT": {"event_count": 0, "last_event": None, "categories": [], "recent": False, "respond_details": []},
+        "RESPOND": {"event_count": 0, "last_event": None, "categories": [], "recent": False, "respond_details": []},
+        "RECOVER": {"event_count": 0, "last_event": None, "categories": [], "recent": False, "respond_details": []},
+    }
+
+    entries = AuditLogEntry.query.filter(
+        AuditLogEntry.tenant_id == tenant_id,
+        AuditLogEntry.created_at >= cutoff_24h
+    ).all()
+
+    for entry in entries:
+        nist_info = BLOCK_STATUS_NIST_MAP.get(entry.status)
+        if not nist_info:
+            for key, val in BLOCK_STATUS_NIST_MAP.items():
+                if entry.status and entry.status.startswith(key):
+                    nist_info = val
+                    break
+        if not nist_info:
+            continue
+
+        fn = nist_info["function"]
+        if fn not in functions:
+            continue
+
+        functions[fn]["event_count"] += 1
+        cat_name = nist_info.get("name", nist_info.get("category", ""))
+        if cat_name and cat_name not in functions[fn]["categories"]:
+            functions[fn]["categories"].append(cat_name)
+
+        ts = entry.created_at.isoformat() if entry.created_at else None
+        if ts:
+            if not functions[fn]["last_event"] or ts > functions[fn]["last_event"]:
+                functions[fn]["last_event"] = ts
+            if entry.created_at >= cutoff_5min:
+                functions[fn]["recent"] = True
+
+    try:
+        revoked_tokens = ProxyToken.query.filter(
+            ProxyToken.tenant_id == tenant_id,
+            ProxyToken.revoked_at >= cutoff_24h
+        ).all()
+        revoke_count = len(revoked_tokens)
+        if revoke_count > 0:
+            functions["RESPOND"]["event_count"] += revoke_count
+            if "Token Revocation" not in functions["RESPOND"]["categories"]:
+                functions["RESPOND"]["categories"].append("Token Revocation")
+            for tok in revoked_tokens:
+                detail = "\U0001F511 Token Revoked"
+                if tok.label:
+                    detail += f" ({tok.label})"
+                functions["RESPOND"]["respond_details"].append(detail)
+                ts = tok.revoked_at.isoformat() if tok.revoked_at else None
+                if ts:
+                    if not functions["RESPOND"]["last_event"] or ts > functions["RESPOND"]["last_event"]:
+                        functions["RESPOND"]["last_event"] = ts
+                    if tok.revoked_at >= cutoff_5min:
+                        functions["RESPOND"]["recent"] = True
+
+            bulk_revokes = {}
+            for tok in revoked_tokens:
+                if tok.revoked_at:
+                    key = tok.revoked_at.strftime("%Y-%m-%d %H:%M")
+                    bulk_revokes.setdefault(key, 0)
+                    bulk_revokes[key] += 1
+            for ts_key, count in bulk_revokes.items():
+                if count >= 3:
+                    if "Kill Switch Activated" not in functions["RESPOND"]["categories"]:
+                        functions["RESPOND"]["categories"].append("Kill Switch Activated")
+                    functions["RESPOND"]["respond_details"].append(f"\U0001F6D1 Kill Switch Activated ({count} tokens)")
+    except Exception:
+        pass
+
+    result = {}
+    for fn, data in functions.items():
+        result[fn] = {
+            "event_count": data["event_count"],
+            "last_event": data["last_event"],
+            "categories": data["categories"],
+            "recent": data["recent"],
+            "respond_details": data.get("respond_details", []),
+        }
+
+    return jsonify(result)
 
 
 @app.route("/api/stats", methods=["GET"])
@@ -4699,7 +4798,7 @@ def toggle_shadow_mode():
     db.session.commit()
     return jsonify({
         "shadow_mode": settings.shadow_mode,
-        "message": "Shadow Mode enabled - observing only, no blocking" if settings.shadow_mode else "Blocking Mode enabled - violations will be blocked",
+        "message": "Observe & Audit Mode enabled - observing only, no blocking" if settings.shadow_mode else "Blocking Mode enabled - violations will be blocked",
     })
 
 
@@ -4842,6 +4941,37 @@ def toggle_strict_reasoning():
 
 
 _app_start_time = time.time()
+
+
+def _startup_env_check():
+    import logging
+    logger = logging.getLogger("snapwire.startup")
+    logger.setLevel(logging.INFO)
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        logger.addHandler(handler)
+
+    admin_email = os.environ.get("ADMIN_EMAIL", "").strip()
+    if not admin_email:
+        logger.warning("\033[91m[STARTUP] ADMIN_EMAIL is not set — admin access will be unavailable\033[0m")
+
+    db_url = os.environ.get("DATABASE_URL", "").strip()
+    if not db_url:
+        logger.warning("\033[93m[STARTUP] DATABASE_URL not set — using SQLite fallback (not recommended for production)\033[0m")
+
+    session_secret = os.environ.get("SESSION_SECRET", "").strip()
+    if not session_secret:
+        logger.warning("\033[93m[STARTUP] SESSION_SECRET not set — auto-generated (sessions will not persist across restarts)\033[0m")
+
+    has_llm = bool(os.environ.get("ANTHROPIC_API_KEY", "").strip()) or bool(os.environ.get("OPENAI_API_KEY", "").strip())
+    if not has_llm:
+        logger.warning("\033[93m[STARTUP] No LLM API key configured — AI features disabled (set ANTHROPIC_API_KEY or OPENAI_API_KEY)\033[0m")
+
+    logger.info("\033[92m[STARTUP] Snapwire environment check complete. Run 'python check_setup.py' for a full report.\033[0m")
+
+
+_startup_env_check()
 
 
 with app.app_context():
@@ -5702,6 +5832,113 @@ def api_admin_aibom_summary():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/admin/system-health", methods=["GET"])
+@require_platform_admin
+def api_admin_system_health():
+    import platform as _plat
+    import sys
+    checks = {}
+
+    try:
+        db.session.execute(db.text("SELECT 1"))
+        table_count = 0
+        try:
+            tables = db.session.execute(db.text(
+                "SELECT count(*) FROM sqlite_master WHERE type='table'"
+                if 'sqlite' in str(db.engine.url) else
+                "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'"
+            )).scalar()
+            table_count = tables or 0
+        except Exception:
+            pass
+        audit_count = AuditLogEntry.query.count()
+        checks["database"] = {
+            "status": "green",
+            "label": "Database",
+            "detail": f"Connected — {table_count} tables, {audit_count} audit log entries",
+        }
+    except Exception as e:
+        checks["database"] = {
+            "status": "red",
+            "label": "Database",
+            "detail": f"Connection failed: {str(e)[:120]}",
+        }
+
+    anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    openai_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    if anthropic_key:
+        checks["llm"] = {"status": "green", "label": "LLM Provider", "detail": "Anthropic API key configured"}
+    elif openai_key:
+        checks["llm"] = {"status": "green", "label": "LLM Provider", "detail": "OpenAI API key configured"}
+    else:
+        checks["llm"] = {"status": "yellow", "label": "LLM Provider", "detail": "No LLM key — AI features disabled, deterministic features active"}
+
+    smtp_host = os.environ.get("SMTP_HOST", "").strip()
+    if smtp_host:
+        checks["email"] = {"status": "green", "label": "Email (SMTP)", "detail": f"Configured — {smtp_host}"}
+    else:
+        checks["email"] = {"status": "yellow", "label": "Email (SMTP)", "detail": "Not configured — email notifications disabled"}
+
+    slack_url = os.environ.get("SLACK_WEBHOOK_URL", "").strip()
+    if slack_url:
+        checks["slack"] = {"status": "green", "label": "Slack Webhook", "detail": "Configured"}
+    else:
+        checks["slack"] = {"status": "yellow", "label": "Slack Webhook", "detail": "Not configured — Slack alerts disabled"}
+
+    sentinel_mode = os.environ.get("SENTINEL_MODE", "").strip()
+    sentinel_port = os.environ.get("SENTINEL_PORT", "").strip()
+    if sentinel_mode or sentinel_port:
+        checks["sentinel"] = {"status": "green", "label": "Sentinel Proxy", "detail": f"Mode: {sentinel_mode or 'default'}, Port: {sentinel_port or 'default'}"}
+    else:
+        checks["sentinel"] = {"status": "yellow", "label": "Sentinel Proxy", "detail": "Not configured"}
+
+    session_secret = os.environ.get("SESSION_SECRET", "").strip()
+    if session_secret:
+        checks["session"] = {"status": "green", "label": "Session Secret", "detail": "Explicitly set"}
+    else:
+        checks["session"] = {"status": "yellow", "label": "Session Secret", "detail": "Auto-generated fallback — set SESSION_SECRET for production"}
+
+    is_replit = bool(os.environ.get("REPL_ID"))
+    hosting = "Replit" if is_replit else "Self-Hosted"
+    checks["platform"] = {
+        "status": "green",
+        "label": "Platform",
+        "detail": f"{hosting} — Python {_plat.python_version()} — {_plat.system()} {_plat.machine()}",
+    }
+
+    admin_email = os.environ.get("ADMIN_EMAIL", "").strip()
+    if admin_email:
+        checks["admin_email"] = {"status": "green", "label": "Admin Email", "detail": admin_email}
+    else:
+        checks["admin_email"] = {"status": "red", "label": "Admin Email", "detail": "ADMIN_EMAIL not set — required for platform admin access"}
+
+    db_url = os.environ.get("DATABASE_URL", "")
+    if db_url:
+        db_type = "PostgreSQL" if "postgres" in db_url else "Custom"
+        checks["database_url"] = {"status": "green", "label": "Database URL", "detail": f"{db_type} configured"}
+    else:
+        checks["database_url"] = {"status": "yellow", "label": "Database URL", "detail": "Not set — using SQLite fallback"}
+
+    uptime_seconds = int(time.time() - _app_start_time)
+    hours = uptime_seconds // 3600
+    minutes = (uptime_seconds % 3600) // 60
+
+    overall = "healthy"
+    check_list = list(checks.values())
+    if any(c["status"] == "red" for c in check_list):
+        overall = "critical"
+    elif any(c["status"] == "yellow" for c in check_list):
+        overall = "degraded"
+
+    return jsonify({
+        "status": overall,
+        "uptime": f"{hours}h {minutes}m",
+        "uptime_seconds": uptime_seconds,
+        "timestamp": datetime.utcnow().isoformat(),
+        "checks": checks,
+    })
+
+
 @app.route("/api/admin/stealth-status", methods=["GET"])
 @require_platform_admin
 def api_admin_stealth_status():
@@ -6061,6 +6298,96 @@ def api_admin_weekly_summary_send():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/admin/hitl-stats", methods=["GET"])
+@require_platform_admin
+def hitl_stats():
+    from datetime import timedelta
+    now = datetime.utcnow()
+    cutoff_30d = now - timedelta(days=30)
+
+    high_risk_total = AuditLogEntry.query.filter(
+        AuditLogEntry.created_at >= cutoff_30d,
+        AuditLogEntry.risk_score >= 70
+    ).count()
+
+    resolved_actions = PendingAction.query.filter(
+        PendingAction.created_at >= cutoff_30d,
+        PendingAction.resolved_by.isnot(None)
+    ).all()
+
+    manual_count = 0
+    edit_release_count = 0
+    trust_rule_count = 0
+    auto_timeout_count = 0
+    auto_count = 0
+
+    for a in resolved_actions:
+        rb = a.resolved_by or ""
+        if rb.startswith("auto-"):
+            auto_count += 1
+            if rb == "auto-timeout":
+                auto_timeout_count += 1
+        else:
+            manual_count += 1
+            if rb == "user-edited":
+                edit_release_count += 1
+            elif rb == "trust-24h":
+                trust_rule_count += 1
+
+    total_resolved = len(resolved_actions)
+    intervention_rate = round((manual_count / total_resolved * 100), 1) if total_resolved > 0 else 0.0
+
+    agent_breakdown_q = db.session.query(
+        PendingAction.agent_id,
+        db.func.count(PendingAction.id)
+    ).filter(
+        PendingAction.created_at >= cutoff_30d,
+        PendingAction.resolved_by.isnot(None),
+        ~PendingAction.resolved_by.like("auto-%")
+    ).group_by(PendingAction.agent_id).order_by(db.func.count(PendingAction.id).desc()).limit(20).all()
+
+    agent_breakdown = [{"agent_id": aid, "interventions": cnt} for aid, cnt in agent_breakdown_q]
+
+    daily_series = []
+    for i in range(30):
+        day = now - timedelta(days=29 - i)
+        day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
+
+        day_actions = PendingAction.query.filter(
+            PendingAction.created_at >= day_start,
+            PendingAction.created_at < day_end,
+            PendingAction.resolved_by.isnot(None)
+        ).all()
+
+        day_manual = 0
+        day_auto = 0
+        for a in day_actions:
+            rb = a.resolved_by or ""
+            if rb.startswith("auto-"):
+                day_auto += 1
+            else:
+                day_manual += 1
+
+        daily_series.append({
+            "date": day_start.strftime("%Y-%m-%d"),
+            "manual": day_manual,
+            "auto": day_auto
+        })
+
+    return jsonify({
+        "high_risk_total": high_risk_total,
+        "manual_review_count": manual_count,
+        "edit_release_count": edit_release_count,
+        "trust_rule_count": trust_rule_count,
+        "auto_timeout_count": auto_timeout_count,
+        "total_resolved": total_resolved,
+        "intervention_rate": intervention_rate,
+        "agent_breakdown": agent_breakdown,
+        "daily_series": daily_series
+    })
 
 
 if __name__ == "__main__":
