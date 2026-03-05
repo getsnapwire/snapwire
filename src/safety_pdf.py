@@ -150,7 +150,7 @@ def generate_safety_pdf():
     pdf.ln(2)
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(60, 60, 70)
-    pdf.multi_cell(0, 5, "Snapwire is a high-risk governance layer designed to sit between AI agents and their tool-call targets. It functions as a deterministic security gateway (reverse proxy) that intercepts, evaluates, and enforces policy on every tool call an autonomous agent makes.")
+    pdf.multi_cell(0, 5, "Snapwire is an Agentic Runtime Security (ARS) platform designed to sit between AI agents and their tool-call targets. It functions as a runtime security layer (reverse proxy) that intercepts, evaluates, and enforces policy on every tool call an autonomous agent makes.")
     pdf.ln(2)
     intended_uses = [
         "Real-time interception and policy enforcement for AI agent tool calls",
@@ -316,7 +316,7 @@ def generate_safety_pdf():
     pdf.ln(4)
     pdf.set_font("Helvetica", "", 7)
     pdf.set_text_color(150, 150, 160)
-    pdf.cell(0, 4, f"Snapwire  |  The Firewall for AI Agents  |  Report generated {now.strftime('%Y-%m-%d %H:%M UTC')}", align="C")
+    pdf.cell(0, 4, f"Snapwire  |  Agentic Runtime Security  |  Report generated {now.strftime('%Y-%m-%d %H:%M UTC')}", align="C")
 
     return bytes(pdf.output())
 

@@ -232,6 +232,6 @@ def generate_compliance_pdf(tenant_id):
     pdf.ln(4)
     pdf.set_font("Helvetica", "", 7)
     pdf.set_text_color(150, 150, 160)
-    pdf.cell(0, 4, f"Snapwire  |  The Firewall for AI Agents  |  Report generated {now.strftime('%Y-%m-%d %H:%M UTC')}", align="C")
+    pdf.cell(0, 4, f"Snapwire  |  Agentic Runtime Security  |  Report generated {now.strftime('%Y-%m-%d %H:%M UTC')}", align="C")
 
     return bytes(pdf.output())

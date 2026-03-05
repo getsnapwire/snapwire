@@ -2,7 +2,7 @@
   <img src="static/badge-snapwire.svg" alt="Protected by Snapwire" />
 </p>
 
-<h1 align="center">Snapwire: The Deterministic Agent Firewall</h1>
+<h1 align="center">Snapwire: Agentic Runtime Security (ARS) Platform</h1>
 <p align="center"><strong>NIST IR 8596 Aligned | Colorado SB24-205 Safe Harbor Ready</strong></p>
 
 <p align="center">

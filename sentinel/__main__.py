@@ -20,7 +20,7 @@ BANNER = r"""
   ___) |  __/ | | | (_| | |_| | | | |  __/ |
  |____/ \___|_| |_|\__,_|\__|_|_| |_|\___|_|
 
- Snapwire Sentinel Proxy — The 60-Second Agent Firewall
+ Snapwire Sentinel Proxy — The 60-Second Agentic Runtime Security Layer
  ─────────────────────────────────────────────────────────
 """
 

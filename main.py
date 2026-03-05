@@ -1889,6 +1889,17 @@ def cancel_action(action_id):
     return jsonify({"status": "cancelled", "action": result, "message": "Held action cancelled."})
 
 
+@app.route("/api/actions/<action_id>/fix-prompt", methods=["POST"])
+@require_login
+def generate_action_fix_prompt(action_id):
+    from src.fix_prompt_generator import generate_fix_prompt
+    tenant_id = get_current_tenant_id()
+    result = generate_fix_prompt(action_id, tenant_id=tenant_id)
+    if result.get("error"):
+        return jsonify(result), 404
+    return jsonify(result)
+
+
 @app.route("/api/actions/<action_id>/trust", methods=["POST"])
 @require_admin
 def trust_tool_24h(action_id):
@@ -2329,7 +2340,7 @@ def import_rules():
             return jsonify({"error": "No JSON payload provided"}), 400
 
     meta = data.get("_meta", {})
-    if meta.get("generator") not in ("Snapwire", "Agentic Firewall"):
+    if meta.get("generator") not in ("Snapwire", "Agentic Firewall", "Agentic Runtime Security"):
         return jsonify({"error": "Invalid import file. Must be a Snapwire export (missing or incorrect _meta.generator)."}), 400
 
     rules = data.get("rules", [])
@@ -5903,7 +5914,7 @@ def generate_weekly_vibe_audit():
             raise RuntimeError("No LLM key configured")
 
         prompt_system = (
-            "You are an executive AI security analyst for Snapwire Agentic Firewall. "
+            "You are an executive AI security analyst for Snapwire Agentic Runtime Security. "
             "Generate a concise 1-page Markdown executive summary from the provided weekly metrics. "
             "Use these exact sections: ## Overview, ## Security Posture, ## Cost Impact, "
             "## Tool Hardening, ## Notable Events, ## Recommendations. "

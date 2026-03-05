@@ -1,11 +1,11 @@
 # Snapwire
 
 ## Overview
-Snapwire is "The Deterministic Agent Firewall," an open-source governance layer for the AI Agentic Economy. It intercepts, audits, and controls AI agent tool calls against user-defined automation rules, acting as a deterministic gatekeeper for mission-critical data. Key capabilities include real-time cost tracking, loop detection, credential proxy (Snap-Tokens), emergency global token revocation, AI-powered evaluation, and compliance-ready audit trails. It supports multi-tenancy and deploys platform-agnostically, providing "Headless Governance Infrastructure" and a "60-Second Firewall for your AI Agents."
+Snapwire is an Agentic Runtime Security (ARS) platform — an open-source governance layer for the AI Agentic Economy. It intercepts, audits, and controls AI agent tool calls against user-defined automation rules, acting as a deterministic gatekeeper for mission-critical data. Key capabilities include real-time cost tracking, loop detection, credential proxy (Snap-Tokens), emergency global token revocation, AI-powered evaluation, and compliance-ready audit trails. It supports multi-tenancy and deploys platform-agnostically, providing "Headless Governance Infrastructure" and a "60-Second Agentic Runtime Security Layer for your AI Agents."
 
 ## User Preferences
 - Dashboard supports dark/light mode toggle (default: dark, saved in localStorage)
-- Browser notifications for blocked actions
+- Browser notifications for runtime violations
 - Plain-language explanations everywhere
 - Footer disclaimer on all pages: "Snapwire is a technical monitoring utility. All blocks, alerts, and signals generated are heuristic and advisory in nature. The final Duty of Care for all agent actions and budgetary releases remains solely with the human operator."
 
@@ -39,7 +39,8 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **Identity Vault**: Securely stores credentials.
 -   **Deception & Goal Drift Detector**: Analyzes agent monologues for misalignments.
 -   **Honeypot Tripwires**: Utilizes decoy tools to detect unauthorized access.
--   **Snap-Card Review Queue**: Presents blocked actions as structured "Snap-Cards" for review.
+-   **Snap-Card Review Queue**: Presents runtime violations as structured "Snap-Cards" for review, with Reject, Edit & Release, Trust 24h, and Generate Fix Prompt buttons.
+-   **Context-Aware Remediation Prompts**: Generates Universal Markdown Block fix prompts on Snap-Cards combining agent intent, violation details, and NIST category. LLM-powered with deterministic fallback per violation type. Compatible with Claude, ChatGPT, and Cursor.
 -   **Trust Rules (24h TTL)**: Allows creation of temporary auto-approval rules.
 -   **Thinking Token Sentinel**: Monitors LLM `usage.thinking_tokens` to detect logic loops and pipeline latency anomalies.
 -   **MCP JSON-RPC 2.0 Ingestion**: Auto-detects MCP format for tool calls.
@@ -61,7 +62,7 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **Dynamic Chaos Ingestor**: Generates per-tool attack scenarios using Claude.
 -   **Legal Counsel Acknowledgment Gate**: Requires user acknowledgment before downloading compliance documents.
 -   **Substantial Modification Trigger**: Alerts users when 10+ tools added since last audit.
--   **Homepage Rewrite**: Focuses on plain-language explanations of Snapwire's purpose and features.
+-   **Homepage Rewrite**: Focuses on plain-language explanations of Snapwire's purpose and features. UI uses universal terms: "Runtime Violations," "Security Signals," "Detected Vulnerabilities."
 -   **Engine Room (Super-Admin Tab Group)**: Platform Admin-only dashboard with Batch Ingestor UI, Chaos Lab, Global Burn Meter, Stealth Control, Telemetry, and Weekly Summary.
 -   **Self-Correction Loop**: Manages auto-healed tool schemas for admin review and approval/rejection.
 -   **Vibe-Audit Weekly Summarizer**: Automated executive summary of audit logs, ingestor results, cost savings, and security posture sent to Slack.
