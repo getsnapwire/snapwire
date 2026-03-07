@@ -450,6 +450,14 @@ FEATURE_NIST_MAP = [
         "evidence": "UnmanagedAgentSighting model with /api/admin/unmanaged-agents endpoints and Shadow Agents Engine Room tab",
         "component": "main.py, models.py",
     },
+    {
+        "number": 55,
+        "name": "Snapwire CLI",
+        "description": "Typer-based CLI with `snapwire init` (config generation), `snapwire check` (preflight: env vars, database, 1-token LLM test), and `snapwire up` (Flask + Sentinel Proxy startup). Professional terminal interface for deployment and demos.",
+        "nist_categories": ["GOVERN-1.1", "IDENTIFY-1.1", "MANAGE-4.1"],
+        "evidence": "snapwire_cli.py with init/check/up commands, Rich-formatted output, sys.exit(1) on preflight failures",
+        "component": "snapwire_cli.py",
+    },
 ]
 
 

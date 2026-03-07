@@ -92,6 +92,7 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **API Docs Try It Playground**: Interactive playground in API docs with pre-filled intercept request, Run button (live fetch), Copy as curl, color-coded response display. Honeypot-aware: abuse attempts produce "Blocked by Snapwire" demo.
 -   **Ultra-Low Latency Intercept**: Sub-10ms governance overhead tracking. `time.perf_counter()` instrumentation on `/api/intercept` stores `intercept_latency_ms` in every `AuditLogEntry`. `X-Snapwire-Latency-Ms` response header. Sentinel Proxy tracks detection/governance/total overhead with `LatencyTracker` rolling window (1000 samples) and `/sentinel/metrics` endpoint. Engine Room "Latency Monitor" tab shows p50/p95/p99 with target badge, breakdown by status and agent. `/api/admin/latency-stats` API with 24h/7d/30d windows.
 -   **Unmanaged Agent Discovery (Shadow Agents)**: Detects agent IDs hitting `/api/intercept` that have no matching `ApiKey.agent_name`. `UnmanagedAgentSighting` model tracks `agent_id`, `first_seen_at`, `last_seen_at`, `sighting_count`, `source_ip`, `last_tool_name`, `status` (unmanaged/acknowledged/enrolled). Admin API: `GET /api/admin/unmanaged-agents`, `POST .../acknowledge`, `POST .../enroll` (auto-creates ApiKey). Engine Room "Shadow Agents" tab with alert badge, hero count, sightings table, Acknowledge/Enroll actions. 30s auto-refresh.
+-   **Snapwire CLI**: Typer-based CLI (`snapwire_cli.py`) with three commands: `snapwire init` (generates `.snapwire.yaml` config), `snapwire check` (preflight: env vars, database connectivity, 1-token LLM test with `sys.exit(1)` on failures), `snapwire up` (starts Flask + optional Sentinel Proxy sidecar via `--proxy` flag). Rich-formatted terminal output with ASCII banner. Professional demo interface for NIST brief.
 
 ## External Dependencies
 -   **Database**: PostgreSQL, SQLite
@@ -104,3 +105,4 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **PDF Generation**: fpdf2
 -   **Async HTTP**: aiohttp
 -   **Slack Integration**: slack-bolt
+-   **CLI Framework**: Typer + Rich

@@ -437,6 +437,12 @@ FEATURE_EU_MAP = [
         "eu_articles": ["ART-9", "ART-14", "ART-26", "ART-72"],
         "evidence": "Detection of unregistered AI agents supports risk management, human oversight of unknown actors, deployer obligations, and post-market monitoring",
     },
+    {
+        "number": 55,
+        "name": "Snapwire CLI",
+        "eu_articles": ["ART-17", "ART-9", "ART-15"],
+        "evidence": "Professional CLI with preflight validation, quality management tooling, and secure deployment workflow supporting risk management and cybersecurity posture",
+    },
 ]
 
 
