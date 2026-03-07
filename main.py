@@ -2766,6 +2766,295 @@ def delete_contact_submission(submission_id):
     return jsonify({"message": "Deleted"})
 
 
+@app.route("/api/admin/generate-detector", methods=["POST"])
+@require_platform_admin
+def generate_detector():
+    data = request.get_json() or {}
+    sample_payload = data.get("sample_payload")
+    protocol_name = (data.get("protocol_name") or "").strip().lower().replace(" ", "_").replace("-", "_")
+
+    if not sample_payload or not isinstance(sample_payload, dict):
+        return jsonify({"error": "sample_payload must be a JSON object"}), 400
+    if not protocol_name or not protocol_name.isidentifier():
+        return jsonify({"error": "protocol_name must be a valid Python identifier (letters, numbers, underscores)"}), 400
+
+    from sentinel.detector import detect_tool_calls
+    existing = detect_tool_calls(sample_payload)
+    if existing:
+        return jsonify({
+            "already_detected": True,
+            "existing_protocol": existing[0].protocol,
+            "existing_tools": [{"tool_name": r.tool_name, "parameters": r.parameters, "protocol": r.protocol, "confidence": r.confidence} for r in existing],
+            "detected_patterns": [],
+            "generated_code": "",
+            "confidence_notes": f"This payload is already detected as '{existing[0].protocol}' protocol with confidence {existing[0].confidence}."
+        })
+
+    patterns = _analyze_payload_patterns(sample_payload)
+
+    if not patterns:
+        return jsonify({
+            "already_detected": False,
+            "existing_protocol": None,
+            "detected_patterns": [],
+            "generated_code": "",
+            "confidence_notes": "No tool-call-like patterns found in this payload. The payload may not contain tool calls, or it uses a format Snapwire doesn't recognize. Try a payload that includes tool definitions or tool call invocations."
+        })
+
+    generated_code = _generate_detector_code(protocol_name, patterns)
+
+    return jsonify({
+        "already_detected": False,
+        "existing_protocol": None,
+        "detected_patterns": patterns,
+        "generated_code": generated_code,
+        "confidence_notes": f"Found {len(patterns)} tool-call pattern(s). Review the generated code and adjust if needed before saving."
+    })
+
+
+def _analyze_payload_patterns(body, access_chain=None, depth=0):
+    if access_chain is None:
+        access_chain = []
+    patterns = []
+    if depth > 3 or not isinstance(body, dict):
+        return patterns
+
+    TOOL_KEYS = {"tool_calls", "tools", "function_calls", "functions", "actions", "tool_call", "function_call"}
+    NAME_KEYS = {"name", "function_name", "tool_name", "action_name"}
+    ARG_KEYS = {"arguments", "args", "parameters", "input", "params", "input_schema"}
+
+    for key, value in body.items():
+        key_lower = key.lower()
+
+        if isinstance(value, list) and len(value) > 0:
+            if key_lower in TOOL_KEYS or "tool" in key_lower or "function" in key_lower:
+                sample = value[0] if isinstance(value[0], dict) else None
+                if sample:
+                    name_key = None
+                    arg_key = None
+                    for nk in NAME_KEYS:
+                        if nk in sample:
+                            name_key = nk
+                            break
+                    if not name_key:
+                        for sk in sample:
+                            if "name" in sk.lower():
+                                name_key = sk
+                                break
+                    for ak in ARG_KEYS:
+                        if ak in sample:
+                            arg_key = ak
+                            break
+                    if not arg_key:
+                        for sk in sample:
+                            if sk.lower() in ARG_KEYS or "arg" in sk.lower() or "param" in sk.lower() or "input" in sk.lower():
+                                arg_key = sk
+                                break
+
+                    if name_key:
+                        patterns.append({
+                            "type": "tool_call_array",
+                            "access_chain": access_chain,
+                            "key": key,
+                            "name_key": name_key,
+                            "arg_key": arg_key,
+                            "sample_keys": list(sample.keys()),
+                            "description": f"Array '{key}' contains objects with '{name_key}'" + (f" and '{arg_key}'" if arg_key else "")
+                        })
+
+        if isinstance(value, dict):
+            has_name = None
+            has_args = None
+            for nk in NAME_KEYS:
+                if nk in value:
+                    has_name = nk
+                    break
+            for ak in ARG_KEYS:
+                if ak in value:
+                    has_args = ak
+                    break
+
+            if has_name and has_args:
+                patterns.append({
+                    "type": "tool_call_object",
+                    "access_chain": access_chain,
+                    "key": key,
+                    "name_key": has_name,
+                    "arg_key": has_args,
+                    "sample_keys": list(value.keys()),
+                    "description": f"Object '{key}' has '{has_name}' and '{has_args}'"
+                })
+
+            nested = _analyze_payload_patterns(value, access_chain + [key], depth + 1)
+            patterns.extend(nested)
+
+        if isinstance(value, list) and len(value) > 0 and isinstance(value[0], dict):
+            for item in value[:1]:
+                nested = _analyze_payload_patterns(item, access_chain + [key + "[]"], depth + 1)
+                patterns.extend(nested)
+
+    return patterns
+
+
+def _generate_detector_code(protocol_name, patterns):
+    lines = []
+    lines.append(f"@register_protocol")
+    lines.append(f"def detect_{protocol_name}(body: dict) -> list:")
+    lines.append(f"    results = []")
+    lines.append(f"")
+
+    for i, pattern in enumerate(patterns):
+        chain = pattern.get("access_chain", [])
+        var_suffix = f"_{i}" if i > 0 else ""
+
+        if chain:
+            nav_lines, final_var, indent = _generate_chain_access(chain, var_suffix)
+            for nl in nav_lines:
+                lines.append(nl)
+        else:
+            final_var = "body"
+            indent = "    "
+
+        if pattern["type"] == "tool_call_array":
+            key = pattern["key"]
+            name_key = pattern["name_key"]
+            arg_key = pattern.get("arg_key")
+            lines.append(f"{indent}items{var_suffix} = {final_var}.get(\"{key}\")")
+            lines.append(f"{indent}if isinstance(items{var_suffix}, list):")
+            lines.append(f"{indent}    for item in items{var_suffix}:")
+            lines.append(f"{indent}        if isinstance(item, dict) and \"{name_key}\" in item:")
+            lines.append(f"{indent}            name = item.get(\"{name_key}\", \"unknown\")")
+            if arg_key:
+                lines.append(f"{indent}            params = item.get(\"{arg_key}\", {{}})")
+            else:
+                lines.append(f"{indent}            params = {{}}")
+            lines.append(f"{indent}            if not any(r.tool_name == name and r.protocol == \"{protocol_name}\" for r in results):")
+            lines.append(f"{indent}                results.append(DetectedToolCall(name, params, \"{protocol_name}\", 0.9))")
+            lines.append(f"")
+
+        elif pattern["type"] == "tool_call_object":
+            key = pattern["key"]
+            name_key = pattern["name_key"]
+            arg_key = pattern.get("arg_key")
+            lines.append(f"{indent}obj{var_suffix} = {final_var}.get(\"{key}\")")
+            lines.append(f"{indent}if isinstance(obj{var_suffix}, dict) and \"{name_key}\" in obj{var_suffix}:")
+            lines.append(f"{indent}    name = obj{var_suffix}.get(\"{name_key}\", \"unknown\")")
+            if arg_key:
+                lines.append(f"{indent}    params = obj{var_suffix}.get(\"{arg_key}\", {{}})")
+            else:
+                lines.append(f"{indent}    params = {{}}")
+            lines.append(f"{indent}    results.append(DetectedToolCall(name, params, \"{protocol_name}\", 0.9))")
+            lines.append(f"")
+
+    lines.append(f"    return results")
+    return "\n".join(lines)
+
+
+def _generate_chain_access(chain, var_suffix=""):
+    nav_lines = []
+    indent = "    "
+    current_var = "body"
+    for ci, step in enumerate(chain):
+        step_var = f"_c{ci}{var_suffix}"
+        if step.endswith("[]"):
+            dict_key = step[:-2]
+            nav_lines.append(f"{indent}{step_var} = {current_var}.get(\"{dict_key}\", [])")
+            nav_lines.append(f"{indent}if isinstance({step_var}, list):")
+            indent += "    "
+            iter_var = f"_item{ci}{var_suffix}"
+            nav_lines.append(f"{indent}for {iter_var} in {step_var}:")
+            indent += "    "
+            nav_lines.append(f"{indent}if isinstance({iter_var}, dict):")
+            indent += "    "
+            current_var = iter_var
+        else:
+            nav_lines.append(f"{indent}{step_var} = {current_var}.get(\"{step}\", {{}})")
+            nav_lines.append(f"{indent}if isinstance({step_var}, dict):")
+            indent += "    "
+            current_var = step_var
+    return nav_lines, current_var, indent
+
+
+@app.route("/api/admin/save-detector", methods=["POST"])
+@require_platform_admin
+def save_detector():
+    data = request.get_json() or {}
+    protocol_name = (data.get("protocol_name") or "").strip().lower().replace(" ", "_").replace("-", "_")
+    patterns = data.get("patterns")
+
+    if not protocol_name or not protocol_name.isidentifier():
+        return jsonify({"error": "Invalid protocol name"}), 400
+    if not patterns or not isinstance(patterns, list) or len(patterns) == 0:
+        return jsonify({"error": "No patterns provided. Run Analyze first."}), 400
+
+    for p in patterns:
+        if not isinstance(p, dict):
+            return jsonify({"error": "Invalid pattern format"}), 400
+        if p.get("type") not in ("tool_call_array", "tool_call_object"):
+            return jsonify({"error": f"Unknown pattern type: {p.get('type')}"}), 400
+        for field in ("key", "name_key"):
+            val = p.get(field, "")
+            if not isinstance(val, str) or not all(c.isalnum() or c in "_-" for c in val):
+                return jsonify({"error": f"Invalid characters in pattern field '{field}'"}), 400
+        arg_key = p.get("arg_key")
+        if arg_key and (not isinstance(arg_key, str) or not all(c.isalnum() or c in "_-" for c in arg_key)):
+            return jsonify({"error": "Invalid characters in arg_key"}), 400
+        access_chain = p.get("access_chain")
+        if access_chain and isinstance(access_chain, list):
+            for step in access_chain:
+                if not isinstance(step, str) or not all(c.isalnum() or c in "_-" for c in step):
+                    return jsonify({"error": f"Invalid characters in access_chain step: {step}"}), 400
+
+    detector_code = _generate_detector_code(protocol_name, patterns)
+
+    import os
+    custom_path = os.path.join(os.path.dirname(__file__), "sentinel", "custom_detectors.py")
+
+    try:
+        with open(custom_path, "r") as f:
+            existing = f.read()
+    except FileNotFoundError:
+        existing = 'from sentinel.detector import register_protocol, DetectedToolCall  # noqa: F401\n'
+
+    if f"def detect_{protocol_name}" in existing:
+        return jsonify({"error": f"A detector for '{protocol_name}' already exists in custom_detectors.py. Remove it first to replace."}), 409
+
+    new_content = existing.rstrip() + "\n\n\n" + detector_code + "\n"
+
+    with open(custom_path, "w") as f:
+        f.write(new_content)
+
+    import importlib
+    from sentinel.detector import PROTOCOL_REGISTRY
+    PROTOCOL_REGISTRY[:] = [fn for fn in PROTOCOL_REGISTRY if not getattr(fn, '__module__', '').endswith('custom_detectors')]
+    import sentinel.custom_detectors
+    importlib.reload(sentinel.custom_detectors)
+
+    detector_names = [fn.__name__ for fn in PROTOCOL_REGISTRY]
+
+    return jsonify({
+        "message": f"Detector 'detect_{protocol_name}' saved and activated.",
+        "total_detectors": len(PROTOCOL_REGISTRY),
+        "active_detectors": detector_names
+    })
+
+
+@app.route("/api/admin/list-detectors", methods=["GET"])
+@require_platform_admin
+def list_detectors():
+    from sentinel.detector import PROTOCOL_REGISTRY
+    detectors = []
+    for fn in PROTOCOL_REGISTRY:
+        is_custom = "custom_detectors" in (fn.__module__ or "")
+        detectors.append({
+            "name": fn.__name__,
+            "protocol": fn.__name__.replace("detect_", ""),
+            "is_custom": is_custom,
+            "module": fn.__module__ or "sentinel.detector"
+        })
+    return jsonify({"detectors": detectors, "total": len(detectors)})
+
+
 @app.route("/api/api-keys", methods=["GET"])
 @require_login
 def list_api_keys():

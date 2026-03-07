@@ -1033,6 +1033,28 @@ OPENAI_BASE_URL=http://localhost:8080/v1 python my_agent.py</pre>
             </table>
             <p><strong>Also compatible via OpenAI format:</strong> Mistral, Azure OpenAI, and any OpenAI-compatible provider are automatically detected by the OpenAI detector since they use the same wire format.</p>
 
+            <h3>Custom Detectors &amp; Detector Lab</h3>
+            <p>Need to support a provider not listed above? Snapwire's <strong>Detector Lab</strong> (Engine Room &rarr; Detector Lab) lets you paste a sample JSON payload from any LLM provider and generates a working detector function automatically. One click to save and activate &mdash; no code editing required.</p>
+            <p>Custom detectors are stored in <code class="inline-code">sentinel/custom_detectors.py</code> and auto-loaded at startup. This file survives upstream updates, so your custom protocol support persists when you pull new versions of Snapwire.</p>
+            <p>Developers can also write detectors manually using the <code class="inline-code">@register_protocol</code> decorator:</p>
+            <pre><span class="lang-tag">Python</span>
+from sentinel.detector import register_protocol, DetectedToolCall
+
+@register_protocol
+def detect_my_provider(body: dict) -&gt; list:
+    results = []
+    tool_calls = body.get("my_tool_calls")
+    if isinstance(tool_calls, list):
+        for tc in tool_calls:
+            if isinstance(tc, dict) and "name" in tc:
+                results.append(DetectedToolCall(
+                    tool_name=tc["name"],
+                    parameters=tc.get("args", {}),
+                    protocol="my_provider",
+                    confidence=0.9
+                ))
+    return results</pre>
+
             <h3>Operational Modes</h3>
             <table>
                 <tr><th>Mode</th><th>Logging</th><th>Headers</th><th>Blocking</th><th>Fail Behavior</th></tr>

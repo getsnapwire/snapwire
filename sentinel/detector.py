@@ -397,3 +397,9 @@ def detect_tool_calls(body: Any) -> list[DetectedToolCall]:
             unique.append(r)
 
     return unique
+
+
+try:
+    import sentinel.custom_detectors  # noqa: F401
+except ImportError:
+    pass

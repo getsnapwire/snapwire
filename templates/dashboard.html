@@ -1864,6 +1864,7 @@
                 <button class="sub-tab" data-subtab="er-telemetry" data-group="engine-room">Telemetry</button>
                 <button class="sub-tab" data-subtab="er-summary" data-group="engine-room">Weekly Summary</button>
                 <button class="sub-tab" data-subtab="er-hitl" data-group="engine-room">HITL Evidence</button>
+                <button class="sub-tab" data-subtab="er-detector" data-group="engine-room" style="color:#00F5D4;">Detector Lab</button>
             </div>
         </div>
 
@@ -2296,6 +2297,84 @@
                             <tr><td colspan="3" style="text-align:center;color:var(--text-secondary);padding:24px;">Click Refresh to load data.</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-er-detector" class="panel">
+            <h3 style="margin-bottom:4px;">&#x1F9EA; Protocol Detector Generator</h3>
+            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;">Paste a sample JSON payload from any LLM provider. Snapwire analyzes it and generates a <code style="background:var(--bg-main);padding:2px 6px;border-radius:4px;font-size:12px;">@register_protocol</code> detector function you can save and activate instantly.</p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                <div>
+                    <div style="margin-bottom:12px;">
+                        <label style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Protocol Name</label>
+                        <input type="text" id="detector-protocol-name" placeholder="e.g. my_provider" style="width:100%;padding:10px 14px;background:var(--bg-main);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:14px;font-family:'Fira Code',monospace;box-sizing:border-box;">
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Sample JSON Payload</label>
+                        <textarea id="detector-sample-payload" rows="16" placeholder='{"tools": [{"name": "search", "parameters": {"query": "test"}}]}' style="width:100%;padding:12px 14px;background:var(--bg-main);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;font-family:'Fira Code',monospace;resize:vertical;box-sizing:border-box;line-height:1.5;"></textarea>
+                    </div>
+                    <button onclick="analyzeDetectorPayload()" id="detector-analyze-btn" style="background:var(--accent-blue);color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;width:100%;">Analyze Payload</button>
+                </div>
+
+                <div>
+                    <div id="detector-result-area" style="display:none;">
+                        <div id="detector-already-detected" style="display:none;background:var(--bg-card);border:1px solid var(--accent-green);border-radius:12px;padding:20px;margin-bottom:16px;">
+                            <div style="font-size:14px;font-weight:600;color:var(--accent-green);margin-bottom:8px;">&#x2705; Already Detected</div>
+                            <div id="detector-existing-info" style="font-size:13px;color:var(--text-secondary);"></div>
+                        </div>
+
+                        <div id="detector-no-patterns" style="display:none;background:var(--bg-card);border:1px solid #ff4d4d;border-radius:12px;padding:20px;margin-bottom:16px;">
+                            <div style="font-size:14px;font-weight:600;color:#ff4d4d;margin-bottom:8px;">&#x26A0; No Patterns Found</div>
+                            <div id="detector-no-patterns-info" style="font-size:13px;color:var(--text-secondary);"></div>
+                        </div>
+
+                        <div id="detector-generated" style="display:none;">
+                            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                    <span style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Detected Patterns</span>
+                                    <span id="detector-pattern-count" style="font-size:12px;color:var(--accent-blue);font-family:'Fira Code',monospace;"></span>
+                                </div>
+                                <div id="detector-patterns-list" style="font-size:13px;color:var(--text-primary);"></div>
+                            </div>
+
+                            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                    <span style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Generated Detector</span>
+                                    <button onclick="copyDetectorCode()" style="background:var(--bg-main);color:var(--text-secondary);border:1px solid var(--border);padding:4px 12px;border-radius:6px;font-size:11px;cursor:pointer;">Copy Code</button>
+                                </div>
+                                <pre id="detector-code-block" style="background:var(--bg-main);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;font-family:'Fira Code',monospace;color:#00F5D4;overflow-x:auto;line-height:1.6;margin:0;white-space:pre-wrap;"></pre>
+                            </div>
+
+                            <button onclick="saveAndActivateDetector()" id="detector-save-btn" style="background:#00F5D4;color:#0a0a0a;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;width:100%;">Save &amp; Activate</button>
+                            <div id="detector-save-status" style="margin-top:8px;font-size:13px;text-align:center;"></div>
+                        </div>
+                    </div>
+
+                    <div id="detector-placeholder" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:40px;text-align:center;color:var(--text-secondary);font-size:14px;">
+                        <div style="font-size:32px;margin-bottom:12px;">&#x1F50D;</div>
+                        Paste a sample payload and click Analyze to generate a detector function.
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top:24px;">
+                <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Active Detectors</h4>
+                <div id="detector-list-loading" style="text-align:center;color:var(--text-secondary);padding:16px;">Loading...</div>
+                <div id="detector-list-table" style="display:none;">
+                    <div class="admin-table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Protocol</th>
+                                    <th>Function</th>
+                                    <th>Source</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detector-list-body"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3397,7 +3476,7 @@ def handle_tool_call(tool_call):
             'agents-group': ['agents', 'analytics'],
             'security': ['vault', 'honeypots', 'blast', 'holdwindow', 'catalog', 'risk', 'autotriage', 'taintpulse', 'stealth'],
             'settings-group': ['keys', 'llm', 'org', 'account', 'settings', 'admin', 'contacts'],
-            'engine-room': ['er-health', 'er-ingestor', 'er-chaos', 'er-burn', 'er-stealth', 'er-telemetry', 'er-summary', 'er-hitl']
+            'engine-room': ['er-health', 'er-ingestor', 'er-chaos', 'er-burn', 'er-stealth', 'er-telemetry', 'er-summary', 'er-hitl', 'er-detector']
         };
 
         let activeSubTabs = {};
@@ -8319,6 +8398,140 @@ if (result.status === "allowed") {
             a.click();
             URL.revokeObjectURL(url);
         }
+
+        let _lastGeneratedCode = '';
+        let _lastProtocolName = '';
+        let _lastPatterns = [];
+
+        async function analyzeDetectorPayload() {
+            const btn = document.getElementById('detector-analyze-btn');
+            const protocolName = document.getElementById('detector-protocol-name').value.trim();
+            const payloadText = document.getElementById('detector-sample-payload').value.trim();
+
+            if (!protocolName) { showToast('Enter a protocol name', 'error'); return; }
+            if (!payloadText) { showToast('Paste a JSON payload', 'error'); return; }
+
+            let parsed;
+            try { parsed = JSON.parse(payloadText); } catch(e) { showToast('Invalid JSON: ' + e.message, 'error'); return; }
+
+            btn.textContent = 'Analyzing...';
+            btn.disabled = true;
+
+            try {
+                const resp = await fetch('/api/admin/generate-detector', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ sample_payload: parsed, protocol_name: protocolName })
+                });
+                const data = await resp.json();
+
+                document.getElementById('detector-placeholder').style.display = 'none';
+                document.getElementById('detector-result-area').style.display = 'block';
+                document.getElementById('detector-already-detected').style.display = 'none';
+                document.getElementById('detector-no-patterns').style.display = 'none';
+                document.getElementById('detector-generated').style.display = 'none';
+
+                if (data.already_detected) {
+                    document.getElementById('detector-already-detected').style.display = 'block';
+                    let info = '<strong>Protocol:</strong> ' + data.existing_protocol + '<br>';
+                    (data.existing_tools || []).forEach(t => {
+                        info += '<div style="margin-top:6px;padding:8px;background:var(--bg-main);border-radius:6px;font-family:\'Fira Code\',monospace;font-size:12px;">' +
+                            t.tool_name + ' <span style="color:var(--text-secondary);">(' + t.protocol + ', confidence: ' + t.confidence + ')</span></div>';
+                    });
+                    document.getElementById('detector-existing-info').innerHTML = info;
+                } else if (!data.generated_code) {
+                    document.getElementById('detector-no-patterns').style.display = 'block';
+                    document.getElementById('detector-no-patterns-info').textContent = data.confidence_notes;
+                } else {
+                    document.getElementById('detector-generated').style.display = 'block';
+                    document.getElementById('detector-pattern-count').textContent = data.detected_patterns.length + ' pattern(s)';
+                    let patternHtml = '';
+                    data.detected_patterns.forEach(p => {
+                        patternHtml += '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">' +
+                            '<span style="color:var(--accent-blue);font-family:\'Fira Code\',monospace;">' + p.type + '</span> &mdash; ' + p.description + '</div>';
+                    });
+                    document.getElementById('detector-patterns-list').innerHTML = patternHtml;
+                    document.getElementById('detector-code-block').textContent = data.generated_code;
+                    _lastGeneratedCode = data.generated_code;
+                    _lastProtocolName = protocolName;
+                    _lastPatterns = data.detected_patterns || [];
+                }
+
+                loadDetectorList();
+            } catch(e) {
+                showToast('Analysis failed: ' + e.message, 'error');
+            } finally {
+                btn.textContent = 'Analyze Payload';
+                btn.disabled = false;
+            }
+        }
+
+        function copyDetectorCode() {
+            if (_lastGeneratedCode) {
+                navigator.clipboard.writeText(_lastGeneratedCode).then(() => showToast('Copied to clipboard', 'success'));
+            }
+        }
+
+        async function saveAndActivateDetector() {
+            if (!_lastPatterns.length || !_lastProtocolName) { showToast('No detector to save — run Analyze first', 'error'); return; }
+            const btn = document.getElementById('detector-save-btn');
+            const status = document.getElementById('detector-save-status');
+            btn.textContent = 'Saving...';
+            btn.disabled = true;
+            status.innerHTML = '';
+
+            try {
+                const resp = await fetch('/api/admin/save-detector', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ protocol_name: _lastProtocolName, patterns: _lastPatterns })
+                });
+                const data = await resp.json();
+
+                if (resp.ok) {
+                    status.innerHTML = '<span style="color:var(--accent-green);">' + data.message + ' (' + data.total_detectors + ' total detectors active)</span>';
+                    showToast('Detector saved and activated', 'success');
+                    loadDetectorList();
+                } else {
+                    status.innerHTML = '<span style="color:#ff4d4d;">' + (data.error || 'Save failed') + '</span>';
+                    showToast(data.error || 'Save failed', 'error');
+                }
+            } catch(e) {
+                status.innerHTML = '<span style="color:#ff4d4d;">Error: ' + e.message + '</span>';
+            } finally {
+                btn.textContent = 'Save & Activate';
+                btn.disabled = false;
+            }
+        }
+
+        async function loadDetectorList() {
+            try {
+                const resp = await fetch('/api/admin/list-detectors');
+                const data = await resp.json();
+                const tbody = document.getElementById('detector-list-body');
+                document.getElementById('detector-list-loading').style.display = 'none';
+                document.getElementById('detector-list-table').style.display = 'block';
+
+                tbody.innerHTML = (data.detectors || []).map(d => {
+                    const badge = d.is_custom
+                        ? '<span style="background:rgba(0,245,212,0.15);color:#00F5D4;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">Custom</span>'
+                        : '<span style="background:rgba(99,102,241,0.15);color:#818cf8;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">Built-in</span>';
+                    return '<tr><td style="font-weight:600;">' + d.protocol + '</td><td style="font-family:\'Fira Code\',monospace;font-size:12px;">' + d.name + '()</td><td>' + badge + '</td></tr>';
+                }).join('');
+            } catch(e) {
+                document.getElementById('detector-list-loading').textContent = 'Failed to load detectors';
+            }
+        }
+
+        (function() {
+            const origSwitchSubTab = window.switchSubTab;
+            if (origSwitchSubTab) {
+                window.switchSubTab = function(name, group) {
+                    origSwitchSubTab(name, group);
+                    if (name === 'er-detector') loadDetectorList();
+                };
+            }
+        })();
     </script>
 
     <div style="text-align:center;padding:16px;color:#8B919A;font-size:12px;border-top:1px solid rgba(39,49,64,0.6);">
