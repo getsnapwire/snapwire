@@ -1023,10 +1023,15 @@ OPENAI_BASE_URL=http://localhost:8080/v1 python my_agent.py</pre>
                 <tr><th>Protocol</th><th>Detection Pattern</th><th>Confidence</th></tr>
                 <tr><td>OpenAI</td><td><code class="inline-code">tools</code> array, <code class="inline-code">tool_choice</code>, <code class="inline-code">tool_calls</code> in messages</td><td>0.90-0.95</td></tr>
                 <tr><td>Anthropic</td><td><code class="inline-code">tool_use</code> content blocks, <code class="inline-code">tools</code> definitions</td><td>0.90-0.95</td></tr>
+                <tr><td>Google Gemini</td><td><code class="inline-code">function_declarations</code>, <code class="inline-code">functionCall</code> in parts/candidates</td><td>0.90-0.95</td></tr>
+                <tr><td>Cohere</td><td><code class="inline-code">parameter_definitions</code>, <code class="inline-code">tool_calls</code> with <code class="inline-code">parameters</code></td><td>0.85-0.95</td></tr>
+                <tr><td>AWS Bedrock</td><td><code class="inline-code">toolConfig.tools[].toolSpec</code>, <code class="inline-code">toolUse</code> content blocks</td><td>0.90-0.95</td></tr>
+                <tr><td>LangChain</td><td><code class="inline-code">tool_calls</code> with <code class="inline-code">args</code> dict, <code class="inline-code">ToolMessage</code> type</td><td>0.80-0.95</td></tr>
                 <tr><td>MCP (JSON-RPC)</td><td><code class="inline-code">jsonrpc: "2.0"</code> + <code class="inline-code">method: "tools/call"</code></td><td>1.00</td></tr>
                 <tr><td>A2A (Agent-to-Agent)</td><td><code class="inline-code">tasks/send</code>, <code class="inline-code">delegate_task</code></td><td>0.85</td></tr>
                 <tr><td>Generic JSON-RPC</td><td>Any <code class="inline-code">method</code> + <code class="inline-code">params</code> pattern</td><td>0.50-0.80</td></tr>
             </table>
+            <p><strong>Also compatible via OpenAI format:</strong> Mistral, Azure OpenAI, and any OpenAI-compatible provider are automatically detected by the OpenAI detector since they use the same wire format.</p>
 
             <h3>Operational Modes</h3>
             <table>

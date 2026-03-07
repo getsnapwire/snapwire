@@ -27,7 +27,7 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **Python SDK**: An installable SDK package for programmatic interaction.
 -   **NISTIR 8596 Alignment**: Includes features for traceability, content hash integrity, and PDF compliance reports.
 -   **BYOK (Bring Your Own Key) Model**: Allows tenants to store encrypted LLM API keys.
--   **Sentinel Proxy (Sidecar)**: A transparent reverse proxy that intercepts LLM API traffic, routes it through Snapwire governance, and operates in `observe`, `audit`, or `enforce` modes. Dockerized as a sidecar service, it injects headers for provenance.
+-   **Sentinel Proxy (Sidecar)**: A transparent reverse proxy that intercepts LLM API traffic, routes it through Snapwire governance, and operates in `observe`, `audit`, or `enforce` modes. Dockerized as a sidecar service, it injects headers for provenance. Auto-detects 9 protocols: OpenAI (+ Mistral, Azure OpenAI), Anthropic, Google Gemini, Cohere, AWS Bedrock, LangChain, MCP, A2A, and Generic JSON-RPC. Registry-based architecture (`@register_protocol` decorator) — adding a new protocol is one function, zero proxy changes.
 
 **Key Features & Implementations:**
 -   **Fuse Breaker**: Detects and blocks recurring tool calls (hallucination loops).
