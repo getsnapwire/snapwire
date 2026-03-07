@@ -204,7 +204,7 @@ FEATURE_NIST_MAP = [
     },
     {
         "number": 24,
-        "name": "Shadow Mode",
+        "name": "Observe & Audit Mode",
         "description": "Rules can be tested in observation mode before enforcement, logging what would be blocked without actually blocking.",
         "nist_categories": ["MEASURE-2.6", "MANAGE-2.3", "MAP-3.5"],
         "evidence": "ConstitutionRule.mode field with enforce/shadow options and shadow-blocked audit status",

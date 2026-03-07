@@ -212,7 +212,7 @@ def generate_safety_pdf():
     discrimination_items = [
         "Constitutional Auditor: Every tool call evaluated against configurable constitutional rules encoding equity and fairness policies",
         "Equity-aware rule templates: Pre-built rule packs include data protection rules to prevent PII leakage and discriminatory data handling",
-        "Shadow Mode: New rules tested in observation mode before enforcement, preventing unintended discriminatory blocking",
+        "Observe & Audit Mode: New rules tested in observation mode before enforcement, preventing unintended discriminatory blocking",
         "Community Rules: Open, peer-reviewed rule contributions ensure diverse perspectives in governance policy",
         "Deception Detection: Heuristic analysis identifies agent circumvention of safety rules through obfuscation",
     ]

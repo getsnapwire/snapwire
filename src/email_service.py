@@ -261,7 +261,7 @@ def send_daily_risk_summary(tenant_id, stats, high_risk_events, shadow_blocks, d
                 </div>
             </div>
             {'<div style="margin-bottom:24px;"><p style="font-weight:600;color:#1e293b;margin:0 0 12px;">High Risk Events</p><table style="width:100%;border-collapse:collapse;font-size:13px;background:white;border-radius:6px;border:1px solid #e2e8f0;"><thead><tr style="background:#f1f5f9;"><th style="padding:8px 12px;text-align:left;">Tool</th><th style="padding:8px 12px;text-align:left;">Agent</th><th style="padding:8px 12px;text-align:left;">Risk</th><th style="padding:8px 12px;text-align:left;">Status</th></tr></thead><tbody>' + risk_rows + '</tbody></table></div>' if risk_rows else ''}
-            {'<div style="margin-bottom:16px;padding:12px;background:#fefce8;border-radius:6px;border:1px solid #fde68a;"><p style="margin:0 0 8px 0;font-weight:600;color:#92400e;">Shadow Mode Blocks (' + str(shadow) + ')</p><p style="margin:0 0 8px 0;color:#78716c;font-size:13px;">These would have been blocked in enforcement mode:</p><ul style="margin:0;padding-left:20px;">' + shadow_rows + '</ul></div>' if shadow_rows else ''}
+            {'<div style="margin-bottom:16px;padding:12px;background:#fefce8;border-radius:6px;border:1px solid #fde68a;"><p style="margin:0 0 8px 0;font-weight:600;color:#92400e;">Observe & Audit Blocks (' + str(shadow) + ')</p><p style="margin:0 0 8px 0;color:#78716c;font-size:13px;">These would have been blocked in enforcement mode:</p><ul style="margin:0;padding-left:20px;">' + shadow_rows + '</ul></div>' if shadow_rows else ''}
             {deception_section}
             {honeypot_section}
         </div>

@@ -206,7 +206,7 @@
             <a href="#webhooks">Webhooks</a>
             <h3>Advanced</h3>
             <a href="#loop-detection">Loop Detection</a>
-            <a href="#shadow-mode">Shadow Mode</a>
+            <a href="#shadow-mode">Observe & Audit Mode</a>
             <a href="#trust-rules">Trust Rules</a>
             <a href="#snap-tokens">Snap-Tokens</a>
             <a href="#config-export-import">Config Export/Import</a>
@@ -509,15 +509,15 @@ if allowed:
   ]
 }</pre>
 
-            <h2 id="shadow-mode">Shadow Mode</h2>
-            <p>Shadow Mode lets you observe what Snapwire <em>would</em> block without actually blocking anything. All tool calls pass through, but violations are logged as <code class="inline-code">shadow-blocked</code> in the audit log. This is ideal for onboarding new rules, testing configurations, or monitoring agents in production without disrupting their work.</p>
+            <h2 id="shadow-mode">Observe & Audit Mode</h2>
+            <p>Observe & Audit Mode lets you observe what Snapwire <em>would</em> block without actually blocking anything. All tool calls pass through, but violations are logged as <code class="inline-code">shadow-blocked</code> in the audit log. This is ideal for onboarding new rules, testing configurations, or monitoring agents in production without disrupting their work.</p>
 
             <h3>Modes</h3>
-            <p><strong>Shadow (observe)</strong> — All tool calls are allowed. Violations are logged but not enforced. Responses include <code class="inline-code">"shadow_mode": true</code>.</p>
+            <p><strong>Observe & Audit</strong> — All tool calls are allowed. Violations are logged but not enforced. Responses include <code class="inline-code">"shadow_mode": true</code>.</p>
             <p><strong>Enforce (block)</strong> — Violations are actively blocked. This is the default production mode.</p>
             <p><strong>Disabled</strong> — No rule evaluation occurs (not recommended).</p>
 
-            <h3>Get Shadow Mode Status</h3>
+            <h3>Get Observe & Audit Mode Status</h3>
             <div class="endpoint-card">
                 <span class="endpoint-method method-get">GET</span>
                 <span class="endpoint-path">/api/settings/shadow-mode</span>
@@ -530,14 +530,14 @@ if allowed:
   "changed_by": 1
 }</pre>
 
-            <h3>Toggle Shadow Mode</h3>
+            <h3>Toggle Observe & Audit Mode</h3>
             <div class="endpoint-card">
                 <span class="endpoint-method method-patch">PATCH</span>
                 <span class="endpoint-path">/api/settings/shadow-mode</span>
             </div>
             <table class="param-table">
                 <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
-                <tr><td>enabled</td><td class="type">boolean</td><td>Set to <code class="inline-code">true</code> for shadow mode, <code class="inline-code">false</code> for enforce mode. Omit to toggle.</td></tr>
+                <tr><td>enabled</td><td class="type">boolean</td><td>Set to <code class="inline-code">true</code> for observe & audit mode, <code class="inline-code">false</code> for enforce mode. Omit to toggle.</td></tr>
             </table>
             <div class="response-label">Response</div>
             <pre><span class="lang-tag">JSON</span>

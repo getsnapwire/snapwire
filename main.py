@@ -86,14 +86,27 @@ def require_admin(f):
     return decorated_function
 
 
+def _is_platform_admin(email):
+    admin_raw = os.environ.get("ADMIN_EMAIL", "").strip()
+    if not admin_raw:
+        return False
+    admin_emails = [e.strip().lower() for e in admin_raw.split(",") if e.strip()]
+    return (email or "").strip().lower() in admin_emails
+
+
+def _get_admin_emails():
+    admin_raw = os.environ.get("ADMIN_EMAIL", "").strip()
+    if not admin_raw:
+        return []
+    return [e.strip().lower() for e in admin_raw.split(",") if e.strip()]
+
+
 def require_platform_admin(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
             return jsonify({"error": "Authentication required"}), 401
-        admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
-        user_email = (current_user.email or "").strip().lower()
-        if not admin_email or user_email != admin_email:
+        if not _is_platform_admin(current_user.email):
             return jsonify({"error": "Platform admin access required"}), 403
         return f(*args, **kwargs)
     return decorated_function
@@ -423,9 +436,7 @@ def dashboard():
         return redirect(url_for("tos_page"))
     is_self_hosted = not os.environ.get("REPL_ID")
     auto_key = session.pop('_local_auto_key', None)
-    admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
-    user_email = (current_user.email or "").strip().lower()
-    is_platform_admin = bool(admin_email and user_email == admin_email)
+    is_platform_admin = _is_platform_admin(current_user.email)
 
     substantial_mod_alert = False
     try:
@@ -446,17 +457,22 @@ def dashboard():
 
 @app.route("/admin-agent", methods=["GET", "POST"])
 def admin_agent():
-    admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
-    if not admin_email:
+    admin_emails = _get_admin_emails()
+    if not admin_emails:
         return "ADMIN_EMAIL environment variable not set.", 403
 
     if current_user.is_authenticated:
-        if (current_user.email or "").lower() == admin_email and current_user.role == 'admin':
+        if _is_platform_admin(current_user.email) and current_user.role == 'admin':
             return redirect("/")
         return redirect("/")
 
-    existing = User.query.filter_by(email=admin_email).first()
+    admin_email = admin_emails[0]
+
+    existing = User.query.filter(
+        db.func.lower(User.email).in_(admin_emails)
+    ).first()
     if existing:
+        admin_email = existing.email.strip().lower()
         if request.method == "POST":
             password = request.form.get("password", "")
             if existing.check_password(password):
@@ -505,14 +521,20 @@ def admin_agent():
 def admin_magic_link():
     import secrets
     from datetime import datetime as _dt, timedelta
-    admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
-    if not admin_email:
+    admin_emails = _get_admin_emails()
+    if not admin_emails:
         return jsonify({"error": "ADMIN_EMAIL not configured"}), 403
+
+    request_email = (request.json or {}).get("email", "").strip().lower() if request.is_json else ""
+    if request_email and request_email in admin_emails:
+        target_email = request_email
+    else:
+        target_email = admin_emails[0]
 
     token = secrets.token_urlsafe(48)
     expires = _dt.now() + timedelta(minutes=15)
 
-    existing = User.query.filter_by(email=admin_email).first()
+    existing = User.query.filter_by(email=target_email).first()
     if existing:
         existing.password_reset_token = f"magic:{token}"
         existing.password_reset_expires_at = expires
@@ -521,7 +543,7 @@ def admin_magic_link():
         from src.tenant import ensure_personal_tenant
         user = User(
             id=str(_uuid_mod.uuid4()),
-            email=admin_email,
+            email=target_email,
             first_name="Admin",
             auth_provider='local',
             role='admin',
@@ -548,30 +570,33 @@ def admin_magic_link():
             <p style="color:#888;font-size:13px;">Or copy this link: {magic_url}</p>
             <p style="color:#888;font-size:12px;margin-top:24px;">This link expires in 15 minutes.</p>
         </div>"""
-        send_email("[Snapwire] Your sign-in link", text_body, html_body, to_email=admin_email)
+        send_email("[Snapwire] Your sign-in link", text_body, html_body, to_email=target_email)
     except Exception as e:
         logging.warning(f"Failed to send magic link email: {e}")
         return jsonify({"error": "Failed to send email. Check email configuration."}), 500
 
-    return jsonify({"message": "Sign-in link sent", "email": admin_email})
+    return jsonify({"message": "Sign-in link sent", "email": target_email})
 
 
 @app.route("/admin-agent/verify/<token>")
 def admin_verify_magic_link(token):
     from datetime import datetime as _dt
-    admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
-    if not admin_email:
+    admin_emails = _get_admin_emails()
+    if not admin_emails:
         return "ADMIN_EMAIL not configured.", 403
 
-    user = User.query.filter_by(email=admin_email).first()
-    if not user or user.password_reset_token != f"magic:{token}":
-        return render_template("admin_login.html", admin_email=admin_email, error="Invalid or expired sign-in link. Please request a new one.")
+    user = User.query.filter(
+        db.func.lower(User.email).in_(admin_emails),
+        User.password_reset_token == f"magic:{token}"
+    ).first()
+    if not user:
+        return render_template("admin_login.html", admin_email=admin_emails[0], error="Invalid or expired sign-in link. Please request a new one.")
 
     if user.password_reset_expires_at and user.password_reset_expires_at < _dt.now():
         user.password_reset_token = None
         user.password_reset_expires_at = None
         db.session.commit()
-        return render_template("admin_login.html", admin_email=admin_email, error="This sign-in link has expired. Please request a new one.")
+        return render_template("admin_login.html", admin_email=user.email, error="This sign-in link has expired. Please request a new one.")
 
     user.password_reset_token = None
     user.password_reset_expires_at = None
@@ -4952,9 +4977,11 @@ def _startup_env_check():
         handler.setFormatter(logging.Formatter("%(message)s"))
         logger.addHandler(handler)
 
-    admin_email = os.environ.get("ADMIN_EMAIL", "").strip()
-    if not admin_email:
+    admin_emails = _get_admin_emails()
+    if not admin_emails:
         logger.warning("\033[91m[STARTUP] ADMIN_EMAIL is not set — admin access will be unavailable\033[0m")
+    else:
+        logger.info(f"\033[92m[STARTUP] ADMIN_EMAIL configured for: {', '.join(admin_emails)}\033[0m")
 
     db_url = os.environ.get("DATABASE_URL", "").strip()
     if not db_url:
@@ -5906,9 +5933,9 @@ def api_admin_system_health():
         "detail": f"{hosting} — Python {_plat.python_version()} — {_plat.system()} {_plat.machine()}",
     }
 
-    admin_email = os.environ.get("ADMIN_EMAIL", "").strip()
-    if admin_email:
-        checks["admin_email"] = {"status": "green", "label": "Admin Email", "detail": admin_email}
+    admin_emails = _get_admin_emails()
+    if admin_emails:
+        checks["admin_email"] = {"status": "green", "label": "Admin Email", "detail": ", ".join(admin_emails)}
     else:
         checks["admin_email"] = {"status": "red", "label": "Admin Email", "detail": "ADMIN_EMAIL not set — required for platform admin access"}
 

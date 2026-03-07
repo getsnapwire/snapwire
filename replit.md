@@ -14,7 +14,8 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 
 **Core Architectural Patterns & Decisions:**
 -   **Multi-Tenancy**: Implemented at the database level with `tenant_id` columns.
--   **Authentication**: Auto-detects environment, using Replit Auth or local username/password with bcrypt.
+-   **Authentication**: Auto-detects environment, using Replit Auth or local username/password with bcrypt. Super admin access via `/admin-agent` route.
+-   **Multi-Admin Support**: `ADMIN_EMAIL` supports comma-separated emails for multiple super admins (e.g., `hello@getsnapwire.com,fastfitness4u@gmail.com`).
 -   **LLM Provider Layer**: Unified adapter for Anthropic Claude and OpenAI GPT.
 -   **Email Layer**: Supports Replit Mail, SMTP, or console logging.
 -   **Database**: PostgreSQL (preferred) or SQLite.

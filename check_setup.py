@@ -20,9 +20,13 @@ def color(text, c):
 def check_required():
     results = []
 
-    admin_email = os.environ.get("ADMIN_EMAIL", "").strip()
-    if admin_email:
-        results.append(("PASS", "ADMIN_EMAIL", f"Set to {admin_email}"))
+    admin_raw = os.environ.get("ADMIN_EMAIL", "").strip()
+    if admin_raw:
+        admin_emails = [e.strip() for e in admin_raw.split(",") if e.strip()]
+        if len(admin_emails) == 1:
+            results.append(("PASS", "ADMIN_EMAIL", f"Set to {admin_emails[0]}"))
+        else:
+            results.append(("PASS", "ADMIN_EMAIL", f"Set to {len(admin_emails)} admins: {', '.join(admin_emails)}"))
     else:
         results.append(("FAIL", "ADMIN_EMAIL", "Missing — required for admin access and platform security"))
 
