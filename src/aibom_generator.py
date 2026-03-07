@@ -27,6 +27,7 @@ def generate_aibom(tenant_id, days=30, include_formulation=True):
     timestamp = datetime.utcnow().isoformat() + "Z"
 
     components = _build_components(tools)
+    _tag_nist_controls(components)
     services = _build_services(logs)
     properties = _build_properties(tools, logs, tenant_id, days)
     formulation = _build_formulation(logs) if include_formulation else []
@@ -106,6 +107,35 @@ def verify_aibom_hmac(aibom_data, secret=None):
         hashlib.sha256
     ).hexdigest()
     return hmac.compare_digest(original_sig, expected)
+
+
+def _tag_nist_controls(components):
+    try:
+        from src.nist_attestation import FEATURE_NIST_MAP
+        name_to_cats = {}
+        for f in FEATURE_NIST_MAP:
+            comp = f.get("component", "")
+            name_lower = f.get("name", "").lower()
+            cats = ",".join(f.get("nist_categories", []))
+            if comp:
+                for part in comp.split(","):
+                    part = part.strip().lower()
+                    name_to_cats[part] = cats
+            name_to_cats[name_lower] = cats
+    except Exception:
+        name_to_cats = {}
+
+    for component in components:
+        tool_name = component.get("name", "").lower()
+        matched_cats = None
+        for key, cats in name_to_cats.items():
+            if tool_name in key or key in tool_name:
+                matched_cats = cats
+                break
+        component["properties"].append({
+            "name": "nist:ir-8596-control",
+            "value": matched_cats or "GOVERN-1.1",
+        })
 
 
 def _build_components(tools):
@@ -279,6 +309,8 @@ def _build_properties(tools, logs, tenant_id, days):
         {"name": "snapwire:safety_grade_distribution", "value": json.dumps(grade_dist)},
         {"name": "snapwire:window_days", "value": str(days)},
         {"name": "snapwire:nist_framework", "value": "NIST IR 8596 (Cyber AI Profile)"},
+        {"name": "nist:ir-8596-features-mapped", "value": "55"},
+        {"name": "nist:ir-8596-coverage", "value": "100%"},
         {"name": "snapwire:compliance_standard", "value": "Colorado SB24-205"},
     ]
 

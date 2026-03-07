@@ -311,7 +311,7 @@ class SentinelProxy:
             forward_headers["X-Snapwire-Trace"] = trace_id
             if self.signing_secret:
                 ts = str(int(time.time()))
-                sig_payload = f"{trace_id}.{ts}.{request.path}"
+                sig_payload = f"{self.agent_id}.{trace_id}.{ts}.{request.path}"
                 signature = hmac.new(
                     self.signing_secret.encode(),
                     sig_payload.encode(),

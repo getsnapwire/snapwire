@@ -440,8 +440,8 @@ FEATURE_EU_MAP = [
     {
         "number": 55,
         "name": "Snapwire CLI",
-        "eu_articles": ["ART-17", "ART-9", "ART-15"],
-        "evidence": "Professional CLI with preflight validation, quality management tooling, and secure deployment workflow supporting risk management and cybersecurity posture",
+        "eu_articles": ["ART-17", "ART-9", "ART-11", "ART-15"],
+        "evidence": "Professional CLI with four commands: init (config + .env.example), check (preflight + Regulatory Readiness), up (Flask + Sentinel Proxy by default), aibom (CycloneDX v1.7 AIBOM generation for technical documentation). Supports quality management, risk management, technical documentation, and cybersecurity posture",
     },
 ]
 

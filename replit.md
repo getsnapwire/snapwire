@@ -24,9 +24,9 @@ Snapwire is built with a Python Flask backend, utilizing SQLAlchemy ORM for data
 -   **Telemetry**: Opt-in anonymous usage data collection.
 -   **Snap-Token Acknowledgment Gate**: Requires user acknowledgment of responsibility before first Snap-Token creation.
 -   **Python SDK**: An installable SDK package for programmatic interaction.
--   **Compliance Integration**: Features align with NISTIR 8596 and EU AI Act, including PDF compliance reports, automated tagging, and an AIBOM Generator (CycloneDX v1.7).
+-   **Compliance Integration**: Features align with NISTIR 8596 and EU AI Act, including PDF compliance reports, automated tagging, and an AIBOM Generator (CycloneDX v1.7 with `nist:ir-8596-control` tags on every component and global `nist:ir-8596-features-mapped: 55` / `nist:ir-8596-coverage: 100%` properties).
 -   **BYOK (Bring Your Own Key) Model**: Allows tenants to store encrypted LLM API keys.
--   **Sentinel Proxy (Sidecar)**: A Dockerized, transparent reverse proxy that intercepts LLM API traffic, routes it through Snapwire governance, and operates in `observe`, `audit`, or `enforce` modes. It supports 9 auto-detected protocols (OpenAI, Anthropic, Google Gemini, Cohere, AWS Bedrock, LangChain, MCP, A2A, Generic JSON-RPC) and allows custom protocol detectors via a registry-based architecture and a "Detector Lab" UI for on-the-fly generation. It injects headers for provenance and tracks latency.
+-   **Sentinel Proxy (Sidecar)**: A Dockerized, transparent reverse proxy that intercepts LLM API traffic, routes it through Snapwire governance, and operates in `observe`, `audit`, or `enforce` modes. It supports 9 auto-detected protocols (OpenAI, Anthropic, Google Gemini, Cohere, AWS Bedrock, LangChain, MCP, A2A, Generic JSON-RPC) and allows custom protocol detectors via a registry-based architecture and a "Detector Lab" UI for on-the-fly generation. It injects headers for provenance and tracks latency. The `X-Snapwire-Signature` header includes `agent_id` in the HMAC payload (`agent_id.trace_id.timestamp.path`) for operator-traceable digital watermarking.
 -   **Engine Room**: A super-admin dashboard with system health monitoring, batch ingestor UI, chaos lab, global burn meter, stealth control, telemetry, HITL evidence, detector lab, latency monitor, and shadow agents.
 -   **Three-Tier Role Model**: Platform Admin, Workspace Owner, and Viewer roles.
 
@@ -37,6 +37,7 @@ Snapwire is built with a Python Flask backend, utilizing SQLAlchemy ORM for data
 -   **Compliance & Governance**: Deployer Compliance Portal, Consequentiality Tagging, Headless Compliance API Docs, Legal Counsel Acknowledgment Gate, Substantial Modification Trigger.
 -   **System Operations**: Batch Ingestor (processes MCP tool schemas), Self-Correction Loop (manages auto-healed schemas), Watchdog Script (automated ingestor runs), Environment Validator, System Health Tab, Live NIST Enforcement Heatmap, Unmanaged Agent Discovery (Shadow Agents).
 -   **User Experience**: Enhanced Onboarding Overlay, API Docs Try It Playground, Snapwire CLI for setup and management.
+-   **Snapwire CLI**: Typer-based CLI (`snapwire_cli.py`) with four commands: `snapwire init` (generates `.snapwire.yaml` config and `.env.example`), `snapwire check` (preflight validation with Regulatory Readiness summary: 55/55 features, NIST 100%, EU AI Act 100%), `snapwire up` (starts Flask + Sentinel Proxy by default with `SNAPWIRE SECURED` banner; `--no-proxy` to disable), `snapwire aibom` (generates CycloneDX v1.7 AIBOM JSON with NIST IR 8596 control tags). Rich-formatted terminal output.
 
 ## External Dependencies
 -   **Database**: PostgreSQL, SQLite

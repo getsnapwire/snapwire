@@ -1,0 +1,1120 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:a2bad5d4-3ddc-4398-8e92-b200a4aa6e20",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-03-07T23:19:54.834567Z",
+    "tools": [
+      {
+        "vendor": "Snapwire",
+        "name": "Snapwire",
+        "version": "1.0.0"
+      }
+    ],
+    "component": {
+      "type": "application",
+      "name": "snapwire-tenant-global",
+      "version": "1.0.0",
+      "description": "AIBOM for tenant all tenants \u2014 30-day window"
+    },
+    "properties": [
+      {
+        "name": "snapwire:tenant_id",
+        "value": "global"
+      },
+      {
+        "name": "snapwire:window_days",
+        "value": "30"
+      },
+      {
+        "name": "snapwire:generated_at",
+        "value": "2026-03-07T23:19:54.834567Z"
+      }
+    ]
+  },
+  "components": [],
+  "services": [
+    {
+      "name": "check_metrics",
+      "description": "Tool service observed 2 times across 1 agent(s)",
+      "properties": [
+        {
+          "name": "snapwire:call_count",
+          "value": "2"
+        },
+        {
+          "name": "snapwire:avg_risk_score",
+          "value": "2.0"
+        },
+        {
+          "name": "snapwire:unique_agents",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:first_seen",
+          "value": "2026-02-27T01:30:05.756083Z"
+        },
+        {
+          "name": "snapwire:last_seen",
+          "value": "2026-02-27T01:35:05.756083Z"
+        },
+        {
+          "name": "snapwire:status:allowed",
+          "value": "2"
+        },
+        {
+          "name": "sn:configuration_item",
+          "value": "snapwire-service:check_metrics"
+        },
+        {
+          "name": "sn:risk_level",
+          "value": "low"
+        },
+        {
+          "name": "sn:impact_category",
+          "value": "low"
+        }
+      ]
+    },
+    {
+      "name": "send_email",
+      "description": "Tool service observed 1 times across 1 agent(s)",
+      "properties": [
+        {
+          "name": "snapwire:call_count",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:avg_risk_score",
+          "value": "88.0"
+        },
+        {
+          "name": "snapwire:unique_agents",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:first_seen",
+          "value": "2026-02-27T01:25:05.756083Z"
+        },
+        {
+          "name": "snapwire:last_seen",
+          "value": "2026-02-27T01:25:05.756083Z"
+        },
+        {
+          "name": "snapwire:status:blocked",
+          "value": "1"
+        },
+        {
+          "name": "sn:configuration_item",
+          "value": "snapwire-service:send_email"
+        },
+        {
+          "name": "sn:risk_level",
+          "value": "high"
+        },
+        {
+          "name": "sn:impact_category",
+          "value": "high"
+        }
+      ]
+    },
+    {
+      "name": "send_notification",
+      "description": "Tool service observed 1 times across 1 agent(s)",
+      "properties": [
+        {
+          "name": "snapwire:call_count",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:avg_risk_score",
+          "value": "5.0"
+        },
+        {
+          "name": "snapwire:unique_agents",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:first_seen",
+          "value": "2026-02-27T01:20:05.756083Z"
+        },
+        {
+          "name": "snapwire:last_seen",
+          "value": "2026-02-27T01:20:05.756083Z"
+        },
+        {
+          "name": "snapwire:status:allowed",
+          "value": "1"
+        },
+        {
+          "name": "sn:configuration_item",
+          "value": "snapwire-service:send_notification"
+        },
+        {
+          "name": "sn:risk_level",
+          "value": "low"
+        },
+        {
+          "name": "sn:impact_category",
+          "value": "low"
+        }
+      ]
+    },
+    {
+      "name": "deploy_to_production",
+      "description": "Tool service observed 1 times across 1 agent(s)",
+      "properties": [
+        {
+          "name": "snapwire:call_count",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:avg_risk_score",
+          "value": "82.0"
+        },
+        {
+          "name": "snapwire:unique_agents",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:first_seen",
+          "value": "2026-02-27T01:15:05.756083Z"
+        },
+        {
+          "name": "snapwire:last_seen",
+          "value": "2026-02-27T01:15:05.756083Z"
+        },
+        {
+          "name": "snapwire:status:blocked",
+          "value": "1"
+        },
+        {
+          "name": "sn:configuration_item",
+          "value": "snapwire-service:deploy_to_production"
+        },
+        {
+          "name": "sn:risk_level",
+          "value": "high"
+        },
+        {
+          "name": "sn:impact_category",
+          "value": "high"
+        }
+      ]
+    },
+    {
+      "name": "run_tests",
+      "description": "Tool service observed 2 times across 1 agent(s)",
+      "properties": [
+        {
+          "name": "snapwire:call_count",
+          "value": "2"
+        },
+        {
+          "name": "snapwire:avg_risk_score",
+          "value": "9.0"
+        },
+        {
+          "name": "snapwire:unique_agents",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:first_seen",
+          "value": "2026-02-27T00:55:05.756083Z"
+        },
+        {
+          "name": "snapwire:last_seen",
+          "value": "2026-02-27T01:00:05.756083Z"
+        },
+        {
+          "name": "snapwire:status:allowed",
+          "value": "2"
+        },
+        {
+          "name": "sn:configuration_item",
+          "value": "snapwire-service:run_tests"
+        },
+        {
+          "name": "sn:risk_level",
+          "value": "low"
+        },
+        {
+          "name": "sn:impact_category",
+          "value": "low"
+        }
+      ]
+    },
+    {
+      "name": "read_file",
+      "description": "Tool service observed 1 times across 1 agent(s)",
+      "properties": [
+        {
+          "name": "snapwire:call_count",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:avg_risk_score",
+          "value": "3.0"
+        },
+        {
+          "name": "snapwire:unique_agents",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:first_seen",
+          "value": "2026-02-27T00:50:05.756083Z"
+        },
+        {
+          "name": "snapwire:last_seen",
+          "value": "2026-02-27T00:50:05.756083Z"
+        },
+        {
+          "name": "snapwire:status:allowed",
+          "value": "1"
+        },
+        {
+          "name": "sn:configuration_item",
+          "value": "snapwire-service:read_file"
+        },
+        {
+          "name": "sn:risk_level",
+          "value": "low"
+        },
+        {
+          "name": "sn:impact_category",
+          "value": "low"
+        }
+      ]
+    },
+    {
+      "name": "delete_database",
+      "description": "Tool service observed 2 times across 1 agent(s)",
+      "properties": [
+        {
+          "name": "snapwire:call_count",
+          "value": "2"
+        },
+        {
+          "name": "snapwire:avg_risk_score",
+          "value": "95.0"
+        },
+        {
+          "name": "snapwire:unique_agents",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:first_seen",
+          "value": "2026-02-27T00:40:05.756083Z"
+        },
+        {
+          "name": "snapwire:last_seen",
+          "value": "2026-02-27T00:41:05.756083Z"
+        },
+        {
+          "name": "snapwire:status:blocked",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:status:reasoning-requested",
+          "value": "1"
+        },
+        {
+          "name": "sn:configuration_item",
+          "value": "snapwire-service:delete_database"
+        },
+        {
+          "name": "sn:risk_level",
+          "value": "high"
+        },
+        {
+          "name": "sn:impact_category",
+          "value": "moderate"
+        }
+      ]
+    },
+    {
+      "name": "execute_shell",
+      "description": "Tool service observed 1 times across 1 agent(s)",
+      "properties": [
+        {
+          "name": "snapwire:call_count",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:avg_risk_score",
+          "value": "25.0"
+        },
+        {
+          "name": "snapwire:unique_agents",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:first_seen",
+          "value": "2026-02-27T00:35:05.756083Z"
+        },
+        {
+          "name": "snapwire:last_seen",
+          "value": "2026-02-27T00:35:05.756083Z"
+        },
+        {
+          "name": "snapwire:status:allowed",
+          "value": "1"
+        },
+        {
+          "name": "sn:configuration_item",
+          "value": "snapwire-service:execute_shell"
+        },
+        {
+          "name": "sn:risk_level",
+          "value": "low"
+        },
+        {
+          "name": "sn:impact_category",
+          "value": "low"
+        }
+      ]
+    },
+    {
+      "name": "write_file",
+      "description": "Tool service observed 2 times across 1 agent(s)",
+      "properties": [
+        {
+          "name": "snapwire:call_count",
+          "value": "2"
+        },
+        {
+          "name": "snapwire:avg_risk_score",
+          "value": "13.5"
+        },
+        {
+          "name": "snapwire:unique_agents",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:first_seen",
+          "value": "2026-02-27T00:25:05.756083Z"
+        },
+        {
+          "name": "snapwire:last_seen",
+          "value": "2026-02-27T00:30:05.756083Z"
+        },
+        {
+          "name": "snapwire:status:allowed",
+          "value": "2"
+        },
+        {
+          "name": "sn:configuration_item",
+          "value": "snapwire-service:write_file"
+        },
+        {
+          "name": "sn:risk_level",
+          "value": "low"
+        },
+        {
+          "name": "sn:impact_category",
+          "value": "low"
+        }
+      ]
+    },
+    {
+      "name": "plan_task",
+      "description": "Tool service observed 1 times across 1 agent(s)",
+      "properties": [
+        {
+          "name": "snapwire:call_count",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:avg_risk_score",
+          "value": "5.0"
+        },
+        {
+          "name": "snapwire:unique_agents",
+          "value": "1"
+        },
+        {
+          "name": "snapwire:first_seen",
+          "value": "2026-02-27T00:15:05.756083Z"
+        },
+        {
+          "name": "snapwire:last_seen",
+          "value": "2026-02-27T00:15:05.756083Z"
+        },
+        {
+          "name": "snapwire:status:allowed",
+          "value": "1"
+        },
+        {
+          "name": "sn:configuration_item",
+          "value": "snapwire-service:plan_task"
+        },
+        {
+          "name": "sn:risk_level",
+          "value": "low"
+        },
+        {
+          "name": "sn:impact_category",
+          "value": "low"
+        }
+      ]
+    }
+  ],
+  "properties": [
+    {
+      "name": "snapwire:total_intercepts",
+      "value": "14"
+    },
+    {
+      "name": "snapwire:blocked_count",
+      "value": "3"
+    },
+    {
+      "name": "snapwire:allowed_count",
+      "value": "10"
+    },
+    {
+      "name": "snapwire:held_count",
+      "value": "0"
+    },
+    {
+      "name": "snapwire:block_rate_pct",
+      "value": "21.4"
+    },
+    {
+      "name": "snapwire:avg_risk_score",
+      "value": "31.9"
+    },
+    {
+      "name": "snapwire:unique_agents",
+      "value": "5"
+    },
+    {
+      "name": "snapwire:total_tools",
+      "value": "0"
+    },
+    {
+      "name": "snapwire:consequential_tools",
+      "value": "0"
+    },
+    {
+      "name": "snapwire:safety_grade_distribution",
+      "value": "{}"
+    },
+    {
+      "name": "snapwire:window_days",
+      "value": "30"
+    },
+    {
+      "name": "snapwire:nist_framework",
+      "value": "NIST IR 8596 (Cyber AI Profile)"
+    },
+    {
+      "name": "nist:ir-8596-features-mapped",
+      "value": "55"
+    },
+    {
+      "name": "nist:ir-8596-coverage",
+      "value": "100%"
+    },
+    {
+      "name": "snapwire:compliance_standard",
+      "value": "Colorado SB24-205"
+    },
+    {
+      "name": "snapwire:bom_hash",
+      "value": "b91e3a7a8b7adec2272a7054264e468eed8718fc55f8856ec7181c3180ba12d8"
+    }
+  ],
+  "formulation": [
+    {
+      "components": [
+        {
+          "type": "application",
+          "name": "check_metrics",
+          "properties": [
+            {
+              "name": "snapwire:intent",
+              "value": "Check P99 latency after staging deployment"
+            },
+            {
+              "name": "snapwire:action",
+              "value": "check_metrics:allowed"
+            },
+            {
+              "name": "snapwire:agent_id",
+              "value": "demo-monitor"
+            },
+            {
+              "name": "snapwire:risk_score",
+              "value": "2"
+            },
+            {
+              "name": "snapwire:content_hash",
+              "value": "31850d269d53580b6e40cc659c03f95b5ff75e1e2e02c3b29e48fe89cc14cb88"
+            },
+            {
+              "name": "snapwire:formulation_hash",
+              "value": "0f6c902a0ebf67cc4ea1e8045487bdf72deeba477796f79992b50540df76761c"
+            },
+            {
+              "name": "snapwire:timestamp",
+              "value": "2026-02-27T01:35:05.756083Z"
+            },
+            {
+              "name": "snapwire:parent_agent_id",
+              "value": "demo-deploy-agent"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "type": "application",
+          "name": "check_metrics",
+          "properties": [
+            {
+              "name": "snapwire:intent",
+              "value": "Monitor error rate after staging deployment"
+            },
+            {
+              "name": "snapwire:action",
+              "value": "check_metrics:allowed"
+            },
+            {
+              "name": "snapwire:agent_id",
+              "value": "demo-monitor"
+            },
+            {
+              "name": "snapwire:risk_score",
+              "value": "2"
+            },
+            {
+              "name": "snapwire:content_hash",
+              "value": "08a89577cc0458892c0cffcea3b04d211c43718098e5e79be5d1e641e31e93f6"
+            },
+            {
+              "name": "snapwire:formulation_hash",
+              "value": "216b1ac7fffc59222fa48535ff1d4c976543d0a3cab473ec3e53a751b4fdf500"
+            },
+            {
+              "name": "snapwire:timestamp",
+              "value": "2026-02-27T01:30:05.756083Z"
+            },
+            {
+              "name": "snapwire:parent_agent_id",
+              "value": "demo-deploy-agent"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "type": "application",
+          "name": "send_email",
+          "properties": [
+            {
+              "name": "snapwire:intent",
+              "value": "Share deployment status with external partner"
+            },
+            {
+              "name": "snapwire:action",
+              "value": "send_email:blocked"
+            },
+            {
+              "name": "snapwire:agent_id",
+              "value": "demo-deploy-agent"
+            },
+            {
+              "name": "snapwire:risk_score",
+              "value": "88"
+            },
+            {
+              "name": "snapwire:content_hash",
+              "value": "541b3a48a20e1dee158e27f1a589440607d4d0dcd83b20c7251971056ee93bf2"
+            },
+            {
+              "name": "snapwire:formulation_hash",
+              "value": "6ce262e3c71d8a98c041107e3406b18405b7eee068a6ae1fbc088d2c7457ff31"
+            },
+            {
+              "name": "snapwire:timestamp",
+              "value": "2026-02-27T01:25:05.756083Z"
+            },
+            {
+              "name": "snapwire:parent_agent_id",
+              "value": "demo-orchestrator"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "type": "application",
+          "name": "send_notification",
+          "properties": [
+            {
+              "name": "snapwire:intent",
+              "value": "Notify the team that the deployment is ready for approval"
+            },
+            {
+              "name": "snapwire:action",
+              "value": "send_notification:allowed"
+            },
+            {
+              "name": "snapwire:agent_id",
+              "value": "demo-deploy-agent"
+            },
+            {
+              "name": "snapwire:risk_score",
+              "value": "5"
+            },
+            {
+              "name": "snapwire:content_hash",
+              "value": "fb137850279a80550bb2366785b7800c5652dd3efe1d9871abcd5b866bf33bb6"
+            },
+            {
+              "name": "snapwire:formulation_hash",
+              "value": "97ed50ec05fa5dbc1896c32650a80a92643c14588466859b4ada819255ed4fff"
+            },
+            {
+              "name": "snapwire:timestamp",
+              "value": "2026-02-27T01:20:05.756083Z"
+            },
+            {
+              "name": "snapwire:parent_agent_id",
+              "value": "demo-orchestrator"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "type": "application",
+          "name": "deploy_to_production",
+          "properties": [
+            {
+              "name": "snapwire:intent",
+              "value": "Deploy the reviewed dashboard to production with rolling update"
+            },
+            {
+              "name": "snapwire:action",
+              "value": "deploy_to_production:blocked"
+            },
+            {
+              "name": "snapwire:agent_id",
+              "value": "demo-deploy-agent"
+            },
+            {
+              "name": "snapwire:risk_score",
+              "value": "82"
+            },
+            {
+              "name": "snapwire:content_hash",
+              "value": "4773585159494909f3b95de601fb86a78801a73f0207f1efb0ea2399b3f27eb9"
+            },
+            {
+              "name": "snapwire:formulation_hash",
+              "value": "eb507c0dac6cabac980d930bc3795fc6cbf19a902ff184b4cb3fc5b8b076cdfc"
+            },
+            {
+              "name": "snapwire:timestamp",
+              "value": "2026-02-27T01:15:05.756083Z"
+            },
+            {
+              "name": "snapwire:parent_agent_id",
+              "value": "demo-orchestrator"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "type": "application",
+          "name": "run_tests",
+          "properties": [
+            {
+              "name": "snapwire:intent",
+              "value": "Run integration test suite to validate API endpoints"
+            },
+            {
+              "name": "snapwire:action",
+              "value": "run_tests:allowed"
+            },
+            {
+              "name": "snapwire:agent_id",
+              "value": "demo-reviewer"
+            },
+            {
+              "name": "snapwire:risk_score",
+              "value": "10"
+            },
+            {
+              "name": "snapwire:content_hash",
+              "value": "c9f606ecbc3208dd6dd3cedc29b8fde4f388b54d39164f09da9ae6396860286f"
+            },
+            {
+              "name": "snapwire:formulation_hash",
+              "value": "07390a42865ec166d6a1b9369711f1972926853b50bc0f14140a8b6d6cdd8bf8"
+            },
+            {
+              "name": "snapwire:timestamp",
+              "value": "2026-02-27T01:00:05.756083Z"
+            },
+            {
+              "name": "snapwire:parent_agent_id",
+              "value": "demo-orchestrator"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "type": "application",
+          "name": "run_tests",
+          "properties": [
+            {
+              "name": "snapwire:intent",
+              "value": "Run unit test suite with coverage reporting"
+            },
+            {
+              "name": "snapwire:action",
+              "value": "run_tests:allowed"
+            },
+            {
+              "name": "snapwire:agent_id",
+              "value": "demo-reviewer"
+            },
+            {
+              "name": "snapwire:risk_score",
+              "value": "8"
+            },
+            {
+              "name": "snapwire:content_hash",
+              "value": "3fe82b345cb08f3134e46dbc27bf6ce1e79cf3ec222ff01db732584855757ded"
+            },
+            {
+              "name": "snapwire:formulation_hash",
+              "value": "33f88b5d7b806529cabd84c95390f4fb01bee4acd5e9306a5430133a38ec6ddc"
+            },
+            {
+              "name": "snapwire:timestamp",
+              "value": "2026-02-27T00:55:05.756083Z"
+            },
+            {
+              "name": "snapwire:parent_agent_id",
+              "value": "demo-orchestrator"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "type": "application",
+          "name": "read_file",
+          "properties": [
+            {
+              "name": "snapwire:intent",
+              "value": "Review the dashboard component code for quality and security issues"
+            },
+            {
+              "name": "snapwire:action",
+              "value": "read_file:allowed"
+            },
+            {
+              "name": "snapwire:agent_id",
+              "value": "demo-reviewer"
+            },
+            {
+              "name": "snapwire:risk_score",
+              "value": "3"
+            },
+            {
+              "name": "snapwire:content_hash",
+              "value": "bf22b75218b6a718ee19ceb80e113eeee2f717b72119e3d4f5ae8b6970582ef0"
+            },
+            {
+              "name": "snapwire:formulation_hash",
+              "value": "bf40b6b1663ccd96a27780593dae0057059ae81d1feecf854c59dd37987ab9cb"
+            },
+            {
+              "name": "snapwire:timestamp",
+              "value": "2026-02-27T00:50:05.756083Z"
+            },
+            {
+              "name": "snapwire:parent_agent_id",
+              "value": "demo-orchestrator"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "type": "application",
+          "name": "delete_database",
+          "properties": [
+            {
+              "name": "snapwire:intent",
+              "value": "Clear stale test data from production database"
+            },
+            {
+              "name": "snapwire:action",
+              "value": "delete_database:blocked"
+            },
+            {
+              "name": "snapwire:agent_id",
+              "value": "demo-code-writer"
+            },
+            {
+              "name": "snapwire:risk_score",
+              "value": "95"
+            },
+            {
+              "name": "snapwire:content_hash",
+              "value": "8596f3ea072158004323ef81aaaee1e0ba0ef985011a52f76cd61a9ecb37e46e"
+            },
+            {
+              "name": "snapwire:formulation_hash",
+              "value": "c641055dbc628cd1f1ed18d525198e563e99bc43120f21a360e7836847393482"
+            },
+            {
+              "name": "snapwire:timestamp",
+              "value": "2026-02-27T00:41:05.756083Z"
+            },
+            {
+              "name": "snapwire:parent_agent_id",
+              "value": "demo-orchestrator"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "type": "application",
+          "name": "delete_database",
+          "properties": [
+            {
+              "name": "snapwire:intent",
+              "value": "Clear stale test data from production database"
+            },
+            {
+              "name": "snapwire:action",
+              "value": "delete_database:reasoning-requested"
+            },
+            {
+              "name": "snapwire:agent_id",
+              "value": "demo-code-writer"
+            },
+            {
+              "name": "snapwire:risk_score",
+              "value": "95"
+            },
+            {
+              "name": "snapwire:content_hash",
+              "value": "6353b77ff5775b3ebb59e393dc25d38d04a51b08b68d94cc1421f50d085f2ef9"
+            },
+            {
+              "name": "snapwire:formulation_hash",
+              "value": "c641055dbc628cd1f1ed18d525198e563e99bc43120f21a360e7836847393482"
+            },
+            {
+              "name": "snapwire:timestamp",
+              "value": "2026-02-27T00:40:05.756083Z"
+            },
+            {
+              "name": "snapwire:parent_agent_id",
+              "value": "demo-orchestrator"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "type": "application",
+          "name": "execute_shell",
+          "properties": [
+            {
+              "name": "snapwire:intent",
+              "value": "Install charting library for dashboard graphs"
+            },
+            {
+              "name": "snapwire:action",
+              "value": "execute_shell:allowed"
+            },
+            {
+              "name": "snapwire:agent_id",
+              "value": "demo-code-writer"
+            },
+            {
+              "name": "snapwire:risk_score",
+              "value": "25"
+            },
+            {
+              "name": "snapwire:content_hash",
+              "value": "2ac302234578a83626e3d98ee6d3a5ce4096484d4ea1f0acffe7f77b387bbedc"
+            },
+            {
+              "name": "snapwire:formulation_hash",
+              "value": "60d014f4854959d6a5f1d80c6f0dcff43631da0473bf4317c4332ff63fd6cf28"
+            },
+            {
+              "name": "snapwire:timestamp",
+              "value": "2026-02-27T00:35:05.756083Z"
+            },
+            {
+              "name": "snapwire:parent_agent_id",
+              "value": "demo-orchestrator"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "type": "application",
+          "name": "write_file",
+          "properties": [
+            {
+              "name": "snapwire:intent",
+              "value": "Create API route for fetching user data"
+            },
+            {
+              "name": "snapwire:action",
+              "value": "write_file:allowed"
+            },
+            {
+              "name": "snapwire:agent_id",
+              "value": "demo-code-writer"
+            },
+            {
+              "name": "snapwire:risk_score",
+              "value": "15"
+            },
+            {
+              "name": "snapwire:content_hash",
+              "value": "1678f9cf9bb2ad43185e15247650091d6697ba4fd7ba4e1dd983058ac398fb35"
+            },
+            {
+              "name": "snapwire:formulation_hash",
+              "value": "689ef9b7533ce6cbfe8c9ae862773b1ba2f5ec9c102f7e6cf99d09fd51ab250f"
+            },
+            {
+              "name": "snapwire:timestamp",
+              "value": "2026-02-27T00:30:05.756083Z"
+            },
+            {
+              "name": "snapwire:parent_agent_id",
+              "value": "demo-orchestrator"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "type": "application",
+          "name": "write_file",
+          "properties": [
+            {
+              "name": "snapwire:intent",
+              "value": "Create the main dashboard component with user stats"
+            },
+            {
+              "name": "snapwire:action",
+              "value": "write_file:allowed"
+            },
+            {
+              "name": "snapwire:agent_id",
+              "value": "demo-code-writer"
+            },
+            {
+              "name": "snapwire:risk_score",
+              "value": "12"
+            },
+            {
+              "name": "snapwire:content_hash",
+              "value": "e4fed1f4c4937699504f3364a92e734fe6540e64a80d07fc3ae437ad776d6997"
+            },
+            {
+              "name": "snapwire:formulation_hash",
+              "value": "b1f0dc1ec28a6703525f6282965d687e2b63167b8d716d984f435033450bf74b"
+            },
+            {
+              "name": "snapwire:timestamp",
+              "value": "2026-02-27T00:25:05.756083Z"
+            },
+            {
+              "name": "snapwire:parent_agent_id",
+              "value": "demo-orchestrator"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "type": "application",
+          "name": "plan_task",
+          "properties": [
+            {
+              "name": "snapwire:intent",
+              "value": "Break down the project into subtasks and delegate to specialist agents"
+            },
+            {
+              "name": "snapwire:action",
+              "value": "plan_task:allowed"
+            },
+            {
+              "name": "snapwire:agent_id",
+              "value": "demo-orchestrator"
+            },
+            {
+              "name": "snapwire:risk_score",
+              "value": "5"
+            },
+            {
+              "name": "snapwire:content_hash",
+              "value": "061deb655809a177502225b3c3baf3f2602fd0f5df498a24e28249ca7584fb6e"
+            },
+            {
+              "name": "snapwire:formulation_hash",
+              "value": "e6bcb8b4e6021048d9993f0f37c7b30fde293d7cb8283d91d07abb8e97464410"
+            },
+            {
+              "name": "snapwire:timestamp",
+              "value": "2026-02-27T00:15:05.756083Z"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "signature": {
+    "algorithm": "HMAC-SHA256",
+    "value": "871c6fb2622b44b9a8fb9bda038973018d80d2e5c05f506a306ea82f776fc3c9",
+    "signed_at": "2026-03-07T23:19:54.834567Z"
+  }
+}
