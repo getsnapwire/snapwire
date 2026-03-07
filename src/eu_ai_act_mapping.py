@@ -425,6 +425,18 @@ FEATURE_EU_MAP = [
         "eu_articles": ["ART-13", "ART-14"],
         "evidence": "Mandatory reasoning documentation ensures transparency and oversight completeness",
     },
+    {
+        "number": 53,
+        "name": "Ultra-Low Latency Intercept",
+        "eu_articles": ["ART-15", "ART-9", "ART-12"],
+        "evidence": "Real-time governance overhead monitoring with percentile metrics ensures system accuracy, cybersecurity, and record-keeping of performance characteristics",
+    },
+    {
+        "number": 54,
+        "name": "Unmanaged Agent Discovery",
+        "eu_articles": ["ART-9", "ART-14", "ART-26", "ART-72"],
+        "evidence": "Detection of unregistered AI agents supports risk management, human oversight of unknown actors, deployer obligations, and post-market monitoring",
+    },
 ]
 
 

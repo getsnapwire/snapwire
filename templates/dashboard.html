@@ -1865,6 +1865,8 @@
                 <button class="sub-tab" data-subtab="er-summary" data-group="engine-room">Weekly Summary</button>
                 <button class="sub-tab" data-subtab="er-hitl" data-group="engine-room">HITL Evidence</button>
                 <button class="sub-tab" data-subtab="er-detector" data-group="engine-room" style="color:#00F5D4;">Detector Lab</button>
+                <button class="sub-tab" data-subtab="er-latency" data-group="engine-room" style="color:#40E0FF;">Latency Monitor</button>
+                <button class="sub-tab" data-subtab="er-shadow" data-group="engine-room" style="color:#ff4d4d;">Shadow Agents<span id="shadow-agents-badge" style="display:none;background:#ff4d4d;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;">0</span></button>
             </div>
         </div>
 
@@ -2375,6 +2377,139 @@
                             <tbody id="detector-list-body"></tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-er-latency" class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div>
+                    <h3 style="margin-bottom:4px;">&#x26A1; Latency Monitor</h3>
+                    <p style="color:var(--text-secondary);font-size:13px;">Governance overhead metrics. Target: &lt;10ms intercept latency.</p>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <select id="latency-window-select" onchange="loadLatencyMonitor()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);font-size:13px;">
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d">Last 30 Days</option>
+                    </select>
+                    <button class="btn" onclick="loadLatencyMonitor()" style="background:var(--accent-blue);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Refresh</button>
+                </div>
+            </div>
+
+            <div id="latency-hero" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;text-align:center;">
+                <div style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Median Intercept Latency (p50)</div>
+                <div id="latency-hero-value" style="font-size:48px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-green);">--</div>
+                <div id="latency-hero-badge" style="display:inline-block;margin-top:8px;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:600;"></div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:20px;" id="latency-percentile-cards">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+                    <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">p50</div>
+                    <div id="latency-p50" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-green);">--</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">ms</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+                    <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">p95</div>
+                    <div id="latency-p95" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--accent-blue);">--</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">ms</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+                    <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">p99</div>
+                    <div id="latency-p99" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:#FF6B00;">--</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">ms</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+                    <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Average</div>
+                    <div id="latency-avg" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--text-primary);">--</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">ms</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+                    <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Min / Max</div>
+                    <div id="latency-minmax" style="font-size:20px;font-weight:700;font-family:'Fira Code',monospace;color:var(--text-primary);">--</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">ms</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+                    <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Total Requests</div>
+                    <div id="latency-count" style="font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:var(--text-primary);">--</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">intercepts</div>
+                </div>
+            </div>
+
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
+                <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Breakdown by Status</h4>
+                <div id="latency-by-status" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
+                    <div style="text-align:center;color:var(--text-secondary);padding:20px;font-size:13px;">Loading...</div>
+                </div>
+            </div>
+
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Top Agents by Latency</h4>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Agent</th>
+                                <th>Requests</th>
+                                <th>p50</th>
+                                <th>p95</th>
+                                <th>p99</th>
+                                <th>Avg</th>
+                            </tr>
+                        </thead>
+                        <tbody id="latency-agent-body">
+                            <tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:24px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="latency-loading" style="display:none;text-align:center;padding:40px;color:var(--text-secondary);font-size:14px;">Loading latency data...</div>
+        </div>
+
+        <div id="panel-er-shadow" class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div>
+                    <h3 style="margin-bottom:4px;">&#x1F47B; Shadow Agents</h3>
+                    <p style="color:var(--text-secondary);font-size:13px;">Unmanaged agents detected hitting your intercept endpoint without a registered API key.</p>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <select id="shadow-status-filter" onchange="loadShadowAgents()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);font-size:13px;">
+                        <option value="">All Statuses</option>
+                        <option value="unmanaged">Unmanaged</option>
+                        <option value="acknowledged">Acknowledged</option>
+                        <option value="enrolled">Enrolled</option>
+                    </select>
+                    <button class="btn" onclick="loadShadowAgents()" style="background:var(--accent-blue);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Refresh</button>
+                </div>
+            </div>
+
+            <div id="shadow-hero" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;text-align:center;">
+                <div style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Unmanaged Agents Detected</div>
+                <div id="shadow-hero-value" style="font-size:48px;font-weight:700;font-family:'Fira Code',monospace;color:#ff4d4d;">--</div>
+                <div id="shadow-hero-subtitle" style="font-size:13px;color:var(--text-secondary);margin-top:6px;">Loading...</div>
+            </div>
+
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Agent Sightings</h4>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Agent ID</th>
+                                <th>First Seen</th>
+                                <th>Last Seen</th>
+                                <th>Sightings</th>
+                                <th>Last Tool</th>
+                                <th>Source IP</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shadow-agents-body">
+                            <tr><td colspan="8" style="text-align:center;color:var(--text-secondary);padding:24px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -3476,7 +3611,7 @@ def handle_tool_call(tool_call):
             'agents-group': ['agents', 'analytics'],
             'security': ['vault', 'honeypots', 'blast', 'holdwindow', 'catalog', 'risk', 'autotriage', 'taintpulse', 'stealth'],
             'settings-group': ['keys', 'llm', 'org', 'account', 'settings', 'admin', 'contacts'],
-            'engine-room': ['er-health', 'er-ingestor', 'er-chaos', 'er-burn', 'er-stealth', 'er-telemetry', 'er-summary', 'er-hitl', 'er-detector']
+            'engine-room': ['er-health', 'er-ingestor', 'er-chaos', 'er-burn', 'er-stealth', 'er-telemetry', 'er-summary', 'er-hitl', 'er-detector', 'er-latency', 'er-shadow']
         };
 
         let activeSubTabs = {};
@@ -3522,6 +3657,8 @@ def handle_tool_call(tool_call):
             if (name === 'er-burn') loadGlobalBurn();
             if (name === 'er-stealth') loadStealthControl();
             if (name === 'er-telemetry') loadAdminTab();
+            if (name === 'er-latency') loadLatencyMonitor();
+            if (name === 'er-shadow') loadShadowAgents();
         }
 
         document.querySelectorAll('.tab[data-tab]').forEach(tab => {
@@ -7621,6 +7758,91 @@ def handle_tool_call(tool_call):
             }
         }
 
+        var _latencyAutoRefreshTimer = null;
+        async function loadLatencyMonitor() {
+            if (_latencyAutoRefreshTimer) clearInterval(_latencyAutoRefreshTimer);
+            _latencyAutoRefreshTimer = setInterval(loadLatencyMonitor, 30000);
+            var windowSel = document.getElementById('latency-window-select');
+            var window = windowSel ? windowSel.value : '24h';
+            try {
+                var res = await fetch('/api/admin/latency-stats?window=' + window);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                var data = await res.json();
+                var o = data.overall || {};
+                var p50Val = o.p50 || 0;
+                document.getElementById('latency-hero-value').textContent = p50Val.toFixed(2) + ' ms';
+                var badge = document.getElementById('latency-hero-badge');
+                if (p50Val > 0 && p50Val < 10) {
+                    badge.textContent = 'UNDER TARGET (<10ms)';
+                    badge.style.background = 'rgba(0,245,212,0.15)';
+                    badge.style.color = 'var(--accent-green)';
+                    badge.style.border = '1px solid rgba(0,245,212,0.3)';
+                    document.getElementById('latency-hero-value').style.color = 'var(--accent-green)';
+                } else if (p50Val >= 10) {
+                    badge.textContent = 'ABOVE TARGET (>=10ms)';
+                    badge.style.background = 'rgba(255,77,77,0.15)';
+                    badge.style.color = '#ff4d4d';
+                    badge.style.border = '1px solid rgba(255,77,77,0.3)';
+                    document.getElementById('latency-hero-value').style.color = '#ff4d4d';
+                } else {
+                    badge.textContent = 'NO DATA';
+                    badge.style.background = 'rgba(255,255,255,0.05)';
+                    badge.style.color = 'var(--text-secondary)';
+                    badge.style.border = '1px solid var(--border)';
+                    document.getElementById('latency-hero-value').style.color = 'var(--text-secondary)';
+                }
+                document.getElementById('latency-p50').textContent = (o.p50 || 0).toFixed(2);
+                document.getElementById('latency-p95').textContent = (o.p95 || 0).toFixed(2);
+                document.getElementById('latency-p99').textContent = (o.p99 || 0).toFixed(2);
+                document.getElementById('latency-avg').textContent = (o.avg || 0).toFixed(2);
+                document.getElementById('latency-minmax').textContent = (o.min || 0).toFixed(2) + ' / ' + (o.max || 0).toFixed(2);
+                document.getElementById('latency-count').textContent = (o.count || 0).toLocaleString();
+
+                var statusColors = { allowed: 'var(--accent-green)', blocked: '#ff4d4d', held: 'var(--accent-yellow)', other: 'var(--text-secondary)' };
+                var statusEl = document.getElementById('latency-by-status');
+                var byStatus = data.by_status || {};
+                var statusKeys = Object.keys(byStatus);
+                if (statusKeys.length === 0) {
+                    statusEl.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px;font-size:13px;">No data for this time window.</div>';
+                } else {
+                    statusEl.innerHTML = statusKeys.map(function(k) {
+                        var s = byStatus[k];
+                        var col = statusColors[k] || 'var(--text-primary)';
+                        return '<div style="background:var(--bg-secondary);border-radius:10px;padding:16px;">' +
+                            '<div style="font-size:13px;font-weight:600;color:' + col + ';text-transform:uppercase;margin-bottom:10px;">' + k + ' (' + s.count + ')</div>' +
+                            '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px;font-family:\'Fira Code\',monospace;">' +
+                            '<div><span style="color:var(--text-secondary);">p50</span><br>' + s.p50.toFixed(2) + '</div>' +
+                            '<div><span style="color:var(--text-secondary);">p95</span><br>' + s.p95.toFixed(2) + '</div>' +
+                            '<div><span style="color:var(--text-secondary);">p99</span><br>' + s.p99.toFixed(2) + '</div>' +
+                            '</div></div>';
+                    }).join('');
+                }
+
+                var agentBody = document.getElementById('latency-agent-body');
+                var byAgent = data.by_agent || {};
+                var agentKeys = Object.keys(byAgent);
+                if (agentKeys.length === 0) {
+                    agentBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:24px;">No agent latency data.</td></tr>';
+                } else {
+                    agentBody.innerHTML = agentKeys.map(function(aid) {
+                        var a = byAgent[aid];
+                        return '<tr>' +
+                            '<td style="font-family:\'Fira Code\',monospace;font-size:12px;">' + aid + '</td>' +
+                            '<td>' + a.count + '</td>' +
+                            '<td>' + a.p50.toFixed(2) + '</td>' +
+                            '<td>' + a.p95.toFixed(2) + '</td>' +
+                            '<td>' + a.p99.toFixed(2) + '</td>' +
+                            '<td>' + a.avg.toFixed(2) + '</td>' +
+                            '</tr>';
+                    }).join('');
+                }
+            } catch(e) {
+                console.error('Failed to load latency monitor', e);
+                document.getElementById('latency-hero-value').textContent = 'Error';
+                document.getElementById('latency-hero-value').style.color = '#ff4d4d';
+            }
+        }
+
         async function toggleGlobalStealth(enabled) {
             try {
                 await fetch('/api/admin/stealth-mode', {
@@ -8532,6 +8754,100 @@ if (result.status === "allowed") {
                 };
             }
         })();
+
+        let _shadowAgentsTimer = null;
+
+        async function loadShadowAgents() {
+            const statusFilter = document.getElementById('shadow-status-filter').value;
+            const url = '/api/admin/unmanaged-agents' + (statusFilter ? '?status=' + statusFilter : '');
+            try {
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error('Failed to load');
+                const data = await resp.json();
+                const agents = data.unmanaged_agents || [];
+
+                const unmanagedCount = agents.filter(a => a.status === 'unmanaged').length;
+                document.getElementById('shadow-hero-value').textContent = unmanagedCount;
+                document.getElementById('shadow-hero-value').style.color = unmanagedCount > 0 ? '#ff4d4d' : 'var(--accent-green)';
+                document.getElementById('shadow-hero-subtitle').textContent = agents.length + ' total sightings across all statuses';
+
+                const badge = document.getElementById('shadow-agents-badge');
+                if (unmanagedCount > 0) {
+                    badge.style.display = 'inline';
+                    badge.textContent = unmanagedCount;
+                } else {
+                    badge.style.display = 'none';
+                }
+
+                const tbody = document.getElementById('shadow-agents-body');
+                if (agents.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);padding:24px;">No shadow agents detected. All agents are registered.</td></tr>';
+                } else {
+                    tbody.innerHTML = agents.map(a => {
+                        const statusColors = {
+                            'unmanaged': 'background:rgba(255,77,77,0.15);color:#ff4d4d;border:1px solid rgba(255,77,77,0.3)',
+                            'acknowledged': 'background:rgba(255,214,107,0.15);color:#FFD66B;border:1px solid rgba(255,214,107,0.3)',
+                            'enrolled': 'background:rgba(0,245,212,0.12);color:#00F5D4;border:1px solid rgba(0,245,212,0.3)'
+                        };
+                        const statusStyle = statusColors[a.status] || statusColors['unmanaged'];
+                        const firstSeen = a.first_seen_at ? new Date(a.first_seen_at).toLocaleString() : '--';
+                        const lastSeen = a.last_seen_at ? new Date(a.last_seen_at).toLocaleString() : '--';
+
+                        let actions = '';
+                        if (a.status === 'unmanaged') {
+                            actions = '<button onclick="acknowledgeShadowAgent(' + a.id + ')" style="background:rgba(255,214,107,0.12);color:#FFD66B;border:1px solid rgba(255,214,107,0.3);padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;margin-right:6px;">Acknowledge</button>' +
+                                      '<button onclick="enrollShadowAgent(' + a.id + ')" style="background:rgba(0,245,212,0.12);color:#00F5D4;border:1px solid rgba(0,245,212,0.3);padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Enroll</button>';
+                        } else if (a.status === 'acknowledged') {
+                            actions = '<button onclick="enrollShadowAgent(' + a.id + ')" style="background:rgba(0,245,212,0.12);color:#00F5D4;border:1px solid rgba(0,245,212,0.3);padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Enroll</button>';
+                        } else {
+                            actions = '<span style="font-size:11px;color:var(--text-secondary);">Enrolled</span>';
+                        }
+
+                        return '<tr>' +
+                            '<td style="font-family:\'Fira Code\',monospace;font-size:12px;font-weight:600;">' + (a.agent_id || '--') + '</td>' +
+                            '<td style="font-size:12px;">' + firstSeen + '</td>' +
+                            '<td style="font-size:12px;">' + lastSeen + '</td>' +
+                            '<td style="font-family:\'Fira Code\',monospace;font-size:13px;font-weight:600;text-align:center;">' + (a.sighting_count || 0) + '</td>' +
+                            '<td style="font-family:\'Fira Code\',monospace;font-size:12px;">' + (a.last_tool_name || '--') + '</td>' +
+                            '<td style="font-size:12px;">' + (a.source_ip || '--') + '</td>' +
+                            '<td><span style="display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;' + statusStyle + '">' + a.status + '</span></td>' +
+                            '<td>' + actions + '</td>' +
+                            '</tr>';
+                    }).join('');
+                }
+            } catch(e) {
+                document.getElementById('shadow-agents-body').innerHTML = '<tr><td colspan="8" style="text-align:center;color:#ff4d4d;padding:24px;">Failed to load shadow agents data.</td></tr>';
+            }
+
+            if (_shadowAgentsTimer) clearTimeout(_shadowAgentsTimer);
+            _shadowAgentsTimer = setTimeout(() => {
+                const panel = document.getElementById('panel-er-shadow');
+                if (panel && panel.classList.contains('active')) loadShadowAgents();
+            }, 30000);
+        }
+
+        async function acknowledgeShadowAgent(id) {
+            try {
+                const resp = await fetch('/api/admin/unmanaged-agents/' + id + '/acknowledge', { method: 'POST' });
+                if (!resp.ok) { const d = await resp.json(); showToast(d.error || 'Failed', 'error'); return; }
+                showToast('Agent acknowledged', 'success');
+                loadShadowAgents();
+            } catch(e) { showToast('Failed to acknowledge agent', 'error'); }
+        }
+
+        async function enrollShadowAgent(id) {
+            try {
+                const resp = await fetch('/api/admin/unmanaged-agents/' + id + '/enroll', { method: 'POST' });
+                const data = await resp.json();
+                if (!resp.ok) { showToast(data.error || 'Failed', 'error'); return; }
+                if (data.api_key && data.api_key.key) {
+                    showToast('Agent enrolled! API Key: ' + data.api_key.key_prefix + '...', 'success');
+                } else {
+                    showToast('Agent enrolled successfully', 'success');
+                }
+                loadShadowAgents();
+            } catch(e) { showToast('Failed to enroll agent', 'error'); }
+        }
     </script>
 
     <div style="text-align:center;padding:16px;color:#8B919A;font-size:12px;border-top:1px solid rgba(39,49,64,0.6);">

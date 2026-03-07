@@ -65,7 +65,7 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **Legal Counsel Acknowledgment Gate**: Requires user acknowledgment before downloading compliance documents.
 -   **Substantial Modification Trigger**: Alerts users when 10+ tools added since last audit.
 -   **Homepage Rewrite**: Focuses on plain-language explanations of Snapwire's purpose and features. UI uses universal terms: "Runtime Violations," "Security Signals," "Detected Vulnerabilities."
--   **Engine Room (Super-Admin Tab Group)**: Platform Admin-only dashboard with System Health, Batch Ingestor UI, Chaos Lab, Global Burn Meter, Stealth Control, Telemetry, Weekly Summary, and HITL Evidence.
+-   **Engine Room (Super-Admin Tab Group)**: Platform Admin-only dashboard with System Health, Batch Ingestor UI, Chaos Lab, Global Burn Meter, Stealth Control, Telemetry, Weekly Summary, HITL Evidence, Detector Lab, Latency Monitor, and Shadow Agents.
 -   **Self-Correction Loop**: Manages auto-healed tool schemas for admin review and approval/rejection.
 -   **Vibe-Audit Weekly Summarizer**: Automated executive summary of audit logs, ingestor results, cost savings, and security posture sent to Slack.
 -   **Watchdog Script**: Automated batch ingestor run with Slack failure alerts.
@@ -90,6 +90,8 @@ Snapwire is built with a Python Flask backend and supports PostgreSQL or SQLite 
 -   **Detailed "How It Works"**: Homepage 3-step section with specific feature names (Fuse Breaker, Burn Meter, Taint Tracking, Snap-Cards, Fix Prompts, NIST compliance) and framework compatibility badges (LangChain, CrewAI, OpenAI Assistants, MCP).
 -   **Cloud Coming Soon**: Pricing page and homepage Cloud column dimmed with "Coming Soon" badges. Self-Hosted remains primary CTA. "Join Waitlist" replaces "Sign Up Free."
 -   **API Docs Try It Playground**: Interactive playground in API docs with pre-filled intercept request, Run button (live fetch), Copy as curl, color-coded response display. Honeypot-aware: abuse attempts produce "Blocked by Snapwire" demo.
+-   **Ultra-Low Latency Intercept**: Sub-10ms governance overhead tracking. `time.perf_counter()` instrumentation on `/api/intercept` stores `intercept_latency_ms` in every `AuditLogEntry`. `X-Snapwire-Latency-Ms` response header. Sentinel Proxy tracks detection/governance/total overhead with `LatencyTracker` rolling window (1000 samples) and `/sentinel/metrics` endpoint. Engine Room "Latency Monitor" tab shows p50/p95/p99 with target badge, breakdown by status and agent. `/api/admin/latency-stats` API with 24h/7d/30d windows.
+-   **Unmanaged Agent Discovery (Shadow Agents)**: Detects agent IDs hitting `/api/intercept` that have no matching `ApiKey.agent_name`. `UnmanagedAgentSighting` model tracks `agent_id`, `first_seen_at`, `last_seen_at`, `sighting_count`, `source_ip`, `last_tool_name`, `status` (unmanaged/acknowledged/enrolled). Admin API: `GET /api/admin/unmanaged-agents`, `POST .../acknowledge`, `POST .../enroll` (auto-creates ApiKey). Engine Room "Shadow Agents" tab with alert badge, hero count, sightings table, Acknowledge/Enroll actions. 30s auto-refresh.
 
 ## External Dependencies
 -   **Database**: PostgreSQL, SQLite

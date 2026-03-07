@@ -434,6 +434,22 @@ FEATURE_NIST_MAP = [
         "evidence": "TenantSettings.strict_reasoning with HTTP 412 enforcement on missing inner_monologue",
         "component": "main.py",
     },
+    {
+        "number": 53,
+        "name": "Ultra-Low Latency Intercept",
+        "description": "Sub-10ms governance overhead tracking with p50/p95/p99 percentile metrics, per-request latency stored in audit log, X-Snapwire-Latency-Ms response header, and Engine Room Latency Monitor dashboard.",
+        "nist_categories": ["DETECT-1.1", "MEASURE-2.6", "MANAGE-4.1"],
+        "evidence": "AuditLogEntry.intercept_latency_ms column, /api/admin/latency-stats endpoint, Sentinel LatencyTracker with /sentinel/metrics",
+        "component": "main.py, sentinel/proxy.py",
+    },
+    {
+        "number": 54,
+        "name": "Unmanaged Agent Discovery",
+        "description": "Detects unregistered agent IDs hitting the intercept endpoint, tracking sighting count, source IP, and last tool used. Admins can acknowledge or enroll shadow agents via Engine Room.",
+        "nist_categories": ["DETECT-2.1", "IDENTIFY-1.1", "RESPOND-1.1", "GOVERN-2.1"],
+        "evidence": "UnmanagedAgentSighting model with /api/admin/unmanaged-agents endpoints and Shadow Agents Engine Room tab",
+        "component": "main.py, models.py",
+    },
 ]
 
 

@@ -23,6 +23,62 @@ from sentinel.detector import detect_tool_calls
 logger = logging.getLogger("sentinel")
 
 MAX_BODY_SIZE = 10 * 1024 * 1024
+LATENCY_WINDOW_SIZE = 1000
+
+
+class LatencyTracker:
+    def __init__(self, max_size=LATENCY_WINDOW_SIZE):
+        self._max_size = max_size
+        self._samples = []
+
+    def record(self, detection_ms, governance_ms, total_overhead_ms):
+        self._samples.append({
+            "detection_ms": detection_ms,
+            "governance_ms": governance_ms,
+            "total_overhead_ms": total_overhead_ms,
+            "timestamp": time.time(),
+        })
+        if len(self._samples) > self._max_size:
+            self._samples = self._samples[-self._max_size:]
+
+    def percentile(self, values, p):
+        if not values:
+            return 0.0
+        s = sorted(values)
+        k = (len(s) - 1) * (p / 100.0)
+        f = int(k)
+        c = f + 1 if f + 1 < len(s) else f
+        return round(s[f] + (k - f) * (s[c] - s[f]), 3)
+
+    def get_stats(self):
+        if not self._samples:
+            return {"count": 0, "p50": 0, "p95": 0, "p99": 0, "avg": 0, "min": 0, "max": 0}
+        totals = [s["total_overhead_ms"] for s in self._samples]
+        detections = [s["detection_ms"] for s in self._samples]
+        governance = [s["governance_ms"] for s in self._samples]
+        return {
+            "count": len(self._samples),
+            "total_overhead": {
+                "p50": self.percentile(totals, 50),
+                "p95": self.percentile(totals, 95),
+                "p99": self.percentile(totals, 99),
+                "avg": round(sum(totals) / len(totals), 3),
+                "min": round(min(totals), 3),
+                "max": round(max(totals), 3),
+            },
+            "detection": {
+                "p50": self.percentile(detections, 50),
+                "p95": self.percentile(detections, 95),
+                "p99": self.percentile(detections, 99),
+                "avg": round(sum(detections) / len(detections), 3),
+            },
+            "governance": {
+                "p50": self.percentile(governance, 50),
+                "p95": self.percentile(governance, 95),
+                "p99": self.percentile(governance, 99),
+                "avg": round(sum(governance) / len(governance), 3),
+            },
+        }
 
 
 class SentinelProxy:
@@ -38,12 +94,14 @@ class SentinelProxy:
         self.signing_secret = config.get("signing_secret", "")
         self._session: aiohttp.ClientSession | None = None
         self._stats = {"total": 0, "intercepted": 0, "blocked": 0, "errors": 0}
+        self._latency = LatencyTracker()
 
     async def start(self):
         self._session = aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=120)
         )
         app = web.Application()
+        app.router.add_get("/sentinel/metrics", self._handle_metrics)
         app.router.add_route("*", "/{path:.*}", self._handle_request)
         app.router.add_route("*", "/", self._handle_request)
         app.on_cleanup.append(self._cleanup)
@@ -55,11 +113,18 @@ class SentinelProxy:
         logger.info(f"Sentinel Proxy listening on port {self.port}")
         return runner
 
+    async def _handle_metrics(self, request: web.Request) -> web.Response:
+        return web.json_response({
+            "stats": self._stats,
+            "latency": self._latency.get_stats(),
+        })
+
     async def _cleanup(self, app):
         if self._session and not self._session.closed:
             await self._session.close()
 
     async def _handle_request(self, request: web.Request) -> web.Response:
+        _t0 = time.perf_counter()
         self._stats["total"] += 1
         trace_id = str(uuid.uuid4())[:12]
 
@@ -87,7 +152,11 @@ class SentinelProxy:
             except (json.JSONDecodeError, UnicodeDecodeError):
                 pass
 
+        _t_detect_start = time.perf_counter()
         detected = detect_tool_calls(body_dict) if body_dict else []
+        _detection_ms = (time.perf_counter() - _t_detect_start) * 1000
+
+        _governance_ms = 0.0
 
         if detected:
             self._stats["intercepted"] += 1
@@ -99,19 +168,31 @@ class SentinelProxy:
                 f"path={request.path}"
             )
 
+            _t_gov_start = time.perf_counter()
             decision = await self._check_snapwire(detected, trace_id, request.path)
+            _governance_ms = (time.perf_counter() - _t_gov_start) * 1000
         else:
             decision = {"status": "pass-through"}
 
+        _total_overhead_ms = (time.perf_counter() - _t0) * 1000
+
+        if detected:
+            self._latency.record(_detection_ms, _governance_ms, _total_overhead_ms)
+            logger.debug(
+                f"[{trace_id}] LATENCY | detection={_detection_ms:.1f}ms | "
+                f"governance={_governance_ms:.1f}ms | total_overhead={_total_overhead_ms:.1f}ms"
+            )
+
+        latency_header = str(round(_total_overhead_ms, 2))
         has_tool_calls = bool(detected)
 
         if decision["status"] == "pass-through" or (
             self.mode == "observe" and decision["status"] != "error"
         ):
-            return await self._forward_request(request, body_bytes, trace_id, inject_headers=has_tool_calls)
+            return await self._forward_request(request, body_bytes, trace_id, inject_headers=has_tool_calls, extra_headers={"X-Snapwire-Proxy-Latency-Ms": latency_header})
 
         if self.mode == "audit":
-            return await self._forward_request(request, body_bytes, trace_id, inject_headers=True)
+            return await self._forward_request(request, body_bytes, trace_id, inject_headers=True, extra_headers={"X-Snapwire-Proxy-Latency-Ms": latency_header})
 
         if self.mode == "enforce":
             if decision["status"] in ("blocked", "error"):
@@ -120,11 +201,13 @@ class SentinelProxy:
                     f"[{trace_id}] BLOCKED | reason={decision.get('reason', 'policy')} | "
                     f"tools={[d.tool_name for d in detected]}"
                 )
-                return self._build_block_response(decision, detected, request)
+                resp = self._build_block_response(decision, detected, request)
+                resp.headers["X-Snapwire-Proxy-Latency-Ms"] = latency_header
+                return resp
 
-            return await self._forward_request(request, body_bytes, trace_id, inject_headers=True)
+            return await self._forward_request(request, body_bytes, trace_id, inject_headers=True, extra_headers={"X-Snapwire-Proxy-Latency-Ms": latency_header})
 
-        return await self._forward_request(request, body_bytes, trace_id, inject_headers=has_tool_calls)
+        return await self._forward_request(request, body_bytes, trace_id, inject_headers=has_tool_calls, extra_headers={"X-Snapwire-Proxy-Latency-Ms": latency_header})
 
     async def _check_snapwire(self, detected: list, trace_id: str, path: str) -> dict:
         if not self._session:
@@ -213,6 +296,7 @@ class SentinelProxy:
         body_bytes: bytes,
         trace_id: str,
         inject_headers: bool = False,
+        extra_headers: dict | None = None,
     ) -> web.Response:
         target_url = f"{self.upstream_url}{request.path_qs}"
 
@@ -267,6 +351,8 @@ class SentinelProxy:
                     for k, v in upstream_resp.headers.items()
                     if k.lower() not in ("transfer-encoding", "content-encoding", "content-length")
                 }
+                if extra_headers:
+                    resp_headers.update(extra_headers)
                 return web.Response(
                     status=upstream_resp.status,
                     body=resp_body,

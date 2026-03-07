@@ -8,8 +8,8 @@ import secrets
 import threading
 from datetime import datetime
 from functools import wraps
-from flask import request, jsonify, render_template, session, url_for, Response, stream_with_context, redirect
-from flask_login import current_user
+from flask import request, jsonify, render_template, session, url_for, Response, stream_with_context, redirect, g
+from flask_login import current_user, login_user
 
 from app import app, db, limiter
 from replit_auth import require_login, make_replit_blueprint, IS_REPLIT
@@ -59,7 +59,7 @@ from src.schema_guard import validate_tool_params, get_schema_stats
 from src.risk_index import calculate_risk_score, record_risk_signal, get_risk_signals, get_tool_risk_summary
 from src.thinking_sentinel import check_thinking_tokens, check_latency_anomaly, get_sentinel_stats
 from src.taint_tracker import check_taint, apply_taint, clear_taint
-from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings, LoopDetectorEvent, SchemaViolationEvent, ProxyToken, RiskSignal, AutoTriageRule, PendingAction
+from models import ToolCatalog, BlastRadiusConfig, HoneypotTool, VaultEntry, HoneypotAlert, BlastRadiusEvent, TenantSettings, LoopDetectorEvent, SchemaViolationEvent, ProxyToken, RiskSignal, AutoTriageRule, PendingAction, UnmanagedAgentSighting
 
 
 import uuid as _uuid_mod
@@ -406,6 +406,9 @@ def set_security_headers(response):
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["X-XSS-Protection"] = "1; mode=block"
+    latency_ms = getattr(g, '_intercept_latency_ms', None)
+    if latency_ms is not None:
+        response.headers["X-Snapwire-Latency-Ms"] = str(latency_ms)
     return response
 
 @app.before_request
@@ -1214,7 +1217,7 @@ def _wrap_mcp_response(response_data, status_code, mcp_id):
 
 @app.route("/api/intercept", methods=["POST"])
 def intercept_tool_call():
-    _intercept_start_time = time.time()
+    _intercept_start_time = time.perf_counter()
     data = request.get_json()
     if not data:
         return jsonify({"error": "No JSON payload provided"}), 400
@@ -1278,6 +1281,46 @@ def intercept_tool_call():
     parent_agent_id = data.get("parent_agent_id")
     webhook_url = data.get("webhook_url")
     api_key_id = api_key.id if api_key else None
+
+    if agent_id != "unknown" and tenant_id:
+        try:
+            known_agent = ApiKey.query.filter_by(agent_name=agent_id, tenant_id=tenant_id, is_active=True).first()
+            if not known_agent:
+                existing_sighting = UnmanagedAgentSighting.query.filter_by(
+                    agent_id=agent_id, tenant_id=tenant_id
+                ).first()
+                if existing_sighting:
+                    if existing_sighting.status != 'enrolled':
+                        existing_sighting.last_seen_at = datetime.utcnow()
+                        existing_sighting.sighting_count += 1
+                        existing_sighting.source_ip = request.remote_addr
+                        existing_sighting.last_tool_name = data.get("tool_name", "")
+                        db.session.commit()
+                else:
+                    try:
+                        new_sighting = UnmanagedAgentSighting(
+                            agent_id=agent_id,
+                            tenant_id=tenant_id,
+                            source_ip=request.remote_addr,
+                            last_tool_name=data.get("tool_name", ""),
+                            first_seen_at=datetime.utcnow(),
+                            last_seen_at=datetime.utcnow(),
+                            sighting_count=1,
+                            status='unmanaged',
+                        )
+                        db.session.add(new_sighting)
+                        db.session.commit()
+                    except Exception:
+                        db.session.rollback()
+                        retry = UnmanagedAgentSighting.query.filter_by(
+                            agent_id=agent_id, tenant_id=tenant_id
+                        ).first()
+                        if retry and retry.status != 'enrolled':
+                            retry.sighting_count += 1
+                            retry.last_seen_at = datetime.utcnow()
+                            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
     sentinel_metadata = None
     raw_metadata = data.get("metadata", {})
@@ -1608,16 +1651,19 @@ def intercept_tool_call():
     if sentinel_warning:
         response_extra["thinking_sentinel_warning"] = sentinel_warning
 
-    _intercept_elapsed_ms = (time.time() - _intercept_start_time) * 1000
+    _intercept_elapsed_ms = round((time.perf_counter() - _intercept_start_time) * 1000, 3)
     latency_warning = check_latency_anomaly(_intercept_elapsed_ms, agent_id=agent_id, tenant_id=tenant_id)
     if latency_warning:
         response_extra["latency_anomaly_warning"] = latency_warning
+
+    response_extra["intercept_latency_ms"] = _intercept_elapsed_ms
+    g._intercept_latency_ms = _intercept_elapsed_ms
 
     if shadow_active:
         response_extra["shadow_mode"] = True
 
     if shadow_active and not audit_result.get("allowed", False):
-        log_action(tool_call, audit_result, "shadow-blocked", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata)
+        log_action(tool_call, audit_result, "shadow-blocked", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata, intercept_latency_ms=_intercept_elapsed_ms)
         _track_usage(tenant_id)
         if data.get("proxy_token"):
             proxy_creds = resolve_proxy_token(data["proxy_token"])
@@ -1671,7 +1717,7 @@ def intercept_tool_call():
                 return _wrap_mcp_response(resp, 202, mcp_id)
             return jsonify(resp), 202
 
-        log_action(tool_call, audit_result, "allowed", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata)
+        log_action(tool_call, audit_result, "allowed", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata, intercept_latency_ms=_intercept_elapsed_ms)
         _track_usage(tenant_id)
         if data.get("proxy_token"):
             proxy_creds = resolve_proxy_token(data["proxy_token"])
@@ -1697,7 +1743,7 @@ def intercept_tool_call():
             tenant_id=tenant_id, agent_id=agent_id, tool_name=data["tool_name"], is_active=True
         ).first()
         if trust_match and not trust_match.is_expired():
-            log_action(tool_call, audit_result, "trust-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata)
+            log_action(tool_call, audit_result, "trust-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata, intercept_latency_ms=_intercept_elapsed_ms)
             _track_usage(tenant_id)
             if data.get("proxy_token"):
                 proxy_creds = resolve_proxy_token(data["proxy_token"])
@@ -1720,7 +1766,7 @@ def intercept_tool_call():
             return jsonify(resp)
 
         if check_auto_approve(tool_call, audit_result, agent_id, tenant_id=tenant_id):
-            log_action(tool_call, audit_result, "auto-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata)
+            log_action(tool_call, audit_result, "auto-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata, intercept_latency_ms=_intercept_elapsed_ms)
             _track_usage(tenant_id)
             if data.get("proxy_token"):
                 proxy_creds = resolve_proxy_token(data["proxy_token"])
@@ -1757,7 +1803,7 @@ def intercept_tool_call():
                     pass
 
             if reasoning_enforcement:
-                log_action(tool_call, audit_result, "reasoning-requested", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata)
+                log_action(tool_call, audit_result, "reasoning-requested", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata, intercept_latency_ms=_intercept_elapsed_ms)
                 _track_usage(tenant_id)
                 resp = {
                     "status": "reasoning_required",
@@ -1777,7 +1823,7 @@ def intercept_tool_call():
         if triage_result:
             triage_action = triage_result["action"]
             if triage_action == "auto_approve":
-                log_action(tool_call, audit_result, "auto-triage-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata)
+                log_action(tool_call, audit_result, "auto-triage-approved", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata, intercept_latency_ms=_intercept_elapsed_ms)
                 _track_usage(tenant_id)
                 resp = {
                     "status": "auto-triage-approved",
@@ -1790,7 +1836,7 @@ def intercept_tool_call():
                     return _wrap_mcp_response(resp, 200, mcp_id)
                 return jsonify(resp)
             elif triage_action == "auto_deny":
-                log_action(tool_call, audit_result, "auto-triage-denied", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata)
+                log_action(tool_call, audit_result, "auto-triage-denied", agent_id=agent_id, api_key_id=api_key_id, tenant_id=tenant_id, parent_agent_id=parent_agent_id, sentinel_metadata=sentinel_metadata, intercept_latency_ms=_intercept_elapsed_ms)
                 _track_usage(tenant_id)
                 resp = {
                     "status": "auto-triage-denied",
@@ -6748,6 +6794,145 @@ def hitl_stats():
         "intervention_rate": intervention_rate,
         "agent_breakdown": agent_breakdown,
         "daily_series": daily_series
+    })
+
+
+@app.route("/api/admin/latency-stats", methods=["GET"])
+@require_platform_admin
+def latency_stats():
+    from datetime import timedelta
+    import statistics as _stats_mod
+
+    now = datetime.utcnow()
+    window = request.args.get("window", "24h")
+    window_map = {"24h": 1, "7d": 7, "30d": 30}
+    days = window_map.get(window, 1)
+    cutoff = now - timedelta(days=days)
+
+    rows = db.session.query(
+        AuditLogEntry.intercept_latency_ms,
+        AuditLogEntry.status,
+        AuditLogEntry.agent_id
+    ).filter(
+        AuditLogEntry.created_at >= cutoff,
+        AuditLogEntry.intercept_latency_ms.isnot(None)
+    ).all()
+
+    latencies = [r[0] for r in rows]
+
+    def _percentiles(values):
+        if not values:
+            return {"p50": 0, "p95": 0, "p99": 0, "avg": 0, "min": 0, "max": 0, "count": 0}
+        s = sorted(values)
+        n = len(s)
+        return {
+            "p50": round(s[int(n * 0.50)] if n else 0, 3),
+            "p95": round(s[min(int(n * 0.95), n - 1)], 3),
+            "p99": round(s[min(int(n * 0.99), n - 1)], 3),
+            "avg": round(sum(s) / n, 3),
+            "min": round(s[0], 3),
+            "max": round(s[-1], 3),
+            "count": n,
+        }
+
+    overall = _percentiles(latencies)
+
+    allowed_statuses = {"allowed", "approved", "auto-approved", "auto-triage-approved", "trust-approved"}
+    blocked_statuses = {"blocked", "blocked-blast-radius", "blocked-sanitizer", "blocked-catalog", "blocked-deception", "shadow-blocked"}
+    held_statuses = {"held", "pending"}
+
+    by_status = {}
+    status_buckets = {"allowed": [], "blocked": [], "held": [], "other": []}
+    for lat, status, _ in rows:
+        if status in allowed_statuses:
+            status_buckets["allowed"].append(lat)
+        elif status in blocked_statuses:
+            status_buckets["blocked"].append(lat)
+        elif status in held_statuses:
+            status_buckets["held"].append(lat)
+        else:
+            status_buckets["other"].append(lat)
+    for k, v in status_buckets.items():
+        if v:
+            by_status[k] = _percentiles(v)
+
+    agent_buckets = {}
+    for lat, _, agent_id in rows:
+        aid = agent_id or "unknown"
+        agent_buckets.setdefault(aid, []).append(lat)
+    by_agent = {}
+    for aid, vals in sorted(agent_buckets.items(), key=lambda x: -len(x[1]))[:20]:
+        by_agent[aid] = _percentiles(vals)
+
+    return jsonify({
+        "window": window,
+        "cutoff": cutoff.isoformat(),
+        "overall": overall,
+        "by_status": by_status,
+        "by_agent": by_agent,
+    })
+
+
+@app.route("/api/admin/unmanaged-agents", methods=["GET"])
+@require_platform_admin
+def list_unmanaged_agents():
+    status_filter = request.args.get("status", None)
+    query = UnmanagedAgentSighting.query.order_by(UnmanagedAgentSighting.last_seen_at.desc())
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+    sightings = query.all()
+    return jsonify({"unmanaged_agents": [s.to_dict() for s in sightings]})
+
+
+@app.route("/api/admin/unmanaged-agents/<int:sighting_id>/acknowledge", methods=["POST"])
+@require_platform_admin
+def acknowledge_unmanaged_agent(sighting_id):
+    sighting = UnmanagedAgentSighting.query.get(sighting_id)
+    if not sighting:
+        return jsonify({"error": "Sighting not found"}), 404
+    sighting.status = "acknowledged"
+    db.session.commit()
+    return jsonify({"status": "acknowledged", "agent": sighting.to_dict()})
+
+
+@app.route("/api/admin/unmanaged-agents/<int:sighting_id>/enroll", methods=["POST"])
+@require_platform_admin
+def enroll_unmanaged_agent(sighting_id):
+    sighting = UnmanagedAgentSighting.query.get(sighting_id)
+    if not sighting:
+        return jsonify({"error": "Sighting not found"}), 404
+    if sighting.status == "enrolled":
+        return jsonify({"error": "Agent already enrolled"}), 400
+    existing_key = ApiKey.query.filter_by(agent_name=sighting.agent_id, tenant_id=sighting.tenant_id, is_active=True).first()
+    if existing_key:
+        sighting.status = "enrolled"
+        db.session.commit()
+        return jsonify({"status": "enrolled", "message": "Agent already has an active API key", "agent": sighting.to_dict()})
+    raw_key = secrets.token_urlsafe(32)
+    key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+    key_prefix = raw_key[:8]
+    api_key = ApiKey(
+        id=str(_uuid_mod.uuid4())[:8],
+        user_id=current_user.id,
+        tenant_id=sighting.tenant_id,
+        name=f"Auto-enrolled: {sighting.agent_id}",
+        key_hash=key_hash,
+        key_prefix=key_prefix,
+        agent_name=sighting.agent_id,
+        is_active=True,
+    )
+    db.session.add(api_key)
+    sighting.status = "enrolled"
+    db.session.commit()
+    return jsonify({
+        "status": "enrolled",
+        "agent": sighting.to_dict(),
+        "api_key": {
+            "id": api_key.id,
+            "key": raw_key,
+            "key_prefix": key_prefix,
+            "agent_name": api_key.agent_name,
+        },
     })
 
 

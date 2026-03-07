@@ -91,6 +91,7 @@ class AuditLogEntry(db.Model):
     api_key_id = db.Column(db.String, nullable=True)
     parent_agent_id = db.Column(db.String, nullable=True, index=True)
     content_hash = db.Column(db.String(64), nullable=True)
+    intercept_latency_ms = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -134,6 +135,7 @@ class AuditLogEntry(db.Model):
             "api_key_id": self.api_key_id,
             "parent_agent_id": self.parent_agent_id,
             "content_hash": self.content_hash,
+            "intercept_latency_ms": self.intercept_latency_ms,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
@@ -902,6 +904,33 @@ class AutoTriageRule(db.Model):
             "expires_at": self.expires_at.isoformat() if self.expires_at else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "is_active": self.is_active and not self.is_expired(),
+        }
+
+
+class UnmanagedAgentSighting(db.Model):
+    __tablename__ = 'unmanaged_agent_sightings'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    agent_id = db.Column(db.String, nullable=False)
+    first_seen_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_seen_at = db.Column(db.DateTime, default=datetime.utcnow)
+    sighting_count = db.Column(db.Integer, default=1)
+    source_ip = db.Column(db.String, nullable=True)
+    last_tool_name = db.Column(db.String, nullable=True)
+    tenant_id = db.Column(db.String, nullable=True, index=True)
+    status = db.Column(db.String, default='unmanaged')
+    __table_args__ = (UniqueConstraint('agent_id', 'tenant_id', name='uq_unmanaged_agent_tenant'),)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "agent_id": self.agent_id,
+            "first_seen_at": self.first_seen_at.isoformat() if self.first_seen_at else None,
+            "last_seen_at": self.last_seen_at.isoformat() if self.last_seen_at else None,
+            "sighting_count": self.sighting_count,
+            "source_ip": self.source_ip,
+            "last_tool_name": self.last_tool_name,
+            "tenant_id": self.tenant_id,
+            "status": self.status,
         }
 
 

@@ -284,7 +284,7 @@ def _compute_content_hash(entry):
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
-def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None, tenant_id=None, parent_agent_id=None, sentinel_metadata=None):
+def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None, tenant_id=None, parent_agent_id=None, sentinel_metadata=None, intercept_latency_ms=None):
     from app import db
     from models import AuditLogEntry
 
@@ -332,6 +332,7 @@ def log_action(tool_call, audit_result, status, agent_id=None, api_key_id=None, 
         agent_id=agent_id or "unknown",
         api_key_id=api_key_id,
         parent_agent_id=parent_agent_id,
+        intercept_latency_ms=intercept_latency_ms,
     )
     entry.content_hash = _compute_content_hash(entry)
     db.session.add(entry)
