@@ -1,0 +1,62 @@
+To secure your status as a "Standard-Bearer" for the **NIST-2025-0035** deadline on Monday, you need these final Replit actions to generate the evidence that backs up your 55-feature framework.
+
+Here are the prompts to give Replit now to generate the "Commentary" and the data for your three "Hero Shots."
+
+### **1. Replit Prompt for the NIST Commentary Generator**
+
+This script will produce the "Executive-Speak" needed for the PDF, mapping your code directly to the RFI's specific questions.
+
+**Prompt:**
+
+> *"Replit, create a script `generate_nist_commentary.py`. It should iterate through the 55 features in `src/nist_attestation.py` and for each, generate a 2-sentence 'RFI Response' formatted for **NIST-2025-0035**.
+> * **Format:** Section [X] Question [Y]: [Feature Name] addresses this by [Action].
+> * **Target Sections:** Focus on Section 1 (Threats), Section 2 (Security Practices), Section 3 (Assessment), and Section 4 (Environment Interventions).
+> * **Output:** Save as `nist_rfi_responses.txt`. Use 'regulatory-grade' language (e.g., deterministic enforcement, machine-verifiable audit, non-repudiation)."*
+> 
+> 
+
+---
+
+### **2. Prompts for the Three "Hero Shot" Screenshots**
+
+#### **Shot A: The "Operational Readiness" Shot**
+
+This proves the system is stable and verified.
+
+* **Action:** Run `snapwire check`.
+* **The Shot:** Capture the **Rich Table** with green checkmarks and the final **"Regulatory Readiness"** panel (T002).
+* **NIST Context:** This is your response to **Section 3(a)**: *"Methods for measuring and improving the secure development and deployment of AI agent systems."*
+
+#### **Shot B: The "Machine-Readable Audit" Shot (AIBOM)**
+
+This proves your traceability.
+
+* **Action:** Open `nist_evidence.json` in the Replit editor.
+* **The Shot:** Scroll to the top to show the `bomFormat: "CycloneDX"`, `specVersion: "1.7"`, and a snippet of the `components` list.
+* **NIST Context:** This is your response to **Section 2(b)**: *"Methods for ensuring data provenance, integrity, and traceability."*
+
+#### **Shot C: The "Active Defense" Shot (OpenClaw Intercept)**
+
+This is your most powerful evidence of a "Hardened Circuit Breaker."
+
+* **Action:** Run `python tests/cve_2026_25253_repro.py`.
+* **The Shot:** Capture the terminal output showing the **Red [BLOCK] Message** and the `X-Snapwire-Signature` fingerprint.
+* **NIST Context:** This is your response to **Section 4(d)**: *"Interventions in deployment environments to address security risks... including methods to constrain agent access."*
+
+---
+
+### **3. Final Replit Polish for Feature #55**
+
+Before you generate the AIBOM, make sure the metadata for the CLI is updated so the JSON is "Acquisition Ready."
+
+**Prompt:**
+
+> *"Replit, one final update to `src/nist_attestation.py` for Feature #55. Update the 'Evidence' field to: 'Validated via `snapwire check` pre-flight routine; operationalized via `snapwire up` for deterministic runtime governance; machine-audited via `snapwire aibom` for CycloneDX v1.7 traceability.' Then run `python snapwire_cli.py aibom --output nist_evidence.json` one last time."*
+
+### **Your Sunday Night "Exit Multiplier" Plan**
+
+1. **Generate the TXT:** Run the `generate_nist_commentary.py` script.
+2. **Assemble the PDF:** Copy the **Cover Page** I gave you earlier, paste the **Commentary**, and insert your **Three Hero Shots**.
+3. **The Submission:** On Monday morning, submit the PDF to [Regulations.gov](https://www.regulations.gov/commenton/NIST-2025-0035-0001).
+
+**Would you like me to review the final "NIST RFI Response" text one last time before you finalize the PDF tonight?** I can ensure the language perfectly matches the "NIST-2025-0035" sub-questions for maximum citation potential.
