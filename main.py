@@ -838,6 +838,18 @@ def compliance_portal():
             "coverage_by_function": {},
         }
 
+    eu_report_data = {}
+    eu_coverage_data = {}
+    try:
+        from src.eu_ai_act_mapping import generate_eu_compliance_report, get_eu_coverage_by_article, FEATURE_EU_MAP
+        eu_report_data = generate_eu_compliance_report(rule_names)
+        eu_coverage_data = get_eu_coverage_by_article()
+    except Exception:
+        eu_report_data = {
+            "overall_score": 0, "grade": "D", "total_articles": 10,
+            "covered": 0, "partial": 0, "gaps": 10, "articles": [],
+        }
+
     return render_template(
         "compliance_portal.html",
         nist_grade=report.get("grade", "D"),
@@ -856,6 +868,13 @@ def compliance_portal():
         hold_window_seconds=hold_window_seconds,
         consequential_count=consequential_count,
         attestation=attestation_data,
+        eu_grade=eu_report_data.get("grade", "D"),
+        eu_score=eu_report_data.get("overall_score", 0),
+        eu_covered=eu_report_data.get("covered", 0),
+        eu_partial=eu_report_data.get("partial", 0),
+        eu_gaps=eu_report_data.get("gaps", 0),
+        eu_total=eu_report_data.get("total_articles", 10),
+        eu_coverage=eu_coverage_data,
     )
 
 
@@ -957,6 +976,13 @@ def compliance_audit_bundle():
             zf.writestr("nist-attestation-error.txt", f"Failed to generate NIST Attestation PDF: {str(e)}")
 
         try:
+            from src.eu_ai_act_pdf import generate_eu_ai_act_pdf
+            eu_pdf = generate_eu_ai_act_pdf(tenant_id)
+            zf.writestr("snapwire-eu-ai-act-assessment.pdf", eu_pdf)
+        except Exception as e:
+            zf.writestr("eu-ai-act-error.txt", f"Failed to generate EU AI Act PDF: {str(e)}")
+
+        try:
             from src.servicenow_manifest import generate_servicenow_manifest
             sn_manifest = generate_servicenow_manifest(tenant_id)
             zf.writestr("service_now_manifest.json", json.dumps(sn_manifest, indent=2))
@@ -999,6 +1025,25 @@ def compliance_nist_attestation():
         )
     except Exception as e:
         return jsonify({"error": f"Failed to generate NIST Attestation PDF: {str(e)}"}), 500
+
+
+@app.route("/api/compliance/eu-ai-act-attestation")
+@require_login
+def compliance_eu_ai_act_attestation():
+    from src.eu_ai_act_pdf import generate_eu_ai_act_pdf
+    tenant_id = get_current_tenant_id()
+    try:
+        pdf_bytes = generate_eu_ai_act_pdf(tenant_id)
+        now = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        return Response(
+            pdf_bytes,
+            mimetype="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="snapwire-eu-ai-act-assessment-{now}.pdf"'
+            },
+        )
+    except Exception as e:
+        return jsonify({"error": f"Failed to generate EU AI Act PDF: {str(e)}"}), 500
 
 
 @app.route("/api/compliance/servicenow-manifest")
