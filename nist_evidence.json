@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.7",
-  "serialNumber": "urn:uuid:a2bad5d4-3ddc-4398-8e92-b200a4aa6e20",
+  "serialNumber": "urn:uuid:f7af79f0-1e7c-4279-ab5b-3b154300c6eb",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-03-07T23:19:54.834567Z",
+    "timestamp": "2026-03-07T23:57:33.541869Z",
     "tools": [
       {
         "vendor": "Snapwire",
@@ -29,7 +29,7 @@
       },
       {
         "name": "snapwire:generated_at",
-        "value": "2026-03-07T23:19:54.834567Z"
+        "value": "2026-03-07T23:57:33.541869Z"
       }
     ]
   },
@@ -523,7 +523,7 @@
     },
     {
       "name": "snapwire:bom_hash",
-      "value": "b91e3a7a8b7adec2272a7054264e468eed8718fc55f8856ec7181c3180ba12d8"
+      "value": "7e507ae5639856c7d0cbde92fd6e62875bbd026d850f9537939dd8f666763670"
     }
   ],
   "formulation": [
@@ -1114,7 +1114,7 @@
   ],
   "signature": {
     "algorithm": "HMAC-SHA256",
-    "value": "871c6fb2622b44b9a8fb9bda038973018d80d2e5c05f506a306ea82f776fc3c9",
-    "signed_at": "2026-03-07T23:19:54.834567Z"
+    "value": "3fb8f2bc1826fd3d8fff1eb68399ba779b08a5a4b11cc3bd0a37c347c70aab25",
+    "signed_at": "2026-03-07T23:57:33.541869Z"
   }
 }

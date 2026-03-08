@@ -455,7 +455,7 @@ FEATURE_NIST_MAP = [
         "name": "Snapwire CLI",
         "description": "Typer-based CLI with four commands: `snapwire init` (generates .snapwire.yaml config and .env.example), `snapwire check` (preflight: env vars, database, 1-token LLM test, plus Regulatory Readiness summary), `snapwire up` (Flask + Sentinel Proxy by default, --no-proxy to disable), and `snapwire aibom` (generates CycloneDX v1.7 AI Bill of Materials JSON). Professional Rich-formatted terminal interface for deployment, compliance evidence, and demos.",
         "nist_categories": ["GOVERN-1.1", "IDENTIFY-1.1", "MANAGE-4.1", "MAP-3.4"],
-        "evidence": "snapwire_cli.py with init/check/up/aibom commands, Rich-formatted output, sys.exit(1) on preflight failures, Regulatory Readiness block, CycloneDX JSON generation",
+        "evidence": "Validated via `snapwire check` pre-flight routine; operationalized via `snapwire up` for deterministic runtime governance; machine-audited via `snapwire aibom` for CycloneDX v1.7 traceability",
         "component": "snapwire_cli.py",
     },
 ]
