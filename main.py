@@ -659,6 +659,16 @@ def docs_screenshots(filename):
     return send_from_directory(os.path.join(os.path.dirname(__file__), "docs", "screenshots"), filename)
 
 
+@app.route("/downloads/nist_rfi_responses.txt")
+def download_nist_rfi():
+    return send_from_directory(os.path.dirname(__file__), "nist_rfi_responses.txt", as_attachment=True)
+
+
+@app.route("/downloads/nist_evidence.json")
+def download_nist_evidence():
+    return send_from_directory(os.path.dirname(__file__), "nist_evidence.json", as_attachment=True)
+
+
 @app.route("/safety")
 def safety_page():
     from src.nist_mapping import generate_compliance_report
