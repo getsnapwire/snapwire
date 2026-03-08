@@ -5,6 +5,7 @@ from flask_limiter.util import get_remote_address
 from sqlalchemy.orm import DeclarativeBase
 import os
 import secrets
+import threading
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 
@@ -45,24 +46,32 @@ limiter = Limiter(
 with app.app_context():
     import models  # noqa: F401
     db.create_all()
-    migrations = [
-        "ALTER TABLE users ADD COLUMN first_block_email_sent BOOLEAN DEFAULT FALSE",
-        "ALTER TABLE audit_log ADD COLUMN parent_agent_id VARCHAR",
-        "ALTER TABLE audit_log ADD COLUMN content_hash VARCHAR(64)",
-        "ALTER TABLE pending_actions ADD COLUMN parent_agent_id VARCHAR",
-        "ALTER TABLE proxy_tokens ADD COLUMN expires_at TIMESTAMP",
-        "ALTER TABLE tenant_settings ADD COLUMN reasoning_enforcement BOOLEAN DEFAULT TRUE",
-        "ALTER TABLE pending_actions ADD COLUMN hold_expires_at TIMESTAMP",
-        "ALTER TABLE tenant_settings ADD COLUMN hold_window_seconds INTEGER DEFAULT 0",
-        "ALTER TABLE audit_log ADD COLUMN vibe_summary TEXT",
-        "ALTER TABLE pending_actions ADD COLUMN vibe_summary TEXT",
-        "ALTER TABLE tenant_settings ADD COLUMN is_stealth_mode BOOLEAN DEFAULT TRUE",
-        "ALTER TABLE tool_catalog ADD COLUMN is_consequential BOOLEAN DEFAULT FALSE",
-        "ALTER TABLE tenant_settings ADD COLUMN last_assessment_at TIMESTAMP",
-    ]
-    for sql in migrations:
-        try:
-            db.session.execute(db.text(sql))
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
+
+
+def _run_migrations():
+    with app.app_context():
+        migrations = [
+            "ALTER TABLE users ADD COLUMN first_block_email_sent BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE audit_log ADD COLUMN parent_agent_id VARCHAR",
+            "ALTER TABLE audit_log ADD COLUMN content_hash VARCHAR(64)",
+            "ALTER TABLE pending_actions ADD COLUMN parent_agent_id VARCHAR",
+            "ALTER TABLE proxy_tokens ADD COLUMN expires_at TIMESTAMP",
+            "ALTER TABLE tenant_settings ADD COLUMN reasoning_enforcement BOOLEAN DEFAULT TRUE",
+            "ALTER TABLE pending_actions ADD COLUMN hold_expires_at TIMESTAMP",
+            "ALTER TABLE tenant_settings ADD COLUMN hold_window_seconds INTEGER DEFAULT 0",
+            "ALTER TABLE audit_log ADD COLUMN vibe_summary TEXT",
+            "ALTER TABLE pending_actions ADD COLUMN vibe_summary TEXT",
+            "ALTER TABLE tenant_settings ADD COLUMN is_stealth_mode BOOLEAN DEFAULT TRUE",
+            "ALTER TABLE tool_catalog ADD COLUMN is_consequential BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE tenant_settings ADD COLUMN last_assessment_at TIMESTAMP",
+        ]
+        for sql in migrations:
+            try:
+                db.session.execute(db.text(sql))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+
+
+_migration_thread = threading.Thread(target=_run_migrations, daemon=True)
+_migration_thread.start()
