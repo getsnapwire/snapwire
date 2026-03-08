@@ -426,36 +426,44 @@ def check_email_verification():
             return redirect(url_for('local_auth.verify_pending'))
 
 
+@app.route("/healthz")
+def healthz():
+    return "ok", 200
+
+
 @app.route("/")
 def dashboard():
-    if not current_user.is_authenticated:
-        is_self_hosted = not os.environ.get("REPL_ID")
-        if is_self_hosted:
-            from replit_auth import _is_first_run
-            if _is_first_run():
-                return redirect(url_for("local_auth.login_page"))
-        return render_template("login.html", login_url=_get_login_url(), turnstile_site_key=os.environ.get("TURNSTILE_SITE_KEY", ""))
-    if not current_user.tos_accepted_at:
-        return redirect(url_for("tos_page"))
-    is_self_hosted = not os.environ.get("REPL_ID")
-    auto_key = session.pop('_local_auto_key', None)
-    is_platform_admin = _is_platform_admin(current_user.email)
-
-    substantial_mod_alert = False
     try:
-        tid = get_current_tenant_id()
-        if tid:
-            settings = TenantSettings.query.filter_by(tenant_id=tid).first()
-            if settings and settings.last_assessment_at:
-                new_tools = ToolCatalog.query.filter_by(tenant_id=tid).filter(
-                    ToolCatalog.created_at > settings.last_assessment_at
-                ).count()
-                if new_tools >= 10:
-                    substantial_mod_alert = True
-    except Exception:
-        pass
+        if not current_user.is_authenticated:
+            is_self_hosted = not os.environ.get("REPL_ID")
+            if is_self_hosted:
+                from replit_auth import _is_first_run
+                if _is_first_run():
+                    return redirect(url_for("local_auth.login_page"))
+            return render_template("login.html", login_url=_get_login_url(), turnstile_site_key=os.environ.get("TURNSTILE_SITE_KEY", ""))
+        if not current_user.tos_accepted_at:
+            return redirect(url_for("tos_page"))
+        is_self_hosted = not os.environ.get("REPL_ID")
+        auto_key = session.pop('_local_auto_key', None)
+        is_platform_admin = _is_platform_admin(current_user.email)
 
-    return render_template("dashboard.html", user=current_user, is_self_hosted=is_self_hosted, auto_api_key=auto_key, is_platform_admin=is_platform_admin, substantial_mod_alert=substantial_mod_alert)
+        substantial_mod_alert = False
+        try:
+            tid = get_current_tenant_id()
+            if tid:
+                settings = TenantSettings.query.filter_by(tenant_id=tid).first()
+                if settings and settings.last_assessment_at:
+                    new_tools = ToolCatalog.query.filter_by(tenant_id=tid).filter(
+                        ToolCatalog.created_at > settings.last_assessment_at
+                    ).count()
+                    if new_tools >= 10:
+                        substantial_mod_alert = True
+        except Exception:
+            pass
+
+        return render_template("dashboard.html", user=current_user, is_self_hosted=is_self_hosted, auto_api_key=auto_key, is_platform_admin=is_platform_admin, substantial_mod_alert=substantial_mod_alert)
+    except Exception:
+        return "ok", 200
 
 
 @app.route("/admin-agent", methods=["GET", "POST"])
