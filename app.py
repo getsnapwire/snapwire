@@ -15,7 +15,7 @@ class Base(DeclarativeBase):
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = os.environ.get("SESSION_SECRET") or secrets.token_hex(32)
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL:
@@ -43,13 +43,30 @@ limiter = Limiter(
     storage_uri="memory://",
 )
 
+
+_app_ready = threading.Event()
+
+
+class StartupMiddleware:
+    def __init__(self, wsgi_app):
+        self._wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        if not _app_ready.is_set():
+            start_response("200 OK", [("Content-Type", "text/plain")])
+            return [b"starting"]
+        return self._wsgi_app(environ, start_response)
+
+
+app.wsgi_app = StartupMiddleware(ProxyFix(app.wsgi_app, x_proto=1, x_host=1))
+
 with app.app_context():
     import models  # noqa: F401
-    db.create_all()
 
 
-def _run_migrations():
+def _init_db():
     with app.app_context():
+        db.create_all()
         migrations = [
             "ALTER TABLE users ADD COLUMN first_block_email_sent BOOLEAN DEFAULT FALSE",
             "ALTER TABLE audit_log ADD COLUMN parent_agent_id VARCHAR",
@@ -71,7 +88,8 @@ def _run_migrations():
                 db.session.commit()
             except Exception:
                 db.session.rollback()
+    _app_ready.set()
 
 
-_migration_thread = threading.Thread(target=_run_migrations, daemon=True)
-_migration_thread.start()
+_init_thread = threading.Thread(target=_init_db, daemon=True)
+_init_thread.start()
