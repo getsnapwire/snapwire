@@ -8,7 +8,7 @@ import secrets
 import threading
 from datetime import datetime
 from functools import wraps
-from flask import request, jsonify, render_template, session, url_for, Response, stream_with_context, redirect, g
+from flask import request, jsonify, render_template, session, url_for, Response, stream_with_context, redirect, g, send_from_directory
 from flask_login import current_user, login_user
 
 from app import app, db, limiter
@@ -642,6 +642,13 @@ def pricing_page():
 def docs_page():
     base_url = request.url_root.rstrip("/")
     return render_template("docs.html", login_url=_get_login_url(), base_url=base_url)
+
+
+@app.route("/docs/screenshots/<path:filename>")
+def docs_screenshots(filename):
+    if not filename.endswith(".png"):
+        return "Not found", 404
+    return send_from_directory(os.path.join(os.path.dirname(__file__), "docs", "screenshots"), filename)
 
 
 @app.route("/safety")
