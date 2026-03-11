@@ -621,6 +621,8 @@ class ProxyToken(db.Model):
     taint_source = db.Column(db.String, nullable=True)
     tainted_at = db.Column(db.DateTime, nullable=True)
     pulse_expiry = db.Column(db.DateTime, nullable=True)
+    allowed_tools = db.Column(db.Text, nullable=True)
+    jit_intent = db.Column(db.Text, nullable=True)
 
     def is_expired(self):
         if self.expires_at and self.expires_at < datetime.utcnow():
@@ -648,6 +650,8 @@ class ProxyToken(db.Model):
             "taint_source": self.taint_source,
             "tainted_at": self.tainted_at.isoformat() if self.tainted_at else None,
             "pulse_expiry": self.pulse_expiry.isoformat() if self.pulse_expiry else None,
+            "allowed_tools": json.loads(self.allowed_tools) if self.allowed_tools else [],
+            "jit_intent": self.jit_intent or "",
         }
 
 
@@ -942,3 +946,33 @@ class TenantLLMConfig(db.Model):
     encrypted_api_key = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class AgentLock(db.Model):
+    __tablename__ = 'agent_locks'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.String, nullable=False, index=True)
+    resource_id = db.Column(db.String(200), nullable=False, index=True)
+    agent_id = db.Column(db.String(200), nullable=False)
+    intent = db.Column(db.Text, nullable=True)
+    acquired_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    released_at = db.Column(db.DateTime, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+
+    def is_expired(self):
+        return datetime.utcnow() > self.expires_at
+
+    def to_dict(self):
+        seconds_remaining = max(0, int((self.expires_at - datetime.utcnow()).total_seconds())) if self.is_active and not self.is_expired() else 0
+        return {
+            "id": self.id,
+            "resource_id": self.resource_id,
+            "agent_id": self.agent_id,
+            "intent": self.intent,
+            "acquired_at": self.acquired_at.isoformat() if self.acquired_at else None,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "released_at": self.released_at.isoformat() if self.released_at else None,
+            "is_active": self.is_active and not self.is_expired(),
+            "seconds_remaining": seconds_remaining,
+        }

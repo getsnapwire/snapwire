@@ -1,0 +1,37 @@
+To ensure **Snapwire** is NIST-aligned (specifically with **NIST AI 600-1** and the **AI RMF 1.0**) within Replit, you need to prompt the AI to move beyond "functional" code and into "governance" code.
+
+In 2026, compliance isn't just a README file; it's a set of technical controls that prove you are managing autonomous risk. Use these three specific prompt sequences to audit and harden your Replit build.
+
+### **1. The "Governance & Interrogation" Prompt**
+
+*NIST GOVERN 1.2 focuses on interrogatability—ensuring every action is traceable.*
+
+> **Prompt:** "Audit my existing agentic proxy logic. Refactor the interceptor to include a 'Deterministic Audit Trail' for every tool call. Every log entry must include: 1) The raw prompt received, 2) The specific organizational policy used for the 'Go/No-Go' decision, 3) A timestamped hash of the logic state at execution, and 4) The intended target API. Ensure this is exported in an 'Audit-Ready' JSON format that maps to the NIST AI RMF GOVERN 1.2 subcategory."
+
+### **2. The "Safety Circuit Breaker" Prompt**
+
+*NIST MANAGE 1.3 requires automated risk treatment to mitigate unintended autonomous actions.*
+
+> **Prompt:** "I need to implement NIST MANAGE 1.3 compliance. Build a 'Safety Circuit Breaker' middleware for my proxy. This middleware must track agent sessions in a stateless cache. If an agent attempts more than [X] tool calls within [Y] seconds, or if it tries to access unauthorized PII fields like [SSN/DOB] three times in a single session, the proxy must immediately kill the session and return a 'Risk Threshold Exceeded' error to the orchestrator. Document these thresholds in a central `governance.config` file."
+
+### **3. The "Taint Tracking & Exfiltration" Prompt**
+
+*NIST MEASURE 2.7 and 2.9 focus on security and explainability of the 'Measurement' phase.*
+
+> **Prompt:** "Enhance the data-masking module of Snapwire to perform 'Recursive Taint Tracking.' Any data retrieved from an internal database tool must be tagged as 'Sensitive.' If the agent attempts to pass this 'Sensitive' data to an external, non-verified API (like an unencrypted email tool), Snapwire must block the outbound call. Add a 'Reasoning Tag' to the block log that explains the policy violation in plain English for non-technical auditors, aligning with NIST AI RMF MEASURE 2.9."
+
+---
+
+### **Verification: How to check if Replit "got it right"**
+
+After running these prompts, you should see three specific changes in your code structure:
+
+1. **A `compliance/` or `logs/` directory:** Containing JSON files that clearly state which NIST policy was applied to which action.
+2. **A `policy_engine.py` (or similar):** That is decoupled from the main proxy logic. This allows you to change security rules without breaking the code—a key "Ops" requirement.
+3. **Deterministic Tests:** Ask Replit to: *"Write a suite of Pytest cases that intentionally try to 'poison' a tool call to see if the Snapwire circuit breaker actually trips."*
+
+### **The "Justin Harris" Ops Advantage**
+
+By using these prompts, you aren't just building a proxy; you're building a **Certified Security Layer**. This is exactly what you need to show in your GitHub README to get those **1,000+ forks**.
+
+**Would you like me to draft the "NIST Compliance Report" template that Snapwire should generate?** This is the document a developer would hand to their boss to prove the tool is safe to use.

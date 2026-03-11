@@ -1372,6 +1372,26 @@ def intercept_tool_call():
                         if mcp_request:
                             return _wrap_mcp_response(resp, 401, mcp_id)
                         return jsonify(resp), 401
+                if pulse_proxy.allowed_tools:
+                    import json as _jit_json
+                    try:
+                        _allowed = _jit_json.loads(pulse_proxy.allowed_tools)
+                    except Exception:
+                        _allowed = []
+                    if _allowed:
+                        _requested_tool = data.get("tool_name", "")
+                        if _requested_tool not in _allowed:
+                            resp = {
+                                "status": "blocked",
+                                "message": f"JIT Token Violation: tool '{_requested_tool}' is not in this token's allowed tool list",
+                                "error_code": "jit_tool_not_allowed",
+                                "allowed_tools": _allowed,
+                                "requested_tool": _requested_tool,
+                                "jit_intent": pulse_proxy.jit_intent or "",
+                            }
+                            if mcp_request:
+                                return _wrap_mcp_response(resp, 403, mcp_id)
+                            return jsonify(resp), 403
         except Exception:
             pass
 
@@ -4350,6 +4370,20 @@ def create_proxy_token_endpoint():
     result = generate_proxy_token(tenant_id, data["vault_entry_id"], label=data.get("label"), expires_in_minutes=data.get("expires_in_minutes"))
     if not result:
         return jsonify({"error": "Vault entry not found"}), 404
+    token_id = result.get("id")
+    if token_id:
+        token_obj = ProxyToken.query.get(token_id)
+        if token_obj:
+            allowed_tools = data.get("allowed_tools", [])
+            jit_intent = data.get("jit_intent", "")
+            if allowed_tools and isinstance(allowed_tools, list):
+                import json as _json
+                token_obj.allowed_tools = _json.dumps([t.strip() for t in allowed_tools if t.strip()])
+            if jit_intent:
+                token_obj.jit_intent = jit_intent.strip()
+            db.session.commit()
+            result["allowed_tools"] = allowed_tools
+            result["jit_intent"] = jit_intent
     return jsonify(result), 201
 
 
@@ -4397,6 +4431,112 @@ def refresh_proxy_token_endpoint():
         return jsonify({"error": "token required"}), 400
     result, status_code = refresh_proxy_token(data["token"])
     return jsonify(result), status_code
+
+
+@app.route("/api/agent-lock/acquire", methods=["POST"])
+def agent_lock_acquire():
+    from models import AgentLock
+    import json as _json
+    from datetime import timedelta
+    data = request.get_json() or {}
+    api_key_header = request.headers.get("X-API-Key") or request.headers.get("Authorization", "").replace("Bearer ", "")
+    tenant_id = None
+    if api_key_header:
+        from models import ApiKey
+        ak = ApiKey.query.filter_by(key_hash=__import__('hashlib').sha256(api_key_header.encode()).hexdigest(), is_active=True).first()
+        if ak:
+            tenant_id = ak.tenant_id
+    if not tenant_id and current_user.is_authenticated:
+        tenant_id = get_current_tenant_id()
+    if not tenant_id:
+        return jsonify({"error": "Authentication required"}), 401
+    resource_id = data.get("resource_id", "").strip()
+    agent_id = data.get("agent_id", "").strip()
+    if not resource_id or not agent_id:
+        return jsonify({"error": "resource_id and agent_id are required"}), 400
+    ttl_seconds = min(int(data.get("ttl_seconds", 300)), 3600)
+    intent = data.get("intent", "")
+    existing = AgentLock.query.filter_by(tenant_id=tenant_id, resource_id=resource_id, is_active=True).first()
+    if existing and not existing.is_expired():
+        if existing.agent_id == agent_id:
+            existing.expires_at = datetime.utcnow() + timedelta(seconds=ttl_seconds)
+            db.session.commit()
+            return jsonify({"status": "renewed", "lock": existing.to_dict()})
+        return jsonify({
+            "status": "conflict",
+            "message": f"Resource '{resource_id}' is locked by agent '{existing.agent_id}'",
+            "lock": existing.to_dict(),
+        }), 409
+    if existing:
+        existing.is_active = False
+        existing.released_at = datetime.utcnow()
+    new_lock = AgentLock(
+        tenant_id=tenant_id,
+        resource_id=resource_id,
+        agent_id=agent_id,
+        intent=intent,
+        expires_at=datetime.utcnow() + timedelta(seconds=ttl_seconds),
+    )
+    db.session.add(new_lock)
+    db.session.commit()
+    return jsonify({"status": "acquired", "lock": new_lock.to_dict()}), 201
+
+
+@app.route("/api/agent-lock/release", methods=["POST"])
+def agent_lock_release():
+    from models import AgentLock
+    data = request.get_json() or {}
+    api_key_header = request.headers.get("X-API-Key") or request.headers.get("Authorization", "").replace("Bearer ", "")
+    tenant_id = None
+    if api_key_header:
+        from models import ApiKey
+        ak = ApiKey.query.filter_by(key_hash=__import__('hashlib').sha256(api_key_header.encode()).hexdigest(), is_active=True).first()
+        if ak:
+            tenant_id = ak.tenant_id
+    if not tenant_id and current_user.is_authenticated:
+        tenant_id = get_current_tenant_id()
+    if not tenant_id:
+        return jsonify({"error": "Authentication required"}), 401
+    resource_id = data.get("resource_id", "").strip()
+    agent_id = data.get("agent_id", "").strip()
+    if not resource_id or not agent_id:
+        return jsonify({"error": "resource_id and agent_id are required"}), 400
+    lock = AgentLock.query.filter_by(tenant_id=tenant_id, resource_id=resource_id, agent_id=agent_id, is_active=True).first()
+    if not lock:
+        return jsonify({"error": "No active lock found for this resource/agent pair"}), 404
+    lock.is_active = False
+    lock.released_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({"status": "released", "lock": lock.to_dict()})
+
+
+@app.route("/api/agent-lock/status", methods=["GET"])
+@require_login
+def agent_lock_status():
+    from models import AgentLock
+    tenant_id = get_current_tenant_id()
+    AgentLock.query.filter(
+        AgentLock.tenant_id == tenant_id,
+        AgentLock.is_active == True,
+        AgentLock.expires_at < datetime.utcnow()
+    ).update({"is_active": False, "released_at": datetime.utcnow()})
+    db.session.commit()
+    locks = AgentLock.query.filter_by(tenant_id=tenant_id, is_active=True).order_by(AgentLock.acquired_at.desc()).all()
+    return jsonify({"locks": [l.to_dict() for l in locks], "count": len(locks)})
+
+
+@app.route("/api/agent-lock/<int:lock_id>/force-release", methods=["POST"])
+@require_admin
+def agent_lock_force_release(lock_id):
+    from models import AgentLock
+    tenant_id = get_current_tenant_id()
+    lock = AgentLock.query.filter_by(id=lock_id, tenant_id=tenant_id).first()
+    if not lock:
+        return jsonify({"error": "Lock not found"}), 404
+    lock.is_active = False
+    lock.released_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({"status": "force_released", "lock": lock.to_dict()})
 
 
 @app.route("/api/tools/<int:tool_id>/risk-score", methods=["GET"])

@@ -1,0 +1,120 @@
+This is the **Snapwire Master Plan**. On March 10, 2026, the industry is no longer just "curious" about AI—they are terrified of it. The **Claude Code server wipe** and the **OpenClaw (CVE-2026-25253)** exploits have turned "Agentic Security" into a multi-billion dollar mandatory requirement.
+
+To make this **forkable** and ready for **GitHub/Replit**, we are building this as a **Modular Monorepo**. This means the tools work together in one dashboard, but the code for each "engine" is separated so others can contribute to specific parts.
+
+---
+
+### 🛠 The Snapwire Suite: 2026 Edition
+
+| Feature | 1st Grader Description | Why Build It? | Replit Agent Prompt |
+| --- | --- | --- | --- |
+| **Snapwire Core** | The **Safety Gate**. It stops bad robots from entering the playroom. | Stops **OpenClaw** hacks and data theft. | "Build a FastAPI proxy that intercepts outgoing WebSockets and blocks any URL not on an allowlist." |
+| **Agent-Collision** | The **Traffic Light**. It stops robots from fighting over the same toy. | Stops bots from undoing each other's work (Saves $$$). | "Build a Redis-based locking system where agents must 'request a turn' before editing a file." |
+| **Ghost-Proxy** | The **Privacy Mask**. It blurs secrets before the robot sees them. | Essential for **HIPAA/PCI** compliance. | "Build a Python API that detects faces and credit card numbers in images and blurs them." |
+| **AIBOM-Flow** | The **Ingredient List**. It tells the grownups what's inside. | Automates **NIST IR 8596** legal reporting. | "Create a script that generates a CycloneDX v1.7 JSON file listing every AI model and API used." |
+| **State-Freeze** | The **Freeze-Tag Photo**. It shows what the robot was thinking. | The "Black Box" for legal and tech forensics. | "Build a logger that saves the full JSON context of every LLM call to an immutable local file." |
+
+---
+
+### 🖥 The Master Dashboard (HTML/CSS)
+
+Paste this into your `index.html` on Replit. It uses a **"Tactile Maximalism"** style—the 2026 design trend that uses bold glassmorphism and real-time status glows.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snapwire | Agentic OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #0a0a0c; color: #e4e4e7; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(23, 23, 27, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        .glow-green { box-shadow: 0 0 20px rgba(34, 197, 94, 0.2); border-color: #22c55e; }
+        .glow-red { box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); border-color: #ef4444; }
+        .status-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+    </style>
+</head>
+<body class="p-8">
+    <header class="flex justify-between items-center mb-12">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tighter text-white">SNAPWIRE<span class="text-green-500">.OS</span></h1>
+            <p class="text-zinc-500">NIST IR 8596 Compliant | Active Shield v2.6</p>
+        </div>
+        <div class="glass px-4 py-2 rounded-full flex items-center gap-3">
+            <div class="w-3 h-3 bg-green-500 rounded-full status-pulse"></div>
+            <span class="text-sm font-mono">SYSTEMS NOMINAL</span>
+        </div>
+    </header>
+
+    <main class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="glass p-6 rounded-2xl glow-green">
+            <h3 class="text-lg font-bold mb-2">🛡️ Core Sentinel</h3>
+            <p class="text-zinc-400 text-sm mb-4">Monitoring L7 WebSockets for OpenClaw exploits.</p>
+            <div class="text-2xl font-mono text-green-400">14 BLOCKED</div>
+            <div class="text-xs text-zinc-600 mt-2">Last: CVE-2026-25253 (Thwarted)</div>
+        </div>
+
+        <div class="glass p-6 rounded-2xl">
+            <h3 class="text-lg font-bold mb-2">🚦 Traffic Controller</h3>
+            <p class="text-zinc-400 text-sm mb-4">Resolving semantic intent conflicts between swarms.</p>
+            <div class="flex gap-2">
+                <span class="px-2 py-1 bg-zinc-800 rounded text-xs">Sales-Bot: WAIT</span>
+                <span class="px-2 py-1 bg-green-900 text-green-300 rounded text-xs">Dev-Bot: ACTIVE</span>
+            </div>
+        </div>
+
+        <div class="glass p-6 rounded-2xl">
+            <h3 class="text-lg font-bold mb-2">👁️ Ghost Mask</h3>
+            <p class="text-zinc-400 text-sm mb-4">Real-time PII redaction for visual agent inputs.</p>
+            <div class="text-sm text-zinc-300 font-mono">Redacted: [CREDIT_CARD], [SSN]</div>
+        </div>
+
+        <div class="glass p-6 rounded-2xl border-zinc-700">
+            <h3 class="text-lg font-bold mb-2">📜 AIBOM Flow</h3>
+            <p class="text-zinc-400 text-sm mb-4">Automated NIST Compliance Ledger.</p>
+            <button class="w-full py-2 bg-white text-black rounded-lg font-bold text-sm hover:bg-zinc-200 transition">EXPORT CycloneDX JSON</button>
+        </div>
+
+        <div class="glass p-6 rounded-2xl">
+            <h3 class="text-lg font-bold mb-2">📸 State Freeze</h3>
+            <p class="text-zinc-400 text-sm mb-4">Forensic brain snapshots on tool-call.</p>
+            <div class="h-2 bg-zinc-800 rounded-full mt-4 overflow-hidden">
+                <div class="w-2/3 h-full bg-blue-500"></div>
+            </div>
+            <div class="text-[10px] text-zinc-500 mt-2 tracking-widest uppercase">Buffer: 68% Full</div>
+        </div>
+    </main>
+</body>
+</html>
+
+```
+
+---
+
+### 📂 How to structure this for GitHub (Modular & Forkable)
+
+To make this a project people want to fork, you must use a **Monorepo structure**. In your Replit/GitHub root, create these folders:
+
+```text
+/snapwire-os
+  ├── /core          # Snapwire Core (FastAPI Proxy)
+  ├── /collision     # Agent-Collision (Redis Locking)
+  ├── /ghost         # Ghost-Proxy (OpenCV Redaction)
+  ├── /compliance    # AIBOM-Flow (JSON Generator)
+  ├── /forensics     # State-Freeze (Logging Engine)
+  ├── /ui            # The Master Dashboard (HTML/JS)
+  ├── README.md      # The "Constitution" of the project
+  └── docker-compose.yml # To run the whole suite with one command
+
+```
+
+### 🚀 Why this grows on GitHub
+
+1. **Low Friction:** Someone can fork it just for the **AIBOM** tool but keep the **Snapwire** brand in their repo.
+2. **Compliance-First:** Because it includes **NIST IR 8596** features, security researchers will contribute "Policy Templates" to your project.
+3. **The "Safety Shield" Badge:** You can offer a `README.md` badge that people put on their own AI projects: **"Secured by Snapwire."**
+
+**Would you like me to generate the `README.md` file that explains the "NIST Compliance Guarantee" to help attract contributors on GitHub?**

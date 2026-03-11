@@ -1867,6 +1867,7 @@
                 <button class="sub-tab" data-subtab="er-detector" data-group="engine-room" style="color:#00F5D4;">Detector Lab</button>
                 <button class="sub-tab" data-subtab="er-latency" data-group="engine-room" style="color:#40E0FF;">Latency Monitor</button>
                 <button class="sub-tab" data-subtab="er-shadow" data-group="engine-room" style="color:#ff4d4d;">Shadow Agents<span id="shadow-agents-badge" style="display:none;background:#ff4d4d;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;">0</span></button>
+                <button class="sub-tab" data-subtab="er-agent-locks" data-group="engine-room" style="color:#f59e0b;">&#x1F6A6; Agent Locks<span id="agent-locks-badge" style="display:none;background:#f59e0b;color:#000;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;">0</span></button>
             </div>
         </div>
 
@@ -2510,6 +2511,46 @@
                             <tr><td colspan="8" style="text-align:center;color:var(--text-secondary);padding:24px;">Loading...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-er-agent-locks" class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div>
+                    <h3 style="margin-bottom:4px;">&#x1F6A6; Agent Collision — Active Locks</h3>
+                    <p style="color:var(--text-secondary);font-size:13px;">Mutex-for-meaning: tracks which agent holds a lock on each resource. Prevents concurrent conflicts.</p>
+                </div>
+                <button class="btn" onclick="loadAgentLocks()" style="background:var(--accent-blue);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Refresh</button>
+            </div>
+
+            <div id="agent-locks-hero" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;text-align:center;">
+                <div style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Active Locks</div>
+                <div id="agent-locks-count" style="font-size:48px;font-weight:700;font-family:'Fira Code',monospace;color:#f59e0b;">--</div>
+                <div style="font-size:13px;color:var(--text-secondary);margin-top:6px;">Resources currently locked by agents</div>
+            </div>
+
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Lock Registry</h4>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Resource</th>
+                                <th>Locked By</th>
+                                <th>Intent</th>
+                                <th>Acquired</th>
+                                <th>Expires In</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agent-locks-body">
+                            <tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:24px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top:16px;padding:14px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;font-size:12px;color:var(--text-secondary);">
+                    <strong style="color:#f59e0b;">API:</strong> Agents acquire locks via <code>POST /api/agent-lock/acquire</code> with <code>{"resource_id": "...", "agent_id": "...", "ttl_seconds": 300}</code>. A <code>409 Conflict</code> is returned if another agent holds the lock.
                 </div>
             </div>
         </div>
@@ -3487,6 +3528,47 @@ def handle_tool_call(tool_call):
         </div>
     </div>
 
+    <div id="jit-token-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:480px;width:90%;max-height:90vh;overflow-y:auto;">
+            <h3 style="margin-bottom:4px;">&#9889; Generate JIT Snap-Token</h3>
+            <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Just-In-Time token scoped to specific tools and a declared intent. Any tool call outside the allowed list will be blocked at runtime.</p>
+            <input type="hidden" id="jit-vault-entry-id">
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Vault Entry</label>
+                <input type="text" id="jit-vault-entry-name" disabled style="width:100%;background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Token Label (optional)</label>
+                <input type="text" id="jit-token-label" placeholder="e.g. Email agent — March 2026" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Allowed Tools <span style="font-size:11px;">(comma-separated — leave blank to allow all)</span></label>
+                <input type="text" id="jit-allowed-tools" placeholder="e.g. send_email, read_inbox" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Calls to any other tool will return HTTP 403 with <code>jit_tool_not_allowed</code></div>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Intent Statement <span style="font-size:11px;">(stored for audit trail)</span></label>
+                <textarea id="jit-intent" placeholder="e.g. Send weekly digest email to subscriber list" rows="2" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;resize:vertical;"></textarea>
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Expires In (minutes, 0 = no expiry)</label>
+                <input type="number" id="jit-expires-minutes" value="60" min="0" max="10080" style="width:100%;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;box-sizing:border-box;">
+            </div>
+            <div id="jit-token-result" style="display:none;margin-bottom:16px;background:rgba(0,245,212,0.06);border:1px solid rgba(0,245,212,0.3);border-radius:10px;padding:14px;">
+                <div style="font-size:12px;color:var(--accent-green);font-weight:600;margin-bottom:6px;">Token Created — Copy Now (shown once)</div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <code id="jit-token-value" style="flex:1;font-family:'Fira Code',monospace;font-size:11px;word-break:break-all;color:var(--text-primary);"></code>
+                    <button onclick="navigator.clipboard.writeText(document.getElementById('jit-token-value').textContent).then(()=>showToast('Copied!','success'))" style="background:var(--accent-purple);color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;white-space:nowrap;">Copy</button>
+                </div>
+                <div id="jit-token-meta" style="font-size:11px;color:var(--text-secondary);margin-top:8px;"></div>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button onclick="hideJitTokenModal()" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:8px 16px;border-radius:8px;cursor:pointer;">Close</button>
+                <button id="jit-create-btn" onclick="createJitToken()" style="background:var(--accent-purple);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;">Generate</button>
+            </div>
+        </div>
+    </div>
+
     <div id="add-honeypot-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:450px;width:90%;">
             <h3 style="margin-bottom:16px;">Add Honeypot Tripwire</h3>
@@ -3611,7 +3693,7 @@ def handle_tool_call(tool_call):
             'agents-group': ['agents', 'analytics'],
             'security': ['vault', 'honeypots', 'blast', 'holdwindow', 'catalog', 'risk', 'autotriage', 'taintpulse', 'stealth'],
             'settings-group': ['keys', 'llm', 'org', 'account', 'settings', 'admin', 'contacts'],
-            'engine-room': ['er-health', 'er-ingestor', 'er-chaos', 'er-burn', 'er-stealth', 'er-telemetry', 'er-summary', 'er-hitl', 'er-detector', 'er-latency', 'er-shadow']
+            'engine-room': ['er-health', 'er-ingestor', 'er-chaos', 'er-burn', 'er-stealth', 'er-telemetry', 'er-summary', 'er-hitl', 'er-detector', 'er-latency', 'er-shadow', 'er-agent-locks']
         };
 
         let activeSubTabs = {};
@@ -3659,6 +3741,7 @@ def handle_tool_call(tool_call):
             if (name === 'er-telemetry') loadAdminTab();
             if (name === 'er-latency') loadLatencyMonitor();
             if (name === 'er-shadow') loadShadowAgents();
+            if (name === 'er-agent-locks') loadAgentLocks();
         }
 
         document.querySelectorAll('.tab[data-tab]').forEach(tab => {
@@ -6577,6 +6660,7 @@ def handle_tool_call(tool_call):
                             <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Secret: ${e.secret_key_name} ${e.secret_exists ? '<span style="color:var(--accent-green);">(configured)</span>' : '<span style="color:var(--accent-red);">(missing)</span>'}</div>
                             <div style="font-size:12px;color:var(--text-secondary);">Header: ${e.header_name}: ${e.header_prefix}***</div>
                         </div>
+                        <button onclick="showJitTokenModal(${e.id}, '${e.tool_name}')" style="background:var(--accent-purple);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;">&#9889; Generate Token</button>
                         <button onclick="deleteVaultEntry(${e.id})" style="background:var(--accent-red);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;">Remove</button>
                     </div>
                 `).join('');
@@ -6624,6 +6708,46 @@ def handle_tool_call(tool_call):
 
         function dismissWelcome() {
             localStorage.setItem('snapwire_welcome_dismissed', '1');
+        }
+
+        function showJitTokenModal(entryId, entryName) {
+            document.getElementById('jit-vault-entry-id').value = entryId;
+            document.getElementById('jit-vault-entry-name').value = entryName;
+            document.getElementById('jit-token-label').value = '';
+            document.getElementById('jit-allowed-tools').value = '';
+            document.getElementById('jit-intent').value = '';
+            document.getElementById('jit-expires-minutes').value = '60';
+            document.getElementById('jit-token-result').style.display = 'none';
+            document.getElementById('jit-create-btn').style.display = 'inline-block';
+            document.getElementById('jit-token-modal').style.display = 'flex';
+        }
+        function hideJitTokenModal() { document.getElementById('jit-token-modal').style.display = 'none'; }
+        async function createJitToken() {
+            const entryId = document.getElementById('jit-vault-entry-id').value;
+            const label = document.getElementById('jit-token-label').value.trim();
+            const rawTools = document.getElementById('jit-allowed-tools').value.trim();
+            const intent = document.getElementById('jit-intent').value.trim();
+            const expiresMin = parseInt(document.getElementById('jit-expires-minutes').value) || 0;
+            const allowedTools = rawTools ? rawTools.split(',').map(t => t.trim()).filter(t => t) : [];
+            const btn = document.getElementById('jit-create-btn');
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            try {
+                const body = { vault_entry_id: parseInt(entryId), label, allowed_tools: allowedTools, jit_intent: intent };
+                if (expiresMin > 0) body.expires_in_minutes = expiresMin;
+                const resp = await fetch('/api/vault/proxy-tokens', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+                const data = await resp.json();
+                if (!resp.ok) { showToast(data.error || 'Failed to create token', 'error'); btn.disabled = false; btn.textContent = 'Generate'; return; }
+                document.getElementById('jit-token-value').textContent = data.token;
+                let meta = '';
+                if (allowedTools.length > 0) meta += `<strong>Allowed tools:</strong> ${allowedTools.join(', ')} &nbsp;|&nbsp; `;
+                if (intent) meta += `<strong>Intent:</strong> ${intent} &nbsp;|&nbsp; `;
+                meta += expiresMin > 0 ? `<strong>Expires:</strong> ${expiresMin}m` : '<strong>Expires:</strong> Never';
+                document.getElementById('jit-token-meta').innerHTML = meta;
+                document.getElementById('jit-token-result').style.display = 'block';
+                btn.style.display = 'none';
+                showToast('JIT Snap-Token created', 'success');
+            } catch(e) { showToast('Token creation failed', 'error'); btn.disabled = false; btn.textContent = 'Generate'; }
         }
 
         function generateSnapTokenGated() {
@@ -8847,6 +8971,59 @@ if (result.status === "allowed") {
                 }
                 loadShadowAgents();
             } catch(e) { showToast('Failed to enroll agent', 'error'); }
+        }
+
+        async function loadAgentLocks() {
+            const tbody = document.getElementById('agent-locks-body');
+            const countEl = document.getElementById('agent-locks-count');
+            if (!tbody) return;
+            try {
+                const resp = await fetch('/api/agent-lock/status');
+                if (!resp.ok) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ff4d4d;padding:24px;">Error loading locks.</td></tr>'; return; }
+                const data = await resp.json();
+                const locks = data.locks || [];
+                if (countEl) countEl.textContent = locks.length;
+                const badge = document.getElementById('agent-locks-badge');
+                if (badge) {
+                    badge.textContent = locks.length;
+                    badge.style.display = locks.length > 0 ? 'inline' : 'none';
+                }
+                if (locks.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:40px;">No active locks. Agents are free to call any resource.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = locks.map(l => {
+                    const acquired = l.acquired_at ? new Date(l.acquired_at).toLocaleTimeString() : '—';
+                    const expiresAt = l.expires_at ? new Date(l.expires_at) : null;
+                    const now = new Date();
+                    let expiresIn = '—';
+                    if (expiresAt) {
+                        const secs = Math.round((expiresAt - now) / 1000);
+                        expiresIn = secs > 0 ? secs + 's' : '<span style="color:#ff4d4d;">Expired</span>';
+                    }
+                    return `<tr>
+                        <td><code style="font-size:12px;">${l.resource_id || '—'}</code></td>
+                        <td><span style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:2px 8px;border-radius:4px;font-size:12px;font-family:'Fira Code',monospace;">${l.agent_id || '—'}</span></td>
+                        <td style="max-width:200px;font-size:12px;color:var(--text-secondary);">${l.intent || '<em>No intent stated</em>'}</td>
+                        <td style="font-size:12px;">${acquired}</td>
+                        <td style="font-size:12px;">${expiresIn}</td>
+                        <td><button onclick="forceReleaseLock(${l.id})" style="padding:4px 10px;border:1px solid #ff4d4d;color:#ff4d4d;background:transparent;border-radius:6px;cursor:pointer;font-size:11px;">Force Release</button></td>
+                    </tr>`;
+                }).join('');
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ff4d4d;padding:24px;">Failed to load agent locks.</td></tr>';
+            }
+        }
+
+        async function forceReleaseLock(lockId) {
+            if (!confirm('Force-release this lock? The holding agent will lose access immediately.')) return;
+            try {
+                const resp = await fetch('/api/agent-lock/' + lockId + '/force-release', { method: 'POST' });
+                const data = await resp.json();
+                if (!resp.ok) { showToast(data.error || 'Failed to force-release', 'error'); return; }
+                showToast('Lock force-released', 'success');
+                loadAgentLocks();
+            } catch(e) { showToast('Failed to force-release lock', 'error'); }
         }
     </script>
 

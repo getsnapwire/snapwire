@@ -13,7 +13,7 @@
 
 <p align="center">
   <a href="https://replit.com/@MasonJeffreys/Snapwire"><img src="https://img.shields.io/badge/Deploy-Replit-F26207?style=for-the-badge&logo=replit&logoColor=white" alt="Deploy to Replit" /></a>&nbsp;
-  <a href="https://railway.app/new/template?template=https://github.com/snapwire-ai/snapwire"><img src="https://img.shields.io/badge/Deploy-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white" alt="Deploy to Railway" /></a>&nbsp;
+  <a href="https://railway.app/new/template?template=https://github.com/getsnapwire/snapwire"><img src="https://img.shields.io/badge/Deploy-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white" alt="Deploy to Railway" /></a>&nbsp;
   <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Ready" />
 </p>
 
@@ -32,7 +32,7 @@
 ### One-Line Install
 
 ```bash
-git clone https://github.com/snapwire-ai/snapwire.git && cd snapwire && docker compose up
+git clone https://github.com/getsnapwire/snapwire.git && cd snapwire && docker compose up
 ```
 
 PostgreSQL + Snapwire, running locally in under 60 seconds. Your keys, your data, your infrastructure.
@@ -160,7 +160,7 @@ We are submitting a joint technical response based on the Sentinel Proxy archite
 ### Option 2: Docker (recommended for self-hosting)
 
 ```bash
-git clone https://github.com/snapwire-ai/snapwire.git
+git clone https://github.com/getsnapwire/snapwire.git
 cd snapwire
 cp .env.example .env
 # Edit .env with your settings
@@ -173,7 +173,7 @@ docker run -p 5000:5000 --env-file .env snapwire
 **Requires Python 3.11+**
 
 ```bash
-git clone https://github.com/snapwire-ai/snapwire.git
+git clone https://github.com/getsnapwire/snapwire.git
 cd snapwire
 pip install .
 cp .env.example .env
@@ -463,10 +463,10 @@ Snapwire provides **Conformity-Ready Infrastructure** for organizations operatin
 Add this to your README to show your agents are governed:
 
 ```markdown
-[![Protected by Snapwire](https://github.com/snapwire-ai/snapwire/raw/main/static/badge-snapwire.svg)](https://github.com/snapwire-ai/snapwire)
+[![Protected by Snapwire](https://github.com/getsnapwire/snapwire/raw/main/static/badge-snapwire.svg)](https://github.com/getsnapwire/snapwire)
 ```
 
-[![Protected by Snapwire](https://github.com/snapwire-ai/snapwire/raw/main/static/badge-snapwire.svg)](https://github.com/snapwire-ai/snapwire)
+[![Protected by Snapwire](https://github.com/getsnapwire/snapwire/raw/main/static/badge-snapwire.svg)](https://github.com/getsnapwire/snapwire)
 
 ---
 

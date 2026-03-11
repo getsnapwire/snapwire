@@ -1,0 +1,42 @@
+This feedback is sharp—you’re identifying the classic "Complexity vs. Value" trap. Ghost-Proxy is a "Big Tech" feature that requires a heavy computer vision (CV) stack, while Agent-Collision is a "Distributed Systems" feature that you can likely build with your current skill set.
+
+If you want features that are **unique, technically defensible, and not yet standard in the 2026 market**, you should look at the "Semantic" and "Forensic" layers of agentic security.
+
+Here are three "Standard-Bearer" features that are currently missing from the market:
+
+### **1. Semantic Rollback (The "Undo" Button for Agents)**
+
+Right now, if an agent makes a mistake (like deleting a file or changing a cloud permission), it's a manual cleanup.
+
+* **The Feature:** Snapwire takes a **State Snapshot** before every tool call. If the Sentinel detects a policy violation or the agent "hallucinates" a failure, Snapwire triggers an automatic **Semantic Rollback**.
+* **Why it’s unique:** Most security tools only *block*. They don't *revert*. This is a "Resilience" play, not just a "Defense" play.
+* **Replit Prompt:** *"Build a Python module that takes a git-style snapshot of a local directory before an agent executes a 'write' command, allowing for a 1-click revert if the command fails."*
+
+### **2. Just-In-Time (JIT) Tool Permissions**
+
+In 2026, most agents have "Permanent Admin" access to their tools.
+
+* **The Feature:** Snapwire holds the "Master Keys." When an agent wants to use a tool (e.g., Send Email), it must request a **JIT Token** from Snapwire. Snapwire evaluates the current prompt context—if the agent is trying to send an email that wasn't mentioned in the original goal, the token is denied.
+* **Why it’s unique:** It applies the **Zero Trust** principle of "Least Privilege" to AI agents. It ensures the agent only has the power it needs for the *specific second* it needs it.
+* **Replit Prompt:** *"Create a FastAPI middleware that requires a one-time-use Bearer token for every tool-call, where tokens are only issued if the tool matches the user's initial intent."*
+
+### **3. Agent "Deterrence" Logs (The Black Box)**
+
+Current logs show what happened, but they don't show the "Reasoning Path" that led to a security breach.
+
+* **The Feature:** Snapwire forces the agent to "Think Out Loud" into an **Immutable Forensic Log** before it acts. If the agent’s reasoning shows signs of "Goal Hijacking" or "Prompt Injection," Snapwire kills the process.
+* **Why it’s unique:** It’s a **Forensic Black Box** for AI. After a hack, a CISO can see exactly *why* the agent thought it was okay to leak data.
+* **Replit Prompt:** *"Build a logging engine that intercepts the 'thought' field of an LLM response and saves it to an encrypted JSON file that cannot be modified by the agent itself."*
+
+---
+
+### **Updated Priority Order (The "Snapwire OS" Roadmap)**
+
+1. **GitHub Launch & Dynamic Badge:** (Your current plan).
+2. **Agent-Collision:** (The "Mutex for Meaning").
+3. **Semantic Rollback:** (The "Undo" button—this is your "wow" feature for the launch).
+4. **JIT Tool Permissions:** (The "Zero Trust" play for Enterprise).
+
+**Ghost-Proxy** should be moved to your **"Research & Development"** section. It signals that you are thinking about the future (Vision-based agents) without distracting you from shipping the Core today.
+
+**Would you like me to generate the "Semantic Rollback" technical spec for your README so you can claim that territory on Thursday?**

@@ -6,7 +6,6 @@ __pycache__/
 build/
 develop-eggs/
 dist/
-downloads/
 eggs/
 .eggs/
 lib/
@@ -40,6 +39,8 @@ coverage.xml
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+*.db
+*.sqlite
 instance/
 .webassets-cache
 .scrapy
@@ -56,6 +57,8 @@ celerybeat-schedule
 celerybeat.pid
 *.sage.py
 .env
+.env.*
+!.env.example
 .venv
 env/
 venv/
@@ -72,3 +75,10 @@ dmypy.json
 .pyre/
 .pytype/
 cython_debug/
+.replit
+replit.nix
+.local/
+*.session
+*.pid
+nist_rfi_responses.txt
+nist_evidence.json
