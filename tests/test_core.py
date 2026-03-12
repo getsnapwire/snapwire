@@ -17,7 +17,7 @@ class TestHealthEndpoint:
 
 class TestAuthFlows:
     def test_login_page_loads(self, client):
-        resp = client.get("/")
+        resp = client.get("/", follow_redirects=True)
         assert resp.status_code == 200
 
     @skip_local_auth
