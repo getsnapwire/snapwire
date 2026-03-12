@@ -1,0 +1,206 @@
+Run python -m pytest tests/ -v --tb=short --cov=. --cov-report=term-missing
+============================= test session starts ==============================
+platform linux -- Python 3.11.14, pytest-9.0.2, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.14/x64/bin/python
+cachedir: .pytest_cache
+rootdir: /home/runner/work/snapwire/snapwire
+configfile: pyproject.toml
+plugins: anyio-4.12.1, Flask-Dance-7.1.0, cov-7.0.0
+collecting ... collected 95 items
+
+tests/scenarios/test_rules.py::TestEnvProtection::test_blocks_dangerous_calls[cred-01-sleeper_agent_aws_credential_harvest] PASSED [  1%]
+tests/scenarios/test_rules.py::TestEnvProtection::test_blocks_dangerous_calls[cred-02-ssh_key_exfiltration] PASSED [  2%]
+tests/scenarios/test_rules.py::TestEnvProtection::test_blocks_dangerous_calls[cred-03-dotenv_secret_dump] PASSED [  3%]
+tests/scenarios/test_rules.py::TestEnvProtection::test_blocks_dangerous_calls[cred-04-tls_private_key_theft] PASSED [  4%]
+tests/scenarios/test_rules.py::TestEnvProtection::test_blocks_dangerous_calls[env-01-indirect_prompt_injection_via_env] PASSED [  5%]
+tests/scenarios/test_rules.py::TestEnvProtection::test_blocks_dangerous_calls[env-02-credential_exfil_via_env_dump] PASSED [  6%]
+tests/scenarios/test_rules.py::TestEnvProtection::test_blocks_dangerous_calls[env-03-shadow_file_privilege_escalation] PASSED [  7%]
+tests/scenarios/test_rules.py::TestEnvProtection::test_blocks_dangerous_calls[env-04-gcloud_token_harvest] PASSED [  8%]
+tests/scenarios/test_rules.py::TestEnvProtection::test_allows_safe_calls[safe-01-benign_web_search] PASSED [  9%]
+tests/scenarios/test_rules.py::TestEnvProtection::test_allows_safe_calls[safe-02-readme_file_read] PASSED [ 10%]
+tests/scenarios/test_rules.py::TestEnvProtection::test_allows_safe_calls[safe-03-normal_business_email] PASSED [ 11%]
+tests/scenarios/test_rules.py::TestEnvProtection::test_allows_safe_calls[safe-04-csv_report_output] PASSED [ 12%]
+tests/scenarios/test_rules.py::TestEnvProtection::test_allows_safe_calls[safe-05-readonly_database_query] PASSED [ 13%]
+tests/scenarios/test_rules.py::TestStubRules::test_stub_returns_valid_response[block_pii] PASSED [ 14%]
+tests/scenarios/test_rules.py::TestStubRules::test_stub_returns_valid_response[budget_cap] PASSED [ 15%]
+tests/scenarios/test_rules.py::TestStubRules::test_stub_returns_valid_response[crypto_lock] PASSED [ 16%]
+tests/scenarios/test_rules.py::TestStubRules::test_stub_returns_valid_response[domain_allowlist] PASSED [ 17%]
+tests/scenarios/test_rules.py::TestStubRules::test_stub_passes_by_default[block_pii] PASSED [ 18%]
+tests/scenarios/test_rules.py::TestStubRules::test_stub_passes_by_default[budget_cap] PASSED [ 20%]
+tests/scenarios/test_rules.py::TestStubRules::test_stub_passes_by_default[crypto_lock] PASSED [ 21%]
+tests/scenarios/test_rules.py::TestStubRules::test_stub_passes_by_default[domain_allowlist] PASSED [ 22%]
+tests/scenarios/test_rules.py::TestAllRulesInterface::test_evaluate_accepts_tool_name_and_parameters[block_pii] PASSED [ 23%]
+tests/scenarios/test_rules.py::TestAllRulesInterface::test_evaluate_accepts_tool_name_and_parameters[budget_cap] PASSED [ 24%]
+tests/scenarios/test_rules.py::TestAllRulesInterface::test_evaluate_accepts_tool_name_and_parameters[crypto_lock] PASSED [ 25%]
+tests/scenarios/test_rules.py::TestAllRulesInterface::test_evaluate_accepts_tool_name_and_parameters[domain_allowlist] PASSED [ 26%]
+tests/scenarios/test_rules.py::TestAllRulesInterface::test_evaluate_accepts_tool_name_and_parameters[env_protection] PASSED [ 27%]
+tests/scenarios/test_rules.py::TestAllRulesInterface::test_evaluate_handles_empty_parameters[block_pii] PASSED [ 28%]
+tests/scenarios/test_rules.py::TestAllRulesInterface::test_evaluate_handles_empty_parameters[budget_cap] PASSED [ 29%]
+tests/scenarios/test_rules.py::TestAllRulesInterface::test_evaluate_handles_empty_parameters[crypto_lock] PASSED [ 30%]
+tests/scenarios/test_rules.py::TestAllRulesInterface::test_evaluate_handles_empty_parameters[domain_allowlist] PASSED [ 31%]
+tests/scenarios/test_rules.py::TestAllRulesInterface::test_evaluate_handles_empty_parameters[env_protection] PASSED [ 32%]
+tests/scenarios/test_rules.py::TestScenarioCoverage::test_has_minimum_scenarios PASSED [ 33%]
+tests/scenarios/test_rules.py::TestScenarioCoverage::test_covers_all_categories PASSED [ 34%]
+tests/scenarios/test_rules.py::TestScenarioCoverage::test_has_safe_scenarios PASSED [ 35%]
+tests/scenarios/test_rules.py::TestScenarioCoverage::test_has_block_scenarios PASSED [ 36%]
+tests/scenarios/test_rules.py::TestScenarioCoverage::test_all_scenarios_have_required_fields PASSED [ 37%]
+tests/scenarios/test_rules.py::TestScenarioCoverage::test_unique_scenario_ids PASSED [ 38%]
+tests/test_core.py::TestHealthEndpoint::test_health_returns_200 PASSED   [ 40%]
+tests/test_core.py::TestAuthFlows::test_login_page_loads FAILED          [ 41%]
+tests/test_core.py::TestAuthFlows::test_register_creates_user PASSED     [ 42%]
+tests/test_core.py::TestAuthFlows::test_register_password_mismatch PASSED [ 43%]
+tests/test_core.py::TestAuthFlows::test_register_short_password PASSED   [ 44%]
+tests/test_core.py::TestAuthFlows::test_login_invalid_credentials PASSED [ 45%]
+tests/test_core.py::TestAuthFlows::test_login_valid_credentials PASSED   [ 46%]
+tests/test_core.py::TestAuthFlows::test_forgot_password_page PASSED      [ 47%]
+tests/test_core.py::TestAuthFlows::test_forgot_password_post PASSED      [ 48%]
+tests/test_core.py::TestInterceptAPI::test_intercept_requires_auth PASSED [ 49%]
+tests/test_core.py::TestInterceptAPI::test_sentinel_metadata_stored_in_audit_log PASSED [ 50%]
+tests/test_core.py::TestRulesCRUD::test_get_constitution PASSED          [ 51%]
+tests/test_core.py::TestRulesCRUD::test_add_rule PASSED                  [ 52%]
+tests/test_core.py::TestRulesCRUD::test_delete_rule PASSED               [ 53%]
+tests/test_core.py::TestConfigExportImport::test_export_rules PASSED     [ 54%]
+tests/test_core.py::TestConfigExportImport::test_import_rules PASSED     [ 55%]
+tests/test_core.py::TestTelemetry::test_telemetry_ingest PASSED          [ 56%]
+tests/test_core.py::TestTelemetry::test_telemetry_ingest_missing_install_id PASSED [ 57%]
+tests/test_core.py::TestTelemetry::test_telemetry_transparency PASSED    [ 58%]
+tests/test_core.py::TestTelemetry::test_telemetry_dashboard_requires_auth PASSED [ 60%]
+tests/test_core.py::TestTelemetry::test_telemetry_dashboard_with_auth PASSED [ 61%]
+tests/test_core.py::TestLatencyAnomaly::test_absolute_threshold_triggers_warning PASSED [ 62%]
+tests/test_core.py::TestLatencyAnomaly::test_rolling_average_triggers_warning PASSED [ 63%]
+tests/test_core.py::TestLatencyAnomaly::test_normal_latency_no_warning PASSED [ 64%]
+tests/test_core.py::TestOverview::test_overview_requires_auth PASSED     [ 65%]
+tests/test_core.py::TestOverview::test_overview_with_auth PASSED         [ 66%]
+tests/test_sentinel.py::TestOpenAIDetector::test_no_tools PASSED         [ 67%]
+tests/test_sentinel.py::TestOpenAIDetector::test_tool_calls_in_messages PASSED [ 68%]
+tests/test_sentinel.py::TestOpenAIDetector::test_tool_choice PASSED      [ 69%]
+tests/test_sentinel.py::TestOpenAIDetector::test_tools_array PASSED      [ 70%]
+tests/test_sentinel.py::TestAnthropicDetector::test_no_tools PASSED      [ 71%]
+tests/test_sentinel.py::TestAnthropicDetector::test_tool_use_block PASSED [ 72%]
+tests/test_sentinel.py::TestAnthropicDetector::test_tools_definition PASSED [ 73%]
+tests/test_sentinel.py::TestMCPDetector::test_non_tool_method PASSED     [ 74%]
+tests/test_sentinel.py::TestMCPDetector::test_tools_call PASSED          [ 75%]
+tests/test_sentinel.py::TestA2ADetector::test_delegate_task PASSED       [ 76%]
+tests/test_sentinel.py::TestA2ADetector::test_tasks_send PASSED          [ 77%]
+tests/test_sentinel.py::TestGenericJSONRPC::test_generic_method PASSED   [ 78%]
+tests/test_sentinel.py::TestGenericJSONRPC::test_not_jsonrpc PASSED      [ 80%]
+tests/test_sentinel.py::TestGenericJSONRPC::test_tools_prefix PASSED     [ 81%]
+tests/test_sentinel.py::TestDetectToolCalls::test_combined_detection PASSED [ 82%]
+tests/test_sentinel.py::TestDetectToolCalls::test_deduplication PASSED   [ 83%]
+tests/test_sentinel.py::TestDetectToolCalls::test_empty_body PASSED      [ 84%]
+tests/test_sentinel.py::TestDetectToolCalls::test_plain_chat_request PASSED [ 85%]
+tests/test_sentinel.py::TestProtocolRegistry::test_registry_functions_callable PASSED [ 86%]
+tests/test_sentinel.py::TestProtocolRegistry::test_registry_has_all_protocols PASSED [ 87%]
+tests/test_sentinel.py::TestProxyHardening::test_max_body_size_exists PASSED [ 88%]
+tests/test_sentinel.py::TestProxyHardening::test_max_body_size_reasonable PASSED [ 89%]
+tests/test_sentinel.py::TestSignature::test_config_includes_signing_secret PASSED [ 90%]
+tests/test_sentinel.py::TestSignature::test_hmac_signature_generation PASSED [ 91%]
+tests/test_sentinel.py::TestSignature::test_proxy_loads_signing_secret PASSED [ 92%]
+tests/test_sentinel.py::TestSignature::test_proxy_no_signing_secret_default PASSED [ 93%]
+tests/test_sentinel.py::TestAuthorizedByHeader::test_config_includes_authorized_by PASSED [ 94%]
+tests/test_sentinel.py::TestAuthorizedByHeader::test_header_injected_in_forward_headers PASSED [ 95%]
+tests/test_sentinel.py::TestAuthorizedByHeader::test_proxy_authorized_by_explicit PASSED [ 96%]
+tests/test_sentinel.py::TestAuthorizedByHeader::test_proxy_has_authorized_by_default PASSED [ 97%]
+tests/test_sentinel.py::TestSentinelConfig::test_get_config_defaults PASSED [ 98%]
+tests/test_sentinel.py::TestSentinelConfig::test_nist_export_grade PASSED [100%]
+
+=================================== FAILURES ===================================
+_____________________ TestAuthFlows.test_login_page_loads ______________________
+tests/test_core.py:21: in test_login_page_loads
+    assert resp.status_code == 200
+E   assert 302 == 200
+E    +  where 302 = <WrapperTestResponse streamed [302 FOUND]>.status_code
+=============================== warnings summary ===============================
+tests/test_core.py: 11 warnings
+  /home/runner/work/snapwire/snapwire/replit_auth.py:22: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    return User.query.get(user_id)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.11.14-final-0 _______________
+
+Name                                  Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------
+agent_firewall.py                       116    116     0%   23-182
+app.py                                   51      5    90%   22-23, 56-57, 88
+check_setup.py                          137    137     0%   2-186
+community/__init__.py                     0      0   100%
+community/_grader_runner.py              66     66     0%   6-135
+community/achievements.py                99     87    12%   14-23, 27, 31-41, 45-100, 104-124, 128-132, 136-139, 143-144
+community/grader.py                      62     49    21%   18-28, 32-140
+community/routes.py                     233    192    18%   22-24, 28-40, 45-64, 75-89, 102-108, 113-119, 124-129, 134-138, 143-160, 165-174, 185-207, 212-262, 271-289, 294-334, 339-350, 355-365
+generate_hero_cve.py                    111    111     0%   1-195
+generate_nist_commentary.py             134    134     0%   15-264
+main.py                                4154   3165    24%   82, 84, 92, 100, 110, 118-124, 129-138, 146-148, 155-159, 169-223, 234-277, 289-318, 330-382, 411, 426, 431, 443-466, 471-528, 533-589, 594-617, 622-626, 631-635, 640, 645-646, 651-652, 657-659, 664, 669, 674-691, 701-740, 757-759, 770-772, 784-908, 939-1057, 1069-1082, 1088-1101, 1107-1113, 1119-1143, 1149-1157, 1163-1179, 1185-1192, 1197-1242, 1246-1263, 1275, 1281-1303, 1316, 1322-1330, 1345-1350, 1365-1375, 1388-1423, 1428-1431, 1436-1452, 1474, 1477-1996, 2002-2003, 2008-2015, 2021-2034, 2040-2065, 2070-2077, 2083-2088, 2094-2126, 2141-2144, 2150-2156, 2162-2171, 2188-2199, 2209-2273, 2285-2293, 2302, 2307, 2310, 2314, 2318, 2330, 2340, 2346-2364, 2370-2380, 2386-2389, 2395-2399, 2405-2416, 2422-2434, 2474-2505, 2518-2524, 2528, 2532, 2536, 2543, 2550-2568, 2571, 2585-2606, 2619-2621, 2627-2720, 2726-2727, 2733-2743, 2749-2771, 2781-2791, 2809-2830, 2836-2856, 2862-2894, 2900-2905, 2923-2929, 2935-2969, 2979-3059, 3063-3113, 3117-3138, 3144-3198, 3208-3218, 3224-3226, 3242-3263, 3276-3282, 3288-3294, 3300-3316, 3330-3331, 3337-3408, 3414-3418, 3424, 3430-3433, 3439-3459, 3471-3472, 3478-3574, 3591-3597, 3603-3615, 3621-3631, 3637-3651, 3660-3670, 3676-3678, 3696-3710, 3723-3729, 3735-3741, 3747-3770, 3776-3781, 3794-3832, 3848-3867, 3873-3876, 3882-3889, 3895-3898, 3916-3924, 3930-3932, 3938-3952, 3958-3988, 3999-4019, 4033-4041, 4051-4067, 4073-4091, 4097-4116, 4122-4123, 4129-4137, 4143-4151, 4157-4163, 4169-4175, 4181-4197, 4203-4204, 4210-4221, 4227-4228, 4234-4235, 4241-4243, 4249-4251, 4257-4258, 4264-4281, 4287-4288, 4294-4295, 4301-4308, 4314-4317, 4323-4327, 4333-4334, 4340-4341, 4347-4359, 4365-4368, 4374-4379, 4385-4387, 4393-4414, 4420-4423, 4429-4431, 4437-4451, 4456-4460, 4465-4509, 4514-4537, 4543-4552, 4558-4566, 4572-4579, 4585-4587, 4593-4595, 4601-4612, 4618-4682, 4693-4721, 4731-4749, 4757, 4762-4788, 4797-4873, 4878-4946, 4968-4999, 5004-5025, 5038-5103, 5109-5110, 5116-5124, 5142-5143, 5145-5147, 5156, 5158, 5193-5195, 5201-5206, 5225-5258, 5264-5267, 5367-5368, 5374-5376, 5386-5396, 5405-5408, 5423-5434, 5443-5445, 5451-5461, 5470-5472, 5478-5482, 5491-5494, 5500-5509, 5518-5520, 5526-5534, 5554, 5564, 5583-5585, 5596-5605, 5615-5619, 5625-5650, 5656-5663, 5669-5671, 5678-5719, 5726-5732, 5739, 5741, 5746, 5778, 5782, 5792-5793, 5799-5800, 5804, 5808, 5870, 5875-6223, 6232-6246, 6252-6269, 6275-6287, 6293-6313, 6319-6323, 6329-6367, 6378-6385, 6391-6405, 6411-6431, 6437-6532, 6544-6546, 6552-6567, 6574-6619, 6625-6627, 6639-6825, 6831-6837, 6843-6899, 6905-6979, 6995-7059, 7071-7076, 7082-7087, 7093-7119, 7134-7171, 7186-7191, 7199-7201
+mcp_server.py                           117    117     0%   30-267
+models.py                               606     73    88%   45, 103-104, 109-110, 115-116, 166-179, 245-258, 357-363, 423, 448, 473, 498, 522, 596, 628-630, 633-635, 638, 670, 695, 698, 758, 761, 786-787, 819, 861, 895-897, 900, 928, 960, 982, 985-986
+replit_auth.py                          348    228    34%   28-29, 33-177, 185-186, 189-231, 235-241, 260, 267, 283, 289, 326-327, 333-335, 339-380, 388-395, 399-420, 435-448, 455-477, 481-482, 497-501, 504-507, 510-523, 531-536
+rules/__init__.py                         0      0   100%
+rules/block_pii.py                        2      0   100%
+rules/budget_cap.py                       4      0   100%
+rules/crypto_lock.py                      4      0   100%
+rules/domain_allowlist.py                 3      0   100%
+rules/env_protection.py                  16      3    81%   48-50
+scripts/__init__.py                       0      0   100%
+scripts/batch_ingestor.py               358    358     0%   20-608
+scripts/dev_health_check.py             166    166     0%   16-351
+scripts/watchdog.py                     106    106     0%   17-212
+seed_demo.py                             37     37     0%   12-265
+sentinel/__init__.py                      1      0   100%
+sentinel/__main__.py                     66     53    20%   43-69, 73-92, 96-125, 129
+sentinel/custom_detectors.py              1      0   100%
+sentinel/detector.py                    281    110    61%   63, 73-74, 102, 113-114, 149-150, 166, 169-173, 179-192, 198-210, 225-227, 233-236, 242-249, 262-270, 278, 281-288, 294-304, 319, 322-329, 334-337, 343-350, 388-389, 404-405
+sentinel/nist_export.py                 163    148     9%   17-26, 30-38, 53-198
+sentinel/proxy.py                       201    157    22%   35-42, 45-51, 54-59, 100-114, 117, 123-124, 127-210, 213-279, 282-291, 301-364, 370-394, 398
+snapwire_audit.py                       380    380     0%   21-706
+snapwire_cli.py                         265    265     0%   12-588
+snapwire_demo.py                        129    129     0%   22-236
+src/__init__.py                           0      0   100%
+src/action_queue.py                     410    353    14%   16-19, 21, 25-28, 32-34, 38-68, 72-134, 138-151, 155-242, 246-251, 255-268, 306-307, 352-390, 394-470, 484-528, 532-560, 564-581, 585-674, 678-708, 721-752
+src/aibom_generator.py                  180    180     0%   1-381
+src/auditor.py                           71     60    15%   38-39, 55-114, 126-163
+src/blast_radius.py                     132    115    13%   13-94, 104-107, 111-113, 117-132, 136-144, 155-174, 178-182, 195-204, 208-243
+src/compliance_report.py                191    191     0%   1-237
+src/constitution.py                     165    113    32%   5-9, 15, 17, 24-25, 46-47, 51-52, 56-67, 86-87, 91-103, 110, 113, 135, 138, 141-142, 151-182, 186-195, 199-238
+src/deception.py                         13      9    31%   26-53
+src/email_service.py                    186    136    27%   30, 32, 37-54, 58-80, 84-105, 119, 121, 124-126, 130-135, 139-176, 180-189, 193-285, 289-377, 439-478, 482-526
+src/eu_ai_act_mapping.py                 82     82     0%   1-586
+src/eu_ai_act_pdf.py                    231    231     0%   1-310
+src/fix_prompt_generator.py             104    104     0%   1-384
+src/honeypot.py                          68     58    15%   6-16, 26-51, 55-70, 74-76, 80-95, 99-106, 110-117, 121-125
+src/input_sanitizer.py                   25      3    88%   199-202
+src/llm_encryption.py                    14     14     0%   1-20
+src/llm_provider.py                     115     97    16%   14-21, 25, 29, 34-36, 41-66, 70-83, 87-93, 97-135, 139-146, 150-157, 161-176
+src/loop_detector.py                     42     26    38%   12-48, 52-67, 71-75
+src/nist_attestation.py                  93     93     0%   1-598
+src/nist_attestation_pdf.py             203    203     0%   1-254
+src/nist_mapping.py                      67     56    16%   133, 137-140, 144-151, 171-236
+src/nlp_rule_builder.py                  67     56    16%   8-9, 25-71, 81-139, 149-206
+src/notifications.py                     46     40    13%   9-54, 59-88
+src/rate_limiter.py                      43     32    26%   35-65, 78-104, 119-121, 128-129
+src/risk_index.py                       149    132    11%   15-53, 57-117, 121-145, 149-178, 188-196, 200-213, 217-219, 223-237
+src/rule_templates.py                    15      3    80%   372, 376, 380
+src/safeguard_openclaw.py               145    119    18%   52-71, 75, 79, 83-87, 91-117, 121-135, 139-152, 161-300, 304
+src/safety_pdf.py                       381    381     0%   1-533
+src/schema_guard.py                      47     36    23%   7-51, 61-74
+src/servicenow_manifest.py               70     70     0%   1-632
+src/slack_notifier.py                   143    143     0%   1-335
+src/taint_tracker.py                     36     32    11%   5-15, 25-43, 47-58
+src/tenant.py                            88     39    56%   7, 9, 14-16, 20-22, 26-40, 66, 72, 116-129, 133-135, 142, 145-151
+src/thinking_sentinel.py                 78     29    63%   24, 46, 85, 91-124, 128-149, 161-162
+src/tool_catalog.py                      73     64    12%   26-65, 69-81, 85-87, 91-105, 109-123
+src/vault.py                            167    153     8%   7-16, 20-40, 44-51, 55-69, 73-82, 89-121, 125-150, 159-167, 171-179, 183-192, 196-242
+tests/__init__.py                         0      0   100%
+tests/conftest.py                        48      0   100%
+tests/cve_2026_25253_repro.py            76     76     0%   17-234
+tests/scenarios/__init__.py               0      0   100%
+tests/scenarios/attack_scenarios.py       7      4    43%   226-228, 232
+tests/scenarios/test_rules.py            90      3    97%   41-42, 65
+tests/test_core.py                      171      0   100%
+tests/test_sentinel.py                  197      1    99%   340
+-------------------------------------------------------------------
+TOTAL                                 12946   9929    23%
+=========================== short test summary info ============================
+FAILED tests/test_core.py::TestAuthFlows::test_login_page_loads - assert 302 == 200
+ +  where 302 = <WrapperTestResponse streamed [302 FOUND]>.status_code
+================== 1 failed, 94 passed, 11 warnings in 2.58s ===================
+Error: Process completed with exit code 1.
