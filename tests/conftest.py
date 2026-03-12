@@ -23,6 +23,13 @@ with flask_app.app_context():
 
 import main  # noqa: F401 - registers routes
 
+# app.py starts a background thread (_init_db) that runs migrations and then
+# signals _app_ready. The StartupMiddleware returns b"starting" for every
+# request until that event is set. Wait here so tests never hit that gate.
+from app import _app_ready, _init_thread  # noqa: E402
+_init_thread.join(timeout=30)
+_app_ready.set()  # ensure it's set even if thread timed out
+
 
 @pytest.fixture(autouse=True)
 def disable_rate_limits():
