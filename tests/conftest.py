@@ -19,6 +19,9 @@ def disable_rate_limits():
 @pytest.fixture(scope="session")
 def app():
     flask_app.config["TESTING"] = True
+    with flask_app.app_context():
+        db.drop_all()
+        db.create_all()
     yield flask_app
 
 
