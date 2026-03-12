@@ -1868,6 +1868,7 @@
                 <button class="sub-tab" data-subtab="er-latency" data-group="engine-room" style="color:#40E0FF;">Latency Monitor</button>
                 <button class="sub-tab" data-subtab="er-shadow" data-group="engine-room" style="color:#ff4d4d;">Shadow Agents<span id="shadow-agents-badge" style="display:none;background:#ff4d4d;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;">0</span></button>
                 <button class="sub-tab" data-subtab="er-agent-locks" data-group="engine-room" style="color:#f59e0b;">&#x1F6A6; Agent Locks<span id="agent-locks-badge" style="display:none;background:#f59e0b;color:#000;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;">0</span></button>
+                <button class="sub-tab" data-subtab="er-forks" data-group="engine-room" style="color:#4ade80;">&#x1F374; Fork Tracker</button>
             </div>
         </div>
 
@@ -2551,6 +2552,55 @@
                 </div>
                 <div style="margin-top:16px;padding:14px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;font-size:12px;color:var(--text-secondary);">
                     <strong style="color:#f59e0b;">API:</strong> Agents acquire locks via <code>POST /api/agent-lock/acquire</code> with <code>{"resource_id": "...", "agent_id": "...", "ttl_seconds": 300}</code>. A <code>409 Conflict</code> is returned if another agent holds the lock.
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-er-forks" class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div>
+                    <h3 style="margin-bottom:4px;">&#x1F374; Fork Tracker</h3>
+                    <p style="color:var(--text-secondary);font-size:13px;">Live fork data from GitHub + badge deployment pings. See who's running Snapwire in the wild.</p>
+                </div>
+                <button class="btn" onclick="loadForkTracker()" style="background:var(--accent-blue);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Refresh</button>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
+                    <div style="font-size:10px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Public Forks</div>
+                    <div id="fork-count" style="font-size:36px;font-weight:700;font-family:'Fira Code',monospace;color:#4ade80;">--</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
+                    <div style="font-size:10px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Stars</div>
+                    <div id="fork-stars" style="font-size:36px;font-weight:700;font-family:'Fira Code',monospace;color:#facc15;">--</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
+                    <div style="font-size:10px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Badge Pings</div>
+                    <div id="badge-ping-count" style="font-size:36px;font-weight:700;font-family:'Fira Code',monospace;color:#a78bfa;">--</div>
+                </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
+                    <div style="font-size:10px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Unique Deployments</div>
+                    <div id="badge-unique-referers" style="font-size:36px;font-weight:700;font-family:'Fira Code',monospace;color:#00F5D4;">--</div>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                    <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">&#x1F374; GitHub Forks</h4>
+                    <div id="fork-list" style="display:flex;flex-direction:column;gap:8px;">
+                        <div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:20px;">Click Refresh to load from GitHub API</div>
+                    </div>
+                    <div id="fork-network-link" style="margin-top:12px;display:none;">
+                        <a id="fork-network-url" href="#" target="_blank" style="font-size:12px;color:var(--accent-blue);text-decoration:none;">View full fork network on GitHub →</a>
+                    </div>
+                </div>
+
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                    <h4 style="font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">&#x1F9E2; Badge Deployment Pings</h4>
+                    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Every request to <code>/badge/snapwire.svg</code> is logged with its Referer — showing where Snapwire is deployed.</p>
+                    <div id="badge-ping-list" style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;">
+                        <div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:20px;">Click Refresh to load badge pings</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3693,7 +3743,7 @@ def handle_tool_call(tool_call):
             'agents-group': ['agents', 'analytics'],
             'security': ['vault', 'honeypots', 'blast', 'holdwindow', 'catalog', 'risk', 'autotriage', 'taintpulse', 'stealth'],
             'settings-group': ['keys', 'llm', 'org', 'account', 'settings', 'admin', 'contacts'],
-            'engine-room': ['er-health', 'er-ingestor', 'er-chaos', 'er-burn', 'er-stealth', 'er-telemetry', 'er-summary', 'er-hitl', 'er-detector', 'er-latency', 'er-shadow', 'er-agent-locks']
+            'engine-room': ['er-health', 'er-ingestor', 'er-chaos', 'er-burn', 'er-stealth', 'er-telemetry', 'er-summary', 'er-hitl', 'er-detector', 'er-latency', 'er-shadow', 'er-agent-locks', 'er-forks']
         };
 
         let activeSubTabs = {};
@@ -3742,6 +3792,7 @@ def handle_tool_call(tool_call):
             if (name === 'er-latency') loadLatencyMonitor();
             if (name === 'er-shadow') loadShadowAgents();
             if (name === 'er-agent-locks') loadAgentLocks();
+            if (name === 'er-forks') loadForkTracker();
         }
 
         document.querySelectorAll('.tab[data-tab]').forEach(tab => {
@@ -9012,6 +9063,72 @@ if (result.status === "allowed") {
                 }).join('');
             } catch(e) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ff4d4d;padding:24px;">Failed to load agent locks.</td></tr>';
+            }
+        }
+
+        async function loadForkTracker() {
+            try {
+                const [forkResp, pingResp] = await Promise.all([
+                    fetch('/api/admin/fork-tracker'),
+                    fetch('/api/admin/badge-pings?limit=50'),
+                ]);
+                const forkData = await forkResp.json();
+                const pingData = await pingResp.json();
+
+                const forkCountEl = document.getElementById('fork-count');
+                const starsEl = document.getElementById('fork-stars');
+                const pingCountEl = document.getElementById('badge-ping-count');
+                const uniqueEl = document.getElementById('badge-unique-referers');
+                if (forkCountEl) forkCountEl.textContent = forkData.total_forks ?? forkData.count ?? '--';
+                if (starsEl) starsEl.textContent = forkData.stars ?? '--';
+                if (pingCountEl) pingCountEl.textContent = pingData.total ?? '--';
+                if (uniqueEl) uniqueEl.textContent = pingData.unique_referers ?? '--';
+
+                const forkList = document.getElementById('fork-list');
+                const forkNetworkLink = document.getElementById('fork-network-link');
+                const forkNetworkUrl = document.getElementById('fork-network-url');
+                if (forkNetworkLink && forkData.fork_network_url) {
+                    forkNetworkLink.style.display = 'block';
+                    forkNetworkUrl.href = forkData.fork_network_url;
+                }
+                if (forkList) {
+                    if (forkData.error) {
+                        forkList.innerHTML = `<div style="color:#f59e0b;font-size:12px;padding:10px;background:rgba(245,158,11,0.08);border-radius:8px;">${forkData.error}<br><br><strong>Tip:</strong> Add a GITHUB_TOKEN env var to increase rate limit from 60 to 5,000 req/hr.</div>`;
+                    } else if (!forkData.forks || forkData.forks.length === 0) {
+                        forkList.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:20px;">No public forks yet. Share the repo to get your first fork!</div>';
+                    } else {
+                        forkList.innerHTML = forkData.forks.map(f => {
+                            const pushed = f.pushed_at ? new Date(f.pushed_at).toLocaleDateString() : '—';
+                            return `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg-secondary);border-radius:8px;">
+                                <img src="${f.avatar}" style="width:28px;height:28px;border-radius:50%;flex-shrink:0;" onerror="this.style.display='none'">
+                                <div style="flex:1;min-width:0;">
+                                    <a href="${f.html_url}" target="_blank" style="font-size:13px;font-weight:600;color:var(--text-primary);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.full_name}</a>
+                                    <div style="font-size:11px;color:var(--text-secondary);">Last push: ${pushed} &nbsp;·&nbsp; ⭐ ${f.stars}</div>
+                                </div>
+                            </div>`;
+                        }).join('');
+                    }
+                }
+
+                const pingList = document.getElementById('badge-ping-list');
+                if (pingList) {
+                    if (!pingData.pings || pingData.pings.length === 0) {
+                        pingList.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:20px;">No badge pings yet. Someone needs to embed the badge in their README!</div>';
+                    } else {
+                        pingList.innerHTML = pingData.pings.map(p => {
+                            const when = p.pinged_at ? new Date(p.pinged_at).toLocaleString() : '—';
+                            const referer = p.referer || '<em style="color:var(--text-secondary);">no referer</em>';
+                            const shortReferer = p.referer ? p.referer.replace('https://github.com/', 'github.com/').replace('https://', '') : 'no referer';
+                            return `<div style="padding:6px 10px;background:var(--bg-secondary);border-radius:6px;font-size:11px;">
+                                <div style="font-weight:600;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.referer || ''}">${shortReferer}</div>
+                                <div style="color:var(--text-secondary);margin-top:2px;">${when}</div>
+                            </div>`;
+                        }).join('');
+                    }
+                }
+            } catch(e) {
+                console.error('Fork tracker error:', e);
+                showToast('Failed to load fork tracker data', 'error');
             }
         }
 

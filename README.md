@@ -14,7 +14,8 @@
 <p align="center">
   <a href="https://replit.com/@MasonJeffreys/Snapwire"><img src="https://img.shields.io/badge/Deploy-Replit-F26207?style=for-the-badge&logo=replit&logoColor=white" alt="Deploy to Replit" /></a>&nbsp;
   <a href="https://railway.app/new/template?template=https://github.com/getsnapwire/snapwire"><img src="https://img.shields.io/badge/Deploy-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white" alt="Deploy to Railway" /></a>&nbsp;
-  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Ready" />
+  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Ready" />&nbsp;
+  <a href="https://github.com/getsnapwire/snapwire/actions/workflows/ci.yml"><img src="https://github.com/getsnapwire/snapwire/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 </p>
 
 <p align="center">
@@ -463,10 +464,12 @@ Snapwire provides **Conformity-Ready Infrastructure** for organizations operatin
 Add this to your README to show your agents are governed:
 
 ```markdown
-[![Protected by Snapwire](https://github.com/getsnapwire/snapwire/raw/main/static/badge-snapwire.svg)](https://github.com/getsnapwire/snapwire)
+[![Protected by Snapwire](https://www.getsnapwire.com/badge/snapwire.svg)](https://github.com/getsnapwire/snapwire)
 ```
 
-[![Protected by Snapwire](https://github.com/getsnapwire/snapwire/raw/main/static/badge-snapwire.svg)](https://github.com/getsnapwire/snapwire)
+[![Protected by Snapwire](https://www.getsnapwire.com/badge/snapwire.svg)](https://github.com/getsnapwire/snapwire)
+
+> **Note:** The badge is served live from `www.getsnapwire.com`. This means every deployment that embeds the badge registers as an active instance — no code required. The badge is always fresh (no CDN caching) and resolves to the current official SVG.
 
 ---
 

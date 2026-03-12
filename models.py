@@ -948,6 +948,24 @@ class TenantLLMConfig(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class BadgePing(db.Model):
+    __tablename__ = 'badge_pings'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    pinged_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    referer = db.Column(db.Text, nullable=True)
+    user_agent = db.Column(db.Text, nullable=True)
+    ip_address = db.Column(db.String(64), nullable=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "pinged_at": self.pinged_at.isoformat() if self.pinged_at else None,
+            "referer": self.referer,
+            "user_agent": self.user_agent,
+            "ip_address": self.ip_address,
+        }
+
+
 class AgentLock(db.Model):
     __tablename__ = 'agent_locks'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

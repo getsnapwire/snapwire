@@ -669,6 +669,33 @@ def download_nist_evidence():
     return send_from_directory(os.path.dirname(__file__), "nist_evidence.json", as_attachment=True)
 
 
+@app.route("/badge/snapwire.svg")
+def serve_badge():
+    from models import BadgePing
+    try:
+        ping = BadgePing(
+            referer=request.headers.get("Referer") or request.headers.get("Referrer") or "",
+            user_agent=request.headers.get("User-Agent", "")[:500],
+            ip_address=(request.headers.get("X-Forwarded-For") or request.remote_addr or "")[:64],
+        )
+        db.session.add(ping)
+        db.session.commit()
+    except Exception:
+        pass
+    svg_path = os.path.join(os.path.dirname(__file__), "static", "badge-snapwire.svg")
+    try:
+        with open(svg_path, "r") as f:
+            svg_content = f.read()
+    except FileNotFoundError:
+        return "Badge not found", 404
+    return Response(svg_content, mimetype="image/svg+xml", headers={
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
+        "Access-Control-Allow-Origin": "*",
+    })
+
+
 @app.route("/safety")
 def safety_page():
     from src.nist_mapping import generate_compliance_report
@@ -7098,6 +7125,73 @@ def enroll_unmanaged_agent(sighting_id):
             "key_prefix": key_prefix,
             "agent_name": api_key.agent_name,
         },
+    })
+
+
+@app.route("/api/admin/fork-tracker", methods=["GET"])
+@require_admin
+def fork_tracker():
+    import urllib.request
+    github_token = os.environ.get("GITHUB_TOKEN", "")
+    repo = "getsnapwire/snapwire"
+    url = f"https://api.github.com/repos/{repo}/forks?per_page=100&sort=newest"
+    headers = {"Accept": "application/vnd.github+json", "User-Agent": "Snapwire-ForkTracker/1.0"}
+    if github_token:
+        headers["Authorization"] = f"Bearer {github_token}"
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            import json as _json
+            forks_raw = _json.loads(resp.read().decode())
+        forks = [{
+            "owner": f.get("owner", {}).get("login", ""),
+            "avatar": f.get("owner", {}).get("avatar_url", ""),
+            "full_name": f.get("full_name", ""),
+            "html_url": f.get("html_url", ""),
+            "stars": f.get("stargazers_count", 0),
+            "forks": f.get("forks_count", 0),
+            "created_at": f.get("created_at", ""),
+            "pushed_at": f.get("pushed_at", ""),
+            "private": f.get("private", False),
+        } for f in forks_raw]
+    except Exception as e:
+        return jsonify({"error": f"GitHub API error: {str(e)}", "forks": [], "count": 0}), 200
+    repo_url = f"https://api.github.com/repos/{repo}"
+    try:
+        req2 = urllib.request.Request(repo_url, headers=headers)
+        with urllib.request.urlopen(req2, timeout=8) as resp2:
+            repo_data = _json.loads(resp2.read().decode())
+        total_forks = repo_data.get("forks_count", len(forks))
+        stars = repo_data.get("stargazers_count", 0)
+        watchers = repo_data.get("subscribers_count", 0)
+    except Exception:
+        total_forks = len(forks)
+        stars = 0
+        watchers = 0
+    return jsonify({
+        "forks": forks,
+        "count": len(forks),
+        "total_forks": total_forks,
+        "stars": stars,
+        "watchers": watchers,
+        "repo": repo,
+        "github_url": f"https://github.com/{repo}",
+        "fork_network_url": f"https://github.com/{repo}/network/members",
+    })
+
+
+@app.route("/api/admin/badge-pings", methods=["GET"])
+@require_admin
+def badge_pings():
+    from models import BadgePing
+    limit = min(int(request.args.get("limit", 100)), 500)
+    pings = BadgePing.query.order_by(BadgePing.pinged_at.desc()).limit(limit).all()
+    total = BadgePing.query.count()
+    unique_referers = db.session.query(BadgePing.referer).filter(BadgePing.referer != "").distinct().count()
+    return jsonify({
+        "pings": [p.to_dict() for p in pings],
+        "total": total,
+        "unique_referers": unique_referers,
     })
 
 
